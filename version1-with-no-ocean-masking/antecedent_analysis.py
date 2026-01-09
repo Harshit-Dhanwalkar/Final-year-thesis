@@ -63,11 +63,11 @@ def compute_antecedent_sm(
         if not landfall_row.empty:
             landfall_time = pd.to_datetime(landfall_row.iloc[0]['time'])
         if landfall_row.empty:
-            print(f" >  [INFO an   ] Track {track_id}                      : No landfall detected")
+            print(f" >  [INFO an   ] Track {track_id}                           : No landfall detected")
             return np.nan
     # If still no landfall, manual check: is_point_land calculation
     if landfall_time is None:
-        print(" >  [WARNING ] Mannual landfall check rather than using is_point_land")
+        print(" >  [WARNING an] Mannual landfall check rather than using is_point_land")
         for _, row in track.iterrows():
             if is_point_land(row['latitude'], row['longitude']):
                 landfall_time = pd.to_datetime(row['time'])
@@ -75,11 +75,11 @@ def compute_antecedent_sm(
 
     # If no landfall, use end of track as reference
     # if landfall_time is None:
-    #     print(f" >  [WARNING ] Track {track_id}  No landfall. Using end point for analysis.")
+    #     print(f" >  [WARNING an] Track {track_id}  No landfall. Using end point for analysis.")
     #     landfall_time = pd.to_datetime(track['time'].max())
     # If no landfall, use start of track as reference
     if landfall_time is None:
-        print(f" >  [WARNING ] Track {track_id}  No landfall. Using start point for analysis.")
+        print(f" >  [WARNING an] Track {track_id}  No landfall. Using start point for analysis.")
         landfall_time = pd.to_datetime(track['time'].min())
 
     sm_vals = []
@@ -92,23 +92,23 @@ def compute_antecedent_sm(
     t_start = landfall_time - pd.Timedelta(hours=hours_before_landfall)
     t_end = landfall_time - pd.Timedelta(hours=exclude_last_hours)
 
-    print(f" >> [DEBUG] Landfall time found: {landfall_time}")
-    print(f" >> [DEBUG] Time window: {t_start} to {t_end}")
-    print(f" >> [DEBUG] Dataset time range: {ds_times.min()} to {ds_times.max()}")
+    print(f" >> [DEBUG an] Landfall time found: {landfall_time}")
+    print(f" >> [DEBUG an] Time window: {t_start} to {t_end}")
+    print(f" >> [DEBUG an] Dataset time range: {ds_times.min()} to {ds_times.max()}")
     if t_start >= t_end:
-        print(f" >> [DEBUG] Invalid window: t_start >= t_end")
+        print(f" >> [DEBUG an] Invalid window: t_start >= t_end")
         return np.nan
 
     # Adjust window to dataset bounds
     if t_start < ds_times.min():
-        print(f" >  [WARNING ] Track {track_id}                           :          t_start ({t_start}) < ds min ({ds_times.min()})")
+        print(f" >  [WARNING an] Track {track_id}                           :          t_start ({t_start}) < ds min ({ds_times.min()})")
         t_start = ds_times.min()
     if t_end > ds_times.max():
-        print(f" >  [WARNING ] Track {track_id}                           :          t_end ({t_end}) > ds max ({ds_times.max()})")
+        print(f" >  [WARNING an] Track {track_id}                           :          t_end ({t_end}) > ds max ({ds_times.max()})")
         t_end = ds_times.max()
 
     if t_start >= t_end:  # No valid window
-        print(f" >  [WARNING ] Track {track_id}                           :          No valid time window (t_start >= t_end)")
+        print(f" >  [WARNING an] Track {track_id}                           :          No valid time window (t_start >= t_end)")
         return np.nan
     print(f" >  [INFO an   ] Track {track_id} Time window               :          {t_start} to {t_end}")
 
@@ -119,7 +119,7 @@ def compute_antecedent_sm(
     ]
 
     if subset_track.empty:
-        print(f" >  [WARNING ] Track {track_id}, No track points in time window")
+        print(f" >  [WARNING an] Track {track_id}, No track points in time window")
         return np.nan
     print(f" >  [INFO an   ] Track {track_id} Points in time window     :          {len(subset_track)} ")
 
@@ -143,7 +143,7 @@ def compute_antecedent_sm(
                 # Find nearest time
                 nearest_idx = np.argmin(np.abs(ds_times - t))
                 t = ds_times[nearest_idx]
-                print(f" >> [INFO an   ] Using nearest time                :          {t}")
+                print(f" >  [INFO an   ] Using nearest time                :          {t}")
 
             # Extract spatial average of soil moisture
             try:
@@ -160,7 +160,7 @@ def compute_antecedent_sm(
                 lon_max = min(lon_max, float(ds_at_time.longitude.max()))
                 # Check if bounds are valid
                 if lat_min >= lat_max or lon_min >= lon_max:
-                    print(f" >  [WARNING ] Invalid bounds at {t}            : lat [{lat_min}, {lat_max}], lon [{lon_min}, {lon_max}]")
+                    print(f" >  [WARNING an] Invalid bounds at {t}            : lat [{lat_min}, {lat_max}], lon [{lon_min}, {lon_max}]")
                     continue
 
                 subset = ds_at_time.sel({
@@ -169,7 +169,7 @@ def compute_antecedent_sm(
                 })
                 if subset.sizes.get('latitude', 0) == 0 or subset.sizes.get('longitude', 0) == 0:
                     ocean_cells_excluded += 1
-                    print(f" >  [WARNING ] Empty subset at {t}")
+                    print(f" >  [WARNING an] Empty subset at {t}")
                     continue
 
                 if 'swvl1' in subset.data_vars:
@@ -181,18 +181,18 @@ def compute_antecedent_sm(
                     else:
                         ocean_cells_excluded += 1
                 else:
-                    print(f" >  [WARNING ] 'swvl1' not in subset at {t}")
+                    print(f" >  [WARNING an] 'swvl1' not in subset at {t}")
             except Exception as e:
                 ocean_cells_excluded += 1
-                print(f" >  [WARNING ] Extraction failed for point at {t}: {e}")
+                print(f" >  [WARNING an] Extraction failed for point at {t}: {e}")
                 continue
         except Exception as e:
             ocean_cells_excluded += 1
-            print(f" >  [WARNING ] Processing point failed: {e}")
+            print(f" >  [WARNING an] Processing point failed: {e}")
             continue
 
     # Diagnostic
-    print(f" >  [DEBUG   ] Track {track_id} Extraction statistics     :")
+    print(f" >  [DEBUG an  ] Track {track_id} Extraction statistics     :")
     print(f"                Land cells included              :          {land_cells_included}")
     print(f"                Ocean/invalid cells excluded     :          {ocean_cells_excluded}")
     print(f"                Inclusion rate                   :          {100*land_cells_included/(land_cells_included+ocean_cells_excluded if ocean_cells_excluded+land_cells_included > 0 else 1):.1f}%")
@@ -206,7 +206,7 @@ def compute_antecedent_sm(
         print(f" >  [INFO an   ] Track {track_id} ASM                       :          {asm_mean:.4f} ± {asm_std:.4f} m³/m³")
         return asm_mean
     else:
-        print(f" >  [WARNING ] Track {track_id}: No valid land-based SM values extracted")
+        print(f" >  [WARNING an] Track {track_id}: No valid land-based SM values extracted")
         return np.nan
 
 
@@ -311,7 +311,7 @@ def compute_antecedent_sm_post_landfall(
             landfall_time = pd.to_datetime(row['time'])
             break
     if landfall_time is None:
-        print(f" >  [WARNING ] Track {track_id}: No landfall detected for post-landfall analysis")
+        print(f" >  [WARNING an] Track {track_id}: No landfall detected for post-landfall analysis")
         return np.nan
 
     sm_vals = []
@@ -325,13 +325,13 @@ def compute_antecedent_sm_post_landfall(
     t_end = landfall_time + pd.Timedelta(hours=hours_after_landfall)
     # Adjust window to dataset bounds
     if t_start < ds_times.min():
-        print(f" >  [WARNING ] Track {track_id}                           :          t_start ({t_start}) < ds min ({ds_times.min()})")
+        print(f" >  [WARNING an] Track {track_id}                           :          t_start ({t_start}) < ds min ({ds_times.min()})")
         t_start = ds_times.min()
     if t_end > ds_times.max():
-        print(f" >  [WARNING ] Track {track_id}                           :          t_end ({t_end}) > ds max ({ds_times.max()})")
+        print(f" >  [WARNING an] Track {track_id}                           :          t_end ({t_end}) > ds max ({ds_times.max()})")
         t_end = ds_times.max()
     if t_start >= t_end:
-        print(f" >  [WARNING ] After adjustment                  :           t_start ({t_start}) >= t_end ({t_end})")
+        print(f" >  [WARNING an] After adjustment                  :           t_start ({t_start}) >= t_end ({t_end})")
         print(f"      Landfall time                              :           {landfall_time}")
         print(f"      Dataset range                              :           {ds_times.min()} to {ds_times.max()}")
         return np.nan
@@ -343,7 +343,7 @@ def compute_antecedent_sm_post_landfall(
         (pd.to_datetime(track['time']) <= t_end)
     ]
     if subset_track.empty:
-        print(f" >  [WARNING ] Track {track_id}                           : No points in post-landfall time window")
+        print(f" >  [WARNING an] Track {track_id}                           : No points in post-landfall time window")
         return np.nan
     print(f" >  [INFO an   ] Track {track_id} Points in post-landfall window:      {len(subset_track)}")
 
@@ -395,14 +395,14 @@ def compute_antecedent_sm_post_landfall(
                         ocean_cells_excluded += 1
             except Exception as e:
                 ocean_cells_excluded += 1
-                print(f" ERROR : {e}")
+                print(f" >  [ERROR an  ] : {e}")
                 continue
         except Exception as e:
             ocean_cells_excluded += 1
-            print(f" ERROR : {e}")
+            print(f" >  [ERROR an  ] : {e}")
             continue
 
-    print(f" >  [DEBUG   ] Track {track_id} Post-landfall extraction  :")
+    print(f" >  [DEBUG  an ] Track {track_id} Post-landfall extraction  :")
     print(f"      Land cells included                        :          {land_cells_included}")
     print(f"      Ocean/invalid cells excluded               :          {ocean_cells_excluded}")
 
@@ -412,7 +412,7 @@ def compute_antecedent_sm_post_landfall(
         print(f" >  [INFO an   ] Track {track_id} Post-landfall SM (6h)     :          {asm_mean:.4f} m³/m³")
         return asm_mean
     else:
-        print(f" >  [WARNING ] Track {track_id}                           :          No valid post-landfall SM values extracted")
+        print(f" >  [WARNING an] Track {track_id}                           :          No valid post-landfall SM values extracted")
         return np.nan
 
 def export_multiwindow_results(track_id, multiwindow_results, output_dir):
@@ -427,7 +427,7 @@ def export_multiwindow_results(track_id, multiwindow_results, output_dir):
     df = pd.DataFrame([export_data])
     output_path = os.path.join(output_dir, 'asm_multiwindow_results.csv')
     df.to_csv(output_path, index=False)
-    print(f" >> [SAVED   ] Multi-window ASM results          :           {output_path}")
+    print(f" >> [SAVED  an ] Multi-window ASM results          :           {output_path}")
     print(f"                Summary for Track {track_id}              :")
     for window_name, window_data in multiwindow_results.items():
         print(f"                      {window_name:20s}       :         {window_data['value']:7.4f} m³/m³")
@@ -443,7 +443,7 @@ def compute_antecedent_sm_all_tracks(
     unique_tracks = sorted(full_track_df['track_id'].unique())
     results = []
     if full_track_df is None or (isinstance(full_track_df, pd.DataFrame) and full_track_df.empty):
-        print(" >  [WARNING ] No track data available for ASM analysis.")
+        print(" >  [WARNING an] No track data available for ASM analysis.")
         return pd.DataFrame()
     for track_id in unique_tracks:
         print(f" >  [INFO an   ] Processing track {track_id}")
@@ -464,7 +464,7 @@ def compute_antecedent_sm_all_tracks(
         if has_landfall:
             print(f" >  [INFO an   ] Track {track_id} ASM_24h                   :          {asm_24h:.4f} m³/m³")
         else:
-            print(f" >  [WARNING ] Track {track_id}                            :          No landfall or insufficient data")
+            print(f" >  [WARNING an] Track {track_id}                            :          No landfall or insufficient data")
     return pd.DataFrame(results)
 
 def compute_asm_tp_correlation(ds, full_track_df, asm_results_df, buffer_km=100, output_dir='output'):
@@ -521,7 +521,7 @@ def compute_asm_tp_correlation(ds, full_track_df, asm_results_df, buffer_km=100,
               f"                Mean TP={tp_mean:.3f} mm/hr,\n"
               f"                Max TP={tp_max:.3f} mm/hr")
     if not correlation_data:
-        print(" >  [WARNING ] No correlation data computed")
+        print(" >  [WARNING an] No correlation data computed")
         return None
     corr_df = pd.DataFrame(correlation_data)
 
@@ -559,7 +559,7 @@ def compute_asm_tp_correlation(ds, full_track_df, asm_results_df, buffer_km=100,
     export_path = os.path.join(output_dir, 'asm_tp_correlation.csv')
     os.makedirs(output_dir, exist_ok=True)
     corr_df.to_csv(export_path, index=False)
-    print(f" >> [SAVED   ] ASM-TP correlation results: {export_path}")
+    print(f" >> [SAVED an  ] ASM-TP correlation results: {export_path}")
     return corr_df
 
 
@@ -576,7 +576,7 @@ def compute_asm_duration_correlation(asm_results_df, duration_df, output_dir='ou
         how='inner'
     )
     if len(merged_df) < 3:
-        print(" >   [WARNING ] Insufficient data for correlation (< 3 tracks)")
+        print(" >   [WARNING an] Insufficient data for correlation (< 3 tracks)")
         return None
     print(f"       Tracks with both ASM and duration data     :          {len(merged_df)}")
     print(f"        Track ID | ASM_24h | Duration (h) | Category")
@@ -633,7 +633,7 @@ def compute_asm_duration_correlation(asm_results_df, duration_df, output_dir='ou
     export_path = os.path.join(output_dir, 'asm_duration_correlation.csv')
     os.makedirs(output_dir, exist_ok=True)
     merged_df.to_csv(export_path, index=False)
-    print(f" >> [SAVED   ] ASM-Duration correlation results  :          {export_path}")
+    print(f" >> [SAVED an  ] ASM-Duration correlation results  :          {export_path}")
     return merged_df
 
 def create_asm_summary_report(
@@ -643,7 +643,7 @@ def create_asm_summary_report(
     output_dir='output'
 ):
     if corr_tp_df is None:
-        print(" >  [WARNING ] Skipping TP correlation section: No data available.")
+        print(" >  [WARNING an] Skipping TP correlation section: No data available.")
         return
 
     report_path = os.path.join(output_dir, 'ASM_Analysis_Report.txt')
@@ -711,7 +711,7 @@ def create_asm_summary_report(
         #     f.write("    (Drier soils support longer tracks)\n")
         # else:
         #     f.write("  • ASM does NOT significantly predict system duration\n")
-    print(f" >> [SAVED   ] Summary report                    :          {report_path}")
+    print(f" >> [SAVED an  ] Summary report                    :          {report_path}")
 
 def export_antecedent_results(
     asm_df,
@@ -720,7 +720,7 @@ def export_antecedent_results(
     os.makedirs(output_dir, exist_ok=True)
     output_path = os.path.join(output_dir, 'antecedent_soil_moisture.csv')
     asm_df.to_csv(output_path, index=False)
-    print(f" >> [SAVED   ] Antecedent SM results             :          {output_path}")
+    print(f" >> [SAVED an  ] Antecedent SM results             :          {output_path}")
 
 
 
@@ -794,10 +794,10 @@ def plot_antecedent_sm_timeseries(ds, track_df, track_id, buffer_km, output_dir 
                     sm_values.append(sm)
                     times.append(t)
         except Exception as e:
-            print(f" >  [WARNING ] Failed to extract SM at {t}: {e}")
+            print(f" >  [WARNING an ] Failed to extract SM at {t}: {e}")
             continue
     if len(sm_values) < 3:
-        print(f" >  [WARNING ] Insufficient SM values ({len(sm_values)}) for timeseries plot")
+        print(f" >  [WARNING an ] Insufficient SM values ({len(sm_values)}) for timeseries plot")
         return
 
     landfall_idx_in_times = -1
@@ -880,7 +880,7 @@ def plot_antecedent_sm_timeseries(ds, track_df, track_id, buffer_km, output_dir 
     outpath = os.path.join(outdir, f'track_{int(track_id)}_asm_timeseries.png')
     plt.savefig(outpath, dpi=300, bbox_inches='tight')
     plt.close()
-    print(f" >> [SAVED   ] Antecedent SM timeseries          :          {outpath}")
+    print(f" >> [SAVED an  ] Antecedent SM timeseries          :          {outpath}")
 
 def plot_sm_tp_map(
     ds,
@@ -893,13 +893,13 @@ def plot_sm_tp_map(
     output_dir = 'output',
 ):
     """Comparison map before/after landfall"""
-    print(f" >> [DEBUG   ] Starting plot_sm_tp_map for track {track_id}")
+    print(f" >> [DEBUG an ] Starting plot_sm_tp_map for track {track_id}")
     # Get ALL points for track
     track = track_df[track_df['track_id'] == track_id].sort_values('time')
 
     track_id = int(track_id)
     if len(track) < 3:
-        print(f" >  [WARNING ] Track {track_id} has insufficient points   :          {len(track)}")
+        print(f" >  [WARNING an] Track {track_id} has insufficient points   :          {len(track)}")
         return
 
     # Find landfall and check origin
@@ -917,7 +917,7 @@ def plot_sm_tp_map(
                 break
     # If still no landfall, warn
     if landfall_time is None:
-        print(f" >  [WARNING ] No landfall detected for Track {track_id}. Using start of track for maps.")
+        print(f" >  [WARNING an] No landfall detected for Track {track_id}. Using start of track for maps.")
         landfall_time = pd.to_datetime(track.iloc[0]['time'])
 
     # # Check if originates over land
@@ -984,24 +984,24 @@ def plot_sm_tp_map(
     track_before = track_window[pd.to_datetime(track_window['time']) < landfall_time]
     track_after = track_window[pd.to_datetime(track_window['time']) >= landfall_time]
     # print(f" >> [INFO an   ] Track window filtering:")
-    print(f" >> [DEBUG]      Landfall time: {landfall_time}")
-    print(f" >> [DEBUG]      Window: {before_start} to {after_end}")
-    print(f" >> [DEBUG]      Track points total: {len(track)}")
-    print(f" >> [DEBUG]      Points in window: {len(track_window)}")
-    print(f" >> [DEBUG]      Points before landfall: {len(track_before)}")
-    print(f" >> [DEBUG]      Points after landfall: {len(track_after)}")
+    print(f" >> [DEBUG an]      Landfall time: {landfall_time}")
+    print(f" >> [DEBUG an]      Window: {before_start} to {after_end}")
+    print(f" >> [DEBUG an]      Track points total: {len(track)}")
+    print(f" >> [DEBUG an]      Points in window: {len(track_window)}")
+    print(f" >> [DEBUG an]      Points before landfall: {len(track_before)}")
+    print(f" >> [DEBUG an]      Points after landfall: {len(track_after)}")
     if len(track_window) > 0:
-        print(f" >> [DEBUG] First point in window: {track_window.iloc[0]['time']}")
-        print(f" >> [DEBUG] Last point in window: {track_window.iloc[-1]['time']}")
-        print(f" >> [DEBUG] Time span in window: {(pd.to_datetime(track_window.iloc[-1]['time']) - pd.to_datetime(track_window.iloc[0]['time'])).total_seconds()/3600:.1f} hours")
+        print(f" >> [DEBUG an]       First point in window: {track_window.iloc[0]['time']}")
+        print(f" >> [DEBUG an]       Last point in window: {track_window.iloc[-1]['time']}")
+        print(f" >> [DEBUG an]       Time span in window: {(pd.to_datetime(track_window.iloc[-1]['time']) - pd.to_datetime(track_window.iloc[0]['time'])).total_seconds()/3600:.1f} hours")
     elif len(track_window) < 0 :
-        print(f" >> [DEBUG] No points in time window!")
-        print(f" >> [DEBUG] Track times: {track['time'].iloc[0]} to {track['time'].iloc[-1]}")
-        print(f" >> [DEBUG] Landfall time: {landfall_time}")
-        print(f" >> [DEBUG] Before start: {before_start}")
-        print(f" >> [DEBUG] After end: {after_end}")
+        print(f" >> [DEBUG an]       No points in time window!")
+        print(f" >> [DEBUG an]       Track times: {track['time'].iloc[0]} to {track['time'].iloc[-1]}")
+        print(f" >> [DEBUG an]       Landfall time: {landfall_time}")
+        print(f" >> [DEBUG an]       Before start: {before_start}")
+        print(f" >> [DEBUG an]       After end: {after_end}")
     else :
-        print(f" >  [WARNING ] No track points in time window for Track {track_id}")
+        print(f" >  [WARNING an] No track points in time window for Track {track_id}")
         return False
 
     # if len(track_before) == 0 and len(track) > 0:
@@ -1017,7 +1017,7 @@ def plot_sm_tp_map(
     all_lats = track['latitude']
     all_lons = track['longitude']
     if all_lats.empty or all_lons.empty:
-        print(f" >  [WARNING ] No valid track points for extent calculation")
+        print(f" >  [WARNING an] No valid track points for extent calculation")
         return False
 
     # Calculate track centroid
@@ -1459,8 +1459,8 @@ def plot_sm_tp_map(
         outpath = os.path.join(output_dir, f'track_{int(track_id)}_sm_tp_before_after.png')
         plt.savefig(outpath, dpi=300, bbox_inches='tight')
         plt.close(fig)
-        print(f" >  [SAVED   ] SM/TP before/after map            :          {outpath}")
-        print(f" >  [DEBUG   ] Extent                            :          {min_lon:.1f}E to {max_lon:.1f}E, {min_lat:.1f}N to {max_lat:.1f}N")
+        print(f" >  [SAVED an  ] SM/TP before/after map            :          {outpath}")
+        print(f" >  [DEBUG an  ] Extent                            :          {min_lon:.1f}E to {max_lon:.1f}E, {min_lat:.1f}N to {max_lat:.1f}N")
         return True  # Signal success
     except Exception as e:
         print(f" >  [ERROR an  ] Plotting before/after maps for track {track_id}: {e}")
