@@ -1,0 +1,67 @@
+\documentclass[11pt, a4paper]{article}
+\usepackage[a4paper, top=2.5cm, bottom=2.5cm, left=2cm, right=2cm]{geometry}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\title{\textbf{Influence of Soil Moisture and Land-Surface Feedback on Monsoon Depression Dynamics}}
+\author{Harshit Prashant Dhanwalkar \\ \small Student ID: SC21B164}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+	The project investigates the influence of land-surface conditions, specifically \textbf{soil moisture} and \textbf{precipitation}, on the kinematic behavior of \textbf{Monsoon Depressions (MDs)} using the \textbf{ERA5 atmospheric reanalysis dataset}. The study focuses on systems originating over the Bay of Bengal (BoB) and propagating inland over the Eastern and Central Indian coast during the monsoon season. The methodology employs a systematic approach combining detection criteria with a geospatial-temporal tracking algorithm to generate continuous trajectories. A subsequent kinematic analysis compares the translational speed of these disturbances over the moisture-rich oceanic environment (BoB) versus over the continental land regions. Furthermore, the analysis explores the correlation between localized soil moisture conditions and changes in MD propagation speed. The results provide quantitative insights into the behavior and propagation characteristics of these crucial MDs as they interact with the continental landmass and its associated moisture feedbacks.
+\end{abstract}
+
+\section{Introduction}
+Monsoon Depressions (MDs) are synoptic-scale low-pressure systems that form primarily over the \textbf{Bay of Bengal (BoB)} during the core summer monsoon season (June to September) and are responsible for a significant portion of the total rainfall across the Indian subcontinent. Accurately identifying and tracking these systems as they move from the sea to the land is essential for agricultural planning, water resource management, and flood forecasting in coastal and inland regions. The primary objective of this project is to establish a systematic workflow using the \textbf{ERA5 reanalysis dataset} to investigate how land-surface interactions, particularly \textbf{soil moisture availability}, influence MD movement. The study covers a multi-week period (e.g., August--September) and aims to: 1) detect potential MD centers based on predefined meteorological criteria, 2) link these detections across consecutive time steps to form continuous tracks from the BoB onto the Eastern Indian landmass, and 3) perform kinematic analyses. This transition is critical because upon crossing the coastal boundary, MDs typically undergo significant changes in their behavior, characterized by a decrease in speed, a shift in intensity, and altered moisture supply due to reduced latent heat flux from the ocean. The analysis focused specifically on quantifying and explaining these changes, particularly the track propagation speed differences over the oceanic (BoB) and continental (Eastern India) surface types.
+
+\section{Methodology}
+
+The project methodology involved systematic detection, track linking, and advanced kinematic analysis, all based on hourly, single-level atmospheric variables from the \textbf{ERA5 reanalysis dataset}. Key variables used include \textbf{$u$ and $v$ wind components}, \textbf{Mean Sea Level Pressure (MSLP)}, \textbf{total precipitation (tp)}, and \textbf{Volumetric Soil Water Layer 1 (swvl1)} to represent soil moisture conditions.
+
+\subsection{Tracking Algorithm}
+
+Track construction relied on a simple yet effective geospatial-temporal linking mechanism. Two successive detections, $\text{D}_1$ at time $t$ and $\text{D}_2$ at time $t + \Delta t$, were considered part of the same track if:
+
+\begin{enumerate}
+	\item The time separation was minimal, $\Delta t \le 1\, \text{hour}$.
+	\item The spatial distance between them, calculated using the geodesic formula on the spherical Earth, was below a set threshold, $d(\text{D}_1, \text{D}_2) \le 300\, \text{km}$.
+\end{enumerate}
+
+This iterative process ensures continuity, filtering out isolated, short-lived events that do not propagate cohesively. The output of this phase was a comprehensive data frame containing unique tracks IDs assignments for all linked MD detections.
+
+\subsection{Kinematic and Statistical Analysis}
+
+\begin{enumerate}
+	\item \textbf{Propagation Speed Comparison and Soil Moisture Correlation:} The propagation speed between consecutive detection points on each track was calculated. Based on the underlying geographical data, each MD location was objectively classified as either 'land' (over the Indian subcontinent) or 'ocean' (Bay of Bengal). For land-based tracks, a further correlation analysis was performed between the local \textbf{Volumetric Soil Water Layer 1 (V-SWL1)} value sampled at the MD center and the observed translational speed.
+\end{enumerate}
+
+\section{Results}
+
+\subsection{Tracking Output Summary}
+The initial application of the systematic detection and tracking methodology successfully identified \textbf{two distinct Monsoon Depression trajectories} during the analysis period (August-September). These tracks are currently the focus of the kinematic and statistical analysis.
+The two MD systems detected are:
+\begin{enumerate}
+	\item \textbf{MD 1:} Detected from 30 August 2024 to 01 September 2024.
+	\item \textbf{MD 2:} Detected from 07 September 2024 to 10 September 2024.
+\end{enumerate}
+
+The total number of unique tracks found was $N_{tracks} = 2$. The coordinates of the full dataset extent were determined dynamically, but typically covered the domain from $[\lambda_{min}, \lambda_{max}, \phi_{min}, \phi_{max}] = [60^\circ, 100^\circ, 0^\circ, 35^\circ]$, encompassing the Bay of Bengal, the Eastern Indian coast, and adjacent inland regions. \textbf{The detected MDs primarily track within the region of roughly $80^\circ$E to $88^\circ$E and $16^\circ$N to $22^\circ$N}, covering the coastal regions of the Bay of Bengal and adjacent East-Central Indian states.
+
+\subsection{Surface Soil Moisture and Propagation Speed Influence}
+
+Crucially, the correlation analysis showed a relationship between MD translational speed over land and localized \textbf{soil moisture} and \textbf{precipitation}. It is hypothesized that higher soil moisture leads to reduced boundary layer friction and increased local latent heat flux, potentially influencing the MD's speed and intensity. Further investigation is needed to confirm the exact nature of this feedback.
+
+The statistical analysis of track speed revealed a clear distinction in propagation characteristics over oceanic versus continental environments. The median propagation speed for Monsoon Depressions over the Bay of Bengal (ocean) was found different than the median speed after landfall (land). Further analysis is required to get accurate differences between velocity of MDs before and after hitting landfall.
+
+\end{document}

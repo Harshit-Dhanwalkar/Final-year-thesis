@@ -1,0 +1,18 @@
+numpy
+scipy
+geopy
+matplotlib
+pyqt5
+cartopy
+shapely
+pandas
+xarray
+dask[distributed]
+numba
+regionmask
+netCDF4
+statsmodels
+# xrft
+# Dataset
+# Basemap
+# cdsapi
