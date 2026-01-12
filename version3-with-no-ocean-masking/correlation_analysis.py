@@ -1,0 +1,807 @@
+"""
+Correlation Analysis: Precipitation vs Soil Moisture
+Analyzes the temporal relationship between TP and SWVL1 during track passage
+
+- Direct correlation (overall, pre-landfall, post-landfall)
+- Lagged correlation analysis
+- Visual comparisons with landfall markers
+- Separate time series and scatter plots
+
+1. TP vs SWVL1
+2. TP vs Surface Heat Fluxes
+3. SWVL1 vs Vorticity/Intensity
+4. Heat Fluxes vs Track Characteristics
+"""
+
+import os
+import numpy as np
+import pandas as pd
+import xarray as xr
+import matplotlib.pyplot as plt
+from scipy import stats
+from scipy.stats import pearsonr
+from statsmodels.tsa.stattools import acf
+import traceback
+
+from utils import (
+    std_print,
+    find_landfall_time,
+    find_origin_type,
+    extract_spatial_subset,
+    setup_output_dir,
+    add_land_ocean_shading
+)
+
+# Helper functions
+def lag_correlation(
+    x,
+    y,
+    max_lag=48, # hrs
+    # max_lag=72, # hrs
+):
+    x = np.asarray(x)
+    y = np.asarray(y)
+    # Remove NaN values while keeping alignment
+    mask = ~np.isnan(x) & ~np.isnan(y)
+    x_clean = x[mask]
+    y_clean = y[mask]
+    if len(x_clean) < 10:
+        # Too few points for meaningful correlation
+        std_print('WARN', 'ca', f'Insufficient non-NaN data for lag correlation', len(x_clean), 'points')
+        return [], []
+
+    lags = range(-max_lag, max_lag+1)
+    correlations = []
+    for lag in lags:
+        if lag < 0:
+            # x lags y (y leads x)
+            if -lag >= len(x_clean):
+                correlations.append(np.nan)
+                continue
+            x_slice = x_clean[:-(-lag)] if -lag > 0 else x_clean
+            y_slice = y_clean[(-lag):] if -lag > 0 else y_clean
+        elif lag > 0:
+            # y lags x (x leads y)
+            if lag >= len(x_clean):
+                correlations.append(np.nan)
+                continue
+            x_slice = x_clean[lag:]
+            y_slice = y_clean[:-lag] if lag > 0 else y_clean
+        else:
+            # Zero lag
+            x_slice = x_clean
+            y_slice = y_clean
+        # Check for sufficient data and non-zero variance
+        if len(x_slice) < 3:
+            correlations.append(np.nan)
+            continue
+        std_x = np.nanstd(x_slice)
+        std_y = np.nanstd(y_slice)
+        if std_x == 0 or std_y == 0:
+            correlations.append(np.nan)
+            continue
+        # Calculate correlation
+        try:
+            r = np.corrcoef(x_slice, y_slice)[0, 1]
+            correlations.append(r)
+        except:
+            correlations.append(np.nan)
+    return list(lags), correlations
+
+def extract_spatial_mean(ds, var_name, t, lat, lon, buffer_km):
+    time_coord = 'time' if 'time' in ds.coords else 'valid_time'
+    subset = extract_spatial_subset(ds, lat, lon, t, buffer_km=buffer_km, time_coord=time_coord)
+    if subset is None or subset.sizes.get('latitude', 0) == 0:
+        return np.nan
+
+    if var_name in subset:
+        return float(subset[var_name].mean().values)
+    else:
+        return np.nan
+
+def effective_sample_size(x, y, max_lag=10):
+    """Calculate effective sample size accounting for autocorrelation"""
+    # Remove NaN values
+    mask = ~np.isnan(x) & ~np.isnan(y)
+    x_clean = x[mask]
+    y_clean = y[mask]
+    if len(x_clean) < 20:
+        return len(x_clean)  # Too short for reliable autocorrelation
+    try:
+        # Calculate autocorrelation at lag-1
+        acf_x = acf(x_clean, nlags=max_lag, fft=True)
+        acf_y = acf(y_clean, nlags=max_lag, fft=True)
+        rho1 = acf_x[1] if len(acf_x) > 1 else 0
+        rho2 = acf_y[1] if len(acf_y) > 1 else 0
+        # Thiebaux and Zwiers (1984) formula
+        n = len(x_clean)
+        n_eff = n * (1 - rho1 * rho2) / (1 + rho1 * rho2)
+        # Ensure reasonable bounds
+        n_eff = max(min(n_eff, n), n/10)
+        return n_eff
+    except:
+        return len(x_clean)  # Fallback to original sample size
+
+def analyze_single_track(ds, track_df, track_id, buffer_km=51, max_lag_hours=50, output_dir="output"):
+    std_print('INFO', 'ca', f'Processing Correlation Analysis for Track {track_id}')
+    # Split into phases
+    ocean_phase = track_df[track_df['is_land'] == False].copy()
+    land_phase = track_df[track_df['is_land'] == True].copy()
+
+    if len(track_df['track_id'].unique()) == 1:
+        # Already filtered to single track
+        current_track = track_df.sort_values('time').copy()
+    else:
+        # Full DataFrame, needs filtering
+        current_track = track_df[track_df['track_id'] == track_id].sort_values('time').copy()
+    if current_track.empty:
+        std_print('ERROR', 'ca', f'track_df is None for track {track_id}')
+        traceback.print_exc()
+        return None
+
+    landfall_index = -1
+    originates_over_land = True # if this is False tp_sm_time_series plot will not generate for land originated MDs
+
+    if 'is_land' in current_track.columns:
+        # Find first transition from ocean to land
+        is_land_values = current_track['is_land'].values
+        for i in range(1, len(is_land_values)):
+            if not is_land_values[i-1] and is_land_values[i]:
+                landfall_index = i
+                break
+        # Check if track originates over land
+        originates_over_land = is_land_values[0] if len(is_land_values) > 0 else False
+
+    ####
+    required_vars = ['tp', 'swvl1']
+    missing_vars = [var for var in required_vars if var not in ds.data_vars]
+    if missing_vars:
+        print("DEBUG ca")
+        std_print('ERROR', 'ca', f'Missing variables in dataset: {missing_vars}')
+        return None
+    ####
+
+    tp_series = []
+    swvl1_series = []
+    valid_times = []
+
+    for i, row in current_track.iterrows():
+        t = pd.to_datetime(row['time'])
+        lat, lon = row['latitude'], row['longitude']
+        time_coord = 'time' if 'time' in ds.coords else 'valid_time'
+        # Use pre-computed is_land if available, otherwise calculate
+        subset = extract_spatial_subset(ds, lat, lon, t, buffer_km, time_coord)
+        if subset is None:
+            std_print('WARN', 'ca', f'Track {track_id}: No data at time {t}')
+            continue
+
+        if 'tp' in subset.data_vars:
+            tp = float(subset['tp'].mean().values)
+        else:
+            tp = np.nan
+        if 'swvl1' in subset.data_vars:
+            swvl1 = float(subset['swvl1'].mean().values)
+        else:
+            swvl1 = np.nan
+
+        if np.isfinite(tp) and np.isfinite(swvl1):
+            tp_series.append(tp)
+            swvl1_series.append(swvl1)
+            valid_times.append(t)
+
+    if len(valid_times) < 4:
+        std_print('WARN', 'ca', f'Track {track_id}: Insufficient data', len(valid_times), 'valid points')
+        return None
+
+    std_print('DEBUG', 'ca', f'Track {track_id}: tp_series shape={len(tp_series)}, swvl1_series shape={len(swvl1_series)}')
+    std_print('DEBUG', 'ca', f'Track {track_id}: Valid times={len(valid_times)}')
+    std_print('DEBUG', 'ca', f'Track {track_id}: tp range={np.nanmin(tp_series):.3f} to {np.nanmax(tp_series):.3f}')
+    std_print('DEBUG', 'ca', f'Track {track_id}: sm range={np.nanmin(swvl1_series):.3f} to {np.nanmax(swvl1_series):.3f}')
+
+    # Units conversion
+    tp_series = np.array(tp_series) * 1000 # m -> mm
+    swvl1_series = np.array(swvl1_series)
+
+    # Generate plots
+    os.makedirs(output_dir, exist_ok=True)
+    std_print('INFO', 'ca', f'Generating plots for Track {track_id}')
+    try:
+        plot_tp_sm_time_series(tp_series, swvl1_series, valid_times, landfall_index, track_id, output_dir, originates_over_land)
+    except Exception as e:
+        std_print('WARN', 'ca','Failed to create time series plot:', e)
+    try:
+        plot_scatter_analysis(tp_series, swvl1_series, track_id, output_dir)
+    except Exception as e:
+        std_print('WARN', 'ca','Failed to create scatter plot:', e)
+    try:
+        plot_lagged_correlation(tp_series, swvl1_series, max_lag_hours, track_id, output_dir)
+    except Exception as e:
+        std_print('WARN', 'ca','Failed to lag correlation plot:', e)
+
+    # Global Correlation
+    corr, p_val = pearsonr(tp_series, swvl1_series) if np.std(tp_series) > 0 else (np.nan, np.nan)
+    # Phase-based Correlations
+    corr_pre, corr_post = np.nan, np.nan
+    if landfall_index != -1:
+        tp_pre, sm_pre = tp_series[:landfall_index], swvl1_series[:landfall_index]
+        tp_post, sm_post = tp_series[landfall_index:], swvl1_series[landfall_index:]
+        if len(tp_pre) >= 3 and np.std(tp_pre) > 0 and np.std(sm_pre) > 0:
+            corr_pre, _ = pearsonr(tp_pre, sm_pre)
+        if len(tp_post) >= 3 and np.std(tp_post) > 0 and np.std(sm_post) > 0:
+            corr_post, _ = pearsonr(tp_post, sm_post)
+
+    # Calculate correlations
+    correlation_results = {
+        'track_id': track_id,
+        'correlation': np.nan,
+        'p_value': np.nan,
+        'corr_pre': np.nan,
+        'corr_post': np.nan,
+        'mean_tp': np.mean(tp_series),
+        'mean_swvl1': np.mean(swvl1_series),
+        'n_samples': len(valid_times),
+        'landfall_time': valid_times[landfall_index] if landfall_index != -1 else None,
+        'landfall_index': landfall_index,
+        'originates_over_land': originates_over_land
+    }
+    # n_effective = effective_sample_size(tp_series, swvl1_series)
+    # if len(tp_series) >= 3 and np.std(tp_series) > 0 and np.std(swvl1_series) > 0:
+    #     try:
+    #         corr, p_val_uncorrected = pearsonr(tp_series, swvl1_series)
+    #         # Adjust degrees of freedom
+    #         dof_effective = n_effective - 2
+    #         dof_original = len(tp_series) - 2
+    #         if dof_effective > 0:
+    #             # Calculate t-statistic
+    #             t_stat = corr * np.sqrt(dof_original / (1 - corr**2))
+    #             # Adjust p-value
+    #             p_val_adjusted = 2 * (1 - stats.t.cdf(abs(t_stat), dof_effective))
+    #         else:
+    #             p_val_adjusted = p_val_uncorrected
+    #         correlation_results['correlation'] = corr
+    #         correlation_results['p_value'] = p_val_adjusted
+    #         correlation_results['p_value_uncorrected'] = p_val_uncorrected
+    #         correlation_results['n_effective'] = n_effective
+    #         correlation_results['reduction_factor'] = n_effective / len(tp_series)
+    #         if n_effective / len(tp_series) < 0.5:
+    #             print(f" > [WARN ] High autocorrelation reduces effective sample size to {n_effective:.1f} "
+    #                   f"({100*n_effective/len(tp_series):.0f}% of original)")
+    #    except Exception as e:
+    #          std_print('ERROR', 'ca', 'Failed to calculate correlation:', e)
+
+    # Global correlation
+    if len(tp_series) >= 3 and np.std(tp_series) > 0 and np.std(swvl1_series) > 0:
+        try:
+            corr, p_val = pearsonr(tp_series, swvl1_series)
+            correlation_results['correlation'] = corr
+            correlation_results['p_value'] = p_val
+        except:
+            pass
+    # Phase-based correlations
+    if landfall_index != -1 and landfall_index > 0:
+        # Pre-landfall
+        if landfall_index >= 3:
+            tp_pre = tp_series[:landfall_index]
+            sm_pre = swvl1_series[:landfall_index]
+            if np.std(tp_pre) > 0 and np.std(sm_pre) > 0:
+                try:
+                    corr_pre, _ = pearsonr(tp_pre, sm_pre)
+                    correlation_results['corr_pre'] = corr_pre
+                except:
+                    pass
+        # Post-landfall
+        if len(tp_series) - landfall_index >= 3:
+            tp_post = tp_series[landfall_index:]
+            sm_post = swvl1_series[landfall_index:]
+            if np.std(tp_post) > 0 and np.std(sm_post) > 0:
+                try:
+                    corr_post, _ = pearsonr(tp_post, sm_post)
+                    correlation_results['corr_post'] = corr_post
+                except:
+                    pass
+
+    std_print('INFO', 'ca', f'Correlation for Track {track_id}',
+          f"                 r={correlation_results['correlation']:.3f},\n"
+          f"                 p={correlation_results['p_value']:.4f},\n"
+          f"                 n={len(valid_times)}"
+    )
+    return correlation_results
+
+
+def plot_tp_sm_time_series(tp, sm, valid_times, landfall_index, track_id, output_dir, originates_over_land=True):
+    # Check if we have valid data
+    if len(tp) < 2 or len(sm) < 2:
+        std_print('WARN', 'ca', f'Track {track_id}: Insufficient data for time series plot')
+        return
+    if all(np.isnan(tp)) or all(np.isnan(sm)):
+        std_print('WARN', 'ca', f'Track {track_id}: All data is NaN for time series')
+        return
+
+    fig, ax1 = plt.subplots(figsize=(12, 6))
+    # Determine landfall status
+    if originates_over_land:
+        status_text = "Originates over land"
+        status_color = 'blue'
+    elif landfall_index == -1:
+        status_text = "No Landfall"
+        status_color = 'gray'
+    else:
+        status_text = "Landfall"
+        status_color = 'black'
+
+    # Time Series (Dual Axis)
+    color_tp = 'tab:blue'
+    ax1.set_xlabel(
+        'Time',
+        fontsize=10,
+        fontweight='bold'
+    )
+    ax1.set_ylabel(
+        'Precipitation (mm/hr)',
+        color='black',
+        fontsize=10,
+        fontweight='bold'
+    )
+    line1 = ax1.plot(
+        valid_times,
+        tp,
+        '-',
+        color=color_tp,
+        linewidth=2,
+        marker='o',
+        markersize=4,
+        label='Precipitation',
+        alpha=0.8,
+        zorder=3
+    )
+    ax1.tick_params(axis='y', labelcolor=color_tp)
+    ax1.grid(True, alpha=0.5, linestyle='--')
+
+    # Landfall line
+    if landfall_index != -1 and landfall_index < len(valid_times):
+        landfall_time = valid_times[landfall_index]
+        ax1.axvline(
+            x=landfall_time,
+            color=status_color,
+            linestyle='--',
+            linewidth=2,
+            alpha=0.8,
+            zorder=4
+        )
+    # Soil moisture on secondary axis
+    ax2 = ax1.twinx()
+    color_sm = 'tab:brown'
+    ax2.set_ylabel(
+        'Soil Moisture (m³/m³)',
+        color='black',
+        fontsize=10,
+        fontweight='bold'
+    )
+    line2 = ax2.plot(
+        valid_times,
+        sm,
+        's-',
+        color=color_sm,
+        linewidth=2,
+        markersize=4,
+        label='Soil Moisture',
+        alpha=0.8,
+        zorder=3
+    )
+    ax2.tick_params(axis='y', labelcolor=color_sm)
+
+    # Legend
+    lines = line1 + line2
+    labels = ['Precipitation', 'Soil Moisture']
+    if landfall_index != -1 and landfall_index < len(valid_times):
+        lines.append(plt.Line2D([0], [0], color=status_color, linestyle='--', linewidth=2))
+        labels.append(status_text)
+    ax1.legend(lines, labels, loc='best', framealpha=0.7)
+
+    ax1.set_title(f'Track {track_id}: Precipitation & Soil Moisture Time Series', fontsize=13, fontweight='bold', pad=10)
+    plt.setp(
+        ax1.xaxis.get_majorticklabels(),
+        rotation=45,
+        ha='right'
+    )
+    plt.tight_layout()
+
+    track_dir = os.path.join(output_dir, "time_series")
+    os.makedirs(track_dir, exist_ok=True)
+    plot_path = os.path.join(track_dir, f"track_{int(track_id)}_tp_sm_time_series.png")
+    plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+    plt.close(fig)
+    std_print('SAVED', 'ca', 'Time series plot', plot_path)
+
+def plot_scatter_analysis(
+    tp,
+    sm,
+    track_id,
+    output_dir,
+):
+    fig, ax3 = plt.subplots(figsize=(10, 8))
+    corr, p_val = pearsonr(tp, sm)
+    ax3.scatter(
+        tp,
+        sm,
+        alpha=0.6,
+        s=100,
+        color='blue',
+        edgecolors='black',
+        linewidth=1,
+        zorder=3
+    )
+    # Regression line
+    if len(tp) > 2:
+        z = np.polyfit(tp, sm, 1)
+        p = np.poly1d(z)
+        x_line = np.array([tp.min(), tp.max()])
+        y_line = p(x_line)
+        r_squared = np.corrcoef(tp, p(tp))[0,1]**2
+        ax3.plot(
+            x_line,
+            y_line,
+            'r--',
+            linewidth=2,
+            alpha=0.85,
+            zorder=4,
+            label=f'Linear Fit (r²={r_squared:.3f})'
+        )
+    ax3.set_xlabel('Precipitation (mm/hr)', fontsize=11, fontweight='bold')
+    ax3.set_ylabel('Soil Moisture (m³/m³)', fontsize=11, fontweight='bold')
+    ax3.set_title(f'Track {track_id}: TP - SWVL1 Correlation', fontsize=13, fontweight='bold')
+    ax3.grid(True, alpha=0.5, linestyle='--')
+    ax3.legend(fontsize=8, loc='best', framealpha=0.7)
+
+    # Statistics box
+    stats_text = (
+        f"Pearson r: {corr:.3f}\n"
+        f"P-value:   {p_val:.4f}\n"
+        f"N samples: {len(tp)}\n"
+        f"Mean TP:   {np.mean(tp):.2f} mm/hr\n"
+        f"Mean SM:   {np.mean(sm):.3f} m³/m³"
+    )
+    ax3.text(
+        1.08,
+        0.9,
+        stats_text,
+        transform=ax3.transAxes,
+        fontsize=9,
+        verticalalignment='top',
+        # horizontalalignment='right',
+        horizontalalignment='left',
+        family='monospace',
+        bbox=dict(boxstyle='round', alpha=0.3)
+    )
+    plt.tight_layout()
+
+    track_dir = os.path.join(output_dir, "scatter_plots")
+    os.makedirs(track_dir, exist_ok=True)
+    plot_path = os.path.join(track_dir, f"track_{int(track_id)}_scatter.png")
+    plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+    plt.close(fig)
+    std_print('SAVED', 'ca', 'Scatter plot', plot_path)
+
+
+def plot_lagged_correlation(
+    tp,
+    sm,
+    max_lag_hours,
+    track_id,
+    output_dir,
+):
+    lags, correlations_lag = lag_correlation(tp, sm, max_lag=max_lag_hours)
+
+    # Ensure lags and correlations have same length
+    if len(lags) != len(correlations_lag):
+        std_print('WARN', 'ca', f'Mismatch between lags ({len(lags)}) and correlations', len(correlations_lag))
+        # Truncate to use the shorter length
+        min_len = min(len(lags), len(correlations_lag))
+        lags = lags[:min_len]
+        correlations_lag = correlations_lag[:min_len]
+
+    # Filter out NaN values
+    valid_indices = [i for i, val in enumerate(correlations_lag) if not np.isnan(val)]
+    if len(valid_indices) == 0:
+        std_print('WARN', 'ca', f'Track {track_id}: No valid correlation values for lag plot')
+        return
+
+    lags = [lags[i] for i in valid_indices]
+    correlations_lag = [correlations_lag[i] for i in valid_indices]
+
+    max_corr_idx = np.argmax(np.abs(correlations_lag))
+    max_corr_lag = lags[max_corr_idx]
+    max_corr_value = correlations_lag[max_corr_idx]
+    if max_corr_lag < 0:
+        lag_interpretation = f"TP LEADS SM by {abs(max_corr_lag)}h\n(Infiltration lag)"
+    elif max_corr_lag > 0:
+        lag_interpretation = f"SM LEADS TP by {max_corr_lag}h\n(Antecedent moisture)"
+    else:
+        lag_interpretation = "Simultaneous\n(Immediate feedback)"
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+    if len(lags) == len(correlations_lag):
+        ax.fill_between(lags, correlations_lag, alpha=0.2, color='steelblue')
+    else:
+        std_print('WARN', 'ca', f'Track {track_id}: Lag mismatch: lags and r_lag lengths differ.')
+
+    # Plot correlation
+    ax.plot(
+        lags,
+        correlations_lag,
+        'o-',
+        lw=2.5,
+        markersize=4,
+        color='blue',
+        zorder=3
+    )
+    ax.fill_between(lags, correlations_lag, alpha=0.2, color='steelblue')
+    # Reference lines
+    ax.axvline(0, color='black', linestyle='--', linewidth=1, alpha=0.6, label='Zero lag')
+    ax.axhline(0, color='gray', linestyle=':', linewidth=1, alpha=0.6)
+    ax.text(0.98, 0.02, lag_interpretation, transform=ax.transAxes,
+            fontsize=10, va='bottom', ha='right',
+            bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
+    ax.set_xlabel("Lag (hours)", fontsize=12, fontweight='bold')
+    ax.set_ylabel("Correlation (r)", fontsize=12, fontweight='bold')
+    ax.set_title(f"Track {track_id}: Lagged Precipitation-Soil Moisture Correlation", fontsize=13, fontweight='bold', pad=10)
+    ax.grid(True, alpha=0.5, linestyle='--')
+    # ax.set_ylim([-1, 1])
+    ax.legend(fontsize=10, loc='best')
+    plt.tight_layout()
+
+    track_dir = os.path.join(output_dir, "lag_correlation")
+    os.makedirs(track_dir, exist_ok=True)
+    plot_path = os.path.join(track_dir, f"track_{int(track_id)}_lag_corr.png")
+    plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+    plt.close(fig)
+    std_print('SAVED', 'ca', 'Lag Ccrelation plot', plot_path)
+
+
+def analyze_flux_correlations(
+    ds,
+    track_df,
+    track_id,
+    buffer_km=100,
+):
+    time_coord = "time" if "time" in ds.coords else "valid_time"
+    ds_times = pd.to_datetime(ds[time_coord].values)
+
+    time_series = []
+    landfall_time = find_landfall_time(track_df)
+    if landfall_time:
+       std_print('INFO', 'ca', f'Track {track_id}: Landfall detected', landfall_time.strftime('%Y-%m-%d %H:%M'))
+    else:
+       std_print('WARN', 'ca', f'Track {track_id}: No landfall detected')
+    if len(time_series) < 5:
+       std_print('WARN', 'ca', f'Track {track_id}: Insufficient data')
+       return None
+    df = pd.DataFrame(time_series)
+
+    # correlations
+    correlations = {}
+    for v1 in ["tp", "swvl1", "total_hf"]:
+        for v2 in ["tp", "swvl1", "total_hf"]:
+            if v1 != v2:
+                mask = df[[v1, v2]].notna().all(axis=1)
+                if mask.sum() > 3:
+                    r, p = pearsonr(df.loc[mask, v1], df.loc[mask, v2])
+                    correlations[f"{v1}_vs_{v2}"] = {"r": r, "p": p, "n": mask.sum()}
+
+    # before / after landfall split
+    results = {
+        "correlations": correlations,
+        "time_series": df,
+        "track_id": track_id,
+    }
+
+    if "is_land" in track_df.columns:
+        land_mask = track_df["is_land"].diff().eq(1)
+        if land_mask.any():
+            lf_time = track_df.loc[land_mask.idxmax(), "time"]
+            pre = df[df["time"] < lf_time]
+            post = df[df["time"] >= lf_time]
+            results["pre_landfall"] = {
+                "mean_tp": pre["tp"].mean(),
+                "mean_swvl1": pre["swvl1"].mean(),
+                "mean_total_hf": pre["total_hf"].mean(),
+            }
+            results["post_landfall"] = {
+                "mean_tp": post["tp"].mean(),
+                "mean_swvl1": post["swvl1"].mean(),
+                "mean_total_hf": post["total_hf"].mean(),
+            }
+    if correlations:
+        print(f" >> [INFO ca    ] Flux correlations for Track {track_id}    :")
+        std_print('INFO', 'ca', f'Flux correlation for Track {track_id}:')
+        for k, v in correlations.items():
+            print(f"             {k}: r={v['r']:.3f}, p={v['p']:.4f}, n={v['n']}")
+    return results
+
+def plot_flux_analysis(
+    results,
+    output_dir,
+    track_id,
+):
+    if results is None or len(results) < 4:  # Require minimum points for a meaningful plot
+       std_print('WARN', 'ca', f'Track {track_id}: Insufficient data')
+       return
+    if not results or 'time_series' not in results:
+       std_print('WARN', 'ca', f'Track {track_id}: No time series data')
+       return
+
+    df = results['time_series']
+    # Validate DataFrame
+    if not isinstance(df, pd.DataFrame) or df.empty:
+       std_print('WARN', 'ca', f'Track {track_id}: Invalid or empty DataFrame')
+       return
+
+    if df.empty or len(df) < 3:
+       std_print('WARN', 'ca', f'Track {track_id}: Insufficient data', len(df), 'points')
+       return
+
+    # Check for required columns
+    required_cols = ['time', 'tp', 'swvl1']
+    missing_cols = [col for col in required_cols if col not in df.columns]
+    if missing_cols:
+       std_print('WARN', 'ca', f'Track {track_id}: Missing required columns:', missing_cols)
+       return
+    # Ensure is_land column exists
+    if 'is_land' not in df.columns:
+        df['is_land'] = False  # Default to ocean if not present
+
+    track_dir = os.path.join(output_dir, f"track_{track_id}_analysis")
+    os.makedirs(track_dir, exist_ok=True)
+
+    # PLOT 1: Precipitation & Soil Moisture
+    try:
+        ## Precip (Primary Y)
+        plt.figure(figsize=(10, 5))
+        ax1 = plt.gca()
+        p1, = ax1.plot(
+            df['time'],
+            df['tp'],
+            'b-',
+            linewidth=2
+        )
+        ax1.set_ylabel('Total Precipitation (mm/hr)', fontweight='bold')
+        ax1.tick_params(axis='y', labelcolor='b')
+        ## Soil Moisture (Secondary Y)
+        ax1_twin = ax1.twinx()
+        p2, = ax1_twin.plot(
+            df['time'],
+            df['swvl1'],
+            'r-',
+            linewidth=2
+        )
+        ax1_twin.set_ylabel('Soil Moisture (m³/m³)', fontweight='bold')
+        ax1_twin.tick_params(axis='y', labelcolor='r')
+
+        add_land_ocean_shading(ax1, df['time'], df['is_land'])
+
+        plt.title(f"Track {track_id}: Total Precipitation & Soil Moisture", fontsize=13, fontweight='bold')
+
+        # Get legend items from shading (land/ocean patches) and the data line handles with proper labels
+        handles, labels = ax1.get_legend_handles_labels()
+        all_handles = handles + [p1, p2]
+        all_labels = labels + ['Total Precipitation', 'Soil Moisture']
+        ax1.legend(all_handles, all_labels, loc='best', framealpha=0.7)
+        ax1.grid(True, alpha=0.5, linestyle='--')
+
+        plot1_path = os.path.join(track_dir, f"track_{track_id}_tp_sm.png")
+        plt.savefig(plot1_path, dpi=300, bbox_inches='tight')
+        plt.close()
+        std_print('SAVED', 'ca', 'Precipitation & Soil Moisture plot', plot1_path)
+    except Exception as e:
+        std_print('WARN', 'ca', f'Track {track_id}: Failed to create TP & SM plot:', e)
+        traceback.print_exc()
+ 
+
+    # PLOT 2: Heat Fluxes (The one with the Land/Ocean Legend)
+    try:
+        fig = plt.figure(figsize=(10, 5))
+        ax2 = fig.gca()
+        ax2.plot(
+            df['time'],
+            df['latent_hf'],
+            'blue',
+            label='Latent Heat Flux',
+            linewidth=2
+        )
+        ax2.plot(
+            df['time'],
+            df['sensible_hf'],
+            'red',
+            label='Sensible Heat Flux',
+            linewidth=2
+        )
+        ax2.plot(
+            df['time'],
+            df['total_hf'],
+            'purple',
+            label='Total Heat Flux',
+            linewidth=2
+        )
+
+        add_land_ocean_shading(ax2, df['time'], df['is_land'])
+        ax2.set_ylabel('Flux (W/m²)', fontweight='bold')
+        ax2.set_xlabel('Time', fontweight='bold')
+        ax2.legend(loc='upper left', framealpha=0.7)
+        ax2.grid(True, alpha=0.5, linestyle='--')
+
+        plt.title(f"Track {track_id}: Surface Heat Flux Transition", fontsize=13, fontweight='bold')
+        plot2_path = os.path.join(track_dir, f"track_{track_id}_heat_fluxes_trasnsition.png")
+        plt.savefig(plot2_path, dpi=300, bbox_inches='tight')
+        plt.close(fig)
+        std_print('SAVED', 'ca', 'Surface Heat Flux Transitions plot', plot2_path)
+    except Exception as e:
+        std_print('ERROR', 'hf', f'Track {track_id} Failed to create heat flux plot:', e)
+        traceback.print_exc()
+
+    # PLOT 3: Scatter Plot (Flux vs. Soil Moisture)
+    try:
+        fig = plt.figure(figsize=(10, 5))
+        if len(df) > 2:
+            scatter = plt.scatter(
+                df['swvl1'],
+                df['total_hf'],
+                c=df['tp'],
+                cmap='viridis',
+                s=70,
+                alpha=0.8,
+                edgecolors='k',
+                label='All Points'
+            )
+            # Calculate Correlation
+            try:
+                r, p = pearsonr(df['swvl1'], df['total_hf'])
+                corr_text = f"Pearson r = {r:.3f} (p={p:.4f})"
+            except:
+                corr_text = "Unable to calculate correlation"
+            # Differentiate land vs ocean points with markers if data exists
+            if 'is_land' in df.columns and df['is_land'].any():
+                land_pts = df[df['is_land'] == True]
+                if not land_pts.empty:
+                    plt.scatter(
+                        land_pts['swvl1'],
+                        land_pts['total_hf'],
+                        c='orange',
+                        s=100,
+                        marker='s',
+                        alpha=0.6,
+                        edgecolors='k',
+                        linewidth=1.5,
+                        label='Land Points',
+                        zorder=5
+                    )
+            plt.title(
+                f"Track {track_id}: SM vs Total Flux\n{corr_text}",
+                fontsize=13,
+                fontweight='bold'
+            )
+            cbar = plt.colorbar(scatter)
+            cbar.set_label('Precipitation (mm/hr)', fontsize=10)
+        else:
+            # Fallback if insufficient data
+            plt.text(
+                0.5, 0.5,
+                f"Insufficient Data for Track {track_id}\n({len(df)} points)",
+                ha='center',
+                va='center',
+                fontsize=12,
+                transform=plt.gca().transAxes
+            )
+            plt.title(f"Track {track_id}: SM vs Flux (Insufficient Data)")
+
+        plt.xlabel('Soil Moisture (m³/m³)', fontweight='bold', fontsize=11)
+        plt.ylabel('Total Heat Flux (W/m²)', fontweight='bold', fontsize=11)
+        plt.legend(loc='best', framealpha=0.7)
+        plt.grid(True, alpha=0.5, linestyle='--')
+
+        plot3_path = os.path.join(track_dir, f"track_{track_id}_correlation_scatter.png")
+        plt.savefig(plot3_path, dpi=300, bbox_inches='tight')
+        plt.close(fig)
+        std_print('SAVED', 'ca', 'SM vs Flux Correlation plot', plot3_path)
+    except Exception as e:
+        std_print('ERROR', 'ca', f'Track {track_id} Failed to create Scatter plot:', e)
+        traceback.print_exc()

@@ -1,0 +1,6 @@
+track_id,ASM_24h,has_landfall
+1,"{'value': nan, 'reason': 'land_originated'}",False
+2,"{'value': nan, 'reason': 'land_originated'}",False
+3,0.07556572587539752,True
+4,0.024551773443818092,True
+5,,False

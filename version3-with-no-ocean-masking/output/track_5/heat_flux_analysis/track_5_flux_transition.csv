@@ -1,0 +1,2 @@
+track_id,landfall_time,has_actual_landfall,before_environment,after_environment,before,after,change
+5,2024-09-13 10:00:00,False,Unknown,Land,"{'latent': nan, 'sensible': nan, 'total': nan, 'n_samples': 0}","{'latent': np.float64(-93.41782257080078), 'sensible': np.float64(10.012695885896683), 'total': np.float64(-83.4051266849041), 'n_samples': 25}","{'latent': np.float64(nan), 'sensible': np.float64(nan), 'total': np.float64(nan)}"

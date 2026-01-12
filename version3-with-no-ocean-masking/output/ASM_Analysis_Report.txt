@@ -1,0 +1,10 @@
+ANTECEDENT SOIL MOISTURE ANALYSIS - REPORT
+1. ANTECEDENT SOIL MOISTURE STATISTICS
+  Number of tracks analyzed:                     3
+  Mean ASM (24h before landfall):                nan m³/m³
+  Std Dev:                                       nan m³/m³
+  Min:                                           nan m³/m³
+  Max:                                           nan m³/m³
+  Range:                                         nan m³/m³
+
+2. ASM - PRECIPITATION CORRELATION

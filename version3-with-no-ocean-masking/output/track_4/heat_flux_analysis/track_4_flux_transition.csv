@@ -1,0 +1,2 @@
+track_id,landfall_time,has_actual_landfall,before_environment,after_environment,before,after,change
+4,2024-09-09 04:00:00,True,Ocean,Land,"{'latent': np.float64(-134.9034744898478), 'sensible': np.float64(-12.201472997665405), 'total': np.float64(-147.10494748751321), 'n_samples': 24}","{'latent': np.float64(-80.93491612309995), 'sensible': np.float64(4.336975009545036), 'total': np.float64(-76.59794111355491), 'n_samples': 23}","{'latent': np.float64(53.96855836674786), 'sensible': np.float64(16.53844800721044), 'total': np.float64(70.5070063739583)}"
