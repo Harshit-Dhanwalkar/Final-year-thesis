@@ -83,24 +83,23 @@ def extract_spatial_subset(ds, lat, lon, time, buffer_km=100, time_coord='time')
     """Extract regional data around a point with latitude-dependent buffering"""
     try:
         lat_buffer, lon_buffer = calculate_buffer_deg(lat, buffer_km)
-
         # Create bounds
-        lat_min = lat - lat_buffer
-        lat_max = lat + lat_buffer
-        lon_min = lon - lon_buffer
-        lon_max = lon + lon_buffer
+        lat_min, lat_max = lat - lat_buffer, lat + lat_buffer
+        lon_min, lon_max = lon - lon_buffer, lon + lon_buffer
 
         # Select using where/isin
-        lat_mask = (ds.latitude >= lat_min) & (ds.latitude <= lat_max)
-        lon_mask = (ds.longitude >= lon_min) & (ds.longitude <= lon_max)
+        lat_min = max(lat_min, float(ds.latitude.min()))
+        lat_max = min(lat_max, float(ds.latitude.max()))
+        lon_min = max(lon_min, float(ds.longitude.min()))
+        lon_max = min(lon_max, float(ds.longitude.max()))
 
         subset = ds.sel({
             time_coord: time,
-            'latitude': lat_mask,
-            'longitude': lon_mask
+            'latitude': (ds.latitude >= lat_min) & (ds.latitude <= lat_max),
+            'longitude': (ds.longitude >= lon_min) & (ds.longitude <= lon_max)
         }, method='nearest')
 
-        return subset
+        return subset if subset.sizes['latitude'] > 0 else None
     except Exception as e:
         print(f"Error in extract_spatial_subset: {e}")
         return None

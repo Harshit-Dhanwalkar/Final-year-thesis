@@ -25,6 +25,7 @@ import traceback
 
 from utils import (
     std_print,
+    is_point_land,
     find_landfall_time,
     find_origin_type,
     extract_spatial_subset,
@@ -165,10 +166,10 @@ def analyze_single_track(ds, track_df, track_id, buffer_km=51, max_lag_hours=50,
     swvl1_series = []
     valid_times = []
 
+    time_coord = 'time' if 'time' in ds.coords else 'valid_time'
     for i, row in current_track.iterrows():
         t = pd.to_datetime(row['time'])
         lat, lon = row['latitude'], row['longitude']
-        time_coord = 'time' if 'time' in ds.coords else 'valid_time'
         # Use pre-computed is_land if available, otherwise calculate
         subset = extract_spatial_subset(ds, lat, lon, t, buffer_km, time_coord)
         if subset is None:
@@ -244,30 +245,24 @@ def analyze_single_track(ds, track_df, track_id, buffer_km=51, max_lag_hours=50,
         'landfall_index': landfall_index,
         'originates_over_land': originates_over_land
     }
-    # n_effective = effective_sample_size(tp_series, swvl1_series)
-    # if len(tp_series) >= 3 and np.std(tp_series) > 0 and np.std(swvl1_series) > 0:
-    #     try:
-    #         corr, p_val_uncorrected = pearsonr(tp_series, swvl1_series)
-    #         # Adjust degrees of freedom
-    #         dof_effective = n_effective - 2
-    #         dof_original = len(tp_series) - 2
-    #         if dof_effective > 0:
-    #             # Calculate t-statistic
-    #             t_stat = corr * np.sqrt(dof_original / (1 - corr**2))
-    #             # Adjust p-value
-    #             p_val_adjusted = 2 * (1 - stats.t.cdf(abs(t_stat), dof_effective))
-    #         else:
-    #             p_val_adjusted = p_val_uncorrected
-    #         correlation_results['correlation'] = corr
-    #         correlation_results['p_value'] = p_val_adjusted
-    #         correlation_results['p_value_uncorrected'] = p_val_uncorrected
-    #         correlation_results['n_effective'] = n_effective
-    #         correlation_results['reduction_factor'] = n_effective / len(tp_series)
-    #         if n_effective / len(tp_series) < 0.5:
-    #             print(f" > [WARN ] High autocorrelation reduces effective sample size to {n_effective:.1f} "
-    #                   f"({100*n_effective/len(tp_series):.0f}% of original)")
-    #    except Exception as e:
-    #          std_print('ERROR', 'ca', 'Failed to calculate correlation:', e)
+    if len(tp_series) >= 3 and np.std(tp_series) > 0 and np.std(swvl1_series) > 0:
+        try:
+            corr, p_val_uncorrected = pearsonr(tp_series, swvl1_series)
+            # Calculate effective sample size
+            n_eff = effective_sample_size(tp_series, swvl1_series)
+            dof_eff = max(1, int(n_eff) - 2)
+            # Recalculate p-value with effective DOF
+            t_stat = corr * np.sqrt(dof_eff / (1 - corr**2 + 1e-10))
+            p_val = 2 * (1 - stats.t.cdf(abs(t_stat), dof_eff))
+            p_val_adj = 2 * (1 - stats.t.cdf(abs(t_stat), dof_eff))
+            std_print('INFO', 'ca', f"p_original={p_val:.4f}, p_adjusted={p_val_adj:.4f}, n_eff={n_eff:.0f}")
+            correlation_results['correlation'] = corr
+            correlation_results['p_value'] = p_val
+            correlation_results['p_value_uncorrected'] = p_val_uncorrected
+            correlation_results['n_effective'] = n_eff
+            correlation_results['dof'] = dof_eff
+        except Exception as e:
+            std_print('ERROR', 'ca', 'Correlation calculation failed:', str(e))
 
     # Global correlation
     if len(tp_series) >= 3 and np.std(tp_series) > 0 and np.std(swvl1_series) > 0:

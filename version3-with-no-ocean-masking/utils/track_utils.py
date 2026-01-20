@@ -1,6 +1,38 @@
 import numpy as np
 import pandas as pd
-from .land_utils import is_point_land
+import shapely.geometry as sgeom
+import cartopy.io.shapereader as shpreader
+
+def is_point_land(lat: float, lon: float) -> bool:
+    """Check if a point is over land."""
+    try:
+        if not (-90 <= lat <= 90 and -180 <= lon <= 180):
+            return False
+        point = sgeom.Point(lon, lat)
+        # '110m'
+        # land_shp = shpreader.natural_earth(
+        #     resolution='110m',
+        #     category='physical',
+        #     name='land'
+        # )
+        land_shp = shpreader.natural_earth(
+            resolution='50m',
+            category='physical',
+            name='land'
+        )
+        # '10m' if slow
+        # land_shp = shpreader.natural_earth(
+        #     resolution='10m',
+        #     category='physical',
+        #     name='land'
+        # )
+        reader = shpreader.Reader(land_shp)
+        for geometry in reader.geometries():
+            if geometry.contains(point):
+                return True
+        return False
+    except Exception:
+        return False
 
 def find_landfall_time(track_df):
     """Find the first ocean→land transition time (landfall)"""
@@ -12,6 +44,35 @@ def find_landfall_time(track_df):
         if not landfall_rows.empty:
             return pd.to_datetime(landfall_rows.iloc[0]['time'])
     return None
+
+def get_landfall_status_array(track_df):
+    """
+    Returns:
+        np.array of bool (True=land, False=ocean)
+    """
+    if 'is_land' not in track_df.columns:
+        track_df['is_land'] = track_df.apply(
+            lambda row: is_point_land(row['latitude'], row['longitude']),
+            axis=1
+        )
+    return track_df['is_land'].values
+
+def get_landfall_index(track_df):
+    """
+    landfall_idx, origin_type, is_valid_transition
+    - Returns -1 if no ocean→land transition
+    """
+    if 'is_land' not in track_df.columns:
+        track_df['is_land'] = track_df.apply(
+            lambda r: is_point_land(r['latitude'], r['longitude']), axis=1)
+
+    origin = track_df['is_land'].iloc[0]
+
+    # Find first ocean -> land transition
+    for i in range(1, len(track_df)):
+        if not track_df['is_land'].iloc[i-1] and track_df['is_land'].iloc[i]:
+            return i, ('land_originated' if origin else 'ocean_originated'), True
+    return -1, ('land_originated' if origin else 'ocean_originated'), False
 
 def find_origin_type(track_df):
     """Classify track origin as ocean-originated or land-originated"""
@@ -55,17 +116,3 @@ def classify_track_status(track_df):
         result['landfall_time'] = landfall_time
 
     return result
-
-
-def get_landfall_status_array(track_df):
-    """
-    Returns:
-        np.array of bool (True=land, False=ocean)
-    """
-    if 'is_land' not in track_df.columns:
-        track_df['is_land'] = track_df.apply(
-            lambda row: is_point_land(row['latitude'], row['longitude']),
-            axis=1
-        )
-
-    return track_df['is_land'].values

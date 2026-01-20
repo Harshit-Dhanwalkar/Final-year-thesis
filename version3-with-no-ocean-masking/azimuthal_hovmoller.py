@@ -7,8 +7,8 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from utils import (
     std_print,
-    find_landfall_time,
     is_point_land,
+    find_landfall_time,
     setup_output_dir
 )
 

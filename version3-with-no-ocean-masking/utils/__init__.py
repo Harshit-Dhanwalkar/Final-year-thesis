@@ -3,9 +3,9 @@ import numpy as np
 import pandas as pd
 import shapely.geometry as sgeom
 import cartopy.io.shapereader as shpreader
-from .land_utils import is_point_land
 
 from .track_utils import (
+    is_point_land,
     find_landfall_time,
     find_origin_type,
     classify_track_status,

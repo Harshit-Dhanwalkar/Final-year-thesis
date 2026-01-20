@@ -6,8 +6,19 @@
 # Wet antecedent conditions -> Soil is already near saturation → much more of the MD's heavy rainfall becomes surface runoff -> higher flood potential even if the total rainfall amount is not extreme.
 
 # FIX: before after 24 landfall plots (plot_sm_tp_map) shows full track rather than just clipped track for that duration
-
 # FIX: even tho clipped spacial domain to 10N70E to 30N95E yet before/after plots uses full extend
+# TODO: runs multiple t-tests without correction
+# from scipy.stats import pearsonr
+# from statsmodels.stats.multitest import multipletests
+# # Collect all p-values
+# pvalues = [p_mean, p_max, p_total]
+# tests = ['ASM vs Mean TP', 'ASM vs Max TP', 'ASM vs Total TP']
+# # Apply Benjamini-Hochberg correction
+# reject, p_corrected, _, _ = multipletests(pvalues, method='fdr_bh', alpha=0.05)
+# # Report corrected values
+# for test, p_orig, p_corr, sig in zip(tests, pvalues, p_corrected, reject):
+#     std_print('INFO', 'an', f'{test}',
+#              f'p_uncorrected={p_orig:.4f}, p_corrected={p_corr:.4f}, sig={sig}')
 
 import os
 import numpy as np
@@ -18,13 +29,14 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 from scipy.stats import pearsonr, spearmanr, ttest_ind
+from statsmodels.stats.multitest import multipletests
 import seaborn as sns
 import traceback
 
 from utils import (
     std_print,
-    find_landfall_time,
     is_point_land,
+    find_landfall_time,
     find_origin_type,
     extract_spatial_subset,
     calculate_buffer_deg,
@@ -32,7 +44,7 @@ from utils import (
     export_results_to_csv
 )
 
-def compute_antecedent_sm(ds, track_df, track_id, hours_before_landfall = 24, exclude_last_hours = 6, buffer_km = 100):
+def compute_antecedent_sm(ds, track_df, track_id, hours_before_landfall, exclude_last_hours, buffer_km = 100):
     track_id = int(track_id)
     time_coord = 'time' if 'time' in ds.coords else 'valid_time'
     # Convert dataset times to datetime
@@ -72,17 +84,15 @@ def compute_antecedent_sm(ds, track_df, track_id, hours_before_landfall = 24, ex
     t_start = landfall_time - pd.Timedelta(hours=hours_before_landfall)
     t_end = landfall_time - pd.Timedelta(hours=exclude_last_hours)
 
-    print(f"[DEBUG an] Landfall time found: {landfall_time}")
-    print(f"[DEBUG an] Time window: {t_start} to {t_end}")
-    print(f"[DEBUG an] Dataset time range: {ds_times.min()} to {ds_times.max()}")
-    if t_start >= t_end:
-        std_print('WARN', 'an', f'Track {track_id}: Invalid time window (t_start >= t_end)')
-        return np.nan
+    std_print('DEBUG', 'an', 'Landfall time found:', {landfall_time})
+    std_print('DEBUG', 'an', f'Dataset time range: {ds_times.min()} to {ds_times.max()}{landfall_time}')
+    std_print('DEBUG', 'an', f'Time window: {t_start} to {t_end}')
 
     # Adjust window to dataset bounds
     if t_start >= t_end:  # No valid window
         std_print('WARN', 'an', f'Track {track_id}: No valid time window (t_start >= t_end)')
         return np.nan
+
     if t_start < ds_times.min():
         t_start = ds_times.min()
     if t_end > ds_times.max():
@@ -113,25 +123,33 @@ def compute_antecedent_sm(ds, track_df, track_id, hours_before_landfall = 24, ex
                 std_print('INFO', 'an', 'Using nearest time', t)
 
             # Extract spatial average of soil moisture
-            subset = extract_spatial_subset(
-                ds, lat, lon, t,
-                buffer_km=buffer_km,
-                time_coord=time_coord
-            )
+            subset = extract_spatial_subset(ds, lat, lon, t, buffer_km=buffer_km, time_coord=time_coord)
+            if 'swvl1' in subset.data_vars:
+                # Check spatial coverage
+                valid_cells = (~np.isnan(subset['swvl1'].values)).sum()
+                total_cells = subset['swvl1'].size
+                coverage = valid_cells / total_cells if total_cells > 0 else 0
+                if coverage < 0.5:  # Require >50% valid data
+                    ocean_cells_excluded += 1
+                    continue
+                sm = subset['swvl1'].mean().values
+                if not np.isnan(sm) and 0.01 < sm < 0.70:
+                    sm_vals.append(float(sm))
+
             if subset is None:
                 ocean_cells_excluded += 1
                 std_print('WARN', 'an', f'Track {track_id}: Subset is None')
                 continue
 
-            if 'swvl1' in subset.data_vars:
-                sm = subset['swvl1'].mean().values
-                if not np.isnan(sm) and 0.01 < sm < 0.70:
-                    sm_vals.append(float(sm))
-                    land_cells_included += 1
-                else:
-                    ocean_cells_excluded += 1
-            else:
-                ocean_cells_excluded += 1
+            # if 'swvl1' in subset.data_vars:
+            #     sm = subset['swvl1'].mean().values
+            #     if not np.isnan(sm) and 0.01 < sm < 0.70:
+            #         sm_vals.append(float(sm))
+            #         land_cells_included += 1
+            #     else:
+            #         ocean_cells_excluded += 1
+            # else:
+            #     ocean_cells_excluded += 1
 
         except Exception as e:
             ocean_cells_excluded += 1
@@ -155,7 +173,7 @@ def compute_antecedent_sm(ds, track_df, track_id, hours_before_landfall = 24, ex
         std_print('WARN', 'an', f'Track {track_id}: No valid land-based SM values extracted')
         return np.nan
 
-def compute_antecedent_sm_multiwindow(ds, track_df, track_id, buffer_km=100, land_only=True):
+def compute_antecedent_sm_multiwindow(ds, track_df, track_id, buffer_km=100, land_only=False):
     """ Compute soil moisture at multiple windows for transition analysis
     "How do TP and SWVL1 affect MD ocean -> land transition?"
     """
@@ -219,7 +237,7 @@ def compute_antecedent_sm_multiwindow(ds, track_df, track_id, buffer_km=100, lan
         }
     return results
 
-def compute_antecedent_sm_post_landfall(ds, track_df, track_id, hours_after_landfall=6, buffer_km=100, land_only=True):
+def compute_antecedent_sm_post_landfall(ds, track_df, track_id, hours_after_landfall, buffer_km=100, land_only=False):
     """
     Compute soil moisture AFTER landfall (land phase).
     hours_after_landfall: How many hours AFTER landfall to analyze
@@ -240,10 +258,13 @@ def compute_antecedent_sm_post_landfall(ds, track_df, track_id, hours_after_land
         return np.nan
 
     # Ensure is_land column exists
-    if 'is_land' not in track.columns:
-        track['is_land'] = track.apply(lambda row: is_point_land(row['latitude'], row['longitude']), axis=1)
-
+    # if 'is_land' not in track.columns:
+    #     track['is_land'] = track.apply(lambda row: is_point_land(row['latitude'], row['longitude']), axis=1)
     landfall_time = find_landfall_time(track)
+    if landfall_time is None and 'is_land' in track.columns:
+        landfall_rows = track[track['is_land'] == True]
+        if not landfall_rows.empty:
+            landfall_time = pd.to_datetime(landfall_rows.iloc[0]['time'])
     if landfall_time is None:
         std_print('WARN', 'an', f'Track {track_id}: No landfall detected', 'Returning NaN')
         return np.nan
@@ -279,6 +300,7 @@ def compute_antecedent_sm_post_landfall(ds, track_df, track_id, hours_after_land
     if subset_track.empty:
         std_print('WARN', 'an', f'Track {track_id}: No points in post-landfall tim e window')
         return np.nan
+
     std_print('INFO', 'an', f'Track {track_id} Points in post-landfall window:', len(subset_track))
 
     # Extract soil moisture along track in the time window
@@ -286,18 +308,18 @@ def compute_antecedent_sm_post_landfall(ds, track_df, track_id, hours_after_land
         try:
             lat, lon = row['latitude'], row['longitude']
             t = pd.to_datetime(row['time'])
+            # Check land-only constraint
             if land_only and not is_point_land(lat, lon):
                 ocean_cells_excluded += 1
                 continue
             lat_buf, lon_buf = calculate_buffer_deg(lat, buffer_km)
-            # Find nearest time
+            # Find nearest time in dataset
             if t not in ds_times:
                 nearest_idx = np.argmin(np.abs(ds_times - t))
                 t = ds_times[nearest_idx]
+            ds_at_time = ds.sel({time_coord: t}, method='nearest')
             try:
                 # Extract spatial average of soil moisture
-                ds_at_time = ds.sel({time_coord: t}, method='nearest')
-                # Spatial bounds
                 lat_min = min(lat - lat_buf, lat + lat_buf)
                 lat_max = max(lat - lat_buf, lat + lat_buf)
                 lon_min = min(lon - lon_buf, lon + lon_buf)
@@ -335,14 +357,14 @@ def compute_antecedent_sm_post_landfall(ds, track_df, track_id, hours_after_land
             std_print('ERROR', 'an', f'Track {track_id}', str(e))
             continue
 
-    std_print('INFO', 'an', f'Track {track_id} Post-landfall extraction')
-    std_print('INFO', 'an', 'Land cells included', land_cells_included)
-    std_print('INFO', 'an', 'Ocean/invalid cells excluded', ocean_cells_excluded)
+    std_print('DEBUG', 'an', f'Track {track_id} Post-landfall extraction')
+    std_print('DEBUG', 'an', 'Land cells included', land_cells_included)
+    std_print('DEBUG', 'an', 'Ocean/invalid cells excluded', ocean_cells_excluded)
 
     # Return sm_mean or NaN if insufficient data
     if sm_vals:
         asm_mean = np.mean(sm_vals)
-        std_print('INFO', 'an', f'Track {track_id} Post-landfall SM (6h)', f'{asm_mean:.4f}', 'mÂ³/mÂ³')
+        std_print('INFO', 'an', f'Track {track_id} Post-landfall SM (6h)', f'{asm_mean:.4f}', 'm³/m³')
         return asm_mean
     else:
         std_print('WARN', 'an', f'Track {track_id}: No valid post-landfall SM values extracted')
@@ -372,7 +394,7 @@ def export_multiwindow_results(track_id, multiwindow_results, output_dir):
         std_print('INFO', 'an', f'   {window_name}', val_str, 'm³/m³')
     return asm_multiwindow_df
 
-def compute_antecedent_sm_all_tracks(ds, full_track_df, hours_before_landfall = 24, exclude_last_hours = 6, buffer_km = 100):
+def compute_antecedent_sm_all_tracks(ds, full_track_df, hours_before_landfall, exclude_last_hours, buffer_km = 100):
     unique_tracks = sorted(full_track_df['track_id'].unique())
     results = []
 
@@ -387,27 +409,30 @@ def compute_antecedent_sm_all_tracks(ds, full_track_df, hours_before_landfall = 
         track = full_track_df[full_track_df['track_id'] == track_id].sort_values('time')
         # Check if track has landfall
         origin_type = find_origin_type(track)
+        asm_results = {}
         if origin_type == 'land_originated':
             # FIX:
-            # For land-originated tracks, we can still compute soil moisture
-            # but it won't be "antecedent" in the traditional sense
+            # For land-originated tracks, won't be "antecedent" in the traditional sense
             std_print('INFO', 'an', f'Track {track_id}: Land-originated - computing soil moisture at start')
             # Compute soil moisture at track start
             asm_24h = compute_soil_moisture_at_start(ds, track, buffer_km)
             has_landfall = False
         else:
-            asm_24h = compute_antecedent_sm(
-                ds=ds,
-                track_df=full_track_df,
-                track_id=track_id,
-                hours_before_landfall=hours_before_landfall, 
-                exclude_last_hours=exclude_last_hours, 
-                buffer_km=buffer_km
-            )
-            has_landfall = pd.notna(asm_24h) and not isinstance(asm_24h, dict)
+            for exclusion_hours in [0, 3, 6, 12]:
+                asm_24h = compute_antecedent_sm(
+                    ds, full_track_df, track_id,
+                    hours_before_landfall=24,
+                    exclude_last_hours=exclusion_hours,
+                    buffer_km=100
+                )
+                asm_results[f'ASM_excl_{exclusion_hours}h'] = asm_24h
+                has_landfall = pd.notna(asm_24h) and not isinstance(asm_24h, dict)
         results.append({
             'track_id': track_id,
-            'ASM_24h': asm_24h,
+            'ASM_24h_excl_0h': asm_results.get('ASM_excl_0h'),
+            'ASM_24h_excl_3h': asm_results.get('ASM_excl_3h'),
+            'ASM_24h_excl_6h': asm_results.get('ASM_excl_6h'),
+            'ASM_24h_excl_12h': asm_results.get('ASM_excl_12h'),
             'has_landfall': has_landfall,
             'origin_type': origin_type
         })
@@ -449,6 +474,7 @@ def compute_asm_tp_correlation(ds, full_track_df, asm_results_df, buffer_km=100,
     """
     std_print('INFO', 'an', 'ASM - PRECIPITATION CORRELATION ANALYSIS')
     correlation_data = []
+
     unique_tracks = asm_results_df['track_id'].unique()
     for track_id in unique_tracks:
         track_df = full_track_df[full_track_df['track_id'] == track_id].copy()
@@ -457,29 +483,56 @@ def compute_asm_tp_correlation(ds, full_track_df, asm_results_df, buffer_km=100,
         asm_row = asm_results_df[asm_results_df['track_id'] == track_id]
         if asm_row.empty:
             continue
-        asm_value = asm_row['ASM_24h'].iloc[0]
+        asm_col = 'ASM_24h_excl_6h'
+        # Check if the column exists, if not try other available columns
+        if asm_col not in asm_row.columns:
+            # Find any available ASM_24h column
+            available_cols = [col for col in asm_row.columns if 'ASM_24h' in col]
+            if not available_cols:
+                continue  # Skip this track if no ASM column found
+            asm_col = available_cols[0]  # Use the first available
+        asm_value = asm_row[asm_col].iloc[0]
         if isinstance(asm_value, dict):
             asm_value = asm_value.get('value', np.nan)
-
         if pd.isna(asm_value):
             continue
         asm_24h = float(asm_value)
         ####
         # Extract precipitation time series along track
         tp_vals = []
+        time_coord = 'time' if 'time' in ds.coords else 'valid_time'
+        ds_times = pd.to_datetime(ds[time_coord].values)
         for _, row in track_df.iterrows():
             try:
-                t = pd.to_datetime(row['time'])
                 lat, lon = row['latitude'], row['longitude']
-                # FIX:
-                lat_buf = buffer_km / 111.0
-                lon_buf = buffer_km / (111.0 * np.cos(np.radians(lat)))
-                time_coord = 'time' if 'time' in ds.coords else 'valid_time'
-                subset = ds.sel({
-                    time_coord: t,
-                    'latitude': slice(lat + lat_buf, lat - lat_buf),
-                    'longitude': slice(lon - lon_buf, lon + lon_buf)
-                }, method='nearest')
+                t = pd.to_datetime(row['time'])
+                lat_buf, lon_buf = calculate_buffer_deg(lat, buffer_km)
+                # Find nearest time
+                if t not in ds_times:
+                    nearest_idx = np.argmin(np.abs(ds_times - t))
+                    t = ds_times[nearest_idx]
+                # Get dataset at this time
+                ds_at_time = ds.sel({time_coord: t}, method='nearest')
+                # Extract spatial average of soil moisture
+                lat_min = min(lat - lat_buf, lat + lat_buf)
+                lat_max = max(lat - lat_buf, lat + lat_buf)
+                lon_min = min(lon - lon_buf, lon + lon_buf)
+                lon_max = max(lon - lon_buf, lon + lon_buf)
+                # Clamp to dataset bounds
+                lat_min = max(lat_min, float(ds_at_time.latitude.min()))
+                lat_max = min(lat_max, float(ds_at_time.latitude.max()))
+                lon_min = max(lon_min, float(ds_at_time.longitude.min()))
+                lon_max = min(lon_max, float(ds_at_time.longitude.max()))
+                # Check if bounds are valid
+                if lat_min >= lat_max or lon_min >= lon_max:
+                    continue
+                subset = ds_at_time.sel({
+                    'latitude': slice(lat_max, lat_min),
+                    'longitude': slice(lon_min, lon_max)
+                })
+                if subset.sizes.get('latitude', 0) == 0 or subset.sizes.get('longitude', 0) == 0:
+                    continue
+
                 if 'tp' in subset.data_vars:
                     tp = float(subset['tp'].mean().values) * 1000  # m to mm/hr
                     if not np.isnan(tp) and tp >= 0:
@@ -488,6 +541,7 @@ def compute_asm_tp_correlation(ds, full_track_df, asm_results_df, buffer_km=100,
                 continue
         if len(tp_vals) < 3:
             continue
+
         tp_mean = np.mean(tp_vals)
         tp_max = np.max(tp_vals)
         tp_std = np.std(tp_vals)
@@ -557,13 +611,21 @@ def compute_asm_duration_correlation(asm_results_df, duration_df, output_dir='ou
     )
     if len(merged_df) < 3:
         std_print('WARN', 'an', 'Insufficient data for correlation (< 3 tracks)')
-        std_print('WARN', 'an', 'Insufficient data for correlation (< 3 tracks)')
+        return None
+
+    asm_col = None
+    available_asm_cols = [col for col in merged_df.columns if 'ASM_24h' in col]
+    if available_asm_cols:
+        asm_col = available_asm_cols[0]  # Use first available ASM column
+        std_print('INFO', 'an', f'Using ASM column: {asm_col}')
+    else:
+        std_print('ERROR', 'an', 'No ASM_24h columns found in dataframe')
+        std_print('ERROR', 'an', f'Available columns: {merged_df.columns.tolist()}')
         return None
 
     asm_values = []
     for idx, row in merged_df.iterrows():
-        asm_val = row['ASM_24h']
-        # If ASM_24h is a dictionary, extract the 'value' key
+        asm_val = row[asm_col]
         if isinstance(asm_val, dict):
             asm_val = asm_val.get('value', np.nan)
         asm_values.append(asm_val)
@@ -592,7 +654,6 @@ def compute_asm_duration_correlation(asm_results_df, duration_df, output_dir='ou
     pearson_r, pearson_p = pearsonr(valid_data['ASM_24h_clean'], valid_data['duration_hours'])
     print(f"     ASM vs Duration:")
     std_print('INFO', 'an', 'ASM vs Duration - Pearson', f'r={pearson_r:.3f}, p={pearson_p:.4f}')
-    print(f"     ASM vs Duration:")
     try:
         spearman_r, spearman_p = spearmanr(valid_data['ASM_24h_clean'], valid_data['duration_hours'])
         std_print('INFO', 'an', 'ASM vs Duration - Spearman', f'ρ={spearman_r:.3f}, p={spearman_p:.4f}')
@@ -615,12 +676,20 @@ def compute_asm_duration_correlation(asm_results_df, duration_df, output_dir='ou
     long_lived = merged_df[merged_df['is_long_lived']]
     short_lived = merged_df[~merged_df['is_long_lived']]
     if len(long_lived) > 0:
-        std_print('INFO', 'an', 'Long-lived MDs (≥96h) - Mean ASM', f"{long_lived['ASM_24h'].mean():.4f} ± {long_lived['ASM_24h'].std():.4f}", 'mÂ³/mÂ³')
-        std_print('INFO', 'an', 'Long-lived MDs (≥96h) - Mean Duration', f"{long_lived['duration_hours'].mean():.1f} ± {long_lived['duration_hours'].std():.1f}", 'hours')
+        long_lived_asm = long_lived['ASM_24h_clean'].dropna()
+        if len(long_lived_asm) > 0:
+            std_print('INFO', 'an', 'Long-lived MDs (≥96h) - Mean ASM', 
+                     f"{long_lived_asm.mean():.4f} ± {long_lived_asm.std():.4f}", 'mÂ³/mÂ³')
+        std_print('INFO', 'an', 'Long-lived MDs (≥96h) - Mean Duration', 
+                 f"{long_lived['duration_hours'].mean():.1f} ± {long_lived['duration_hours'].std():.1f}", 'hours')
         std_print('INFO', 'an', 'Long-lived MDs count', len(long_lived))
     if len(short_lived) > 0:
-        std_print('INFO', 'an', 'Short-lived MDs (<96h) - Mean ASM', f"{short_lived['ASM_24h'].mean():.4f} ± {short_lived['ASM_24h'].std():.4f}", 'mÂ³/mÂ³')
-        std_print('INFO', 'an', 'Short-lived MDs (<96h) - Mean Duration', f"{short_lived['duration_hours'].mean():.1f} ± {short_lived['duration_hours'].std():.1f}", 'hours')
+        short_lived_asm = short_lived['ASM_24h_clean'].dropna()
+        if len(short_lived_asm) > 0:
+            std_print('INFO', 'an', 'Short-lived MDs (<96h) - Mean ASM', 
+                     f"{short_lived_asm.mean():.4f} ± {short_lived_asm.std():.4f}", 'mÂ³/mÂ³')
+        std_print('INFO', 'an', 'Short-lived MDs (<96h) - Mean Duration', 
+                 f"{short_lived['duration_hours'].mean():.1f} ± {short_lived['duration_hours'].std():.1f}", 'hours')
         std_print('INFO', 'an', 'Short-lived MDs count', len(short_lived))
 
     # Statistical test
@@ -647,27 +716,64 @@ def create_asm_summary_report(asm_results_df, corr_tp_df, corr_duration_df, outp
         std_print('WARN', 'an', 'Skipping TP correlation section: No data available')
         return
 
-    report_path = os.path.join(output_dir, 'ASM_Analysis_Report.txt')
+    report_path = os.path.join(output_dir, 'ASM_Analysis_Report_global.txt')
+
+    tests = []
+    pvalues = []
     with open(report_path, 'w') as f:
         f.write("ANTECEDENT SOIL MOISTURE ANALYSIS - REPORT\n")
         # Section 1: ASM Statistics
         f.write("1. ANTECEDENT SOIL MOISTURE STATISTICS\n")
         f.write(f"  Number of tracks analyzed:                     {len(asm_results_df)}\n")
-        f.write(f"  Mean ASM (24h before landfall):                {asm_results_df['ASM_24h'].mean():.4f} m³/m³\n")
-        f.write(f"  Std Dev:                                       {asm_results_df['ASM_24h'].std():.4f} m³/m³\n")
-        f.write(f"  Min:                                           {asm_results_df['ASM_24h'].min():.4f} m³/m³\n")
-        f.write(f"  Max:                                           {asm_results_df['ASM_24h'].max():.4f} m³/m³\n")
-        f.write(f"  Range:                                         {asm_results_df['ASM_24h'].max() - asm_results_df['ASM_24h'].min():.4f} m³/m³\n\n")
+        # Find available ASM column
+        asm_col = 'ASM_24h_excl_6h'
+        if asm_col not in asm_results_df.columns:
+            available_cols = [col for col in asm_results_df.columns if 'ASM_24h' in col]
+            if available_cols:
+                asm_col = available_cols[0]
+            else:
+                asm_col = None
+        if asm_col and asm_col in asm_results_df.columns:
+            valid_asm = asm_results_df[asm_col].dropna()
+            if len(valid_asm) > 0:
+                f.write(f"  Mean ASM (24h before landfall):                {valid_asm.mean():.4f} m³/m³\n")
+                f.write(f"  Std Dev:                                       {valid_asm.std():.4f} m³/m³\n")
+                f.write(f"  Min:                                           {valid_asm.min():.4f} m³/m³\n")
+                f.write(f"  Max:                                           {valid_asm.max():.4f} m³/m³\n")
+                f.write(f"  Range:                                         {valid_asm.max() - valid_asm.min():.4f} mÂ³/mÂ³\n\n")
+        else:
+            f.write(f"  No ASM data available\n\n")
         # Section 2: ASM-Precipitation Correlation
         f.write("2. ASM - PRECIPITATION CORRELATION\n")
-        if 'ASM_24h' in corr_tp_df.columns and 'mean_tp' in corr_tp_df.columns:
+        if corr_tp_df is not None and 'mean_tp' in corr_tp_df.columns:
+            # Find the ASM column (should be 'ASM_24h' from compute_asm_tp_correlation)
+            asm_col = 'ASM_24h'
             print(f"DEBUG: corr_tp_df columns are: {corr_tp_df.columns.tolist()}")
-            valid_data = corr_tp_df.dropna(subset=['ASM_24h', 'mean_tp'])
-            print(f"DEBUG: corr_tp_df valid columns are: {valid_data}")
-            if len(valid_data) > 1:  # Pearsonr needs at least 2 points
-                r_mean, p_mean = pearsonr(valid_data['ASM_24h'], valid_data['mean_tp'])
-                r_max, p_max = pearsonr(corr_tp_df['ASM_24h'], corr_tp_df['max_tp'])
-                r_total, p_total = pearsonr(corr_tp_df['ASM_24h'], corr_tp_df['total_tp'])
+            if asm_col in corr_tp_df.columns:
+                valid_data = corr_tp_df.dropna(subset=[asm_col, 'mean_tp'])
+                if len(valid_data) > 1:  # Pearsonr needs at least 2 points
+                    r_mean, p_mean = pearsonr(valid_data[asm_col], valid_data['mean_tp'])
+                    r_max, p_max = pearsonr(corr_tp_df[asm_col], corr_tp_df['max_tp'])
+                    r_total, p_total = pearsonr(corr_tp_df[asm_col], corr_tp_df['total_tp'])
+
+                    tests.append(('ASM vs Mean TP', r_mean, p_mean))
+                    pvalues.append(p_mean)
+                    tests.append(('ASM vs Max TP', r_max, p_max))
+                    pvalues.append(p_max)
+                    tests.append(('ASM vs Total TP', r_total, p_total))
+                    pvalues.append(p_total)
+
+                reject, p_corrected, _, _ = multipletests(
+                    pvalues, 
+                    method='fdr_bh',  # Benjamini-Hochberg FDR correction
+                    alpha=0.05
+                )
+                for test_name, p_orig, p_corr, is_sig in zip(tests, pvalues, p_corrected, reject):
+                    print(f"{test_name}:")
+                    print(f"  p_uncorrected: {p_orig:.4f}")
+                    print(f"  p_corrected:   {p_corr:.4f}")
+                    print(f"  Significant:   {is_sig}")
+
                 f.write(f"  ASM vs Mean TP:\n")
                 f.write(f"    Pearson r: {r_mean:.3f}, p-value: {p_mean:.3f}\n")
                 f.write(f"    Significance: {'YES' if p_mean < 0.05 else 'NO'}\n\n")
@@ -748,10 +854,10 @@ def plot_antecedent_sm_timeseries(ds, track_df, track_id, buffer_km, output_dir 
         std_print('INFO', 'an', f'Track {track_id}: Using start time as reference for land-originated MD')
 
     # Approximation: 1 degree latitude ~ 111 km
+    time_coord = 'time' if 'time' in ds.coords else 'valid_time'
     for _, row in track_df.iterrows():
         try:
             t = pd.to_datetime(row['time'])
-            time_coord = 'time' if 'time' in ds.coords else 'valid_time'
             ds_at_time = ds.sel({time_coord: t}, method='nearest')
             lat, lon = row['latitude'], row['longitude']
             lat_buffer, lon_buffer = calculate_buffer_deg(lat, buffer_km)
@@ -884,7 +990,7 @@ def plot_sm_tp_map(
     output_dir = 'output',
 ):
     """Comparison map before/after landfall"""
-    print(f"[DEBUG an ] Starting plot_sm_tp_map for track {track_id}")
+    std_print('DEBUG', 'an', f'Starting plot_sm_tp_map for track {track_id}')
     # Get ALL points for track
     track = track_df[track_df['track_id'] == track_id].sort_values('time')
     time_coord = 'time' if 'time' in ds.coords else 'valid_time'
@@ -992,12 +1098,12 @@ def plot_sm_tp_map(
     std_print('INFO', 'an', f'Track {track_id}: Map extent (clipped)', f'{min_lon:.1f}E-{max_lon:.1f}E, {min_lat:.1f}N-{max_lat:.1f}N')
 
     print(f"[DEBUG an] Map extent for track {track_id}   :")
-    print(f"            Latitude          :  [{min_lat:.2f}, {max_lat:.2f}] deg (range: {lat_range:.1f}°)")
-    print(f"            Longitude         :  [{min_lon:.2f}, {max_lon:.2f}] deg (range: {lon_range:.1f}°)")
-    print(f"            Centroid          :  ({centroid_lat:.2f}, {centroid_lon:.2f})")
-    print(f"            Track points      :  {len(track)}")
-    print(f"            Before landfall   :  {len(track_before)} points")
-    print(f"            After landfall    :  {len(track_after)} points")
+    print(f"    Latitude          :  [{min_lat:.2f}, {max_lat:.2f}] deg (range: {lat_range:.1f}°)")
+    print(f"    Longitude         :  [{min_lon:.2f}, {max_lon:.2f}] deg (range: {lon_range:.1f}°)")
+    print(f"    Centroid          :  ({centroid_lat:.2f}, {centroid_lon:.2f})")
+    print(f"    Track points      :  {len(track)}")
+    print(f"    Before landfall   :  {len(track_before)} points")
+    print(f"    After landfall    :  {len(track_after)} points")
 
     try:
         actual_before_start = pd.Timestamp(max(before_start, ds_times.min()))
@@ -1025,362 +1131,374 @@ def plot_sm_tp_map(
         tp_change = tp_after_total - tp_before_total
 
         # Get antecedent SM
-        asm_24h = compute_antecedent_sm(ds, track_df, track_id, 24, 6, 100)
-        if isinstance(asm_24h, dict):
-            asm_24h = asm_24h.get('value', np.nan)
-        if np.isnan(asm_24h):
-            asm_display = "N/A"
-        else:
-            asm_display = f"{asm_24h:.4f} m³/m³"
+        for exclusion_hours in [0, 3, 6, 12]:
+            asm_24h = compute_antecedent_sm(ds, track_df, track_id, hours_before_landfall=24, exclude_last_hours=exclusion_hours , buffer_km=100)
+            if isinstance(asm_24h, dict):
+                asm_24h = asm_24h.get('value', np.nan)
+            if np.isnan(asm_24h):
+                asm_display = "N/A"
+            else:
+                asm_display = f"{asm_24h:.4f} m³/m³"
 
-        # Create 2x4 subplot layout
-        fig, axes = plt.subplots(
-            2,
-            4,
-            figsize=(22, 14),
-            subplot_kw={'projection': ccrs.PlateCarree()}
-        )
-        # For soil moisture
-        sm_all_values = np.concatenate([
-            sm_before_mean.values.flatten(),
-            sm_after_mean.values.flatten()
-        ])
-        sm_all_values = sm_all_values[~np.isnan(sm_all_values)]
-        sm_vmin = np.percentile(sm_all_values, 5) if len(sm_all_values) > 0 else 0
-        sm_vmax = np.percentile(sm_all_values, 95) if len(sm_all_values) > 0 else 1
-        # For Total Precipitation
-        tp_all_values = np.concatenate([tp_before_total.values.flatten(), tp_after_total.values.flatten()])
-        tp_all_values = tp_all_values[~np.isnan(tp_all_values)]
-        tp_vmin = 0  # Always start at 0 for precipitation
-        tp_vmax = np.percentile(tp_all_values, 95) if len(tp_all_values) > 0 else 10
-        # For change plots
-        sm_change_values = sm_change.values.flatten()
-        sm_change_values = sm_change_values[~np.isnan(sm_change_values)]
-        sm_change_vmax = max(abs(np.nanpercentile(sm_change_values, 5)), abs(np.nanpercentile(sm_change_values, 95))) if len(sm_change_values) > 0 else 0.1
-        tp_change_values = tp_change.values.flatten()
-        tp_change_values = tp_change_values[~np.isnan(tp_change_values)]
-        tp_change_vmax = max(abs(np.nanpercentile(tp_change_values, 5)), abs(np.nanpercentile(tp_change_values, 95))) if len(tp_change_values) > 0 else 10
+            # Create 2x4 subplot layout
+            fig, axes = plt.subplots(
+                2,
+                4,
+                figsize=(22, 14),
+                subplot_kw={'projection': ccrs.PlateCarree()}
+            )
+            # For soil moisture
+            sm_all_values = np.concatenate([
+                sm_before_mean.values.flatten(),
+                sm_after_mean.values.flatten()
+            ])
+            sm_all_values = sm_all_values[~np.isnan(sm_all_values)]
+            sm_vmin = np.percentile(sm_all_values, 5) if len(sm_all_values) > 0 else 0
+            sm_vmax = np.percentile(sm_all_values, 95) if len(sm_all_values) > 0 else 1
+            # For Total Precipitation
+            tp_all_values = np.concatenate([tp_before_total.values.flatten(), tp_after_total.values.flatten()])
+            tp_all_values = tp_all_values[~np.isnan(tp_all_values)]
+            tp_vmin = 0  # Always start at 0 for precipitation
+            tp_vmax = np.percentile(tp_all_values, 95) if len(tp_all_values) > 0 else 10
+            # For change plots
+            sm_change_values = sm_change.values.flatten()
+            sm_change_values = sm_change_values[~np.isnan(sm_change_values)]
+            sm_change_vmax = max(abs(np.nanpercentile(sm_change_values, 5)), abs(np.nanpercentile(sm_change_values, 95))) if len(sm_change_values) > 0 else 0.1
+            tp_change_values = tp_change.values.flatten()
+            tp_change_values = tp_change_values[~np.isnan(tp_change_values)]
+            tp_change_vmax = max(abs(np.nanpercentile(tp_change_values, 5)), abs(np.nanpercentile(tp_change_values, 95))) if len(tp_change_values) > 0 else 10
 
-        period_titles = [f'Before {period_label} ({hours_before}h)', f'After {period_label} ({hours_after}h)', 'Change (After - Before)']
+            period_titles = [f'Before {period_label} ({hours_before}h)', f'After {period_label} ({hours_after}h)', 'Change (After - Before)']
 
-        # Row 0: Soil moisture maps
-        for i, (data, title) in enumerate(zip(
-            [sm_before_mean, sm_after_mean, sm_change],
-            period_titles
-        )):
-            ax = axes[0, i]
-            if data.size == 0 or np.all(np.isnan(data.values)):
-                ax.text(
-                    0.5,
-                    0.5,
-                    'No Data',
-                    transform=ax.transAxes,
-                    ha='center',
-                    va='center',
-                    fontsize=12
-                )
+            # Row 0: Soil moisture maps
+            for i, (data, title) in enumerate(zip(
+                [sm_before_mean, sm_after_mean, sm_change],
+                period_titles
+            )):
+                ax = axes[0, i]
+                if data.size == 0 or np.all(np.isnan(data.values)):
+                    ax.text(
+                        0.5,
+                        0.5,
+                        'No Data',
+                        transform=ax.transAxes,
+                        ha='center',
+                        va='center',
+                        fontsize=12
+                    )
+                    ax.set_title(f'Soil Moisture\n{title}', fontsize=12, fontweight='bold')
+                    continue
+
+                if i == 2:  # Change plot for soil moisture
+                    sm_change_vmax = max(abs(data.values.min()), abs(data.values.max()))
+                    im = ax.contourf(
+                        data.longitude,
+                        data.latitude,
+                        data.values,
+                        levels=21,
+                        cmap='RdBu',
+                        vmin=-sm_change_vmax,
+                        vmax=sm_change_vmax,
+                        transform=ccrs.PlateCarree(),
+                        extend='both'
+                    )
+                else:  # Before/After plots
+                    im = ax.contourf(
+                        data.longitude,
+                        data.latitude,
+                        data.values,
+                        levels=21,
+                        cmap='YlGnBu',
+                        vmin=sm_vmin,
+                        vmax=sm_vmax,
+                        transform=ccrs.PlateCarree(),
+                        extend='both'
+                    )
+                # Contour lines
+                if not np.all(np.isnan(data.values)):
+                    contours = ax.contour(
+                        data.longitude,
+                        data.latitude,
+                        data.values,
+                        levels=8,
+                        colors='black',
+                        linewidths=0.5,
+                        alpha=0.5,
+                        transform=ccrs.PlateCarree()
+                    )
+                    ax.clabel(contours, inline=True, fontsize=7, fmt='%1.3f')
+                # Plot track segments
+                if i == 0 and len(track_before) > 0:
+                    ax.plot(
+                        track_before['longitude'],
+                        track_before['latitude'],
+                        'b-',
+                        linewidth=2.5,
+                        transform=ccrs.PlateCarree(),
+                        zorder=5
+                    )
+                elif i == 1 and len(track_after) > 0:
+                    ax.plot(
+                        track_after['longitude'],
+                        track_after['latitude'],
+                        'r-',
+                        linewidth=2.5,
+                        transform=ccrs.PlateCarree(),
+                        zorder=5
+                    )
+                elif i == 2 and len(track_window) > 0:
+                    # Plot windowed track
+                    ax.plot(
+                        track_window['longitude'],
+                        track_window['latitude'],
+                        'k-',
+                        linewidth=2.5,
+                        alpha=0.9,
+                        transform=ccrs.PlateCarree(),
+                        zorder=4
+                    )
+                    # Mark landfall point
+                    landfall_idx = -1
+                    if landfall_time is not None and not track_window.empty:
+                        for idx, row in track_window.iterrows():
+                            t = pd.to_datetime(row['time'])
+                            if t >= landfall_time:
+                                landfall_idx = idx
+                                break
+                    # if len(track_before) > 0:
+                    #     point = track_before.iloc[-1]
+                    if 0 <= landfall_idx < len(track_window):
+                        point = track.iloc[landfall_idx]
+                        ax.plot(
+                            point['longitude'],
+                            point['latitude'],
+                            'D',
+                            color='yellow',
+                            markersize=10,
+                            markeredgecolor='black',
+                            markeredgewidth=1,
+                            transform=ccrs.PlateCarree(),
+                            zorder=6,
+                            label='Landfall'
+                        )
+
+                ax.coastlines(resolution='50m', linewidth=0.8)
+                ax.add_feature(cfeature.LAND, facecolor='lightgray', alpha=0.2)
+                ax.add_feature(cfeature.BORDERS, linewidth=0.5, linestyle='--', alpha=0.5)
+                ax.add_feature(cfeature.OCEAN, facecolor='lightblue', alpha=0.1)
+                ax.set_extent([min_lon, max_lon, min_lat, max_lat], crs=ccrs.PlateCarree())
+                gl = ax.gridlines(draw_labels=True, linewidth=0.5, alpha=0.5, linestyle='--')
+                gl.top_labels = False
+                gl.right_labels = False
                 ax.set_title(f'Soil Moisture\n{title}', fontsize=12, fontweight='bold')
-                continue
+                # Colorbar
+                cbar = plt.colorbar(im, ax=ax, pad=0.02,shrink=0.7)
+                if i == 2:
+                    cbar.set_label('Δ Soil Moisture (m³/m³)', fontsize=10)
+                else:
+                    cbar.set_label('Soil Moisture (m³/m³)', fontsize=10)
 
-            if i == 2:  # Change plot for soil moisture
-                sm_change_vmax = max(abs(data.values.min()), abs(data.values.max()))
-                im = ax.contourf(
-                    data.longitude,
-                    data.latitude,
-                    data.values,
-                    levels=21,
-                    cmap='RdBu',
-                    vmin=-sm_change_vmax,
-                    vmax=sm_change_vmax,
-                    transform=ccrs.PlateCarree(),
-                    extend='both'
-                )
-            else:  # Before/After plots
-                im = ax.contourf(
-                    data.longitude,
-                    data.latitude,
-                    data.values,
-                    levels=21,
-                    cmap='YlGnBu',
-                    vmin=sm_vmin,
-                    vmax=sm_vmax,
-                    transform=ccrs.PlateCarree(),
-                    extend='both'
-                )
-            # Contour lines
-            if not np.all(np.isnan(data.values)):
-                contours = ax.contour(
-                    data.longitude,
-                    data.latitude,
-                    data.values,
-                    levels=8,
-                    colors='black',
-                    linewidths=0.5,
-                    alpha=0.5,
-                    transform=ccrs.PlateCarree()
-                )
-                ax.clabel(contours, inline=True, fontsize=7, fmt='%1.3f')
+            # SM Stats in 4th column of row 0
+            ax_sm_stats = axes[0, 3]
+            ax_sm_stats.axis('off')
 
-            # Plot track segments
-            if i == 0 and len(track_before) > 0:
-                ax.plot(
-                    track_before['longitude'],
-                    track_before['latitude'],
-                    'b-',
-                    linewidth=2.5,
-                    transform=ccrs.PlateCarree(),
-                    zorder=5
-                )
-            elif i == 1 and len(track_after) > 0:
-                ax.plot(
-                    track_after['longitude'],
-                    track_after['latitude'],
-                    'r-',
-                    linewidth=2.5,
-                    transform=ccrs.PlateCarree(),
-                    zorder=5
-                )
-            elif i == 2 and len(track_window) > 0:
-                # Plot windowed track
-                ax.plot(
-                    track_window['longitude'],
-                    track_window['latitude'],
-                    'k-',
-                    linewidth=2.5,
-                    alpha=0.9,
-                    transform=ccrs.PlateCarree(),
-                    zorder=4
-                )
-                # Mark landfall point
-                landfall_idx = -1
-                # if len(track_before) > 0:
-                #     point = track_before.iloc[-1]
-                if 0 <= landfall_idx < len(track):
-                    point = track.iloc[landfall_idx]
-                    ax.plot(
-                        point['longitude'],
-                        point['latitude'],
-                        'D',
-                        color='yellow',
-                        markersize=10,
-                        markeredgecolor='black',
-                        markeredgewidth=1,
-                        transform=ccrs.PlateCarree(),
-                        zorder=6,
-                        label='Landfall'
+            sm_before_val = sm_before_mean.mean().item() if sm_before_mean.size > 0 else np.nan
+            sm_after_val = sm_after_mean.mean().item() if sm_after_mean.size > 0 else np.nan
+            sm_change_val = sm_change.mean().item() if sm_change.size > 0 else np.nan
+
+            sm_stats_text = (
+                f"Soil moisture statistics\n\n"
+                f"Mean before:        {sm_before_val:.4f} m³/m³\n"
+                f"Mean after:         {sm_after_val:.4f} m³/m³\n"
+                f"Mean change:        {sm_change_val:+.4f} m³/m³\n"
+                f"Antecedent (24h):   {asm_display}\n\n"
+                f"Track status:       {status_text}\n"
+                f"Landfall time:      {landfall_time.strftime('%Y-%m-%d %H:%M')}"
+                # f"\nMap extent:         {lon_range:.1f}° × {lat_range:.1f}°"
+            )
+            ax_sm_stats.text(
+                0.05,
+                0.95,
+                sm_stats_text,
+                transform=ax_sm_stats.transAxes,
+                fontsize=11,
+                family='monospace',
+                verticalalignment='top',
+                bbox=dict(boxstyle='round', alpha=0.3, facecolor='lightblue')
+            )
+
+            # Row 1: Total Precipitation maps
+            for i, (data, title) in enumerate(zip(
+                [tp_before_total, tp_after_total, tp_change],
+                period_titles
+            )):
+                ax = axes[1, i]
+                if data.size == 0 or np.all(np.isnan(data.values)):
+                    ax.text(
+                        0.5,
+                        0.5,
+                        'No Data',
+                        transform=ax.transAxes,
+                        ha='center',
+                        va='center',
+                        fontsize=12
                     )
+                    ax.set_title(f'Total Precipitation\n{title}', fontsize=12, fontweight='bold')
+                    continue
 
-            ax.coastlines(resolution='50m', linewidth=0.8)
-            ax.add_feature(cfeature.LAND, facecolor='lightgray', alpha=0.2)
-            ax.add_feature(cfeature.BORDERS, linewidth=0.5, linestyle='--', alpha=0.5)
-            ax.add_feature(cfeature.OCEAN, facecolor='lightblue', alpha=0.1)
-            ax.set_extent([min_lon, max_lon, min_lat, max_lat], crs=ccrs.PlateCarree())
-            gl = ax.gridlines(draw_labels=True, linewidth=0.5, alpha=0.5, linestyle='--')
-            gl.top_labels = False
-            gl.right_labels = False
-            ax.set_title(f'Soil Moisture\n{title}', fontsize=12, fontweight='bold')
-            # Colorbar
-            cbar = plt.colorbar(im, ax=ax, pad=0.02,shrink=0.7)
-            if i == 2:
-                cbar.set_label('Δ Soil Moisture (m³/m³)', fontsize=10)
-            else:
-                cbar.set_label('Soil Moisture (m³/m³)', fontsize=10)
+                if i == 2:  # Change plot for Total Precipitation
+                    im = ax.contourf(
+                        data.longitude,
+                        data.latitude,
+                        data.values,
+                        levels=21,
+                        cmap='RdBu',
+                        vmin=-tp_change_vmax,
+                        vmax=tp_change_vmax,
+                        transform=ccrs.PlateCarree(),
+                        extend='both'
+                    )
+                else:  # Before/After plots
+                    im = ax.contourf(
+                        data.longitude,
+                        data.latitude,
+                        data.values,
+                        levels=21,
+                        cmap='YlOrRd',
+                        vmin=tp_vmin,
+                        vmax=tp_vmax,
+                        transform=ccrs.PlateCarree(),
+                        extend='max'
+                    )
+                # Contour lines
+                if not np.all(np.isnan(data.values)):
+                    contours = ax.contour(
+                        data.longitude,
+                        data.latitude,
+                        data.values,
+                        levels=8,
+                        colors='black',
+                        linewidths=0.5,
+                        alpha=0.5,
+                        transform=ccrs.PlateCarree()
+                    )
+                    ax.clabel(contours, inline=True, fontsize=7, fmt='%1.0f')
+                # Plot track segments
+                if i == 0 and len(track_before) > 0:
+                    ax.plot(
+                        track_before['longitude'],
+                        track_before['latitude'],
+                        'b-',
+                        linewidth=2.5,
+                        transform=ccrs.PlateCarree(),
+                        zorder=5
+                    )
+                elif i == 1 and len(track_after) > 0:
+                    ax.plot(
+                        track_after['longitude'],
+                        track_after['latitude'],
+                        'r-',
+                        linewidth=2.5,
+                        transform=ccrs.PlateCarree(),
+                        zorder=5
+                    )
+                elif i == 2 and len(track_window) > 0:
+                    # Plot windowed track
+                    ax.plot(
+                        track_window['longitude'],
+                        track_window['latitude'],
+                        'k-',
+                        linewidth=2.5,
+                        alpha=0.9,
+                        transform=ccrs.PlateCarree(),
+                        zorder=4
+                    )
+                    # Mark landfall point
+                    landfall_idx = -1
+                    if landfall_time is not None and not track_window.empty:
+                        for idx, row in track_window.iterrows():
+                            t = pd.to_datetime(row['time'])
+                            if t >= landfall_time:
+                                landfall_idx = idx
+                                break
+                    # if len(track_before) > 0:
+                    #     point = track_before.iloc[-1]
+                    if 0 <= landfall_idx < len(track_window):
+                        point = track.iloc[landfall_idx]
+                        ax.plot(
+                            point['longitude'],
+                            point['latitude'],
+                            'D',
+                            color='yellow',
+                            markersize=10,
+                            markeredgecolor='black',
+                            markeredgewidth=1,
+                            transform=ccrs.PlateCarree(),
+                            zorder=6,
+                            label='Landfall'
+                        )
 
-        # SM Stats in 4th column of row 0
-        ax_sm_stats = axes[0, 3]
-        ax_sm_stats.axis('off')
-
-        sm_before_val = sm_before_mean.mean().item() if sm_before_mean.size > 0 else np.nan
-        sm_after_val = sm_after_mean.mean().item() if sm_after_mean.size > 0 else np.nan
-        sm_change_val = sm_change.mean().item() if sm_change.size > 0 else np.nan
-
-        sm_stats_text = (
-            f"Soil moisture statistics\n\n"
-            f"Mean before:        {sm_before_val:.4f} m³/m³\n"
-            f"Mean after:         {sm_after_val:.4f} m³/m³\n"
-            f"Mean change:        {sm_change_val:+.4f} m³/m³\n"
-            f"Antecedent (24h):   {asm_display}\n\n"
-            f"Track status:       {status_text}\n"
-            f"Landfall time:      {landfall_time.strftime('%Y-%m-%d %H:%M')}"
-            # f"\nMap extent:         {lon_range:.1f}° × {lat_range:.1f}°"
-        )
-        ax_sm_stats.text(
-            0.05,
-            0.95,
-            sm_stats_text,
-            transform=ax_sm_stats.transAxes,
-            fontsize=11,
-            family='monospace',
-            verticalalignment='top',
-            bbox=dict(boxstyle='round', alpha=0.3, facecolor='lightblue')
-        )
-
-        # Row 1: Total Precipitation maps
-        for i, (data, title) in enumerate(zip(
-            [tp_before_total, tp_after_total, tp_change],
-            period_titles
-        )):
-            ax = axes[1, i]
-            if data.size == 0 or np.all(np.isnan(data.values)):
-                ax.text(
-                    0.5,
-                    0.5,
-                    'No Data',
-                    transform=ax.transAxes,
-                    ha='center',
-                    va='center',
-                    fontsize=12
-                )
+                ax.coastlines(resolution='50m', linewidth=0.8)
+                ax.add_feature(cfeature.LAND, facecolor='lightgray', alpha=0.2)
+                ax.add_feature(cfeature.BORDERS, linewidth=0.5, linestyle='--', alpha=0.5)
+                ax.add_feature(cfeature.OCEAN, facecolor='lightblue', alpha=0.1)
+                ax.set_extent([min_lon, max_lon, min_lat, max_lat], crs=ccrs.PlateCarree())
+                gl = ax.gridlines(draw_labels=True, linewidth=0.5, alpha=0.5, linestyle='--')
+                gl.top_labels = False
+                gl.right_labels = False
                 ax.set_title(f'Total Precipitation\n{title}', fontsize=12, fontweight='bold')
-                continue
+                # Colorbar
+                cbar = plt.colorbar(im, ax=ax, pad=0.02, shrink=0.7)
+                if i == 2:
+                    cbar.set_label('Δ Precipitation (mm)', fontsize=10)
+                else:
+                    cbar.set_label('Total Precip (mm)', fontsize=10)
 
-            if i == 2:  # Change plot for Total Precipitation
-                im = ax.contourf(
-                    data.longitude,
-                    data.latitude,
-                    data.values,
-                    levels=21,
-                    cmap='RdBu',
-                    vmin=-tp_change_vmax,
-                    vmax=tp_change_vmax,
-                    transform=ccrs.PlateCarree(),
-                    extend='both'
-                )
-            else:  # Before/After plots
-                im = ax.contourf(
-                    data.longitude,
-                    data.latitude,
-                    data.values,
-                    levels=21,
-                    cmap='YlOrRd',
-                    vmin=tp_vmin,
-                    vmax=tp_vmax,
-                    transform=ccrs.PlateCarree(),
-                    extend='max'
-                )
-            # Contour lines
-            if not np.all(np.isnan(data.values)):
-                contours = ax.contour(
-                    data.longitude,
-                    data.latitude,
-                    data.values,
-                    levels=8,
-                    colors='black',
-                    linewidths=0.5,
-                    alpha=0.5,
-                    transform=ccrs.PlateCarree()
-                )
-                ax.clabel(contours, inline=True, fontsize=7, fmt='%1.0f')
-            # Plot track segments
-            if i == 0 and len(track_before) > 0:
-                ax.plot(
-                    track_before['longitude'],
-                    track_before['latitude'],
-                    'b-',
-                    linewidth=2.5,
-                    transform=ccrs.PlateCarree(),
-                    zorder=5
-                )
-            elif i == 1 and len(track_after) > 0:
-                ax.plot(
-                    track_after['longitude'],
-                    track_after['latitude'],
-                    'r-',
-                    linewidth=2.5,
-                    transform=ccrs.PlateCarree(),
-                    zorder=5
-                )
-            elif i == 2 and len(track_window) > 0:
-                # Plot windowed track
-                ax.plot(
-                    track_window['longitude'],
-                    track_window['latitude'],
-                    'k-',
-                    linewidth=2.5,
-                    alpha=0.9,
-                    transform=ccrs.PlateCarree(),
-                    zorder=4
-                )
-                # Mark landfall point
-                landfall_idx = -1
-                # if len(track_before) > 0:
-                #     point = track_before.iloc[-1]
-                if 0 <= landfall_idx < len(track):
-                    point = track.iloc[landfall_idx]
-                    ax.plot(
-                        point['longitude'],
-                        point['latitude'],
-                        'D',
-                        color='yellow',
-                        markersize=10,
-                        markeredgecolor='black',
-                        markeredgewidth=1,
-                        transform=ccrs.PlateCarree(),
-                        zorder=6,
-                        label='Landfall'
-                    )
+            # TP Stats in 4th column of row 1
+            ax_tp_stats = axes[1, 3]
+            ax_tp_stats.axis('off')
 
-            ax.coastlines(resolution='50m', linewidth=0.8)
-            ax.add_feature(cfeature.LAND, facecolor='lightgray', alpha=0.2)
-            ax.add_feature(cfeature.BORDERS, linewidth=0.5, linestyle='--', alpha=0.5)
-            ax.add_feature(cfeature.OCEAN, facecolor='lightblue', alpha=0.1)
-            ax.set_extent([min_lon, max_lon, min_lat, max_lat], crs=ccrs.PlateCarree())
-            gl = ax.gridlines(draw_labels=True, linewidth=0.5, alpha=0.5, linestyle='--')
-            gl.top_labels = False
-            gl.right_labels = False
-            ax.set_title(f'Total Precipitation\n{title}', fontsize=12, fontweight='bold')
-            # Colorbar
-            cbar = plt.colorbar(im, ax=ax, pad=0.02, shrink=0.7)
-            if i == 2:
-                cbar.set_label('Δ Precipitation (mm)', fontsize=10)
-            else:
-                cbar.set_label('Total Precip (mm)', fontsize=10)
+            tp_before_val = tp_before_total.mean().item() if tp_before_total.size > 0 else np.nan
+            tp_after_val = tp_after_total.mean().item() if tp_after_total.size > 0 else np.nan
+            tp_change_val = tp_change.mean().item() if tp_change.size > 0 else np.nan
 
-        # TP Stats in 4th column of row 1
-        ax_tp_stats = axes[1, 3]
-        ax_tp_stats.axis('off')
+            tp_stats_text = (
+                f"Total Precipitation statistics\n\n"
+                f"Mean before:      {tp_before_val:.1f} mm\n"
+                f"Mean after:       {tp_after_val:.1f} mm\n"
+                f"Mean change:      {tp_change_val:+.1f} mm\n"
+                f"Max before:       {tp_before_total.max().item():.1f} mm\n"
+                f"Max after:        {tp_after_total.max().item():.1f} mm\n"
+                f"Total before:     {tp_before_total.sum().item():.1f} mm\n"
+                f"Total after:      {tp_after_total.sum().item():.1f} mm"
+            )
+            ax_tp_stats.text(
+                0.05,
+                0.95,
+                tp_stats_text,
+                transform=ax_tp_stats.transAxes,
+                fontsize=11,
+                family='monospace',
+                verticalalignment='top',
+                bbox=dict(boxstyle='round', alpha=0.3, facecolor='lightblue')
+            )
+            # Main title
+            fig.suptitle(
+                f'Track {track_id}: Soil Moisture & Precipitation Evolution\n'            f'Before/After {period_label} ({hours_before}h before → {hours_after}h after)',
+                fontsize=16,
+                fontweight='bold',
+                y=0.8
+            )
+            plt.tight_layout()
+            plt.subplots_adjust(top=0.8)
 
-        tp_before_val = tp_before_total.mean().item() if tp_before_total.size > 0 else np.nan
-        tp_after_val = tp_after_total.mean().item() if tp_after_total.size > 0 else np.nan
-        tp_change_val = tp_change.mean().item() if tp_change.size > 0 else np.nan
-
-        tp_stats_text = (
-            f"Total Precipitation statistics\n\n"
-            f"Mean before:      {tp_before_val:.1f} mm\n"
-            f"Mean after:       {tp_after_val:.1f} mm\n"
-            f"Mean change:      {tp_change_val:+.1f} mm\n"
-            f"Max before:       {tp_before_total.max().item():.1f} mm\n"
-            f"Max after:        {tp_after_total.max().item():.1f} mm\n"
-            f"Total before:     {tp_before_total.sum().item():.1f} mm\n"
-            f"Total after:      {tp_after_total.sum().item():.1f} mm"
-        )
-        ax_tp_stats.text(
-            0.05,
-            0.95,
-            tp_stats_text,
-            transform=ax_tp_stats.transAxes,
-            fontsize=11,
-            family='monospace',
-            verticalalignment='top',
-            bbox=dict(boxstyle='round', alpha=0.3, facecolor='lightblue')
-        )
-        # Main title
-        fig.suptitle(
-            f'Track {track_id}: Soil Moisture & Precipitation Evolution\n'            f'Before/After {period_label} ({hours_before}h before → {hours_after}h after)',
-            fontsize=16,
-            fontweight='bold',
-            y=0.8
-        )
-        plt.tight_layout()
-        plt.subplots_adjust(top=0.8)
-
-        os.makedirs(output_dir, exist_ok=True)
-        sm_tp_before_after_map_path = os.path.join(output_dir, f'track_{int(track_id)}_sm_tp_before_after.png')
-        plt.savefig(sm_tp_before_after_map_path, dpi=300, bbox_inches='tight')
-        plt.close(fig)
-        std_print('SAVED', 'an', 'SM/TP brefore/after map', sm_tp_before_after_map_path)
-        print(f"[DEBUG an  ] Extent                            :          {min_lon:.1f}E to {max_lon:.1f}E, {min_lat:.1f}N to {max_lat:.1f}N")
-        return True  # Signal success
+            os.makedirs(output_dir, exist_ok=True)
+            sm_tp_before_after_map_path = os.path.join(output_dir, f'track_{int(track_id)}_sm_tp_before_after.png')
+            plt.savefig(sm_tp_before_after_map_path, dpi=300, bbox_inches='tight')
+            plt.close(fig)
+            std_print('SAVED', 'an', 'SM/TP brefore/after map', sm_tp_before_after_map_path)
+            print(f"[DEBUG an  ] Extent                            :          {min_lon:.1f}E to {max_lon:.1f}E, {min_lat:.1f}N to {max_lat:.1f}N")
+            return True  # Signal success
     except Exception as e:
         std_print('ERROR', 'an', f'Track {track_id} Plotting brefore/after maps:', str(e))
         traceback.print_exc()
@@ -1403,6 +1521,7 @@ def analyze_landfall_fluxes(ds, track_df, track_id, hours_before=24, hours_after
     # Calculate mean fluxes
     fluxes_before = {'latent': [], 'sensible': [], 'total': []}
     fluxes_after = {'latent': [], 'sensible': [], 'total': []}
+
     time_coord = 'time' if 'time' in ds.coords else 'valid_time'
     for t in pd.date_range(before_start, landfall_time, freq='h'):
         if t in ds[time_coord].values:

@@ -53,6 +53,11 @@ def get_environment(is_land_list):
         return "Mixed"  # Equal land and ocean points
 
 def extract_heat_flux_timeseries(ds, track_df, track_id, buffer_km=100):
+    """
+    Handles two ERA5 conventions:
+    1. Accumulated: slhf, sshf (J m⁻²) - negative = away from surface
+    2. Instantaneous Average: avg_slhtf, avg_ishf (W m⁻²) 
+    """
     track_id = int(track_id)
     std_print('INFO', 'hf', 'Dataset variables available', list(ds.data_vars.keys()))
     time_coord = 'time' if 'time' in ds.coords else 'valid_time'
@@ -61,6 +66,17 @@ def extract_heat_flux_timeseries(ds, track_df, track_id, buffer_km=100):
     track = track_df.sort_values('time').reset_index(drop=True)
     if 'is_land' not in track.columns:
         track['is_land'] = track.apply(lambda r: is_point_land(r['latitude'], r['longitude']), axis=1)
+
+    # Detect which flux type is available
+    has_accumulated = 'slhf' in ds.data_vars and 'sshf' in ds.data_vars
+    has_average = 'avg_slhtf' in ds.data_vars and 'avg_ishf' in ds.data_vars
+    if not (has_accumulated or has_average):
+        std_print('ERROR', 'hf', 
+                 'No valid heat flux variables found. Check dataset variables.',
+                 list(ds.data_vars))
+        return None
+    flux_type = 'average' if has_average else 'accumulated'
+    std_print('INFO', 'hf', 'Using flux type', flux_type)
 
     # Container
     flux_records = []
@@ -141,26 +157,27 @@ def extract_heat_flux_timeseries(ds, track_df, track_id, buffer_km=100):
                 })
             else:
                 std_print('WARN', 'hf', f'No data within buffer at {t_now}')
-                
+
         except Exception as e:
             std_print('ERROR', 'hf', f'Error processing time step at {t_now}', str(e))
             continue
-    
+
     if not flux_records:
         std_print('WARN', 'hf', f'Track {track_id}: No heat-flux data extracted')
         return None
-    
+
     std_print('INFO', 'hf', f'Extracted heat flux records for Track {track_id}', len(flux_records), 'records')
     return pd.DataFrame(flux_records)
 
-def analyze_flux_transition(
-    ds,
-    track_df,
-    track_id : int,
-    hours_before=24,
-    hours_after=24,
-    buffer_km=100,
-):
+def analyze_flux_transition(ds, track_df, track_id, hours_before=24, hours_after=24):
+    """
+    ERA5 Heat Flux Sign Convention:
+    - avg_slhtf, avg_ishf: W/m² (instantaneous, positive = away from surface)
+    - slhf, sshf: J/m² (accumulated, ERA5 convention: negative downward)
+
+    Conversion: W/m² = -dJ/m² / dt_seconds
+    (Negative sign flips downward → upward convention)
+    """
     track_id = int(track_id)
     time_coord = 'time' if 'time' in ds.coords else 'valid_time'
     track_df = track_df.sort_values('time')
@@ -371,7 +388,8 @@ def classify_md_duration(
     }
     return classification
 
-def plot_heat_flux_timeseries(flux_df, track_df, track_id, output_dir):
+def plot_heat_flux_timeseries(flux_df, track_id, output_dir):
+    track_id = int(track_id)
     if flux_df is None or len(flux_df) < 3:
         std_print('WARN', 'hf', f'Track {track_id}: Insufficient data points for heat flux plot', len(flux_df) if flux_df is not None else 0)
         return
@@ -429,9 +447,9 @@ def plot_heat_flux_timeseries(flux_df, track_df, track_id, output_dir):
     if 'is_land' in flux_df.columns:
         for i in range(len(flux_df) - 1):
             if flux_df.iloc[i]['is_land']:
-                ax3.axvspan(times.iloc[i], times.iloc[i+1], alpha=0.2, color='brown')
+                ax3.axvspan(times.iloc[i], times.iloc[i+1], alpha=0.2, color='brown', linewidth=0)
             else:
-                ax3.axvspan(times.iloc[i], times.iloc[i+1], alpha=0.2, color='blue')
+                ax3.axvspan(times.iloc[i], times.iloc[i+1], alpha=0.2, color='blue', linewidth=0)
 
     ax3.set_ylabel('Total Heat Flux (W/m²)', fontsize=11, fontweight='bold')
     ax3.set_xlabel('Time', fontsize=11, fontweight='bold')

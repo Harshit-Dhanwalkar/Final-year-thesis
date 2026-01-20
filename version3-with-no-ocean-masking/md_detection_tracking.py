@@ -45,10 +45,10 @@ import shapely.geometry as sgeom
 
 from utils import (
     std_print,
+    is_point_land,
+    find_landfall_time,
     setup_output_dir,
     export_results_to_csv,
-    find_landfall_time,
-    is_point_land,
     find_origin_type,
     classify_track_status,
     extract_spatial_subset,
@@ -83,11 +83,6 @@ from antecedent_analysis import (
     export_antecedent_results,
     plot_antecedent_sm_timeseries,
     plot_sm_tp_map,
-)
-
-from before_after_24hr import (
-    plot_md_24h_before_after_landfall,
-    plot_all_tracks_24h
 )
 
 from correlation_analysis import (
@@ -126,8 +121,8 @@ print("-------------------------------------------------------------------------
 
 DATA_DIR = os.path.join("..", "Data", "single-levels", "ncfiles")
 MONTH_DIRS = [
-    # "June-2024",
-    # "July-2024",
+    "June-2024",
+    "July-2024",
     "August-2024",
     "September-2024",
 ]
@@ -517,28 +512,28 @@ def diagnose_temporal_issues(ds):
         for idx in duplicate_indices[:5]:  # Show first 5
             print(f" >  [INFO md   ] Duplicate at index {idx}          :          {times[idx]}")
     else:
-        print(" >  [INFO md   ] No duplicate timestamps")
+        std_print('INFO', 'md', 'No duplicates timestamps')
 
     # Detect negative gaps (time goes backwards)
     std_print('INFO', 'md', 'Time continuity check')
     negative_gaps = np.where(time_diffs < 0)[0]
     if len(negative_gaps) > 0:
-        print(f" >  [INFO md   ] Found backward time jumps         :          {len(negative_gaps)}")
+        std_print('INFO', 'md', 'Found Time reversals', len(negative_gaps), 'backward jumps')
         for idx in negative_gaps[:5]:
             print(f" >  [INFO md   ] Jump backward at index {idx}          :           {times[idx]} -> {times[idx+1]} (difference: {time_diffs[idx]:.1f} hours)")
     else:
-        print(" >  [INFO md   ] Time is monotonically increasing")
+        std_print('INFO', 'md', 'Time is monotonically increasing')
 
     # Detect zero-gaps (identical consecutive times)
     zero_gaps = np.where(time_diffs == 0)[0]
     if len(zero_gaps) > 0:
-        print(f" >  [INFO md   ] Found identical consecutive timestamps:      {len(zero_gaps)}")
+        std_print('INFO', 'md', 'Found identical consecutive timestamps:', len(zero_gaps))
     if n_duplicates > 0:
-        print(f" >    Duplicates present                         :          {n_duplicates} repeated timestamps")
+        std_print('INFO', 'md', 'Duplicates present', n_duplicates, 'repeated timestamps')
     if len(negative_gaps) > 0:
-        print(f" >    Time reversals                             :          {len(negative_gaps)} backward jumps")
+        std_print('INFO', 'md', 'Time reversals', len(negative_gaps), 'backward jumps')
     if len(month_changes) > 0 and len(unique_diffs) > 1:
-        print(f" >    Files likely concatenated: Different resolutions at month boundaries")
+        std_print('INFO', 'md', 'Files likely concatenated:', 'Different resolutions at month boundaries')
 
     return {
         'times': times,
@@ -552,41 +547,46 @@ def diagnose_temporal_issues(ds):
     }
 
 
-def fix_temporal_resolution(
-    ds,
-    target_resolution_hours=1,
-    method='interpolate',
-):
+# def fix_temporal_resolution(ds, target_resolution_hours=1, method='interpolate'):
+def fix_temporal_resolution(ds, target_resolution_hours=1) : 
     time_coord = "time" if "time" in ds.coords else "valid_time"
     times = pd.to_datetime(ds[time_coord].values)
 
-    print(f" >  -- Temporal resampling --")
-    print(f" >  [INFO md   ] Dataset temporal resolution       :          {len(times)} time points")
-    if method == 'interpolate':
-        # Create regular time grid
-        time_start = times[0]
-        time_end = times[-1]
-        new_times = pd.date_range(
-            start=time_start,
-            end=time_end,
-            freq=f'{target_resolution_hours}h'
-        )
-        # Reindex dataset to regular grid with interpolation
-        ds_fixed = ds.reindex({time_coord: new_times}, method='nearest')
-        print(f" >  [INFO md   ] Resampled time points             :          {len(new_times)}/{target_resolution_hours}h")
-        # original_bounds = (ds[time_coord].min(), ds[time_coord].max())
-        # out_of_bounds = (new_times < original_bounds[0]) | (new_times > original_bounds[1])
-        # print(f" >  [INFO md   ] Interpolation: {out_of_bounds.sum()} points outside original time bounds")
-    else:
-        raise ValueError(f" >  [ERROR md  ] Unknown method: {method}")
+    std_print('INFO', 'md', 'Temporal resampling')
+    std_print('INFO', 'md', 'Dataset temporal resolution:', len(times), 'time points')
+    # Create regular time grid
+    time_start = times[0]
+    time_end = times[-1]
+    new_times = pd.date_range(
+        start=time_start,
+        end=time_end,
+        freq=f'{target_resolution_hours}h'
+    )
+    # Reindex dataset to regular grid with interpolation
+    ####
+    for var in ['u10', 'v10']:
+        if var in ds.data_vars:
+            ds[var] = ds[var].interp(
+                {time_coord: new_times}, 
+                method='nearest'
+            )
+    for var in ['tp', 'swvl1', 'msl', 't2m']:
+        if var in ds.data_vars:
+            ds[var] = ds[var].interp(
+                {time_coord: new_times}, 
+                method='linear',
+                kwargs={'fill_value': np.nan}
+            )
+    ####
+    ds_fixed = ds.reindex({time_coord: new_times}, method='nearest')
+    print(f" >  [INFO md   ] Resampled time points             :          {len(new_times)}/{target_resolution_hours}h")
+    # original_bounds = (ds[time_coord].min(), ds[time_coord].max())
+    # out_of_bounds = (new_times < original_bounds[0]) | (new_times > original_bounds[1])
+    # print(f" >  [INFO md   ] Interpolation: {out_of_bounds.sum()} points outside original time bounds")
     return ds_fixed
 
 
-def validate_temporal_consistency(
-    ds,
-    expected_hours=1,
-    tolerance=0.1,
-):
+def validate_temporal_consistency(ds, expected_hours=1, tolerance=0.1):
     time_coord = "time" if "time" in ds.coords else "valid_time"
     times = pd.to_datetime(ds[time_coord].values)
     time_diffs = np.diff(times).astype('timedelta64[m]').astype(float) / 60
@@ -681,13 +681,7 @@ def haversine(lon1, lat1, lon2, lat2):
     c = 2 * np.arcsin(np.sqrt(a))
     return EARTH_R * c
 
-def find_low_pressure_center(
-    data_slice: xr.Dataset,
-    time_step: np.datetime64,
-    prev_center: None,
-    search_radius_km: float = DISTANCE_THRESHOLD_KM,
-    smoothing_radius_km: int = 100,
-) -> Optional[Tuple[float, float]]:
+def find_low_pressure_center(data_slice, time_step, prev_center, search_radius_km = DISTANCE_THRESHOLD_KM, smoothing_radius_km = 100) :
     required_vars = ["msl", "u10", "v10", "tp"]
     if not all(var in data_slice.data_vars for var in required_vars):
         return None
@@ -781,6 +775,7 @@ def find_low_pressure_center(
             #     return None
     except Exception as e:
         print(f" >  [ERROR md  ] Finding low pressure center at {time_step}: {e}")
+
         return None
 
 def track_monsoon_depressions(
@@ -1054,13 +1049,9 @@ def consolidate_simultaneous_tracks(
 
     return final_tracks
 
-def smooth_track_coordinates(
-    track_df,
-    window_size = 5,
-    iterations = 2
-):
+def smooth_track_coordinates(track_df, window_size = 5, iterations = 2):
     if len(track_df) < window_size:
-        print(f" >  [ERROR md  ] Track have less points than       :          {window_size}")
+        std_print('ERROR', 'md', 'Track have less points than', window_size)
         return track_df
 
     track_df = track_df.copy()
@@ -1071,16 +1062,8 @@ def smooth_track_coordinates(
 
     for _ in range(iterations):
         # Moving average
-        lat_smooth = track_df['latitude'].rolling(
-            window=window_size, 
-            center=True, 
-            min_periods=1
-        ).mean()
-        lon_smooth = track_df['longitude'].rolling(
-            window=window_size, 
-            center=True, 
-            min_periods=1
-        ).mean()
+        lat_smooth = track_df['latitude'].rolling(window=window_size, center=True, min_periods=1).mean()
+        lon_smooth = track_df['longitude'].rolling(window=window_size, center=True, min_periods=1).mean()
         # Apply smoothed values
         track_df['latitude'] = lat_smooth
         track_df['longitude'] = lon_smooth
@@ -1108,11 +1091,7 @@ def calculate_track_direction(track_data):
 
     return bearing
 
-def filter_valid_tracks(
-    tracks,
-    min_duration=MIN_TRACK_DURATION_HOURS,
-    min_distance=MIN_NET_DISPLACEMENT_KM,
-):
+def filter_valid_tracks(tracks, min_duration=MIN_TRACK_DURATION_HOURS, min_distance=MIN_NET_DISPLACEMENT_KM):
     """Filter tracks by duration, displacement, and direction"""
     valid_tracks = []
     if isinstance(tracks, dict):
@@ -1159,14 +1138,14 @@ def process_files(ds):
         # Verify dataset has regular spacing
         if np.std(time_diffs) > 0.1:
             print(f" >  [WARN ] Irregular intervals detected")
-            ds = fix_temporal_resolution(ds, target_resolution_hours=1, method='interpolate')
+            ds = fix_temporal_resolution(ds, target_resolution_hours=1)
             times = pd.to_datetime(ds[time_coord].values)
             time_diffs = np.diff(times).astype('timedelta64[s]').astype(float) / 3600
             print(f" >  [INFO md   ] After fix Mean interval           :          {np.mean(time_diffs):.2f} hours")
 
         required_vars = ["msl", "u10", "v10", "tp"]
         if not all(var in ds.data_vars for var in required_vars):
-            print(f" >  [ERROR md  ] Missing required variables")
+            std_print('ERROR', 'md', 'Missing required variables:', required_vars)
             return None
 
         times = ds[time_coord].values
@@ -1306,7 +1285,7 @@ def process_files(ds):
         print(f" >  [FINAL   ] Tracks ready for analysis         :          {len(smoothed_tracks)}")
         return track_df_with_ids
     except Exception as e:
-        print(f" >  [ERROR md  ] process_files: {e}")
+        std_print('ERROR', 'md', 'process_files', e)
         traceback.print_exc()
         return None
     finally:
@@ -1472,7 +1451,6 @@ def plot_track_full_map(
     gl.xformatter = LongitudeFormatter()
     gl.yformatter = LatitudeFormatter()
 
-    # only plot this track
     track_data = track_df_single.sort_values("time")
     month = track_data["month"].iloc[0]
     color = month_colors.get(month, "black")
@@ -1769,6 +1747,7 @@ def load_dataset_async(month_dirs, data_dir, result_container):
         result_container["success"] = False
         return
     try:
+        # FIX: Issue: .compute() loads entire dataset into memory, Could cause OOM for very large datasets
         ds = xr.open_mfdataset(
             file_list,
             combine="by_coords",
@@ -1777,16 +1756,23 @@ def load_dataset_async(month_dirs, data_dir, result_container):
             compat='override',
             join='outer'
         ).compute()
-        # FIX: Issue: .compute() loads entire dataset into memory, Could cause OOM for very large datasets
-        # def load_dataset_async(data_dir, months):
-        #         ds = xr.open_mfdataset(
-        #         [os.path.join(data_dir, m, "*.nc") for m in months],
-        #         combine='by_coords',
-        #         chunks={'time': 24, 'latitude': 100, 'longitude': 100} 
-        #         )
+        # ds = xr.open_mfdataset(
+        #     file_list,
+        #     chunks={'time': 24},
+        #     combine='by_coords',
+        #     parallel=True,
+        #     coords='minimal',   # type: ignore[arg-type]
+        #     data_vars='minimal',
+        #     compat='override'
+        # )
+        if 'valid_time' in ds.coords and 'time' not in ds.coords:
+            ds = ds.rename({'valid_time': 'time'})
         ds = standardize_time_coord(ds)
-        std_print('INFO', 'md', 'Time coordinate standardized')
         ds = ds.sortby('time')
+        # ds = ds.sel(
+        #     latitude=slice(clipped_max_lat, clipped_min_lat),
+        #     longitude=slice(clipped_min_lon, clipped_max_lon)
+        # )
         result_container["ds"] = ds
         result_container["success"] = True
     except Exception as e:
@@ -1912,7 +1898,7 @@ def generate_summary_report(all_correlation_results, all_flux_results, all_landf
             f.write(f"   Tracks analyzed:                                 {len(df_sm)}\n")
             f.write(f"   Mean soil moisture:                              {df_sm['mean_swvl1'].mean():.3f} m³/m³\n")
             f.write(f"   Mean precipitation:                              {df_sm['mean_tp'].mean():.2f} mm/hr\n\n")
-    print(f" >> [SAVED   ] Summary report                    :         {report_path}")
+    std_print("SAVED", 'md', f'Summary report : {report_path}')
     return report_path
 
 if __name__ == "__main__":
@@ -1931,9 +1917,7 @@ if __name__ == "__main__":
     start_processing_time = time.time()
     num_files = len(MONTH_DIRS) * 3
     result_container = {"ds": None, "success": False, "error": None}
-    load_thread = threading.Thread(
-        target=load_dataset_async, args=(MONTH_DIRS, DATA_DIR, result_container)
-    )
+    load_thread = threading.Thread(target=load_dataset_async, args=(MONTH_DIRS, DATA_DIR, result_container,))
     load_thread.daemon = True
     load_thread.start()
 
@@ -1962,16 +1946,8 @@ if __name__ == "__main__":
         print("      Original dataset has variable time spacing")
         print("      Resampling to regular 1-hour grid...")
 
-        ds = fix_temporal_resolution(
-            ds,
-            target_resolution_hours=1,
-            method='interpolate'
-        )
-        is_valid, val_report = validate_temporal_consistency(
-            ds,
-            expected_hours=1,
-            tolerance=0.05
-        )
+        ds = fix_temporal_resolution(ds, target_resolution_hours=1)
+        is_valid, val_report = validate_temporal_consistency(ds, expected_hours=1, tolerance=0.05)
         if not is_valid:
             std_print('WARN', 'md', 'Some intervals still outside tolerance')
             std_print('WARN', 'md', 'This may affect tracking accuracy')
@@ -2103,27 +2079,27 @@ if __name__ == "__main__":
             # print(f" > [DEBUG  ] Total distance: {metrics.get('total_distance_km', 0):.1f} km")
             # 7) Generate Hovmöller Plots
             print("\n---------------------------------- Azimuthal Hovmoller Plots --------------------------")
-            print(f" >  [INFO md   ] Skipping Hovmöller for Track {track_id} for debug")
-            # print(f" >  [INFO md   ] Computing Hovmöller for Track {track_id}")
-            # hov_dir = os.path.join(track_dir, "hovmoller")
-            # os.makedirs(hov_dir, exist_ok=True)
-            # hov_data, track_times, landfall_index = compute_azimuthal_hovmoller(
-            #     ds=ds,
-            #     track_df=track_df,
-            #     radii_km=radii,
-            #     variables=variables,
-            #     n_theta=72
-            # )
-            # for var in variables:
-            #     print(f" >  [PLOTTING] Hovmöller for variable            :          {var}")
-            #     plot_hovmoller(
-            #         hov_arr=hov_data[var],
-            #         track_times=track_times,
-            #         radii_km=radii,
-            #         var_name=var,
-            #         track_df=track_df,
-            #         outdir=hov_dir
-            #     )
+            # print(f" >  [INFO md   ] Skipping Hovmöller for Track {track_id} for debug")
+            print(f" >  [INFO md   ] Computing Hovmöller for Track {track_id}")
+            hov_dir = os.path.join(track_dir, "hovmoller")
+            os.makedirs(hov_dir, exist_ok=True)
+            hov_data, track_times, landfall_index = compute_azimuthal_hovmoller(
+                ds=ds,
+                track_df=track_df,
+                radii_km=radii,
+                variables=variables,
+                n_theta=72
+            )
+            for var in variables:
+                print(f" >  [PLOTTING] Hovmöller for variable            :          {var}")
+                plot_hovmoller(
+                    hov_arr=hov_data[var],
+                    track_times=track_times,
+                    radii_km=radii,
+                    var_name=var,
+                    track_df=track_df,
+                    outdir=hov_dir
+                )
             # 8) Antecedent Soil Moisture Analysis
             print("\n-------------------------------- Antecedent Soil Moisture Analysis ---------------------")
             print(f" >  [INFO md   ] Computing antecedent SM for Track {track_id}")
@@ -2142,7 +2118,7 @@ if __name__ == "__main__":
                     track_df=track_df,
                     track_id=track_id,
                     buffer_km=100,
-                    land_only=True
+                    land_only=False
                 )
                 if multiwindow_results:
                     export_multiwindow_results(track_id, multiwindow_results, asm_dir)
@@ -2224,14 +2200,7 @@ if __name__ == "__main__":
             # 10) Landfall flux analysis
             print("\n----------------------------------- Landfall Flux Analysis -----------------------------")
             try:
-                landfall_result = analyze_flux_transition(
-                    ds,
-                    track_df,
-                    track_id,
-                    hours_before=24,
-                    hours_after=24,
-                    buffer_km=100
-                )
+                landfall_result = analyze_flux_transition(ds, track_df, track_id, hours_before=24, hours_after=24)
                 if landfall_result:
                     print(f" >  [INFO   ] Landfall flux transition Track {track_id}   :")
                     print(f"                Before landfall                  : \n"
@@ -2255,54 +2224,17 @@ if __name__ == "__main__":
             print("\n---------------------------------- Soil moisture analysis ------------------------------")
             print(f" >  [INFO md   ] SM analysis for Track {track_id}")
             try:
-                sm_result = compute_single_track_correlation(
-                    ds=ds,
-                    track_df=track_df,
-                    track_id=track_id,
-                    buffer_km=100
-                )
+                sm_result = compute_single_track_correlation(ds=ds, track_df=track_df, track_id=track_id, buffer_km=100)
                 if sm_result:
                     all_sm_results.append(sm_result)
                     sm_dir = os.path.join(track_dir, "sm_analysis")
                     os.makedirs(sm_dir, exist_ok=True)
-                    plot_track_timeseries(
-                        ds,
-                        track_df,
-                        track_id,
-                        buffer_km=100,
-                        output_dir=sm_dir
-                    )
-                    plot_spatial_tp_sm(
-                        ds,
-                        track_df,
-                        track_id,
-                        buffer_deg=5.0,
-                        output_dir=sm_dir
-                    )
+                    plot_track_timeseries(ds, track_df, track_id, buffer_km=100, output_dir=sm_dir)
+                    plot_spatial_tp_sm(ds, track_df, track_id, buffer_deg=5.0, output_dir=sm_dir)
                     print(f" >> [SAVED   ] SM analysis plots for Track {track_id}")
             except Exception as e:
                 print(f" >  [WARN ] SM analysis failed for track {track_id}: {e}")
-            # 12) Before/After Landfall Analysis
-            print("\n-------------------------------- Before/After Landfall Analysis ------------------------")
-            ba_dir = os.path.join(output_dir, "before_after_24h")
-            os.makedirs(ba_dir, exist_ok=True)
-            for track_id in unique_track_ids:
-                track_id = int(track_id)
-                try:
-                    track_subset = full_track_df[full_track_df['track_id'] == track_id]
-                    success = plot_md_24h_before_after_landfall(
-                        track_df=track_subset,
-                        track_id=track_id,
-                        output_dir=ba_dir
-                    )
-                    if success:
-                        print(f" >> [PLOTTED] 24h before/after plot for Track {track_id}")
-                    else:
-                        print(f" >  [WARN ] Could not create 24h plot for Track {track_id} (no landfall or insufficient data)")
-                except Exception as e:
-                    print(f" >  [ERROR md  ] Failed to create 24h plot for Track {track_id}: {e}")
-                    traceback.print_exc()
-            # 13) Heat Flux Analysis and MD Duration Classification
+            # 12) Heat Flux Analysis and MD Duration Classification
             print("\n------------------------------------ Heat Flux & Duration Analysis ---------------------")
             classification = classify_md_duration(track_df)
             classification['track_id'] = track_id
@@ -2311,12 +2243,7 @@ if __name__ == "__main__":
             print(f"                  Duration                       :          {classification['duration_hours']:.1f} hours ({classification['num_points']} points)")
             hf_dir = os.path.join(track_dir, "heat_flux_analysis")
             os.makedirs(hf_dir, exist_ok=True)
-            flux_df = extract_heat_flux_timeseries(
-                ds,
-                track_df,
-                track_id,
-                buffer_km=100
-            )
+            flux_df = extract_heat_flux_timeseries(ds, track_df, track_id, buffer_km=100)
             if flux_df is not None:
                 print(f" >  [INFO md   ] Heat flux data extracted          :          {len(flux_df)} points")
                 flux_analysis = analyze_heat_flux_evolution(flux_df, track_df, track_id)
@@ -2336,19 +2263,12 @@ if __name__ == "__main__":
                         print(f"                Ocean phase Total HF             :          {flux_analysis['ocean_mean_total_hf']:.1f} W/m²")
                         print(f"                Land phase Total HF              :          {flux_analysis['land_mean_total_hf']:.1f} W/m²")
                         print(f"                Change (Ocean->Land)             :          {flux_analysis['total_hf_change']:.1f} W/m²")
-                plot_heat_flux_timeseries(flux_df, track_df, track_id, hf_dir)
+                plot_heat_flux_timeseries(flux_df, track_id, hf_dir)
             else:
                 print(f" >  [WARN ] No heat flux data for Track {track_id}")
             print(f" >  [DEBUG   ] Heat flux transition analysis for Track {track_id}")
             try:
-                landfall_result = analyze_flux_transition(
-                    ds=ds,
-                    track_df=track_df,
-                    track_id=track_id,
-                    hours_before=24,
-                    hours_after=24,
-                    buffer_km=100
-                )
+                landfall_result = analyze_flux_transition(ds=ds, track_df=track_df, track_id=track_id, hours_before=24, hours_after=24)
                 if landfall_result:
                     all_landfall_results.append(landfall_result)
                     landfall_csv = os.path.join(hf_dir, f'track_{track_id}_flux_transition.csv')
@@ -2366,7 +2286,10 @@ if __name__ == "__main__":
             asm_output_dir = os.path.join(output_dir, "antecedent_analysis")
             os.makedirs(asm_output_dir, exist_ok=True)
             export_antecedent_results(all_asm_df, asm_output_dir)
-            print(f" >> [SAVED   ] Combined ASM results for tracks   :          {len(all_asm_df)} tracks")
+            std_print('INFO', 'md', f"Combined ASM results saved for {len(all_asm_df)} tracks")
+            # Correlation Analysis (ASM vs Precipitation and Duration)
+            std_print('INFO', 'md', "Computing ASM Correlations (Rainfall & Duration)")
+            duration_df = pd.DataFrame(all_classifications)
         else:
             print(f" >  [WARN ] No ASM results collected")
             all_asm_df = pd.DataFrame()
@@ -2381,26 +2304,13 @@ if __name__ == "__main__":
                 track_subset = full_track_df[full_track_df['track_id'] == track_id]
                 print(f" >  [INFO md   ] Generating Before/After Spatial Map for Track {track_id}")
                 print(f"      Using FULL track dataframe with {len(full_track_df[full_track_df['track_id'] == track_id])} points")
-                success =  plot_sm_tp_map(
-                    ds=ds,
-                    track_df=full_track_df,
-                    track_id=track_id,
-                    hours_before=24,
-                    hours_after=24,
-                    buffer_km=300,
-                    min_extent_deg=10.0,
-                    output_dir=asm_global_dir
-                )
+                success =  plot_sm_tp_map(ds=ds, track_df=full_track_df, track_id=track_id, hours_before=24, hours_after=24, buffer_km=300, min_extent_deg=10.0, output_dir=asm_global_dir)
                 if not success:
                     print(f" >  [WARN ] Failed to generate map for track {track_id}")
         print("\n------------------------- Global ASM Correlation Analysis ---------------------")
         asm_output_dir = os.path.join(output_dir, "antecedent_analysis")
         os.makedirs(asm_output_dir, exist_ok=True)
-        all_asm_df = compute_antecedent_sm_all_tracks(
-            ds=ds,
-            full_track_df=full_track_df,
-            buffer_km=100
-        )
+        all_asm_df = compute_antecedent_sm_all_tracks(ds=ds, full_track_df=full_track_df, hours_before_landfall=24, exclude_last_hours=6, buffer_km=100)
         if not all_asm_df.empty:
             export_antecedent_results(all_asm_df, asm_output_dir)
             print(f" >> [SAVED   ] Combined ASM results for          :          {len(all_asm_df)} tracks.")
@@ -2410,28 +2320,14 @@ if __name__ == "__main__":
             # A) Correlation: ASM vs. Precipitation (TP)
             # This checks if wetter soil before landfall leads to more rain after landfall
             print(" >  [INFO md   ] Computing correlation: ASM vs Precipitation")
-            corr_tp_df = compute_asm_tp_correlation(
-                ds=ds,
-                full_track_df=full_track_df,
-                asm_results_df=all_asm_df,
-                output_dir=asm_summary_dir
-            )
+            corr_tp_df = compute_asm_tp_correlation(ds=ds, full_track_df=full_track_df, asm_results_df=all_asm_df, output_dir=asm_summary_dir)
             # B) Correlation: ASM vs. Track Duration
             # This checks if wetter soil helps the MD survive longer inland (Brown Ocean Effect)
             print(" >  [INFO md   ] Computing correlation: ASM vs Duration")
             duration_df = pd.DataFrame(all_classifications)
-            corr_duration_df = compute_asm_duration_correlation(
-                asm_results_df=all_asm_df,
-                duration_df=duration_df,
-                output_dir=asm_summary_dir
-            )
+            corr_duration_df = compute_asm_duration_correlation(asm_results_df=all_asm_df, duration_df=duration_df, output_dir=asm_summary_dir)
             # C) Generate Final Summary Report
-            create_asm_summary_report(
-                asm_results_df=all_asm_df,
-                corr_tp_df=corr_tp_df,
-                corr_duration_df=corr_duration_df,
-                output_dir=asm_summary_dir
-            )
+            create_asm_summary_report(asm_results_df=all_asm_df, corr_tp_df=corr_tp_df, corr_duration_df=corr_duration_df, output_dir=asm_summary_dir)
         # Check if multi-window data is available
         if multiwindow_data:
             all_multiwindow_df = pd.concat(multiwindow_data, ignore_index=True)
@@ -2467,34 +2363,42 @@ if __name__ == "__main__":
                             traceback.print_exc()
                 else:
                     print(f" >  [WARN ] Skipping plot for Track {track_id}         : No valid ASM values")
-        # Also use all_asm_df for tracks that might not be in multiwindow_data
+        # Use all_asm_df for tracks that might not be in multiwindow_data
         elif not all_asm_df.empty:
-            for _, asm_row in all_asm_df.iterrows():
-                track_id = asm_row['track_id']
-                asm_value = asm_row['ASM_24h']
-                if not np.isnan(asm_value):
-                    track_subset = full_track_df[full_track_df['track_id'] == track_id]
-                    if len(track_subset) >= 3:
-                        print(f" >  [INFO md   ] Plotting before/after for Track {track_id} (ASM={asm_value:.4f})")
-                        try:
-                            success = plot_sm_tp_map(
-                                ds=ds,
-                                track_df=track_subset,
-                                track_id=track_id,
-                                hours_before=24,
-                                hours_after=24,
-                                buffer_km=100,
-                                output_dir=asm_output_dir
-                            )
-                            if success:
-                                print(f" >> [PLOTTED ] Before/after map created for Track {track_id}")
-                            else:
-                                print(f" >  [WARN ] Failed to create before/after map for Track {track_id}")
-                        except Exception as e:
-                            print(f" >  [ERROR md  ] Error creating before/after map for Track {track_id}: {e}")
-                            traceback.print_exc()
-                else:
-                    print(f" >  [WARN ] Skipping plot for Track {track_id}: Invalid ASM")
+            asm_col = None
+            available_asm_cols = [col for col in all_asm_df.columns if 'ASM_24h' in col]
+            if available_asm_cols:
+                asm_col = available_asm_cols[0]  # Use first available ASM column
+            if asm_col:
+                for _, asm_row in all_asm_df.iterrows():
+                    track_id = asm_row['track_id']
+                    asm_value = asm_row[asm_col]
+                    if not np.isnan(asm_value):
+                        track_subset = full_track_df[full_track_df['track_id'] == track_id]
+                        if len(track_subset) >= 3:
+                            print(f" >  [INFO md   ] Plotting before/after for Track {track_id} (ASM={asm_value:.4f})")
+                            try:
+                                success = plot_sm_tp_map(
+                                    ds=ds,
+                                    track_df=track_subset,
+                                    track_id=track_id,
+                                    hours_before=24,
+                                    hours_after=24,
+                                    buffer_km=100,
+                                    output_dir=asm_output_dir
+                                )
+                                if success:
+                                    print(f" >> [PLOTTED ] Before/after map created for Track {track_id}")
+                                else:
+                                    print(f" >  [WARN ] Failed to create before/after map for Track {track_id}")
+                            except Exception as e:
+                                print(f" >  [ERROR md  ] Error creating before/after map for Track {track_id}: {e}")
+                                traceback.print_exc()
+                    else:
+                        print(f" >  [WARN ] Skipping plot for Track {track_id}: Invalid ASM")
+            else:
+                print(f" >  [WARN ] No ASM_24h columns found in dataframe")
+                print(f" >  [WARN ] Available columns: {all_asm_df.columns.tolist()}")
         else:
             print(f" >  [WARN ] No ASM results to plot")
         print("\n-------------------------------- Multi-Window ASM Aggregation ---------------------------")
@@ -2538,17 +2442,6 @@ if __name__ == "__main__":
                         )
         else:
             print(f" >  [WARN] No multi-window ASM data to aggregate")
-        print("\n-------------------------------- Before/After 24h Landfall Analysis for all Tracks------------------------")
-        print(f" >  [INFO md   ] Creating before/after maps")
-        try:
-            success_count = plot_all_tracks_24h(
-                track_df=full_track_df,  # Use the full track dataframe
-                output_dir=os.path.join(output_dir, "before_after_24h", "all_tracks")
-            )
-            print(f" >> [SUMMARY] 24h before/after plots generated for {success_count} tracks")
-        except Exception as e:
-            print(f" >  [ERROR md  ] Failed to generate all tracks 24h plots: {e}")
-            traceback.print_exc()
         print("\n-------------------------------- Gloabl Flux Analysis for all Tracks------------------------")
         if all_flux_results:
             for i, flux_res in enumerate(all_flux_results):

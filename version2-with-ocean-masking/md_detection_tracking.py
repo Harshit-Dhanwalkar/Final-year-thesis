@@ -121,6 +121,7 @@ MSL_LOWER_BOUND_PA = 100000  # 99800                       # Pa
 PRECIPITATION_THRESHOLD_MM = 0.3                           # mm/hr
 VORTICITY_THRESHOLD = 5e-6           # > 0                 # /s
 
+MAX_SPEED_MS = 15 
 # MAX_GAP_HOURS = 12
 MAX_GAP_ALLOWED_HOURS = 6              # Bridge small gaps In Detection
 MERGE_DISTANCE_KM = 100                # Distance to consider two detections as same MD
@@ -766,7 +767,7 @@ def find_low_pressure_center(
 
 def track_monsoon_depressions(
     detections,
-    max_speed_ms=10,
+    max_speed_ms=15,
     search_radius_km=100,
     max_time_gap_hours=12
 ):
@@ -1330,7 +1331,7 @@ def process_files(ds):
         # Initial Tracking
         initial_tracks = track_monsoon_depressions(
             detections_df,
-            max_speed_ms=15,                         # Increased for MDs
+            max_speed_ms=MAX_SPEED_MS,                         # Increased for MDs
             search_radius_km=DISTANCE_THRESHOLD_KM,  # For better linking
             max_time_gap_hours=MAX_GAP_ALLOWED_HOURS # gaps
         )

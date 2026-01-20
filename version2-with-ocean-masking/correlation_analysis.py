@@ -259,7 +259,7 @@ def analyze_single_track(
     os.makedirs(output_dir, exist_ok=True)
     print(f" >  [INFO ca    ] Generating plots for Track {track_id}")
     try:
-        plot_tp_sm_time_series(tp_series, swvl1_series, valid_times, landfall_index, track_id, output_dir, originates_over_land)
+        plot_time_series(tp_series, swvl1_series, valid_times, landfall_index, track_id, output_dir, originates_over_land)
     except Exception as e:
         print(f" >  [WARNING ] Failed to create time series plot: {e}")
     try:
@@ -362,7 +362,7 @@ def analyze_single_track(
     return correlation_results
 
 
-def plot_tp_sm_time_series(
+def plot_time_series(
     tp,
     sm,
     valid_times,
@@ -462,7 +462,7 @@ def plot_tp_sm_time_series(
 
     track_dir = os.path.join(output_dir, "time_series")
     os.makedirs(track_dir, exist_ok=True)
-    plot_path = os.path.join(track_dir, f"track_{int(track_id)}_tp_sm_time_series.png")
+    plot_path = os.path.join(track_dir, f"track_{int(track_id)}_time_series.png")
     plt.savefig(plot_path, dpi=300, bbox_inches='tight')
     plt.close(fig)
     print(f" >> [SAVED   ] Time series plot                  :          {plot_path}")

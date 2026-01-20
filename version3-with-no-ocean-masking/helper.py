@@ -30,7 +30,7 @@ class IntegrationHelper:
         print("\n--- STEP 0: VERIFY UTILS INSTALLATION ---")
         utils_dir = self.project_root / 'utils'
         required_files = [
-            '__init__.py', 'land_utils.py', 'track_utils.py',
+            '__init__.py', 'track_utils.py',
             'spatial_utils.py', 'temporal_utils.py', 'io_utils.py', 'plot_utils.py'
         ]
         if not utils_dir.exists():
@@ -87,16 +87,16 @@ class IntegrationHelper:
                 continue
 
             print(f"\n{filename} ({file_code}):")
-            
+
             # Imports
             has_imports = self.check_file_imports(filename)
             print(f"  {'✓' if has_imports else '❌'} Utils imports added")
-            
+
             # Prints with line numbers
             count, lines = self.count_old_prints(filename)
             line_str = f" (Lines: {', '.join(map(str, lines))})" if lines else ""
             print(f"  {'✓' if count == 0 else '⚠️ '} Old-style prints: {count} remaining{line_str}")
-            
+
             # Landfall
             uses_new_landfall = self.check_landfall_usage(filename)
             print(f"  {'✓' if uses_new_landfall else '❌'} Uses find_landfall_time()")
