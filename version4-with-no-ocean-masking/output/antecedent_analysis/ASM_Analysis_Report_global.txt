@@ -1,5 +1,5 @@
-ANTECEDENT SOIL MOISTURE ANALYSIS - REPORT
-1. ANTECEDENT SOIL MOISTURE STATISTICS
+Antecedent soil moisture analysis - report
+1. Antecedent soil moisture statistics
   Number of tracks analyzed:                     6
   Mean ASM (24h before landfall):                0.0455 m³/m³
   Std Dev:                                       0.0267 m³/m³
@@ -7,9 +7,9 @@ ANTECEDENT SOIL MOISTURE ANALYSIS - REPORT
   Max:                                           0.0756 m³/m³
   Range:                                         0.0510 mÂ³/mÂ³
 
-2. ASM - PRECIPITATION CORRELATION
+2. ASM - Precipitation correlation
   ASM vs Mean TP:
-    Pearson r: -0.632, p-value: 0.565
+    Pearson r: -0.631, p-value: 0.5655
     Significance: NO
 
   ASM vs Max TP:
@@ -17,6 +17,6 @@ ANTECEDENT SOIL MOISTURE ANALYSIS - REPORT
     Significance: NO
 
   ASM vs Total TP:
-    Pearson r = -0.657, p-value = 0.5433
+    Pearson r = -0.659, p-value = 0.5417
     Significance: NO
 

@@ -31,6 +31,7 @@ from typing import Optional, Tuple, List, Dict
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import matplotlib.pyplot as plt
+from numba import none
 from numba.core.serialize import custom_rebuild
 from numba.core import analysis
 import numpy as np
@@ -109,6 +110,14 @@ from heatflux_analysis import (
     print_md_classification_summary
 )
 
+from coupling_metrics import (
+    compute_fsi_all_tracks,
+    compute_diurnal_amplitude_all_tracks,
+    compute_coupling_efficiency,
+    export_coupling_metrics,
+    generate_coupling_metrics_report,
+)
+
 import traceback
 
 output_dir = "output"
@@ -116,8 +125,7 @@ if not os.path.exists(output_dir):
     os.makedirs(output_dir)
     std_print('INFO', 'md', 'Created output directory', output_dir)
 else:
-    std_print('INFO', 'md', 'Using existing output directory', output_dir)
-print("----------------------------------------------------------------------------------------")
+    std_print('INFO', 'md', 'Using existing output directory', output_dir, '\n')
 
 DATA_DIR = os.path.join("..", "Data", "single-levels", "ncfiles")
 MONTH_DIRS = [
@@ -127,7 +135,8 @@ MONTH_DIRS = [
     "September-2024",
 ]
 
-DISTANCE_THRESHOLD_KM = 51  # 300      # km
+TRACKING_SEARCH_RADIUS_KM = 50    # For hourly tracking
+LINKING_SEARCH_RADIUS_KM = 100    # For multi-hour gaps
 # for wind creterion : https://mausam.imd.gov.in/imd_latest/monsoonreport2024.pdf page: 284
 WIND_SPEED_LOWER_BOUND_MS = 5        # == 17knots  # 8     # m/s
 WIND_SPEED_UPPER_BOUND_MS = 19       # == 27knots  # 16    # m/s
@@ -136,10 +145,11 @@ PRECIPITATION_THRESHOLD_MM = 0.3                           # mm/hr
 VORTICITY_THRESHOLD = 5e-6           # > 0                 # /s
 
 MAX_SPEED_MS = 15
-# MAX_GAP_HOURS = 12
-MAX_GAP_ALLOWED_HOURS = 6              # Bridge small gaps In Detection
-MERGE_DISTANCE_KM = 100                # Distance to consider two detections as same MD
-STITCH_DISTANCE_KM = 300
+MAX_GAP_HOURS = 12              # Bridge small gaps In Detection
+
+STITCH_DISTANCE_KM = 300   # 400 # For gap bridging
+MERGE_DISTANCE_KM = 350    # 100 # For simultaneous systems, distance to consider two detections as same MD
+
 MIN_TRACK_DURATION_HOURS = 24
 MIN_NET_DISPLACEMENT_KM = 250          # MD travel distance
 BUFFER = 5.0                           # deg
@@ -350,7 +360,6 @@ def calculate_vorticity(ds, lat_idx, lon_idx):
     vorticity = dv_dx - du_dy
     return vorticity
 
-
 def check_vorticity_criteria(data_slice, lat, lon):
     try:
         # Find the time step index
@@ -403,7 +412,7 @@ def check_vorticity_criteria(data_slice, lat, lon):
         return vorticity > VORTICITY_THRESHOLD, vorticity
 
     except Exception as e:
-        print(f" >  [ERROR md  ] Computing vorticity: {e}")
+        std_print('ERROR', 'md', 'Computing vorticity:', e)
         return False, np.nan
 
 def check_moisture_criteria(data_slice, lat, lon):
@@ -448,7 +457,6 @@ def compute_surface_heat_fluxes(ds, lat, lon, buffer_km=100):
     except:
         return {'latent_flux': np.nan, 'sensible_flux': np.nan, 'total_flux': np.nan}
 
-# Helper functions
 def diagnose_temporal_issues(ds):
     """
     Identifies:
@@ -461,31 +469,31 @@ def diagnose_temporal_issues(ds):
     #     ds = ds.rename({'valid_time': 'time'})
     time_coord = "time" if "time" in ds.coords else "valid_time"
     times = pd.to_datetime(ds[time_coord].values)
-    std_print('INFO', 'md', 'Temporal range')
-    print(f"      Start                                      :          {times[0]}")
-    print(f"      End                                        :          {times[-1]}")
-    print(f"      Total duration                             :          {(times[-1] - times[0]).total_seconds() / 3600:.1f} hours")
-    print(f"      Total points                               :          {len(times)}")
+    std_print(None, None, 'Start', times[0])
+    std_print(None, None, 'End', times[-1])
+    std_print(None, None, 'Total duration (hours)', f'{(times[-1] - times[0]).total_seconds() / 3600:.1f}')
+    std_print(None, None, 'Total points', len(times))
+    std_print(None, None, 'Total points', len(times))
 
     # Calculate time differences
     time_diffs = np.diff(times).astype('timedelta64[m]').astype(float) / 60  # Convert to hours
 
     std_print('INFO', 'md', 'Time step statistics')
-    print(f"      Mean interval                              :          {np.mean(time_diffs):.2f} hours")
-    print(f"      Median interval                            :          {np.median(time_diffs):.2f} hours")
-    print(f"      Std Dev                                    :          {np.std(time_diffs):.2f} hours")
-    print(f"      Min interval                               :          {np.min(time_diffs):.2f} hours")
-    print(f"      Max interval                               :          {np.max(time_diffs):.2f} hours")
-    # Identify a  nomalies
+    std_print(None, None, f'Mean interval   {np.mean(time_diffs):.2f} hours')
+    std_print(None, None, f'Median interval {np.median(time_diffs):.2f} hours')
+    std_print(None, None, f'Std Dev         {np.std(time_diffs):.2f} hours')
+    std_print(None, None, f'Min interval    {np.min(time_diffs):.2f} hours')
+    std_print(None, None, f'Max interval    {np.max(time_diffs):.2f} hours')
+    # Identify anomalies
     mode_diff = np.argmax(np.bincount(time_diffs.astype(int)))
-    print(f"      Most common interval                       :          {mode_diff} hours")
+    std_print(None, None ,'Most common interval (hours)', mode_diff)
 
     # Find irregular gaps
     unique_diffs, counts = np.unique(time_diffs.astype(int), return_counts=True)
     std_print('INFO', 'md', 'Time step distribution')
     for diff, count in sorted(zip(unique_diffs, counts), key=lambda x: x[1], reverse=True):
         percentage = 100 * count / len(time_diffs)
-        print(f" >  [INFO md   ] Hour intervals                    :         {diff:2d} for {count:4d} times ({percentage:5.1f}%)")
+        std_print(None, None, 'Hour intervals', f'{diff:2d} for {count:4d} times ({percentage:5.1f}%)')
 
     # Detect month boundaries
     std_print('INFO', 'md', 'Month boundary analysis')
@@ -494,23 +502,23 @@ def diagnose_temporal_issues(ds):
         if times[i].month != times[i-1].month:
             month_changes.append((i, times[i-1], times[i], time_diffs[i-1]))
     if month_changes:
-        print(f" >  [INFO md   ] Found {len(month_changes)} month transitions:")
+        std_print('INFO', 'md', f'Found {len(month_changes)} month transitions:')
         for idx, prev_time, curr_time, gap in month_changes:
-            print(f"      Index {idx}:     {prev_time.strftime('%Y-%m-%d %H:%M')} -> {curr_time.strftime('%Y-%m-%d %H:%M')}  (gap: {gap:.1f} hours)")
+            std_print(None, None, f"Index {idx}: {prev_time.strftime('%Y-%m-%d %H:%M')} -> {curr_time.strftime('%Y-%m-%d %H:%M')}  (gap: {gap:.1f} hours)")
     else:
-        print(" >  [INFO md   ] No month transitions detected (single continuous month)")
+        std_print('INFO', 'md','No month transitions detected (single continuous month)')
 
     # Detect duplicates
     std_print('INFO', 'md', 'Duplicate/overlap detection')
     unique_times, indices = np.unique(times, return_index=True)
     n_duplicates = len(times) - len(unique_times)
     if n_duplicates > 0:
-        std_print('INFO', 'md', 'Found duplicate timestamps', {n_duplicates})
+        std_print(None, None, 'Found duplicate timestamps', {n_duplicates})
         duplicate_mask = np.zeros(len(times), dtype=bool)
         duplicate_mask[indices] = True
         duplicate_indices = np.where(~duplicate_mask)[0]
         for idx in duplicate_indices[:5]:  # Show first 5
-            print(f" >  [INFO md   ] Duplicate at index {idx}          :          {times[idx]}")
+            std_print(None, None, f'Duplicate at index {idx} :', times[idx])
     else:
         std_print('INFO', 'md', 'No duplicates timestamps')
 
@@ -518,22 +526,22 @@ def diagnose_temporal_issues(ds):
     std_print('INFO', 'md', 'Time continuity check')
     negative_gaps = np.where(time_diffs < 0)[0]
     if len(negative_gaps) > 0:
-        std_print('INFO', 'md', 'Found Time reversals', len(negative_gaps), 'backward jumps')
+        std_print(None, None, 'Found Time reversals', len(negative_gaps), 'backward jumps')
         for idx in negative_gaps[:5]:
-            print(f" >  [INFO md   ] Jump backward at index {idx}          :           {times[idx]} -> {times[idx+1]} (difference: {time_diffs[idx]:.1f} hours)")
+            std_print(None, None, f'Jump backward at index {idx}', f'{times[idx]} -> {times[idx+1]} (difference: {time_diffs[idx]:.1f} hours)')
     else:
         std_print('INFO', 'md', 'Time is monotonically increasing')
 
     # Detect zero-gaps (identical consecutive times)
     zero_gaps = np.where(time_diffs == 0)[0]
     if len(zero_gaps) > 0:
-        std_print('INFO', 'md', 'Found identical consecutive timestamps:', len(zero_gaps))
+        std_print('INFO', 'md', 'Found identical consecutive timestamps', len(zero_gaps))
     if n_duplicates > 0:
         std_print('INFO', 'md', 'Duplicates present', n_duplicates, 'repeated timestamps')
     if len(negative_gaps) > 0:
         std_print('INFO', 'md', 'Time reversals', len(negative_gaps), 'backward jumps')
     if len(month_changes) > 0 and len(unique_diffs) > 1:
-        std_print('INFO', 'md', 'Files likely concatenated:', 'Different resolutions at month boundaries')
+        std_print('INFO', 'md', 'Files likely concatenated', 'Different resolutions at month boundaries')
 
     return {
         'times': times,
@@ -546,14 +554,12 @@ def diagnose_temporal_issues(ds):
         'zero_gaps': zero_gaps
     }
 
-
 # def fix_temporal_resolution(ds, target_resolution_hours=1, method='interpolate'):
-def fix_temporal_resolution(ds, target_resolution_hours=1) : 
+def fix_temporal_resolution(ds, target_resolution_hours=1):
     time_coord = "time" if "time" in ds.coords else "valid_time"
     times = pd.to_datetime(ds[time_coord].values)
 
-    std_print('INFO', 'md', 'Temporal resampling')
-    std_print('INFO', 'md', 'Dataset temporal resolution:', len(times), 'time points')
+    std_print('INFO', 'md', 'Dataset temporal resolution', len(times), 'time points')
     # Create regular time grid
     time_start = times[0]
     time_end = times[-1]
@@ -579,12 +585,11 @@ def fix_temporal_resolution(ds, target_resolution_hours=1) :
             )
     ####
     ds_fixed = ds.reindex({time_coord: new_times}, method='nearest')
-    print(f" >  [INFO md   ] Resampled time points             :          {len(new_times)}/{target_resolution_hours}h")
+    std_print('INFO', 'md', 'Resampled time points (hours):',  f'{len(new_times)}/{target_resolution_hours}')
     # original_bounds = (ds[time_coord].min(), ds[time_coord].max())
     # out_of_bounds = (new_times < original_bounds[0]) | (new_times > original_bounds[1])
     # print(f" >  [INFO md   ] Interpolation: {out_of_bounds.sum()} points outside original time bounds")
     return ds_fixed
-
 
 def validate_temporal_consistency(ds, expected_hours=1, tolerance=0.1):
     time_coord = "time" if "time" in ds.coords else "valid_time"
@@ -612,32 +617,27 @@ def validate_temporal_consistency(ds, expected_hours=1, tolerance=0.1):
         'mean_interval': np.mean(time_diffs),
         'violations': np.where(~within_tolerance)[0].tolist()
     }
-    print(f" >  -- Temporal validation --")
-    print(f"      Expected                                   :          {expected_hours}±{tolerance*100:.0f}% hours")
-    print(f"      Compliance                                 :          {n_valid}/{n_total} intervals ({validity_pct:.1f}%)")
-    print(f"      Valid                                      :          {'YES' if is_valid else 'NO'}")
+    std_print('INFO', 'md', 'Temporal validation')
+    std_print('Expected :', f'{expected_hours}±{tolerance*100:.0f}% hours')
+    std_print('Compliance :', f'{n_valid}/{n_total} intervals ({validity_pct:.1f}%)')
+    std_print('Valid :', f"{'YES' if is_valid else 'NO'}")
     if not is_valid and len(report['violations']) > 0:
-        print(f" >  [INFO md   ] Violations at indices             :          {report['violations'][:10]}")
+        std_print(None, None, 'Violations at indices :', f"{report['violations'][:10]}")
     return is_valid, report
-
 
 def resample_dataset_to_resolution(ds, target_hours=1):
     time_coord = "time" if "time" in ds.coords else "valid_time"
     times = pd.to_datetime(ds[time_coord].values)
     if target_hours == 1:
-        print(f" >  [INFO md   ] Dataset at 1-hourly resolution    :          {len(times)} steps")
+        std_print('INFO', 'md', 'Dataset at 1-hourly resolution :', f'{len(times)} steps')
         return ds
-    new_times = pd.date_range(
-        start=times[0],
-        end=times[-1],
-        freq=f'{target_hours}h'
-    )
+    new_times = pd.date_range(start=times[0], end=times[-1], freq=f'{target_hours}h')
     original_count = len(times)
     new_count = len(new_times)
-    print(f" >  [TEMPORAL RESAMPLING]")
-    print(f"      Input                                      :          {original_count} time steps (hourly)")
-    print(f"      Output                                     :          {new_count} time steps ({target_hours}-hourly)")
-    print(f"      Reduction                                  :          {100*(1-new_count/original_count):.1f}%")
+    std_print('INFO', 'md', 'Temporal resampling')
+    std_print(None, None, 'Input :', f'{original_count} time steps (hourly)')
+    std_print(None, None, 'Output :', f'{new_count} time steps ({target_hours}-hourly)')
+    std_print(None, None, 'Reduction :', f'{100*(1-new_count/original_count):.1f}%')
 
     # Interpolate all variables to new time grid
     ds_resampled = ds.interp(
@@ -648,7 +648,6 @@ def resample_dataset_to_resolution(ds, target_hours=1):
     )
     return ds_resampled
 
-### Helper function
 def ensure_flux_results_complete(all_flux_results, all_classifications):
     """Ensure all_flux_results has required fields from classifications"""
     if not all_flux_results or not all_classifications:
@@ -681,11 +680,10 @@ def haversine(lon1, lat1, lon2, lat2):
     c = 2 * np.arcsin(np.sqrt(a))
     return EARTH_R * c
 
-def find_low_pressure_center(data_slice, time_step, prev_center, search_radius_km = DISTANCE_THRESHOLD_KM, smoothing_radius_km = 100) :
+def find_low_pressure_center(data_slice, time_step, prev_center, search_radius_km = TRACKING_SEARCH_RADIUS_KM, smoothing_radius_km = 100) :
     required_vars = ["msl", "u10", "v10", "tp"]
     if not all(var in data_slice.data_vars for var in required_vars):
         return None
-
     try:
         msl_data = data_slice["msl"]
         u_data = data_slice["u10"]
@@ -716,9 +714,8 @@ def find_low_pressure_center(data_slice, time_step, prev_center, search_radius_k
             if prev_center is not None:
                 prev_lat, prev_lon = prev_center
                 distance = haversine(prev_lon, prev_lat, lon, lat)
-                if distance > DISTANCE_THRESHOLD_KM:
+                if distance > search_radius_km:
                     continue
-
             candidates.append({
                 'lat': lat,
                 'lon': lon,
@@ -771,19 +768,13 @@ def find_low_pressure_center(data_slice, time_step, prev_center, search_radius_k
             # }
             # i = 0
             # if i % 100000 == 0:  # Print every nth time step
-            #     print(f" [DEBUG   ] t={time_step}: {debug_info}")
+            #     std_print('DEBUG', 'md', f't={time_step}: {debug_info}')
             #     return None
     except Exception as e:
-        print(f" >  [ERROR md  ] Finding low pressure center at {time_step}: {e}")
-
+        std_print('ERROR', 'md', f'Finding low pressure center at {time_step} :', e)
         return None
 
-def track_monsoon_depressions(
-    detections,
-    max_speed_ms=15,
-    search_radius_km=100,
-    max_time_gap_hours=12
-):
+def track_monsoon_depressions(detections, max_speed_ms=15, search_radius_km = TRACKING_SEARCH_RADIUS_KM, max_time_gap_hours = MAX_GAP_HOURS):
     if detections.empty:
         return []
     detections = detections.sort_values("time").reset_index(drop=True)
@@ -803,25 +794,25 @@ def track_monsoon_depressions(
         for i in range(1, len(time_steps)):
             diff = (time_steps[i] - time_steps[i-1]).total_seconds() / 3600
             time_diffs.append(diff)
-        print(f" >  [DEBUG   ] Time gaps between detections:")
-        print(f"                Mean                             :          {np.mean(time_diffs):.1f} hours")
-        print(f"                Min/Max                          :          {np.min(time_diffs):.1f}/{np.max(time_diffs):.1f} hours")
-        print(f"                Std Dev                          :          {np.std(time_diffs):.1f} hours")
+        std_print('DEBUG', 'md', 'Time gaps between detections :')
+        std_print(None, None, 'Mean (hours)', f'{np.mean(time_diffs):.1f}')
+        std_print(None, None, 'Min/Max (hours)', f'{np.min(time_diffs):.1f}/{np.max(time_diffs):.1f}')
+        std_print(None, None, 'Std Dev (hours)', f'{np.std(time_diffs):.1f} hours')
         # Show distribution of gaps
         unique_gaps, gap_counts = np.unique(np.round(time_diffs), return_counts=True)
         for gap, count in sorted(zip(unique_gaps, gap_counts)):
-            print(f"                Hour gaps of length              :          {int(gap)} occur {count} times")
+            std_print(None, None, 'Hour gaps of length', f'{int(gap)} occur {count} times')
 
     tracks = []
     if len(time_steps) < 2:
-        print(" >  [WARN ] Not enough time steps for tracking")
+        std_print('WARN', 'Not enough time steps for tracking')
         return tracks
 
     active_tracks = {}
     first_detections = time_groups.get_group(time_steps[0])
     for i, (_, row) in enumerate(first_detections.iterrows()):
         active_tracks[i] = [row]
-    print(f" >  [INFO md   ] Initial active tracks             :          {len(active_tracks)}")
+    std_print('INFO', 'md', 'Initial active tracks ', f'{len(active_tracks)}')
     for t_idx in range(1, len(time_steps)):
         current_hour = time_steps[t_idx]
         current_detections = time_groups.get_group(current_hour)
@@ -830,7 +821,7 @@ def track_monsoon_depressions(
 
         # Only proceed if time gap is reasonable
         if time_diff_hours > max_time_gap_hours:
-            print(f" >  [INFO md   ] Large time gap                    :          {time_diff_hours:.1f} hours from {prev_hour} to {current_hour}")
+            std_print(None, None, 'Large time gap ', f'{time_diff_hours:.1f} hours from {prev_hour} to {current_hour}')
             # End all current tracks
             for track_id, points in list(active_tracks.items()):
                 if len(points) >= 3:
@@ -909,17 +900,12 @@ def track_monsoon_depressions(
     for points in active_tracks.values():
         if len(points) >= 3:
             tracks.append(pd.DataFrame(points))
-    print(f" >  [INFO md   ] Tracks found                      :          {len(tracks)}")
+    std_print('INFO', 'md', 'Tracks found :', f'{len(tracks)}')
     return tracks
 
-def stitch_sequential_tracks(
-    tracks: List[pd.DataFrame],
-    gap_hours=6,
-    dist_km=400,
-) -> List[pd.DataFrame]:
+def stitch_sequential_tracks(tracks, max_time_gap_hours=6, dist_km=400):
     if not tracks:
        return []
-
     # Sort tracks by start time
     tracks = sorted(tracks, key=lambda x: x['time'].iloc[0])
     stitched = []
@@ -929,7 +915,6 @@ def stitch_sequential_tracks(
         if i in used: continue
         current_track = tracks[i].copy()
         used.add(i)
-
         any_joined = True
         while any_joined:
             any_joined = False
@@ -944,7 +929,7 @@ def stitch_sequential_tracks(
 
                 # Check time gap
                 hour_gap = (start_time - last_time).total_seconds() / 3600
-                if 0 < hour_gap <= gap_hours:
+                if 0 < hour_gap <= max_time_gap_hours:
                     # Check distance gap
                     d = haversine(last_lon, last_lat, next_track['longitude'].iloc[0], next_track['latitude'].iloc[0])
                     if d < dist_km:
@@ -990,13 +975,8 @@ def stitch_sequential_tracks(
 #         final_tracks.append(base)
 #     return final_tracks
 
-def consolidate_simultaneous_tracks(
-    tracks,
-    dist_km=350,
-    time_tolerance_hours=1,
-):
+def consolidate_simultaneous_tracks(tracks, dist_km=350, time_tolerance_hours=1):
     if not tracks: return []
-
     final_tracks = []
     used_indices = set()
 
@@ -1030,12 +1010,7 @@ def consolidate_simultaneous_tracks(
                         if not base_subset.empty and not other_subset.empty:
                             p1 = base_subset.iloc[0]
                             p2 = other_subset.iloc[0]
-                            d = haversine(
-                                p1['longitude'],
-                                p1['latitude'],
-                                p2['longitude'],
-                                p2['latitude']
-                            )
+                            d = haversine(p1['longitude'], p1['latitude'], p2['longitude'], p2['latitude'])
                             overlap_dists.append(d)
                     if overlap_dists and np.mean(overlap_dists) < dist_km:
                         # Merge: keep lower pressure at each time
@@ -1046,7 +1021,6 @@ def consolidate_simultaneous_tracks(
                                 .sort_values('time'))
                         used_indices.add(j)
         final_tracks.append(base)
-
     return final_tracks
 
 def smooth_track_coordinates(track_df, window_size = 5, iterations = 2):
@@ -1057,7 +1031,7 @@ def smooth_track_coordinates(track_df, window_size = 5, iterations = 2):
     track_df = track_df.copy()
     # Check if required columns exist
     if 'latitude' not in track_df.columns or 'longitude' not in track_df.columns:
-        print(" >  [ERROR md  ] Track DataFrame is missing 'latitude' and/or 'longitude' columns")
+        std_print('ERROR', 'md', "Track DataFrame is missing 'latitude' and/or 'longitude' columns")
         return track_df
 
     for _ in range(iterations):
@@ -1078,7 +1052,6 @@ def calculate_track_direction(track_data):
     end_lat = track_data.iloc[-1]["latitude"]
     end_lon = track_data.iloc[-1]["longitude"]
 
-    # Calculate bearing
     lat1, lon1 = np.radians(start_lat), np.radians(start_lon)
     lat2, lon2 = np.radians(end_lat), np.radians(end_lon)
 
@@ -1123,39 +1096,38 @@ def filter_valid_tracks(tracks, min_duration=MIN_TRACK_DURATION_HOURS, min_dista
         valid_tracks.append(track)
     return valid_tracks
 
-
 def process_files(ds):
     try:
         time_coord = "time" if "time" in ds.coords else "valid_time"
         times = pd.to_datetime(ds[time_coord].values)
         time_diffs = np.diff(times).astype('timedelta64[s]').astype(float) / 3600
 
-        print(f" >  -- Temporal check --")
-        print(f"      Dataset time steps                         :          {len(times)}")
-        print(f"      Mean interval                              :          {np.mean(time_diffs):.2f} hours")
-        print(f"      Min interval                               :          {np.min(time_diffs):.2f} hours")
-        print(f"      Max interval                               :          {np.max(time_diffs):.2f} hours")
+        std_print('INFO', 'md', 'Temporal check')
+        std_print(None, None, 'Dataset time steps :', len(times))
+        std_print(None, None, 'Mean interval (hours)', f'{np.mean(time_diffs):.2f}')
+        std_print(None, None, 'Min interval  (hours)', f'{np.min(time_diffs):.2f}')
+        std_print(None, None, 'Max interval  (hours)', f'{np.max(time_diffs):.2f}')
         # Verify dataset has regular spacing
         if np.std(time_diffs) > 0.1:
             print(f" >  [WARN ] Irregular intervals detected")
             ds = fix_temporal_resolution(ds, target_resolution_hours=1)
             times = pd.to_datetime(ds[time_coord].values)
             time_diffs = np.diff(times).astype('timedelta64[s]').astype(float) / 3600
-            print(f" >  [INFO md   ] After fix Mean interval           :          {np.mean(time_diffs):.2f} hours")
+            std_print('INFO', 'md', 'After fix Mean interval (hours)', f'{np.mean(time_diffs):.2f}')
 
         required_vars = ["msl", "u10", "v10", "tp"]
         if not all(var in ds.data_vars for var in required_vars):
-            std_print('ERROR', 'md', 'Missing required variables:', required_vars)
+            std_print('ERROR', 'md', 'Missing required variables', required_vars)
             return None
 
         times = ds[time_coord].values
-        print(f" >  [INFO md   ] Time range                        :          {times[0]} to {times[-1]}")
-        print(f" >  [INFO md   ] Number of time steps              :          {len(times)}")
+        std_print('INFO', 'md', 'Time range :', f'{times[0]} to {times[-1]}')
+        std_print('INFO', 'md', 'Number of time steps :', len(times))
 
         md_detections = []
         prev_center = None
         detection_count = 0
-        print(f" >  -- Detection progress --")
+        std_print('INFO', 'md', 'Detection progress')
         total_steps = len(times)
         # spinner = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
         spinner = ["◜", "◝", "◞", "◟"]
@@ -1179,9 +1151,9 @@ def process_files(ds):
                 data_slice,
                 time_step,
                 prev_center,
-                search_radius_km=DISTANCE_THRESHOLD_KM
+                search_radius_km = TRACKING_SEARCH_RADIUS_KM,
+                smoothing_radius_km = 100
             )
-
             if center is not None:
                 lat, lon = center
                 data_slice = ds.sel(time=time_step)
@@ -1201,45 +1173,44 @@ def process_files(ds):
             else:
                 prev_center = None  # Reset if no detection
 
-        print(f"\r >  [INFO md   ] Total detections found            :          {detection_count} / {total_steps} time steps")
-        print(f"      Detection rate                             :          {100*detection_count/total_steps:.1f}%")
+        std_print('\rINFO', 'md', 'Total detections found :', f'{detection_count} / {total_steps} time steps')
+        std_print(None, None, 'Detection rate', f'{100*detection_count/total_steps:.1f}%')
         if not md_detections:
-            print(" >  [INFO md   ] No MD centers detected")
+            std_print('INFO', 'md', 'No MD centers detected')
             return None
 
         detections_df = pd.DataFrame(md_detections)
         detections_df["month"] = pd.to_datetime(detections_df["time"]).dt.strftime("%B")
         # Verify detection times are on the hour
         detection_hours = [int(h) for h in detections_df['time'].dt.hour.unique()]
-        print(f" >  [INFO md   ] Detections occur at hours         :          {sorted(detection_hours)}")
+        std_print(None, None, 'Detections occur at hours', sorted(detection_hours))
         # Initial Tracking
         initial_tracks = track_monsoon_depressions(
             detections_df,
-            max_speed_ms=MAX_SPEED_MS,
-            search_radius_km=DISTANCE_THRESHOLD_KM,  # For better linking
-            max_time_gap_hours=MAX_GAP_ALLOWED_HOURS
+            max_speed_ms = MAX_SPEED_MS,
+            search_radius_km = LINKING_SEARCH_RADIUS_KM,  # larger for better linking
+            max_time_gap_hours = MAX_GAP_HOURS
         )
-        print(f" >  [INFO md   ] Initial raw tracks found          :          {len(initial_tracks)}")
+        std_print('INFO', 'md', 'Initial raw tracks found :', len(initial_tracks))
 
         # Filter out very short tracks immediately (<5 points)
         initial_tracks = [t for t in initial_tracks if len(t) >= 5]
-        print(f" >  [INFO md   ] After removing very short tracks  :          {len(initial_tracks)}")
+        std_print('INFO', 'md', 'After removing very short tracks :', len(initial_tracks))
 
         # Stitch sequential fragments (gaps)
         stitched_tracks = stitch_sequential_tracks(
             initial_tracks,
-            # gap_hours=MAX_GAP_HOURS,
-            gap_hours=MAX_GAP_ALLOWED_HOURS,
-            dist_km=STITCH_DISTANCE_KM
+            max_time_gap_hours = MAX_GAP_HOURS,
+            dist_km = STITCH_DISTANCE_KM
         )
-        print(f" >  [INFO md   ] Tracks after stitching gaps       :          {len(stitched_tracks)}")
+        std_print('INFO', 'md', 'Tracks after stitching gaps :', len(stitched_tracks))
 
         # Consolidate simultaneous/overlapping tracks (Spatial Merge)
         consolidated_tracks = consolidate_simultaneous_tracks(
             stitched_tracks,
-            dist_km=MERGE_DISTANCE_KM
+            dist_km = MERGE_DISTANCE_KM
         )
-        print(f" >  [INFO md   ] Tracks after consolidating centers:          {len(consolidated_tracks)}")
+        std_print('INFO', 'md', 'Tracks after consolidating centers :', len(consolidated_tracks))
 
         # # Filter by environment
         # ocean_tracks = filter_tracks_by_environment(
@@ -1254,9 +1225,9 @@ def process_files(ds):
             min_duration=MIN_TRACK_DURATION_HOURS,
             min_distance=MIN_NET_DISPLACEMENT_KM
         )
-        print(f" >  [INFO md   ] Valid tracks after QC             :          {len(filtered_valid_tracks)}")
+        std_print('INFO', 'md', 'Valid tracks after QC :', len(filtered_valid_tracks))
         if not filtered_valid_tracks:
-            print(" >  [INFO md   ] No tracks survived filtering criteria")
+            std_print(None, None, 'No tracks survived filtering criteria')
             return pd.DataFrame()  # Return empty dataframe
 
         # Smooth each track
@@ -1282,7 +1253,7 @@ def process_files(ds):
             track_df_with_ids['month'] = pd.to_datetime(
                 track_df_with_ids['time']
             ).dt.strftime("%B")
-        print(f" >  [FINAL   ] Tracks ready for analysis         :          {len(smoothed_tracks)}")
+        std_print('FINAL', 'md', 'Tracks ready for analysis :', len(smoothed_tracks))
         return track_df_with_ids
     except Exception as e:
         std_print('ERROR', 'md', 'process_files', e)
@@ -1307,14 +1278,7 @@ def plot_tracks(track_df, output_dir="output"):
     ax.add_feature(cfeature.STATES, linewidth=0.5, linestyle='--', alpha=0.7)
     ax.add_feature(cfeature.RIVERS, linewidth=0.5, alpha=0.5)
 
-    gl = ax.gridlines(
-        crs=ccrs.PlateCarree(),
-        draw_labels=True,
-        linewidth=0.4,
-        color="gray",
-        alpha=0.6,
-        linestyle="--",
-    )
+    gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True, linewidth=0.4, color="gray", alpha=0.6, linestyle="--")
     gl.top_labels = False
     gl.right_labels = False
     gl.xformatter = LongitudeFormatter()
@@ -1379,7 +1343,6 @@ def plot_tracks(track_df, output_dir="output"):
         )
 
     legend_handles = []
-
     for month, color in month_colors.items():
         if month in track_df["month"].unique():
             (legend_line,) = plt.plot(
@@ -1419,13 +1382,7 @@ def plot_tracks(track_df, output_dir="output"):
     # plt.show()
     plt.close()
 
-
-def plot_track_full_map(
-    track_df_single,
-    track_id,
-    full_extent,
-    output_dir,
-):
+def plot_track_full_map(track_df_single, track_id, full_extent, output_dir):
     fig = plt.figure(figsize=(12, 8))
     ax: GeoAxes = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree()) # type: ignore[assignment]
 
@@ -1438,14 +1395,7 @@ def plot_track_full_map(
     ax.add_feature(cfeature.STATES, linewidth=0.5, linestyle='--')
     ax.add_feature(cfeature.RIVERS)
 
-    gl = ax.gridlines(
-        crs=ccrs.PlateCarree(),
-        draw_labels=True,
-        linewidth=0.5,
-        color="gray",
-        alpha=0.5,
-        linestyle="--",
-    )
+    gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True, linewidth=0.5, color="gray", alpha=0.5, linestyle="--")
     gl.top_labels = False
     gl.right_labels = False
     gl.xformatter = LongitudeFormatter()
@@ -1532,27 +1482,15 @@ def plot_single_track(track_df, track_id, output_dir):
     ax.add_feature(cfeature.BORDERS, linestyle=":", alpha=0.5, linewidth=0.6, zorder=6)
     ax.add_feature(cfeature.STATES, linewidth=0.4, linestyle='--', alpha=0.6)
     ax.add_feature(cfeature.RIVERS, linewidth=0.4, alpha=0.5)
-    gl = ax.gridlines(
-        crs=ccrs.PlateCarree(),
-        draw_labels=True,
-        linewidth=0.5,
-        color="gray",
-        alpha=0.5,
-        linestyle="--",
-    )
+
+    gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True, linewidth=0.5, color="gray", alpha=0.5, linestyle="--")
     gl.top_labels = False
     gl.right_labels = False
     gl.xformatter = LongitudeFormatter()
     gl.yformatter = LatitudeFormatter()
 
     # Helper: common bbox style used for start, end and landfall annotattion
-    common_bbox = dict(
-        boxstyle="round,pad=0.05",
-        facecolor="white",
-        alpha=0.7,
-        edgecolor="none",
-        linewidth=0.8
-    )
+    common_bbox = dict(boxstyle="round,pad=0.05", facecolor="white", alpha=0.7, edgecolor="none", linewidth=0.8)
     for track_plot_index, (track_id_str, track_data) in enumerate(track_df.groupby("track_id")):
         track_data = track_data.sort_values("time")
         start_point = track_data.iloc[0]
@@ -1679,19 +1617,8 @@ def plot_single_track(track_df, track_id, output_dir):
                     bbox=common_bbox,
                     zorder=7
                 )
-    ax.set_title(
-        f"Monsoon Depression Track {track_id}\n{start_time_str} to {end_time_str}",
-        fontsize=12,
-        fontweight='bold',
-        pad=10
-    )
-    ax.legend(
-        loc='upper left',
-        fontsize=9,
-        framealpha=0.95,
-        edgecolor='black',
-        fancybox=True
-    )
+    ax.set_title(f"Monsoon Depression Track {track_id}\n{start_time_str} to {end_time_str}", fontsize=12, fontweight='bold', pad=10)
+    ax.legend(loc='upper left', fontsize=9, framealpha=0.95, edgecolor='black', fancybox=True)
     plt.tight_layout()
 
     track_id_str = str(track_id).replace('/', '_').replace(' ', '_')
@@ -1716,7 +1643,6 @@ def export_track_coordinates(track_df, output_dir):
     print(f" >> [INFO md   ] No. of Track Coordinates to export:         {len(track_df)}")
     print(f" >> [EXPORTED] Track Coordinates detections CSV  :         {output_filename}")
 
-
 def export_single_track_coordinates(track_df, track_id, output_dir):
     export_df = track_df[['time', 'latitude', 'longitude', 'track_id']].copy()
     export_df['time'] = pd.to_datetime(export_df['time']).dt.strftime('%Y-%m-%d %H:%M:%S')
@@ -1735,7 +1661,7 @@ def load_dataset_async(month_dirs, data_dir, result_container):
             #     os.path.join(month_path, f)
             #     for f in os.listdir(month_path) if f.endswith(".nc")
             # ])
-            month_files = [os.path.join(month_path, f) 
+            month_files = [os.path.join(month_path, f)
                           for f in os.listdir(month_path) if f.endswith(".nc")]
             file_list.extend(month_files)
             monthly_stats[month_dir] = {
@@ -1778,7 +1704,6 @@ def load_dataset_async(month_dirs, data_dir, result_container):
     except Exception as e:
         result_container["error"] = str(e)
         result_container["success"] = False
-
 
 def diagnose_detection_issues(ds, track_df):
     """
@@ -1831,8 +1756,7 @@ def diagnose_detection_issues(ds, track_df):
             lat2_rad = np.deg2rad(lat2)
 
             x = np.sin(dlon) * np.cos(lat2_rad)
-            y = (np.cos(lat1_rad) * np.sin(lat2_rad) - 
-                 np.sin(lat1_rad) * np.cos(lat2_rad) * np.cos(dlon))
+            y = (np.cos(lat1_rad) * np.sin(lat2_rad) - np.sin(lat1_rad) * np.cos(lat2_rad) * np.cos(dlon))
 
             bearing = np.degrees(np.arctan2(x, y))
             bearing = (bearing + 360) % 360
@@ -1844,7 +1768,6 @@ def diagnose_detection_issues(ds, track_df):
             (bearings >= 240) & (bearings <= 360) |
             (bearings >= 0) & (bearings <= 30)
         ]
-
         if len(wnd_bearings) / len(bearings) < 0.7:
             print(f" >  [INFO md   ] Movement in WNW (expected >70%)   :          {100*len(wnd_bearings)/len(bearings):.1f}%")
         else:
@@ -1904,7 +1827,7 @@ def generate_summary_report(all_correlation_results, all_flux_results, all_landf
 if __name__ == "__main__":
     start_time = time.time()
     std_print('INFO', 'md', 'Applied Thresholds')
-    std_print('INFO', 'md', f'Distance threshold: {DISTANCE_THRESHOLD_KM} km')
+    std_print('INFO', 'md', f'Distance threshold: {TRACKING_SEARCH_RADIUS_KM} km')
     std_print('INFO', 'md', f'Wind Speed (10m): {WIND_SPEED_LOWER_BOUND_MS}-{WIND_SPEED_UPPER_BOUND_MS} m/s')
     std_print('INFO', 'md', f'MSLP threshold: < {MSL_LOWER_BOUND_PA} Pa ({MSL_LOWER_BOUND_PA/100:.0f} hPa)')
     std_print('INFO', 'md', f'Precipitation: > {PRECIPITATION_THRESHOLD_MM} mm/hr')
@@ -1984,12 +1907,10 @@ if __name__ == "__main__":
 
     print("\n------------------------------------ Processing ----------------------------------------")
     full_track_df = process_files(ds)
-
     if full_track_df is not None and not full_track_df.empty:
         if 'track_id' not in full_track_df.columns:
             print(" >  [ERROR md  ] 'track_id' column not found")
             sys.exit(1)
-
         # # For plotting and processing only `desired_tracks` selectively
         # if 'track_id' in full_track_df.columns:
         #     initial_track_count = len(full_track_df['track_id'].unique())
@@ -2001,27 +1922,19 @@ if __name__ == "__main__":
         #     print(" >  [WARN ]: 'track_id' column not found. Skipping track filter.")
         plot_tracks(full_track_df, output_dir)
 
-        pad = 0.5
         # FIX: even after clipping it is using full extend (Detected)
+        pad = 0.5
         try:
-            full_extent = [
-                ds_lon_min - pad,
-                ds_lon_max + pad,
-                ds_lat_min - pad,
-                ds_lat_max + pad,
-            ]
+            full_extent = [ds_lon_min - pad, ds_lon_max + pad, ds_lat_min - pad, ds_lat_max + pad]
             print(f" [DEBUG   ] Full extent (Detected)                  :          {full_extent}")
         except Exception:
             # full_extent = [70, 100, 5, 30]
             full_extent = [70, 95, 10, 30]
             print(f" [DEBUG   ] Full extent (Mannual)                   :          {full_extent}")
 
-        full_track_df['is_land'] = full_track_df.apply(
-            lambda row: is_point_land(row['latitude'], row['longitude']), axis=1
-        )
+        full_track_df['is_land'] = full_track_df.apply(lambda row: is_point_land(row['latitude'], row['longitude']), axis=1)
         unique_track_ids = sorted([int(tid) for tid in full_track_df['track_id'].unique()])
-        print(f" >  [INFO md   ] MD tracks for individual export   :          {len(unique_track_ids)}")
-
+        std_print('INFO', 'md', 'MD tracks for individual export', len(unique_track_ids))
         # Results containers
         all_correlation_results = []
         all_sm_results = []
@@ -2030,10 +1943,13 @@ if __name__ == "__main__":
         all_classifications = []
         asm_results_list = []
         multiwindow_data = []
+        track_dict = {}
+        flux_dict = {} 
         # Process each track
         for track_id in unique_track_ids:
             track_id = int(track_id)
             track_df = full_track_df[full_track_df['track_id'] == track_id].copy()
+            track_dict[track_id] = track_df.copy() # for coupling metrics
             track_dir = os.path.join(output_dir, f"track_{int(track_id)}")
             os.makedirs(track_dir, exist_ok=True)
             track_df = full_track_df[full_track_df['track_id'] == track_id].reset_index(drop=True).copy()
@@ -2045,7 +1961,6 @@ if __name__ == "__main__":
             # 2) Smooth coordinates
             track_df = smooth_track_coordinates(track_df, window_size=3, iterations=4)
             print(f"\n--------------------------------- MD Track {track_id} ---------------------------------")
-            print(f" >> [Diagnostics] for md track {track_id}")
             diagnose_detection_issues(ds, track_df)
             # 3) Plot maps
             plot_track_full_map(track_df, track_id, full_extent, track_dir)
@@ -2058,14 +1973,12 @@ if __name__ == "__main__":
             print(f" >> [EXPORTED] Track detections CSV of {track_id}         :          {track_csv}")
             # 6) Plot speed analysis
             print("\n---------------------------------- Translational Speed Plots --------------------------")
-            print(f" >  [INFO md   ] Computing Translation speed for Track {track_id}")
             speed_dir = os.path.join(track_dir, "translational-speed")
             os.makedirs(speed_dir, exist_ok=True)
             track_df = compute_track_speeds(track_df)
             track_csv = os.path.join(speed_dir, f"track_{int(track_id)}_detections_augmented.csv")
             track_df.to_csv(track_csv, index=False)
             print(f" >> [SAVED   ] Augmented track data for Track {track_id}  :          {track_csv}")
-            print(f" >  [INFO md   ] Generating speed plots for Track {track_id}")
             plot_speed_analysis_kmh(track_df, track_id, speed_dir)
             plot_speed_analysis_ms(track_df, track_id, speed_dir)
             print(f" >  [INFO md   ] Speed Statistics for Track {track_id}      : \n"
@@ -2079,59 +1992,46 @@ if __name__ == "__main__":
             # print(f" > [DEBUG  ] Total distance: {metrics.get('total_distance_km', 0):.1f} km")
             # 7) Generate Hovmöller Plots
             print("\n---------------------------------- Azimuthal Hovmoller Plots --------------------------")
-            # print(f" >  [INFO md   ] Skipping Hovmöller for Track {track_id} for debug")
-            print(f" >  [INFO md   ] Computing Hovmöller for Track {track_id}")
-            hov_dir = os.path.join(track_dir, "hovmoller")
-            os.makedirs(hov_dir, exist_ok=True)
-            hov_data, track_times, landfall_index = compute_azimuthal_hovmoller(
-                ds=ds,
-                track_df=track_df,
-                radii_km=radii,
-                variables=variables,
-                n_theta=72
-            )
-            for var in variables:
-                print(f" >  [PLOTTING] Hovmöller for variable            :          {var}")
-                plot_hovmoller(
-                    hov_arr=hov_data[var],
-                    track_times=track_times,
-                    radii_km=radii,
-                    var_name=var,
-                    track_df=track_df,
-                    outdir=hov_dir
-                )
+            std_print('DEBUG', 'md', f'Skipping Hovmöller for Track {track_id}')
+            # std_print('INFO', 'md', f'Computing Hovmöller for Track {track_id}')
+            # hov_dir = os.path.join(track_dir, "hovmoller")
+            # os.makedirs(hov_dir, exist_ok=True)
+            # hov_data, track_times, landfall_index = compute_azimuthal_hovmoller(
+            #     ds=ds,
+            #     track_df=track_df,
+            #     radii_km=radii,
+            #     variables=variables,
+            #     n_theta=72
+            # )
+            # for var in variables:
+            #     print(f" >  [PLOTTING] Hovmöller for variable            :          {var}")
+            #     plot_hovmoller(
+            #         hov_arr=hov_data[var],
+            #         track_times=track_times,
+            #         radii_km=radii,
+            #         var_name=var,
+            #         track_df=track_df,
+            #         outdir=hov_dir
+            #     )
             # 8) Antecedent Soil Moisture Analysis
             print("\n-------------------------------- Antecedent Soil Moisture Analysis ---------------------")
-            print(f" >  [INFO md   ] Computing antecedent SM for Track {track_id}")
+            std_print('INFO', 'md', f'Computing antecedent SM for Track {track_id}')
            # Ensure is_land column exists for antecedent analysis
-            track_df['is_land'] = track_df.apply(
-                lambda row: is_point_land(row['latitude'], row['longitude']),
-                axis=1
-            )
+            track_df['is_land'] = track_df.apply(lambda row: is_point_land(row['latitude'], row['longitude']), axis=1)
             std_print('INFO', 'md', 'Land/ocean classification computed', f'{track_df["is_land"].sum()} land points')
             try:
                 asm_dir = os.path.join(track_dir, "antecedent_sm")
                 os.makedirs(asm_dir, exist_ok=True)
                 # Compute multi-window ASM (OCEAN -> LAND TRANSITION FOCUSED)
-                multiwindow_results = compute_antecedent_sm_multiwindow(
-                    ds=ds,
-                    track_df=track_df,
-                    track_id=track_id,
-                    buffer_km=100,
-                    land_only=False
-                )
+                multiwindow_results = compute_antecedent_sm_multiwindow(ds=ds, track_df=track_df, track_id=track_id, buffer_km=100, land_only=False)
                 if multiwindow_results:
                     export_multiwindow_results(track_id, multiwindow_results, asm_dir)
                     # Compute ASM for single track (track_id)
                     asm_24h_value = multiwindow_results['antecedent_24h']['value']
                     if isinstance(asm_24h_value, dict):
                         asm_24h_value = asm_24h_value.get('value', np.nan)
-                        asm_results_list.append({
-                            'track_id': track_id,
-                            'ASM_24h': asm_24h_value,
-                            'has_landfall': True
-                        })
-                        print(f"[DEBUG  md  ] Track {track_id} Multi-window ASM computed")
+                        asm_results_list.append({'track_id': track_id, 'ASM_24h': asm_24h_value, 'has_landfall': True})
+                        print(f"DEBUG  md Track {track_id} Multi-window ASM computed")
                     # No need of this since 'land_only=true'
                     # # Plot timeseries if landfall detected
                     # landfall_detected = any(
@@ -2143,7 +2043,7 @@ if __name__ == "__main__":
                 else:
                     std_print('WARN', 'md', f'Track {track_id} No multi-window ASM computed')
             except Exception as e:
-                std_print('ERROR', 'md', f'Track {track_id} ASM analysis failed', e)
+                std_print('ERROR', 'md', f'Track {track_id} ASM analysis failed', str(e))
                 traceback.print_exc()
             try:
                 post_asm_value = compute_antecedent_sm_post_landfall(ds=ds, track_df=track_df, track_id=track_id, hours_after_landfall=12, buffer_km=100)
@@ -2160,14 +2060,7 @@ if __name__ == "__main__":
             correlation_dir = os.path.join(track_dir, "correlation_analysis")
             os.makedirs(correlation_dir, exist_ok=True)
             try:
-                correlation_result = analyze_single_track(
-                    ds=ds,
-                    track_df=track_df,
-                    track_id=track_id,
-                    buffer_km=100,
-                    max_lag_hours=24,
-                    output_dir=correlation_dir
-                )
+                correlation_result = analyze_single_track(ds=ds, track_df=track_df, track_id=track_id, buffer_km=100, max_lag_hours=24, output_dir=correlation_dir)
                 if correlation_result:
                     all_correlation_results.append({
                         'track_id': track_id,
@@ -2180,23 +2073,18 @@ if __name__ == "__main__":
                         'landfall_index': correlation_result.get('landfall_index')
                     })
             except Exception as e:
-                print(f" >  [WARN ] Correlation analysis failed: {e}")
+                std_print('ERROR', 'md', 'Correlation analysis failed', e)
             flux_dir = os.path.join(track_dir, "flux_analysis")
             os.makedirs(flux_dir, exist_ok=True)
             try:
-                flux_results = analyze_flux_correlations(
-                    ds,
-                    track_df,
-                    track_id,
-                    buffer_km=100
-                )
+                flux_results = analyze_flux_correlations(ds, track_df, track_id, buffer_km=100)
                 if flux_results:
                     plot_flux_analysis(flux_results, flux_dir, track_id)
                     flux_csv_path = os.path.join(flux_dir, f'track_{track_id}_flux_summary.csv')
                     pd.DataFrame([flux_results]).to_csv(flux_csv_path, index=False)
                     print(f" >> [EXPORTED] Flux Summary CSV                  :          {os.path.basename(flux_csv_path)}")
             except Exception as e:
-                print(f" >  [WARN ] Flux analysis failed for Track {track_id}: {e}")
+                std_print('ERROR', 'md', f'Flux analysis failed for Track {track_id}', str(e))
             # 10) Landfall flux analysis
             print("\n----------------------------------- Landfall Flux Analysis -----------------------------")
             try:
@@ -2222,7 +2110,6 @@ if __name__ == "__main__":
                 print(f" >  [WARN ] Landfall flux analysis failed for track {track_id}: {e}")
             # 11) Soil moisture analysis
             print("\n---------------------------------- Soil moisture analysis ------------------------------")
-            print(f" >  [INFO md   ] SM analysis for Track {track_id}")
             try:
                 sm_result = compute_single_track_correlation(ds=ds, track_df=track_df, track_id=track_id, buffer_km=100)
                 if sm_result:
@@ -2233,18 +2120,19 @@ if __name__ == "__main__":
                     plot_spatial_tp_sm(ds, track_df, track_id, buffer_deg=5.0, output_dir=sm_dir)
                     print(f" >> [SAVED   ] SM analysis plots for Track {track_id}")
             except Exception as e:
-                print(f" >  [WARN ] SM analysis failed for track {track_id}: {e}")
+                 std_print('ERROR', 'md', f"SM analysis failed for Track {track_id}")
             # 12) Heat Flux Analysis and MD Duration Classification
             print("\n------------------------------------ Heat Flux & Duration Analysis ---------------------")
             classification = classify_md_duration(track_df)
             classification['track_id'] = track_id
             all_classifications.append(classification)
-            print(f" >> [CLASSIFICATION] Track {track_id} which is {classification['category']}:")
+            print(f"Classification Track {track_id} which is {classification['category']}:")
             print(f"                  Duration                       :          {classification['duration_hours']:.1f} hours ({classification['num_points']} points)")
             hf_dir = os.path.join(track_dir, "heat_flux_analysis")
             os.makedirs(hf_dir, exist_ok=True)
             flux_df = extract_heat_flux_timeseries(ds, track_df, track_id, buffer_km=100)
             if flux_df is not None:
+                flux_dict[track_id] = flux_df.copy() # store for coupling metrics
                 print(f" >  [INFO md   ] Heat flux data extracted          :          {len(flux_df)} points")
                 flux_analysis = analyze_heat_flux_evolution(flux_df, track_df, track_id)
                 if flux_analysis:
@@ -2265,8 +2153,8 @@ if __name__ == "__main__":
                         print(f"                Change (Ocean->Land)             :          {flux_analysis['total_hf_change']:.1f} W/m²")
                 plot_heat_flux_timeseries(flux_df, track_id, hf_dir)
             else:
-                print(f" >  [WARN ] No heat flux data for Track {track_id}")
-            print(f" >  [DEBUG   ] Heat flux transition analysis for Track {track_id}")
+                 std_print('WARN', 'md', f"No heat flux data for Track {track_id}")
+            print(f"DEBUG Heat flux transition analysis for Track {track_id}")
             try:
                 landfall_result = analyze_flux_transition(ds=ds, track_df=track_df, track_id=track_id, hours_before=24, hours_after=24)
                 if landfall_result:
@@ -2275,10 +2163,49 @@ if __name__ == "__main__":
                     pd.DataFrame([landfall_result]).to_csv(landfall_csv, index=False)
                     print(f" >> [SAVED   ] Flux transition analysis          :          {landfall_csv}")
                 else:
-                    print(f" >  [WARN ] Could not analyze flux transition for Track {track_id}")
+                    std_print('WARN', 'md', f"Could not analyze flux transition for Track {track_id}")
             except Exception as e:
-                print(f" >  [ERROR md  ] Flux transition analysis failed for Track {track_id}: {e}")
+                std_print('ERROR', 'md', f"Flux transition analysis failed for Track {track_id}: {e}")
                 traceback.print_exc()
+
+        # Coupling metrics
+        std_print('INFO', 'md', "Starting Coupling Metrics Analysis")
+        correlation_df = pd.DataFrame(all_correlation_results) if all_correlation_results else pd.DataFrame()
+        duration_df = pd.DataFrame(all_classifications) if all_classifications else pd.DataFrame()
+        coupling_metrics_dir = os.path.join(output_dir, "coupling_metrics")
+        os.makedirs(coupling_metrics_dir, exist_ok=True)
+        if all_flux_results:
+            flux_results_df = pd.DataFrame(all_flux_results)
+        else:
+            flux_results_df = pd.DataFrame()
+        try:
+            coupling_metrics_dir = os.path.join(output_dir, "coupling_metrics")
+            os.makedirs(coupling_metrics_dir, exist_ok=True)
+            # Compute FSI
+            if not correlation_df.empty and track_dict:
+                std_print('INFO', 'md', "Computing Feedback Strength Index (FSI)")
+                fsi_df = compute_fsi_all_tracks(correlation_df, track_dict, ds)
+            else:
+                std_print('WARN', 'md', "Insufficient data for FSI computation")
+                fsi_df = pd.DataFrame()
+            # Compute Diurnal Amplitude
+            if flux_dict:
+                std_print('INFO', 'md', "Computing Diurnal SHF Amplitude")
+                amplitude_df = compute_diurnal_amplitude_all_tracks(flux_dict, track_dict)
+            else:
+                std_print('WARN', 'md', "No flux data available for diurnal amplitude")
+                amplitude_df = pd.DataFrame()
+            # Compute Coupling Efficiency
+            if not fsi_df.empty and not amplitude_df.empty and not duration_df.empty:
+                std_print('INFO', 'md', "Computing Coupling Efficiency")
+                coupling_efficiency_df = compute_coupling_efficiency(fsi_df, correlation_df, amplitude_df, duration_df)
+                export_coupling_metrics(fsi_df, amplitude_df, coupling_efficiency_df, coupling_metrics_dir)
+                generate_coupling_metrics_report(fsi_df, amplitude_df, coupling_efficiency_df, coupling_metrics_dir)
+            else:
+                std_print('WARN', 'md', "Insufficient data for coupling efficiency computation")
+        except Exception as e:
+            std_print('ERROR', 'md', f"Coupling metrics analysis failed: {e}")
+            traceback.print_exc()
 
         # Post-loop processing: Global Analysis
         if not full_track_df.empty:

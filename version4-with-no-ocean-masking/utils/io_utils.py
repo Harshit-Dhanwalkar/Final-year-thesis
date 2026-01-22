@@ -13,31 +13,55 @@ FILE_CODES = {
     'azimuthal_hovmoller': 'ho'
 }
 
-def std_print(level, file_code, message, value=None, unit=None):
-    """
-    Args:
-        level: 'INFO', 'WARN', 'ERROR', 'DEBUG', 'SAVE'
-        file_code: 'md', 'an', 'ca', 'sm', 'sa', 'hf', 'ba', 'ho'
-        message: Message text
-        value: Optional value to display
-        unit: Optional unit for value
-    Example:
-        standardized_print('INFO', 'md', 'Tracks detected', 6, 'tracks')
-        standardized_print('SAVE', 'an', 'Results exported', '/path/file.csv')
-        standardized_print('WARN', 'ca', 'Insufficient data')
-    """
+# def std_print(level, file_code, message, value=None, unit=None):
+#     """
+#     Args:
+#         level: 'INFO', 'WARN', 'ERROR', 'DEBUG', 'SAVE'
+#         file_code: 'md', 'an', 'ca', 'sm', 'sa', 'hf', 'ba', 'ho'
+#         message: Message text
+#         value: Optional value to display
+#         unit: Optional unit for value
+#     Example:
+#         standardized_print('INFO', 'md', 'Tracks detected', 6, 'tracks')
+#         standardized_print('SAVE', 'an', 'Results exported', '/path/file.csv')
+#         standardized_print('WARN', 'ca', 'Insufficient data')
+#     """
+#     # Truncate level to 8 chars to fit format
+#     level_str = level[:8]
+#
+#     if value is not None:
+#         # Format with value
+#         spacing = max(0, 50 - len(message))
+#         unit_str = f" {unit}" if unit else ""
+#         print(f" >  [{level_str} {file_code}] {message}{' ':>{spacing}}:          {value}{unit_str}")
+#     else:
+#         # Format without value
+#         print(f" >  [{level_str} {file_code}] {message}")
+def std_print(level=None, file_code=None, message="", value=None, unit=None):
+    # CASE 1: No level provided - Indent output by 10 characters
+    if level is None:
+        indent = " " * 10
+        if value is not None:
+            unit_str = f" {unit}" if unit else ""
+            print(f"{indent}{message}: {value}{unit_str}")
+        else:
+            print(f"{indent}{message}")
+        return
+
+    # CASE 2: Level provided - Standardized format
     # Truncate level to 8 chars to fit format
-    level_str = level[:8]
+    level_str = str(level)[:8]
+    f_code = file_code if file_code else "??"
 
     if value is not None:
         # Format with value
         spacing = max(0, 50 - len(message))
         unit_str = f" {unit}" if unit else ""
-        print(f" >  [{level_str} {file_code}] {message}{' ':>{spacing}}:          {value}{unit_str}")
+        # Using a fixed width for the bracketed section to keep alignment consistent
+        print(f" >  [{level_str:<5} {f_code}] {message}{' ':>{spacing}}          {value}{unit_str}")
     else:
         # Format without value
-        print(f" >  [{level_str} {file_code}] {message}")
-
+        print(f" >  [{level_str:<5} {f_code}] {message}")
 
 def setup_output_dir(base_dir, *subdirs):
     """ Create output directory structure. 

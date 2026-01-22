@@ -24,7 +24,7 @@ class IntegrationHelper:
             'before_after_24hr.py': 'ba',
             'azimuthal_hovmoller.py': 'ho'
         }
-    
+
     def check_utils_installed(self):
         """Verify utils directory exists and has all modules"""
         print("\n--- STEP 0: VERIFY UTILS INSTALLATION ---")
@@ -34,14 +34,14 @@ class IntegrationHelper:
             'spatial_utils.py', 'temporal_utils.py', 'io_utils.py', 'plot_utils.py'
         ]
         if not utils_dir.exists():
-            print(f"❌ Utils directory not found at {utils_dir}")
+            print(f"X Utils directory not found at {utils_dir}")
             return False
-        
+
         missing = [f for f in required_files if not (utils_dir / f).exists()]
         if missing:
-            print(f"❌ Missing files: {missing}")
+            print(f"X Missing files: {missing}")
             return False
-        print("✓ All utils modules installed correctly!")
+        print("_/ All utils modules installed correctly!")
         return True
 
     def check_file_imports(self, filename):
@@ -90,40 +90,40 @@ class IntegrationHelper:
 
             # Imports
             has_imports = self.check_file_imports(filename)
-            print(f"  {'✓' if has_imports else '❌'} Utils imports added")
+            print(f"  {'✓' if has_imports else 'X'} Utils imports added")
 
             # Prints with line numbers
             count, lines = self.count_old_prints(filename)
             line_str = f" (Lines: {', '.join(map(str, lines))})" if lines else ""
-            print(f"  {'✓' if count == 0 else '⚠️ '} Old-style prints: {count} remaining{line_str}")
+            print(f"  {'✓' if count == 0 else '!!!'} Old-style prints: {count} remaining{line_str}")
 
             # Landfall
             uses_new_landfall = self.check_landfall_usage(filename)
             print(f"  {'✓' if uses_new_landfall else '❌'} Uses find_landfall_time()")
-            
+
             # Status
             all_done = has_imports and count == 0 and uses_new_landfall
-            status = "✓ DONE" if all_done else "⚠️  IN PROGRESS" if (has_imports or count < 10) else "❌ NOT STARTED"
+            status = "✓ DONE" if all_done else "!!! IN PROGRESS" if (has_imports or count < 10) else "❌ NOT STARTED"
             print(f"  Status: {status}")
 
     def run_integration_diagnostics(self):
         """Run diagnostics on all files with specific line pointers"""
         print("\n--- STEP 2: DETAILED DIAGNOSTICS ---")
         total_issues = 0
-        
+
         for filename in self.files_to_integrate.keys():
             fpath = self.project_root / filename
             if not fpath.exists(): continue
-            
+
             content = fpath.read_text()
-            
+
             # Patterns to find
             patterns = {
                 "Old Prints": r'print\(f" >  \[',
                 "Manual Spatial Buffers": r'lat_buffer = buffer_km / 111',
                 "Manual Landfall Loops": r'for.*in.*iterrows.*is_point_land'
             }
-            
+
             file_header_printed = False
             for label, pattern in patterns.items():
                 lines = self.get_match_line_numbers(pattern, content)
@@ -131,24 +131,20 @@ class IntegrationHelper:
                     if not file_header_printed:
                         print(f"\n[{filename}]")
                         file_header_printed = True
-                    print(f"  ⚠️  {label}: Found at line(s) {', '.join(map(str, lines))}")
+                    print(f"  !!!  {label}: Found at line(s) {', '.join(map(str, lines))}")
                     total_issues += len(lines)
-        
+
         if total_issues == 0:
-            print("\n✓ No issues found! Integration looks solid.")
+            print("\n_/ No issues found! Integration looks solid.")
         else:
             print(f"\nSummary: {total_issues} patterns remaining to be consolidated.")
 
     def main(self):
         """Run all checks"""
-        print("="*60)
-        print("MONSOON DEPRESSION ANALYSIS - UTILS INTEGRATION HELPER")
-        print("="*60)
-        
         if not self.check_utils_installed():
-            print("\n❌ Fix utils installation first!")
+            print("\nXXX Fix utils installation first!")
             return
-            
+
         self.generate_checklist()
         self.run_integration_diagnostics()
 

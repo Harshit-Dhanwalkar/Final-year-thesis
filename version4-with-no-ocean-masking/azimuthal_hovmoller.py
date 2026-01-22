@@ -106,7 +106,7 @@ def compute_azimuthal_hovmoller(
         try:
             ds_t = ds.sel(time=t, method='nearest')
         except Exception as e:
-            std_print('WARN', 'ho', f'Failed to select time {t}:', e)
+            std_print('WARN', 'ho', f'Failed to select time {t} :', e)
             continue
 
         for j, r in enumerate(radii_km):
@@ -187,7 +187,7 @@ def compute_azimuthal_hovmoller(
                         if 'vt10' in hov_results:
                             hov_results['vt10'][i, j] = np.nan
             except Exception as e:
-                std_print('WARN', 'ho', f'Failed to select time {t}, radius {r} km:', e)
+                std_print('WARN', 'ho', f'Failed to select time {t}, radius {r} km :', e)
                 # Mark this cell as NaN
                 for var in variables:
                     hov_results[var][i, j] = np.nan

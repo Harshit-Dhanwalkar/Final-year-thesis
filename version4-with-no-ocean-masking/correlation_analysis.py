@@ -48,7 +48,7 @@ def lag_correlation(
     y_clean = y[mask]
     if len(x_clean) < 10:
         # Too few points for meaningful correlation
-        std_print('WARN', 'ca', f'Insufficient non-NaN data for lag correlation', len(x_clean), 'points')
+        std_print('WARN', 'ca', f'Insufficient non-NaN data for lag correlation :', len(x_clean), 'points')
         return [], []
 
     lags = range(-max_lag, max_lag+1)
@@ -173,7 +173,7 @@ def analyze_single_track(ds, track_df, track_id, buffer_km=51, max_lag_hours=50,
         # Use pre-computed is_land if available, otherwise calculate
         subset = extract_spatial_subset(ds, lat, lon, t, buffer_km, time_coord)
         if subset is None:
-            std_print('WARN', 'ca', f'Track {track_id}: No data at time {t}')
+            std_print('WARN', 'ca', f'Track {track_id} : No data at time {t}')
             continue
 
         if 'tp' in subset.data_vars:
@@ -191,13 +191,13 @@ def analyze_single_track(ds, track_df, track_id, buffer_km=51, max_lag_hours=50,
             valid_times.append(t)
 
     if len(valid_times) < 4:
-        std_print('WARN', 'ca', f'Track {track_id}: Insufficient data', len(valid_times), 'valid points')
+        std_print('WARN', 'ca', f'Track {track_id} :', f'Insufficient data {len(valid_times)} valid points')
         return None
 
-    std_print('DEBUG', 'ca', f'Track {track_id}: tp_series shape={len(tp_series)}, swvl1_series shape={len(swvl1_series)}')
-    std_print('DEBUG', 'ca', f'Track {track_id}: Valid times={len(valid_times)}')
-    std_print('DEBUG', 'ca', f'Track {track_id}: tp range={np.nanmin(tp_series):.3f} to {np.nanmax(tp_series):.3f}')
-    std_print('DEBUG', 'ca', f'Track {track_id}: sm range={np.nanmin(swvl1_series):.3f} to {np.nanmax(swvl1_series):.3f}')
+    std_print('DEBUG', 'ca', f'Track {track_id} :', f'tp_series shape={len(tp_series)}, swvl1_series shape={len(swvl1_series)}')
+    std_print('DEBUG', 'ca', f'Track {track_id} :', f'Valid times={len(valid_times)}')
+    std_print('DEBUG', 'ca', f'Track {track_id} :', f'tp range={np.nanmin(tp_series):.3f} to {np.nanmax(tp_series):.3f}')
+    std_print('DEBUG', 'ca', f'Track {track_id} :', f'sm range={np.nanmin(swvl1_series):.3f} to {np.nanmax(swvl1_series):.3f}')
 
     # Units conversion
     tp_series = np.array(tp_series) * 1000 # m -> mm
@@ -295,21 +295,20 @@ def analyze_single_track(ds, track_df, track_id, buffer_km=51, max_lag_hours=50,
                 except:
                     pass
 
-    std_print('INFO', 'ca', f'Correlation for Track {track_id}',
-          f"                 r={correlation_results['correlation']:.3f},\n"
-          f"                 p={correlation_results['p_value']:.4f},\n"
-          f"                 n={len(valid_times)}"
-    )
+    std_print('INFO', 'ca', f'Correlation for Track {track_id} :')
+    std_print(None, None, f"r={correlation_results['correlation']:.3f},")
+    std_print(None, None, f"p={correlation_results['p_value']:.4f},")
+    std_print(None, None, f"n={len(valid_times)}")
     return correlation_results
 
 
 def plot_tp_sm_time_series(tp, sm, valid_times, landfall_index, track_id, output_dir, originates_over_land=True):
     # Check if we have valid data
     if len(tp) < 2 or len(sm) < 2:
-        std_print('WARN', 'ca', f'Track {track_id}: Insufficient data for time series plot')
+        std_print('WARN', 'ca', f'Track {track_id} :', 'Insufficient data for time series plot')
         return
     if all(np.isnan(tp)) or all(np.isnan(sm)):
-        std_print('WARN', 'ca', f'Track {track_id}: All data is NaN for time series')
+        std_print('WARN', 'ca', f'Track {track_id} :', 'All data is NaN for time series')
         return
 
     fig, ax1 = plt.subplots(figsize=(12, 6))
@@ -406,7 +405,7 @@ def plot_tp_sm_time_series(tp, sm, valid_times, landfall_index, track_id, output
     plot_path = os.path.join(track_dir, f"track_{int(track_id)}_tp_sm_time_series.png")
     plt.savefig(plot_path, dpi=300, bbox_inches='tight')
     plt.close(fig)
-    std_print('SAVED', 'ca', 'Time series plot', plot_path)
+    std_print('SAVED', 'ca', 'Time series plot :', plot_path)
 
 def plot_scatter_analysis(
     tp,
@@ -475,7 +474,7 @@ def plot_scatter_analysis(
     plot_path = os.path.join(track_dir, f"track_{int(track_id)}_scatter.png")
     plt.savefig(plot_path, dpi=300, bbox_inches='tight')
     plt.close(fig)
-    std_print('SAVED', 'ca', 'Scatter plot', plot_path)
+    std_print('SAVED', 'ca', 'Scatter plot :', plot_path)
 
 
 def plot_lagged_correlation(
@@ -489,7 +488,7 @@ def plot_lagged_correlation(
 
     # Ensure lags and correlations have same length
     if len(lags) != len(correlations_lag):
-        std_print('WARN', 'ca', f'Mismatch between lags ({len(lags)}) and correlations', len(correlations_lag))
+        std_print('WARN', 'ca', f'Mismatch between lags ({len(lags)}) and correlations :', len(correlations_lag))
         # Truncate to use the shorter length
         min_len = min(len(lags), len(correlations_lag))
         lags = lags[:min_len]
@@ -498,7 +497,7 @@ def plot_lagged_correlation(
     # Filter out NaN values
     valid_indices = [i for i, val in enumerate(correlations_lag) if not np.isnan(val)]
     if len(valid_indices) == 0:
-        std_print('WARN', 'ca', f'Track {track_id}: No valid correlation values for lag plot')
+        std_print('WARN', 'ca', f'Track {track_id} :', 'No valid correlation values for lag plot')
         return
 
     lags = [lags[i] for i in valid_indices]
@@ -518,7 +517,7 @@ def plot_lagged_correlation(
     if len(lags) == len(correlations_lag):
         ax.fill_between(lags, correlations_lag, alpha=0.2, color='steelblue')
     else:
-        std_print('WARN', 'ca', f'Track {track_id}: Lag mismatch: lags and r_lag lengths differ.')
+        std_print('WARN', 'ca', f'Track {track_id} Lag mismatch :', 'lags and r_lag lengths differ')
 
     # Plot correlation
     ax.plot(
@@ -550,26 +549,21 @@ def plot_lagged_correlation(
     plot_path = os.path.join(track_dir, f"track_{int(track_id)}_lag_corr.png")
     plt.savefig(plot_path, dpi=300, bbox_inches='tight')
     plt.close(fig)
-    std_print('SAVED', 'ca', 'Lag Ccrelation plot', plot_path)
+    std_print('SAVED', 'ca', 'Lag Ccrelation plot :', plot_path)
 
 
-def analyze_flux_correlations(
-    ds,
-    track_df,
-    track_id,
-    buffer_km=100,
-):
+def analyze_flux_correlations(ds, track_df, track_id, buffer_km=100):
     time_coord = "time" if "time" in ds.coords else "valid_time"
     ds_times = pd.to_datetime(ds[time_coord].values)
 
     time_series = []
     landfall_time = find_landfall_time(track_df)
     if landfall_time:
-       std_print('INFO', 'ca', f'Track {track_id}: Landfall detected', landfall_time.strftime('%Y-%m-%d %H:%M'))
+       std_print('INFO', 'ca', f'Track {track_id} : Landfall detected', landfall_time.strftime('%Y-%m-%d %H:%M'))
     else:
-       std_print('WARN', 'ca', f'Track {track_id}: No landfall detected')
+       std_print('WARN', 'ca', f'Track {track_id} : No landfall detected')
     if len(time_series) < 5:
-       std_print('WARN', 'ca', f'Track {track_id}: Insufficient data')
+       std_print('WARN', 'ca', f'Track {track_id} : Insufficient data')
        return None
     df = pd.DataFrame(time_series)
 
@@ -607,39 +601,34 @@ def analyze_flux_correlations(
                 "mean_total_hf": post["total_hf"].mean(),
             }
     if correlations:
-        print(f" >> [INFO ca    ] Flux correlations for Track {track_id}    :")
-        std_print('INFO', 'ca', f'Flux correlation for Track {track_id}:')
+        std_print('INFO', 'ca', f'Flux correlation for Track {track_id} :')
         for k, v in correlations.items():
-            print(f"             {k}: r={v['r']:.3f}, p={v['p']:.4f}, n={v['n']}")
+            std_print(None, None, f"{k}: r={v['r']:.3f}, p={v['p']:.4f}, n={v['n']}")
     return results
 
-def plot_flux_analysis(
-    results,
-    output_dir,
-    track_id,
-):
+def plot_flux_analysis(results, output_dir, track_id):
     if results is None or len(results) < 4:  # Require minimum points for a meaningful plot
-       std_print('WARN', 'ca', f'Track {track_id}: Insufficient data')
+       std_print('WARN', 'ca', f'Track {track_id} : Insufficient data')
        return
     if not results or 'time_series' not in results:
-       std_print('WARN', 'ca', f'Track {track_id}: No time series data')
+       std_print('WARN', 'ca', f'Track {track_id} : No time series data')
        return
 
     df = results['time_series']
     # Validate DataFrame
     if not isinstance(df, pd.DataFrame) or df.empty:
-       std_print('WARN', 'ca', f'Track {track_id}: Invalid or empty DataFrame')
+       std_print('WARN', 'ca', f'Track {track_id} : Invalid or empty DataFrame')
        return
 
     if df.empty or len(df) < 3:
-       std_print('WARN', 'ca', f'Track {track_id}: Insufficient data', len(df), 'points')
+       std_print('WARN', 'ca', f'Track {track_id} : Insufficient data', len(df), 'points')
        return
 
     # Check for required columns
     required_cols = ['time', 'tp', 'swvl1']
     missing_cols = [col for col in required_cols if col not in df.columns]
     if missing_cols:
-       std_print('WARN', 'ca', f'Track {track_id}: Missing required columns:', missing_cols)
+       std_print('WARN', 'ca', f'Track {track_id} Missing required columns :', missing_cols)
        return
     # Ensure is_land column exists
     if 'is_land' not in df.columns:
@@ -688,7 +677,7 @@ def plot_flux_analysis(
         plt.close()
         std_print('SAVED', 'ca', 'Precipitation & Soil Moisture plot', plot1_path)
     except Exception as e:
-        std_print('WARN', 'ca', f'Track {track_id}: Failed to create TP & SM plot:', e)
+        std_print('ERROR', 'ca', f'Track {track_id} : Failed to create TP & SM plot:', e)
         traceback.print_exc()
  
 
@@ -728,9 +717,9 @@ def plot_flux_analysis(
         plot2_path = os.path.join(track_dir, f"track_{track_id}_heat_fluxes_trasnsition.png")
         plt.savefig(plot2_path, dpi=300, bbox_inches='tight')
         plt.close(fig)
-        std_print('SAVED', 'ca', 'Surface Heat Flux Transitions plot', plot2_path)
+        std_print('SAVED', 'ca', 'Surface Heat Flux Transitions plot :', plot2_path)
     except Exception as e:
-        std_print('ERROR', 'hf', f'Track {track_id} Failed to create heat flux plot:', e)
+        std_print('ERROR', 'hf', f'Track {track_id} Failed to create heat flux plot :', e)
         traceback.print_exc()
 
     # PLOT 3: Scatter Plot (Flux vs. Soil Moisture)
@@ -796,7 +785,7 @@ def plot_flux_analysis(
         plot3_path = os.path.join(track_dir, f"track_{track_id}_correlation_scatter.png")
         plt.savefig(plot3_path, dpi=300, bbox_inches='tight')
         plt.close(fig)
-        std_print('SAVED', 'ca', 'SM vs Flux Correlation plot', plot3_path)
+        std_print('SAVED', 'ca', 'SM vs Flux Correlation plot :', plot3_path)
     except Exception as e:
-        std_print('ERROR', 'ca', f'Track {track_id} Failed to create Scatter plot:', e)
+        std_print('ERROR', 'ca', f'Track {track_id} Failed to create Scatter plot :', e)
         traceback.print_exc()

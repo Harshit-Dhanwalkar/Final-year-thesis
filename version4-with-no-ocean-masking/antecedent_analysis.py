@@ -59,7 +59,7 @@ def compute_antecedent_sm(ds, track_df, track_id, hours_before_landfall, exclude
     # Find first landfall point
     origin_type = find_origin_type(track)
     if origin_type == 'land_originated':
-        std_print('INFO', 'an', f'Track {track_id}: Land-originated', 'Skipping ASM (no ocean→land transition)')
+        std_print('INFO', 'an', f'Track {track_id} : Land-originated', 'Skipping ASM (no ocean→land transition)')
         return {'value': np.nan, 'reason': 'land_originated'}
 
     # Ensure is_land column exists
@@ -75,7 +75,7 @@ def compute_antecedent_sm(ds, track_df, track_id, hours_before_landfall, exclude
         std_print('WARN', 'an', f'Track {track_id}: No landfall detected')
         return {'value': np.nan, 'reason': 'no_landfall'}
 
-    std_print('INFO', 'an', f'Track {track_id}: Landfall detected', landfall_time.strftime('%Y-%m-%d %H:%M'))
+    std_print('INFO', 'an', f'Track {track_id} : Landfall detected', landfall_time.strftime('%Y-%m-%d %H:%M'))
     sm_vals = []
     ocean_cells_excluded = 0
     land_cells_included = 0
@@ -84,13 +84,13 @@ def compute_antecedent_sm(ds, track_df, track_id, hours_before_landfall, exclude
     t_start = landfall_time - pd.Timedelta(hours=hours_before_landfall)
     t_end = landfall_time - pd.Timedelta(hours=exclude_last_hours)
 
-    std_print('DEBUG', 'an', 'Landfall time found:', {landfall_time})
-    std_print('DEBUG', 'an', f'Dataset time range: {ds_times.min()} to {ds_times.max()}{landfall_time}')
-    std_print('DEBUG', 'an', f'Time window: {t_start} to {t_end}')
+    std_print('DEBUG', 'an', 'Landfall time found : ', {landfall_time})
+    std_print('DEBUG', 'an', f'Dataset time range : {ds_times.min()} to {ds_times.max()}{landfall_time}')
+    std_print('DEBUG', 'an', f'Time window : {t_start} to {t_end}')
 
     # Adjust window to dataset bounds
     if t_start >= t_end:  # No valid window
-        std_print('WARN', 'an', f'Track {track_id}: No valid time window (t_start >= t_end)')
+        std_print('WARN', 'an', f'Track {track_id} : No valid time window (t_start >= t_end)')
         return np.nan
 
     if t_start < ds_times.min():
@@ -98,7 +98,7 @@ def compute_antecedent_sm(ds, track_df, track_id, hours_before_landfall, exclude
     if t_end > ds_times.max():
         t_end = ds_times.max()
     if t_start >= t_end:
-        std_print('WARN', 'an', f'Track {track_id}: No valid time window')
+        std_print('WARN', 'an', f'Track {track_id} : No valid time window')
         return np.nan
     std_print('INFO', 'an', f'Track {track_id} Time window', f'{t_start} to {t_end}')
 
@@ -106,9 +106,9 @@ def compute_antecedent_sm(ds, track_df, track_id, hours_before_landfall, exclude
     subset_track = track[(pd.to_datetime(track['time']) >= t_start) & (pd.to_datetime(track['time']) <= t_end)]
 
     if subset_track.empty:
-        std_print('WARN', 'an', f'Track {track_id}: No track points in time window')
+        std_print('WARN', 'an', f'Track {track_id} : No track points in time window')
         return np.nan
-    std_print('INFO', 'an', f'Track {track_id} Points in time window', len(subset_track), 'points')
+    std_print('INFO', 'an', f'Track {track_id} Points in time window :', len(subset_track), 'points')
 
     # Extract soil moisture along track in the time window
     for _, row in subset_track.iterrows():
@@ -138,7 +138,7 @@ def compute_antecedent_sm(ds, track_df, track_id, hours_before_landfall, exclude
 
             if subset is None:
                 ocean_cells_excluded += 1
-                std_print('WARN', 'an', f'Track {track_id}: Subset is None')
+                std_print('WARN', 'an', f'Track {track_id} : Subset is None')
                 continue
 
             # if 'swvl1' in subset.data_vars:
@@ -153,7 +153,7 @@ def compute_antecedent_sm(ds, track_df, track_id, hours_before_landfall, exclude
 
         except Exception as e:
             ocean_cells_excluded += 1
-            std_print('ERROR', 'an', f'Track {track_id}: Processing point failed:', str(e))
+            std_print('ERROR', 'an', f'Track {track_id} Processing point failed:', str(e))
             continue
 
     # Diagnostic
@@ -167,10 +167,10 @@ def compute_antecedent_sm(ds, track_df, track_id, hours_before_landfall, exclude
     if sm_vals:
         asm_mean = np.mean(sm_vals)
         asm_std = np.std(sm_vals)
-        std_print('INFO', 'an', f'Track {track_id} ASM', f'{asm_mean:.4f} ± {asm_std:.4f}', 'mÂ³/mÂ³')
+        std_print('INFO', 'an', f'Track {track_id} ASM :', f'{asm_mean:.4f} ± {asm_std:.4f}', 'm³/m³')
         return asm_mean
     else:
-        std_print('WARN', 'an', f'Track {track_id}: No valid land-based SM values extracted')
+        std_print('WARN', 'an', f'Track {track_id} : No valid land-based SM values extracted')
         return np.nan
 
 def compute_antecedent_sm_multiwindow(ds, track_df, track_id, buffer_km=100, land_only=False):
@@ -254,7 +254,7 @@ def compute_antecedent_sm_post_landfall(ds, track_df, track_id, hours_after_land
     # Find first landfall point
     origin_type = find_origin_type(track)
     if origin_type == 'land_originated':
-        std_print('INFO', 'an', f'Track {track_id}: Land-originated', 'Skipping ASM (no ocean→land transition)')
+        std_print('INFO', 'an', f'Track {track_id} : Land-originated', 'Skipping ASM (no ocean→land transition)')
         return np.nan
 
     # Ensure is_land column exists
@@ -266,10 +266,10 @@ def compute_antecedent_sm_post_landfall(ds, track_df, track_id, hours_after_land
         if not landfall_rows.empty:
             landfall_time = pd.to_datetime(landfall_rows.iloc[0]['time'])
     if landfall_time is None:
-        std_print('WARN', 'an', f'Track {track_id}: No landfall detected', 'Returning NaN')
+        std_print('WARN', 'an', f'Track {track_id} : No landfall detected', 'Returning NaN')
         return np.nan
 
-    std_print('INFO', 'an', f'Track {track_id}: Landfall detected', landfall_time.strftime('%Y-%m-%d %H:%M'))
+    std_print('INFO', 'an', f'Track {track_id} : Landfall detected', landfall_time.strftime('%Y-%m-%d %H:%M'))
 
     sm_vals = []
     ocean_cells_excluded = 0
@@ -283,25 +283,25 @@ def compute_antecedent_sm_post_landfall(ds, track_df, track_id, hours_after_land
 
     # Adjust window to dataset bounds
     if t_start < ds_times.min():
-        std_print('WARN', 'an', f'Track {track_id}: t_start < ds min', f'{t_start} < {ds_times.min()}')
+        std_print('WARN', 'an', f'Track {track_id} : t_start < ds min', f'{t_start} < {ds_times.min()}')
         t_start = ds_times.min()
     if t_end > ds_times.max():
-        std_print('WARN', 'an', f'Track {track_id}: t_end > ds max', f'{t_end} > {ds_times.max()}')
+        std_print('WARN', 'an', f'Track {track_id} : t_end > ds max', f'{t_end} > {ds_times.max()}')
         t_end = ds_times.max()
     if t_start >= t_end:
-        std_print('WARN', 'an', f'Track {track_id}: No valid post-landfall window (t_start >= t_end)')
-        std_print('INFO', 'an', f'Track {track_id}: Landfall detected', landfall_time)
-        std_print('INFO', 'an', f'Track {track_id}: Dataset range {ds_times.min()} to {ds_times.max()}')
+        std_print('WARN', 'an', f'Track {track_id} : No valid post-landfall window (t_start >= t_end)')
+        std_print('INFO', 'an', f'Track {track_id} : Landfall detected', landfall_time)
+        std_print('INFO', 'an', f'Track {track_id} : Dataset range {ds_times.min()} to {ds_times.max()}')
         return np.nan
     std_print('INFO', 'an', f'Track {track_id} Time window', f'{t_start} to {t_end}')
 
     # Filter track points in this window AND over land
     subset_track = track[(pd.to_datetime(track['time']) >= t_start) & (pd.to_datetime(track['time']) <= t_end)]
     if subset_track.empty:
-        std_print('WARN', 'an', f'Track {track_id}: No points in post-landfall tim e window')
+        std_print('WARN', 'an', f'Track {track_id} : No points in post-landfall tim e window')
         return np.nan
 
-    std_print('INFO', 'an', f'Track {track_id} Points in post-landfall window:', len(subset_track))
+    std_print('INFO', 'an', f'Track {track_id} Points in post-landfall window :', len(subset_track))
 
     # Extract soil moisture along track in the time window
     for _, row in subset_track.iterrows():
@@ -333,10 +333,7 @@ def compute_antecedent_sm_post_landfall(ds, track_df, track_id, hours_after_land
                 if lat_min >= lat_max or lon_min >= lon_max:
                     ocean_cells_excluded += 1
                     continue
-                subset = ds_at_time.sel({
-                    'latitude': slice(lat_max, lat_min),
-                    'longitude': slice(lon_min, lon_max)
-                })
+                subset = ds_at_time.sel({'latitude': slice(lat_max, lat_min), 'longitude': slice(lon_min, lon_max)})
                 if subset.sizes.get('latitude', 0) == 0 or subset.sizes.get('longitude', 0) == 0:
                     ocean_cells_excluded += 1
                     continue
@@ -367,7 +364,7 @@ def compute_antecedent_sm_post_landfall(ds, track_df, track_id, hours_after_land
         std_print('INFO', 'an', f'Track {track_id} Post-landfall SM (6h)', f'{asm_mean:.4f}', 'm³/m³')
         return asm_mean
     else:
-        std_print('WARN', 'an', f'Track {track_id}: No valid post-landfall SM values extracted')
+        std_print('WARN', 'an', f'Track {track_id} : No valid post-landfall SM values extracted')
         return np.nan
 
 def export_multiwindow_results(track_id, multiwindow_results, output_dir):
@@ -383,9 +380,9 @@ def export_multiwindow_results(track_id, multiwindow_results, output_dir):
        export_data[f'{window_name}_hours_before'] = window_data['hours_before']
 
     asm_multiwindow_df = pd.DataFrame([export_data])
-    output_path = os.path.join(output_dir, 'asm_multiwindow_results.csv')
+    output_path = os.path.join(output_dir, f'asm_multiwindow_results_track_{track_id}.csv')
     asm_multiwindow_df.to_csv(output_path, index=False)
-    export_results_to_csv(asm_multiwindow_df, output_dir, 'antecedent_soil_moisture', 'an')
+    export_results_to_csv(asm_multiwindow_df, output_dir, f'antecedent_soil_moisture_track_{track_id}', 'an')
     std_print('SAVED', 'an', 'Multi-window ASM results', output_path)
     std_print('INFO', 'an', f'Summary for Track {track_id}')
     for window_name, window_data in multiwindow_results.items():
@@ -472,7 +469,7 @@ def compute_asm_tp_correlation(ds, full_track_df, asm_results_df, buffer_km=100,
     Correlate antecedent soil moisture with precipitation during track passage.
     Research question: Does low ASM lead to different rainfall patterns?
     """
-    std_print('INFO', 'an', 'ASM - PRECIPITATION CORRELATION ANALYSIS')
+    std_print('INFO', 'an', 'ASM - Precipitation correlation analysis')
     correlation_data = []
 
     unique_tracks = asm_results_df['track_id'].unique()
@@ -555,39 +552,39 @@ def compute_asm_tp_correlation(ds, full_track_df, asm_results_df, buffer_km=100,
             'total_tp': tp_total,
             'n_tp_samples': len(tp_vals)
         })
-        std_print('INFO', 'an', f'Track {track_id} ASM analysis')
-        std_print('INFO', 'an', 'ASM value', f'{asm_24h:.4f}')
-        std_print('INFO', 'an', 'Mean TP', f'{tp_mean:.3f}', 'mm/hr')
-        std_print('INFO', 'an', 'Max TP', f'{tp_max:.3f}', 'mm/hr')
+        std_print(None, 'an', f'Track {track_id} ASM analysis')
+        std_print(None, 'an', 'ASM value', f'{asm_24h:.4f}')
+        std_print(None, 'an', 'Mean TP', f'{tp_mean:.3f}', 'mm/hr')
+        std_print(None, 'an', 'Max TP', f'{tp_max:.3f}', 'mm/hr')
     if not correlation_data:
         std_print('WARN', 'an', 'No correlation data computed')
         return None
     corr_df = pd.DataFrame(correlation_data)
 
     # Compute correlations
-    std_print('INFO', 'an', 'CORRELATION: ASM-TP')
+    std_print('INFO', 'an', 'Correlation : ASM-TP')
     # Pearson correlation
     pearson_r, pearson_p = pearsonr(corr_df['ASM_24h'], corr_df['mean_tp'])
     spearman_r, spearman_p = spearmanr(corr_df['ASM_24h'], corr_df['mean_tp'])
-    std_print('INFO', 'an', 'ASM vs Mean TP - Pearson', f'r={pearson_r:.3f}, p={pearson_p:.4f}')
-    std_print('INFO', 'an', 'ASM vs Mean TP - Spearman', f'ρ={spearman_r:.3f}, p={spearman_p:.4f}')
+    std_print(None, 'an', 'ASM vs Mean TP - Pearson', f'r={pearson_r:.3f}, p={pearson_p:.4f}')
+    std_print(None, 'an', 'ASM vs Mean TP - Spearman', f'ρ={spearman_r:.3f}, p={spearman_p:.4f}')
     # Max precipitation
     pearson_r_max, p_max = pearsonr(corr_df['ASM_24h'], corr_df['max_tp'])
-    std_print('INFO', 'an', 'ASM vs Max TP - Pearson', f'r={pearson_r_max:.3f}, p={p_max:.4f}')
+    std_print(None, 'an', 'ASM vs Max TP - Pearson', f'r={pearson_r_max:.3f}, p={p_max:.4f}')
     # Total precipitation
     pearson_r_total, p_total = pearsonr(corr_df['ASM_24h'], corr_df['total_tp'])
-    std_print('INFO', 'an', 'ASM vs Total TP - Pearson', f'r={pearson_r_total:.3f}, p={p_total:.4f}')
+    std_print(None, 'an', 'ASM vs Total TP - Pearson', f'r={pearson_r_total:.3f}, p={p_total:.4f}')
 
     # Interpretation
-    std_print('INFO', 'an', 'INTERPRETATION: ASM-TP Correlation')
+    std_print('INFO', 'an', 'Interpretation : ASM-TP Correlation')
     if pearson_r > 0.5 and pearson_p < 0.05:
-        std_print('INFO', 'an', 'Result: STRONG POSITIVE correlation (High ASM → Higher rainfall)')
+        std_print(None, 'an', 'Result: STRONG POSITIVE correlation (High ASM → Higher rainfall)')
     elif pearson_r > 0.3 and pearson_p < 0.05:
-        std_print('INFO', 'an', 'Result: MODERATE POSITIVE correlation (Higher ASM tends to produce more rain)')
+        std_print(None, 'an', 'Result: MODERATE POSITIVE correlation (Higher ASM tends to produce more rain)')
     elif pearson_r < -0.3 and pearson_p < 0.05:
-        std_print('INFO', 'an', 'Result: NEGATIVE correlation (Dry soils produce more rain)')
+        std_print(None, 'an', 'Result: NEGATIVE correlation (Dry soils produce more rain)')
     else:
-        std_print('INFO', 'an', 'Result: NO SIGNIFICANT correlation (ASM does not explain rainfall variation)')
+        std_print(None, 'an', 'Result: NO SIGNIFICANT correlation (ASM does not explain rainfall variation)')
 
     # Export results
     export_path = os.path.join(output_dir, 'asm_tp_correlation.csv')
@@ -602,7 +599,7 @@ def compute_asm_duration_correlation(asm_results_df, duration_df, output_dir='ou
     Correlate antecedent soil moisture with MD duration.
     Research question: Does drier soil cause faster weakening?
     """
-    std_print('INFO', 'an', 'ASM - DURATION CORRELATION ANALYSIS')
+    std_print('INFO', 'an', 'ASM - Duration correlation analysis')
     # Merge datasets
     merged_df = asm_results_df.merge(
         duration_df[['track_id', 'duration_hours', 'is_long_lived']],
@@ -632,7 +629,7 @@ def compute_asm_duration_correlation(asm_results_df, duration_df, output_dir='ou
     merged_df['ASM_24h_clean'] = asm_values
     std_print('INFO', 'an', 'Tracks with both ASM and duration data', len(merged_df))
 
-    print(f"        Track ID | ASM_24h | Duration (h) | Category")
+    std_print(None, None, 'Track ID | ASM_24h | Duration (h) | Category')
     for _, row in merged_df.iterrows():
         category = "Long-lived" if row['is_long_lived'] else "Short-lived"
         asm_val = row['ASM_24h_clean']
@@ -641,10 +638,10 @@ def compute_asm_duration_correlation(asm_results_df, duration_df, output_dir='ou
             asm_str = "   N/A"
         else:
             asm_str = f"{asm_val:7.4f}"
-        print(f"      {int(row['track_id']):8d} | {asm_str} | {row['duration_hours']:12.1f} | {category}")
+        std_print(None, None, f"{int(row['track_id']):8d} | {asm_str} | {row['duration_hours']:12.1f} | {category}")
 
     # Compute correlations
-    std_print('INFO', 'an', 'CORRELATION STATISTICS')
+    std_print('INFO', 'an', 'Correlation statistics')
     # Filter out NaN values for correlation
     valid_data = merged_df.dropna(subset=['ASM_24h_clean', 'duration_hours'])
     if len(valid_data) < 3:
@@ -652,34 +649,34 @@ def compute_asm_duration_correlation(asm_results_df, duration_df, output_dir='ou
         return None
     # Pearson correlation
     pearson_r, pearson_p = pearsonr(valid_data['ASM_24h_clean'], valid_data['duration_hours'])
-    print(f"     ASM vs Duration:")
-    std_print('INFO', 'an', 'ASM vs Duration - Pearson', f'r={pearson_r:.3f}, p={pearson_p:.4f}')
+    std_print('INFO', 'an', 'ASM vs Duration :')
+    std_print(None, None, 'ASM vs Duration - Pearson', f'r={pearson_r:.3f}, p={pearson_p:.4f}')
     try:
         spearman_r, spearman_p = spearmanr(valid_data['ASM_24h_clean'], valid_data['duration_hours'])
-        std_print('INFO', 'an', 'ASM vs Duration - Spearman', f'ρ={spearman_r:.3f}, p={spearman_p:.4f}')
+        std_print(None, None, 'ASM vs Duration - Spearman', f'ρ={spearman_r:.3f}, p={spearman_p:.4f}')
     except:
         std_print('WARN', 'an', 'Spearman correlation failed')
 
     # Interpretation
-    std_print('INFO', 'an', 'INTERPRETATION: ASM-Duration Correlation')
+    std_print('INFO', 'an', 'Interpretation: ASM-Duration Correlation')
     if pearson_r > 0.5 and pearson_p < 0.05:
-        std_print('INFO', 'an', 'Result: STRONG POSITIVE (High ASM → Longer track duration)')
+        std_print(None, None, 'Result: STRONG POSITIVE (High ASM → Longer track duration)')
     elif pearson_r > 0.3 and pearson_p < 0.05:
-        std_print('INFO', 'an', 'Result: MODERATE POSITIVE (Higher ASM extends duration)')
+        std_print(None, None, 'Result: MODERATE POSITIVE (Higher ASM extends duration)')
     elif pearson_r < -0.3 and pearson_p < 0.05:
-        std_print('INFO', 'an', 'Result: NEGATIVE (Dry soils support longer tracks)')
+        std_print(None, None, 'Result: NEGATIVE (Dry soils support longer tracks)')
     else:
-        std_print('INFO', 'an', 'Result: NO SIGNIFICANT (ASM does not predict duration)')
+        std_print(None, None, 'Result: NO SIGNIFICANT (ASM does not predict duration)')
 
     # By category
-    std_print('INFO', 'an', 'COMPARISON: Long-lived vs Short-lived MDs')
+    std_print('INFO', 'an', 'Comparison: Long-lived vs Short-lived MDs')
     long_lived = merged_df[merged_df['is_long_lived']]
     short_lived = merged_df[~merged_df['is_long_lived']]
     if len(long_lived) > 0:
         long_lived_asm = long_lived['ASM_24h_clean'].dropna()
         if len(long_lived_asm) > 0:
             std_print('INFO', 'an', 'Long-lived MDs (≥96h) - Mean ASM', 
-                     f"{long_lived_asm.mean():.4f} ± {long_lived_asm.std():.4f}", 'mÂ³/mÂ³')
+                     f"{long_lived_asm.mean():.4f} ± {long_lived_asm.std():.4f}", 'm³/m³')
         std_print('INFO', 'an', 'Long-lived MDs (≥96h) - Mean Duration', 
                  f"{long_lived['duration_hours'].mean():.1f} ± {long_lived['duration_hours'].std():.1f}", 'hours')
         std_print('INFO', 'an', 'Long-lived MDs count', len(long_lived))
@@ -687,7 +684,7 @@ def compute_asm_duration_correlation(asm_results_df, duration_df, output_dir='ou
         short_lived_asm = short_lived['ASM_24h_clean'].dropna()
         if len(short_lived_asm) > 0:
             std_print('INFO', 'an', 'Short-lived MDs (<96h) - Mean ASM', 
-                     f"{short_lived_asm.mean():.4f} ± {short_lived_asm.std():.4f}", 'mÂ³/mÂ³')
+                     f"{short_lived_asm.mean():.4f} ± {short_lived_asm.std():.4f}", 'm³/m³')
         std_print('INFO', 'an', 'Short-lived MDs (<96h) - Mean Duration', 
                  f"{short_lived['duration_hours'].mean():.1f} ± {short_lived['duration_hours'].std():.1f}", 'hours')
         std_print('INFO', 'an', 'Short-lived MDs count', len(short_lived))
@@ -698,9 +695,9 @@ def compute_asm_duration_correlation(asm_results_df, duration_df, output_dir='ou
             t_stat, t_pval = ttest_ind(long_lived['ASM_24h_clean'].dropna(), short_lived['ASM_24h_clean'].dropna())
             std_print('INFO', 'an', 'T-test (Long vs Short ASM)', f't={t_stat:.3f}, p={t_pval:.4f}')
             if t_pval < 0.05:
-                std_print('INFO', 'an', 'Result: Significant difference in ASM between categories')
+                std_print(None, None, 'Result: Significant difference in ASM between categories')
             else:
-                std_print('INFO', 'an', 'Result: No significant ASM difference between categories')
+                std_print(None, None, 'Result: No significant ASM difference between categories')
         except:
             std_print('WARN', 'an', 'T-test failed')
 
@@ -721,9 +718,9 @@ def create_asm_summary_report(asm_results_df, corr_tp_df, corr_duration_df, outp
     tests = []
     pvalues = []
     with open(report_path, 'w') as f:
-        f.write("ANTECEDENT SOIL MOISTURE ANALYSIS - REPORT\n")
+        f.write("Antecedent soil moisture analysis - report\n")
         # Section 1: ASM Statistics
-        f.write("1. ANTECEDENT SOIL MOISTURE STATISTICS\n")
+        f.write("1. Antecedent soil moisture statistics\n")
         f.write(f"  Number of tracks analyzed:                     {len(asm_results_df)}\n")
         # Find available ASM column
         asm_col = 'ASM_24h_excl_6h'
@@ -744,11 +741,11 @@ def create_asm_summary_report(asm_results_df, corr_tp_df, corr_duration_df, outp
         else:
             f.write(f"  No ASM data available\n\n")
         # Section 2: ASM-Precipitation Correlation
-        f.write("2. ASM - PRECIPITATION CORRELATION\n")
+        f.write("2. ASM - Precipitation correlation\n")
         if corr_tp_df is not None and 'mean_tp' in corr_tp_df.columns:
             # Find the ASM column (should be 'ASM_24h' from compute_asm_tp_correlation)
             asm_col = 'ASM_24h'
-            print(f"DEBUG: corr_tp_df columns are: {corr_tp_df.columns.tolist()}")
+            std_print('DEBUG', 'co', f'r_tp_df columns are: {corr_tp_df.columns.tolist()}')
             if asm_col in corr_tp_df.columns:
                 valid_data = corr_tp_df.dropna(subset=[asm_col, 'mean_tp'])
                 if len(valid_data) > 1:  # Pearsonr needs at least 2 points
@@ -756,26 +753,26 @@ def create_asm_summary_report(asm_results_df, corr_tp_df, corr_duration_df, outp
                     r_max, p_max = pearsonr(corr_tp_df[asm_col], corr_tp_df['max_tp'])
                     r_total, p_total = pearsonr(corr_tp_df[asm_col], corr_tp_df['total_tp'])
 
-                    tests.append(('ASM vs Mean TP', r_mean, p_mean))
+                    tests.append('ASM vs Mean TP')
                     pvalues.append(p_mean)
-                    tests.append(('ASM vs Max TP', r_max, p_max))
+                    tests.append('ASM vs Max TP')
                     pvalues.append(p_max)
-                    tests.append(('ASM vs Total TP', r_total, p_total))
+                    tests.append('ASM vs Total TP')
                     pvalues.append(p_total)
 
                 reject, p_corrected, _, _ = multipletests(
-                    pvalues, 
+                    pvalues,
                     method='fdr_bh',  # Benjamini-Hochberg FDR correction
                     alpha=0.05
                 )
                 for test_name, p_orig, p_corr, is_sig in zip(tests, pvalues, p_corrected, reject):
-                    print(f"{test_name}:")
-                    print(f"  p_uncorrected: {p_orig:.4f}")
-                    print(f"  p_corrected:   {p_corr:.4f}")
-                    print(f"  Significant:   {is_sig}")
+                    std_print(None, None, f"{test_name} :")
+                    std_print(None, None, 'p_uncorrected', f'{p_orig:.4f}')
+                    std_print(None, None, 'p_corrected',   f'{p_corr:.4f}')
+                    std_print(None, None, 'Significant',   f'{is_sig}')
 
                 f.write(f"  ASM vs Mean TP:\n")
-                f.write(f"    Pearson r: {r_mean:.3f}, p-value: {p_mean:.3f}\n")
+                f.write(f"    Pearson r: {r_mean:.3f}, p-value: {p_mean:.4f}\n")
                 f.write(f"    Significance: {'YES' if p_mean < 0.05 else 'NO'}\n\n")
                 f.write(f"  ASM vs Max TP:\n")
                 f.write(f"    Pearson r = {r_max:.3f}, p-value = {p_max:.4f}\n")
@@ -833,7 +830,6 @@ def create_asm_summary_report(asm_results_df, corr_tp_df, corr_duration_df, outp
 def export_antecedent_results(asm_df, output_dir = 'output'):
     export_results_to_csv(asm_df, output_dir, 'antecedent_soil_moisture', 'an')
 
-
 def plot_antecedent_sm_timeseries(ds, track_df, track_id, buffer_km, output_dir = 'output'):
     """Plot soil moisture evolution before and after landfall."""
     # print(f" >> [DEBUG   ] Starting timeseries plot for track {track_id}")
@@ -851,7 +847,7 @@ def plot_antecedent_sm_timeseries(ds, track_df, track_id, buffer_km, output_dir 
     if landfall_time is None:
         # If it's land-originated, use the start of the track as the "event" time
         landfall_time = pd.to_datetime(track_df['time'].iloc[0])
-        std_print('INFO', 'an', f'Track {track_id}: Using start time as reference for land-originated MD')
+        std_print(None, 'an', f'Track {track_id}: Using start time as reference for land-originated MD')
 
     # Approximation: 1 degree latitude ~ 111 km
     time_coord = 'time' if 'time' in ds.coords else 'valid_time'
@@ -874,10 +870,7 @@ def plot_antecedent_sm_timeseries(ds, track_df, track_id, buffer_km, output_dir 
             if lat_min >= lat_max or lon_min >= lon_max:
                 continue
 
-            subset = ds_at_time.sel({
-                'latitude': slice(lat_max, lat_min),
-                'longitude': slice(lon_min, lon_max)
-            })
+            subset = ds_at_time.sel({'latitude': slice(lat_max, lat_min), 'longitude': slice(lon_min, lon_max)})
             if subset.sizes.get('latitude', 0) == 0 or subset.sizes.get('longitude', 0) == 0:
                 continue
 
@@ -990,7 +983,6 @@ def plot_sm_tp_map(
     output_dir = 'output',
 ):
     """Comparison map before/after landfall"""
-    std_print('DEBUG', 'an', f'Starting plot_sm_tp_map for track {track_id}')
     # Get ALL points for track
     track = track_df[track_df['track_id'] == track_id].sort_values('time')
     time_coord = 'time' if 'time' in ds.coords else 'valid_time'
@@ -998,7 +990,7 @@ def plot_sm_tp_map(
     track_id = int(track_id)
 
     if len(track) < 3:
-        std_print('WARN', 'an', f'Track {track_id} has insufficient points', len(track))
+        std_print('WARN', 'an', f'Track {track_id} has insufficient points :', len(track))
         return False
 
     # Find landfall and check origin
@@ -1015,7 +1007,7 @@ def plot_sm_tp_map(
                 break
     # If still no landfall use start of track
     if landfall_time is None:
-        std_print('WARN', 'an', f'Track {track_id}: No landfall detected. Using start of track.')
+        std_print('WARN', 'an', f'Track {track_id} :', 'No landfall detected, Using start of track')
         landfall_time = pd.to_datetime(track.iloc[0]['time'])
 
     # # Check if originates over land
@@ -1048,30 +1040,30 @@ def plot_sm_tp_map(
     # Split into before/after
     track_before = track_window[pd.to_datetime(track_window['time']) < landfall_time]
     track_after = track_window[pd.to_datetime(track_window['time']) >= landfall_time]
-    print(f"[DEBUG an]      Landfall time: {landfall_time}")
-    print(f"[DEBUG an]      Window: {before_start} to {after_end}")
-    print(f"[DEBUG an]      Track points total: {len(track)}")
-    print(f"[DEBUG an]      Points in window: {len(track_window)}")
-    print(f"[DEBUG an]      Points before landfall: {len(track_before)}")
-    print(f"[DEBUG an]      Points after landfall: {len(track_after)}")
+    std_print('DEBUG', 'an', 'Landfall time :', f'{landfall_time}')
+    std_print('DEBUG', 'an', 'Window :', f'{before_start} to {after_end}')
+    std_print('DEBUG', 'an', 'Track points total :', f'{len(track)}')
+    std_print('DEBUG', 'an', 'Points in window :', f'{len(track_window)}')
+    std_print('DEBUG', 'an', 'Points before landfall :', f'{len(track_before)}')
+    std_print('DEBUG', 'an', 'Points after landfall :', f'{len(track_after)}')
     if len(track_window) > 0:
-        print(f"[DEBUG an]       First point in window: {track_window.iloc[0]['time']}")
-        print(f"[DEBUG an]       Last point in window: {track_window.iloc[-1]['time']}")
-        print(f"[DEBUG an]       Time span in window: {(pd.to_datetime(track_window.iloc[-1]['time']) - pd.to_datetime(track_window.iloc[0]['time'])).total_seconds()/3600:.1f} hours")
+        std_print('DEBUG', 'an', 'First point in window :', f"{track_window.iloc[0]['time']}")
+        std_print('DEBUG', 'an', 'Last point in window :', f"{track_window.iloc[-1]['time']}")
+        std_print('DEBUG', 'an', 'Time span in window :', f"{(pd.to_datetime(track_window.iloc[-1]['time']) - pd.to_datetime(track_window.iloc[0]['time'])).total_seconds()/3600:.1f} hours")
     elif len(track_window) < 0 :
-        print(f"[DEBUG an]       No points in time window!")
-        print(f"[DEBUG an]       Track times: {track['time'].iloc[0]} to {track['time'].iloc[-1]}")
-        print(f"[DEBUG an]       Landfall time: {landfall_time}")
-        print(f"[DEBUG an]       Before start: {before_start}")
-        print(f"[DEBUG an]       After end: {after_end}")
+        std_print('DEBUG', 'an', f'No points in time window!')
+        std_print('DEBUG', 'an', 'Track times :', f"{track['time'].iloc[0]} to {track['time'].iloc[-1]}")
+        std_print('DEBUG', 'an', 'Landfall time :', landfall_time)
+        std_print('DEBUG', 'an', 'Before start :', before_start)
+        std_print('DEBUG', 'an', 'After end :', after_end)
     else :
-        std_print('WARN', 'an', f'Track {track_id}: No points in time window')
+        std_print('WARN', 'an', f'Track {track_id} : No points in time window')
 
     # Get extent
     all_lats = track['latitude']
     all_lons = track['longitude']
     if all_lats.empty or all_lons.empty:
-        std_print('WARN', 'an', f'Track {track_id}: No valid track points for extent')
+        std_print('WARN', 'an', f'Track {track_id} : No valid track points for extent')
         return False
 
     # Calculate track centroid
@@ -1097,13 +1089,13 @@ def plot_sm_tp_map(
 
     std_print('INFO', 'an', f'Track {track_id}: Map extent (clipped)', f'{min_lon:.1f}E-{max_lon:.1f}E, {min_lat:.1f}N-{max_lat:.1f}N')
 
-    print(f"[DEBUG an] Map extent for track {track_id}   :")
-    print(f"    Latitude          :  [{min_lat:.2f}, {max_lat:.2f}] deg (range: {lat_range:.1f}°)")
-    print(f"    Longitude         :  [{min_lon:.2f}, {max_lon:.2f}] deg (range: {lon_range:.1f}°)")
-    print(f"    Centroid          :  ({centroid_lat:.2f}, {centroid_lon:.2f})")
-    print(f"    Track points      :  {len(track)}")
-    print(f"    Before landfall   :  {len(track_before)} points")
-    print(f"    After landfall    :  {len(track_after)} points")
+    std_print('DEBUG', 'an', f'Map extent for track {track_id}   :')
+    std_print(None, None, 'Latitude        :', f'[{min_lat:.2f}, {max_lat:.2f}] deg (range: {lat_range:.1f}°)')
+    std_print(None, None, 'Longitude       :', f'[{min_lon:.2f}, {max_lon:.2f}] deg (range: {lon_range:.1f}°)')
+    std_print(None, None, 'Centroid        :', f'({centroid_lat:.2f}, {centroid_lon:.2f})')
+    std_print(None, None, 'Track points    :', f'{len(track)}')
+    std_print(None, None, 'Before landfall :', f'{len(track_before)} points')
+    std_print(None, None, 'After landfall  :', f'{len(track_after)} points')
 
     try:
         actual_before_start = pd.Timestamp(max(before_start, ds_times.min()))
@@ -1120,7 +1112,7 @@ def plot_sm_tp_map(
             'longitude': slice(min_lon, max_lon)
         })
         if ds_before[time_coord].size == 0 or ds_after[time_coord].size == 0:
-            std_print('WARN', 'an', f'Track {track_id}: Insufficient temporal data')
+            std_print('WARN', 'an', f'Track {track_id} : Insufficient temporal data')
             return False
 
         sm_before_mean = ds_before['swvl1'].mean(dim=time_coord)
@@ -1141,12 +1133,7 @@ def plot_sm_tp_map(
                 asm_display = f"{asm_24h:.4f} m³/m³"
 
             # Create 2x4 subplot layout
-            fig, axes = plt.subplots(
-                2,
-                4,
-                figsize=(22, 14),
-                subplot_kw={'projection': ccrs.PlateCarree()}
-            )
+            fig, axes = plt.subplots(2, 4, figsize=(22, 14,), subplot_kw={'projection': ccrs.PlateCarree()})
             # For soil moisture
             sm_all_values = np.concatenate([
                 sm_before_mean.values.flatten(),
@@ -1484,7 +1471,7 @@ def plot_sm_tp_map(
             )
             # Main title
             fig.suptitle(
-                f'Track {track_id}: Soil Moisture & Precipitation Evolution\n'            f'Before/After {period_label} ({hours_before}h before → {hours_after}h after)',
+                f'Track {track_id}: Soil Moisture & Precipitation Evolution\n'  f'Before/After {period_label} ({hours_before}h before → {hours_after}h after)',
                 fontsize=16,
                 fontweight='bold',
                 y=0.8
@@ -1493,17 +1480,22 @@ def plot_sm_tp_map(
             plt.subplots_adjust(top=0.8)
 
             os.makedirs(output_dir, exist_ok=True)
-            sm_tp_before_after_map_path = os.path.join(output_dir, f'track_{int(track_id)}_sm_tp_before_after.png')
+            print('DEBUG')
+            print('DEBUG')
+            print('DEBUG')
+            sm_tp_before_after_map_path = os.path.join(output_dir, f'sm_tp_before_after_track_{track_id}.png')
             plt.savefig(sm_tp_before_after_map_path, dpi=300, bbox_inches='tight')
             plt.close(fig)
             std_print('SAVED', 'an', 'SM/TP brefore/after map', sm_tp_before_after_map_path)
-            print(f"[DEBUG an  ] Extent                            :          {min_lon:.1f}E to {max_lon:.1f}E, {min_lat:.1f}N to {max_lat:.1f}N")
+            print('DEBUG')
+            print('DEBUG')
+            print('DEBUG')
+            std_print('DEBUG', 'an', 'Extent :',  f'{min_lon:.1f}E to {max_lon:.1f}E, {min_lat:.1f}N to {max_lat:.1f}N')
             return True  # Signal success
     except Exception as e:
         std_print('ERROR', 'an', f'Track {track_id} Plotting brefore/after maps:', str(e))
         traceback.print_exc()
         return False   # Signal failure
-
 
 def analyze_landfall_fluxes(ds, track_df, track_id, hours_before=24, hours_after=24):
     track_id = int(track_id)
