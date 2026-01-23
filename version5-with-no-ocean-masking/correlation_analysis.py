@@ -19,7 +19,7 @@ import pandas as pd
 import xarray as xr
 import matplotlib.pyplot as plt
 from scipy import stats
-from scipy.stats import pearsonr
+from scipy.stats import pearsonr, spearmanr, linregress
 from statsmodels.tsa.stattools import acf
 import traceback
 
@@ -30,7 +30,8 @@ from utils import (
     find_origin_type,
     extract_spatial_subset,
     setup_output_dir,
-    add_land_ocean_shading
+    add_land_ocean_shading,
+    export_results_to_csv
 )
 
 # Helper functions
@@ -209,15 +210,15 @@ def analyze_single_track(ds, track_df, track_id, buffer_km=51, max_lag_hours=50,
     try:
         plot_tp_sm_time_series(tp_series, swvl1_series, valid_times, landfall_index, track_id, output_dir, originates_over_land)
     except Exception as e:
-        std_print('WARN', 'ca','Failed to create time series plot:', e)
+        std_print('WARN', 'ca','Failed to create time series plot:', str(e))
     try:
-        plot_scatter_analysis(tp_series, swvl1_series, track_id, output_dir)
+        plot_scatter_analysis(ds, track_df, track_id, buffer_km = 100, output_dir = output_dir)
     except Exception as e:
-        std_print('WARN', 'ca','Failed to create scatter plot:', e)
+        std_print('WARN', 'ca','Failed to create scatter plot:', str(e))
     try:
         plot_lagged_correlation(tp_series, swvl1_series, max_lag_hours, track_id, output_dir)
     except Exception as e:
-        std_print('WARN', 'ca','Failed to lag correlation plot:', e)
+        std_print('WARN', 'ca','Failed to lag correlation plot:', str(e))
 
     # Global Correlation
     corr, p_val = pearsonr(tp_series, swvl1_series) if np.std(tp_series) > 0 else (np.nan, np.nan)
@@ -407,59 +408,193 @@ def plot_tp_sm_time_series(tp, sm, valid_times, landfall_index, track_id, output
     plt.close(fig)
     std_print('SAVED', 'ca', 'Time series plot :', plot_path)
 
-def plot_scatter_analysis(
-    tp,
-    sm,
-    track_id,
-    output_dir,
-):
-    fig, ax3 = plt.subplots(figsize=(10, 8))
-    corr, p_val = pearsonr(tp, sm)
-    ax3.scatter(
-        tp,
-        sm,
+def extract_regional_data(ds, track_df, track_id, variable, buffer_km = 100):
+    track_id = int(track_id)
+    track = track_df[track_df['track_id'] == track_id].sort_values('time')
+    values = []
+    valid_times = []
+
+    for _, row in track.iterrows():
+        time_coord = "time" if "time" in ds.coords else "valid_time"
+        lat_c = row['latitude']
+        lon_c = row['longitude']
+        t = pd.to_datetime(row['time'])
+
+        subset = extract_spatial_subset(ds, lat_c, lon_c, t, buffer_km=buffer_km, time_coord=time_coord)
+        if variable in subset.data_vars:
+            val = float(subset[variable].mean().values)
+            if not np.isnan(val):
+                values.append(val)
+                valid_times.append(t)
+
+    return np.array(valid_times), np.array(values)
+
+# Compute comprehensive correlation between TP and SWVL1 for a single track
+def compute_single_track_correlation(ds, track_df, track_id, buffer_km = 100):
+    """
+    - Pearson correlation (linear relationship)
+    - Spearman correlation (monotonic relationship)
+    - Linear regression (slope, intercept, R²)
+    """
+    track_id = int(track_id)
+
+    # Find landfall
+    if 'is_land' not in track_df.columns:
+        from utils import is_point_land
+        track_df['is_land'] = track_df.apply(
+            lambda row: is_point_land(row['latitude'], row['longitude']),
+            axis=1
+        )
+    landfall_time = find_landfall_time(track_df)
+
+    # Extract time series
+    tp_times, tp_vals = extract_regional_data(ds, track_df, track_id, 'tp', buffer_km)
+    sm_times, sm_vals = extract_regional_data(ds, track_df, track_id, 'swvl1', buffer_km)
+    common_times = np.intersect1d(tp_times, sm_times)
+    if len(common_times) < 3:
+        return None
+
+    # Align time series to common times
+    tp_idx = np.isin(tp_times, common_times)
+    sm_idx = np.isin(sm_times, common_times)
+
+    tp_aligned = tp_vals[tp_idx] * 1000  # Convert m to mm
+    sm_aligned = sm_vals[sm_idx]
+    if len(tp_aligned) < 3:
+        return None
+
+    # Pearson correlation (linear)
+    pearson_r, pearson_p = pearsonr(tp_aligned, sm_aligned)
+    # Spearman correlation (monotonic)
+    spearman_r, spearman_p = spearmanr(tp_aligned, sm_aligned)
+    # Linear regression
+    slope, intercept, r_value, p_value, std_err = linregress(tp_aligned, sm_aligned)
+    r_squared_val = float(r_value) ** 2
+
+    return {
+        'track_id': track_id,
+        'n_samples': len(tp_aligned),
+        'mean_tp': float(np.mean(tp_aligned)),
+        'mean_swvl1': float(np.mean(sm_aligned)),
+        'std_tp_mm': float(np.std(tp_aligned)),
+        'std_swvl1': float(np.std(sm_aligned)),
+        'pearson_r': float(pearson_r),
+        'pearson_p': float(pearson_p),
+        'spearman_r': float(spearman_r),
+        'spearman_p': float(spearman_p),
+        'regression_slope': float(slope),
+        'regression_intercept': float(intercept),
+        'r_squared': r_squared_val,
+        'times': common_times,
+        'tp_values': tp_aligned,
+        'swvl1_values': sm_aligned
+    }
+
+# Compute correlations for all tracks.
+def analyze_all_tracks(ds, full_track_df, buffer_km=100, output_dir="output"):
+    std_print('INFO', 'sm', "Analyzing all tracks for soil moisture patterns")
+    unique_tracks = sorted(full_track_df['track_id'].unique())
+    all_results = []
+    for track_id in unique_tracks:
+        track_df = full_track_df[full_track_df['track_id'] == track_id].copy()
+        result = compute_single_track_correlation(ds, track_df, track_id, buffer_km)
+        if result:
+            all_results.append(result)
+    if not all_results:
+        std_print('WARN', 'ca', 'All Tracks', 'No results from individual track analysis')
+        return None
+    results_df = pd.DataFrame(all_results)
+
+    # Summary statistics
+    summary = {
+        'n_tracks': len(results_df),
+        'mean_correlation': results_df['pearson_r'].mean(),
+        'std_correlation': results_df['pearson_r'].std(),
+        'tracks_with_positive_corr': (results_df['pearson_r'] > 0).sum(),
+        'tracks_with_significant_corr': (results_df['pearson_p'] < 0.05).sum(),
+        'mean_tp': results_df['mean_tp'].mean(),
+        'mean_swvl1': results_df['mean_swvl1'].mean(),
+    }
+    std_print('INFO', 'ca', f"Soil Moisture Analysis across  {summary['n_tracks']} Tracks:")
+    std_print(None, None, 'Mean Correlation (TP vs SM)', f"{summary['mean_correlation']:.3f} ± {summary['std_correlation']:.3f}")
+    std_print(None, None, 'Positive Correlations', f"{summary['tracks_with_positive_corr']}/{summary['n_tracks']}")
+    std_print(None, None, 'Significant Correlations (p < 0.05)', f"{summary['tracks_with_significant_corr']}/{summary['n_tracks']}")
+    std_print(None, None, 'Mean TP', f"{summary['mean_tp']:.2f} mm/hr")
+    std_print(None, None, 'Mean SM', f"{summary['mean_swvl1']:.3f} m³/m³")
+    # Export results
+    export_results_to_csv(results_df, output_dir, "sm_analysis", 'sm')
+    return {
+        'summary': summary,
+        'detailed_results': results_df
+    }
+
+def export_results(results_df, output_dir = 'output'):
+    """Export correlation results to CSV."""
+    os.makedirs(output_dir, exist_ok=True)
+    export_cols = [
+        'track_id', 'n_samples', 'mean_tp', 'mean_swvl1',
+        'pearson_r', 'pearson_p', 'spearman_r', 'spearman_p',
+        'regression_slope', 'r_squared'
+    ]
+
+    outpath = os.path.join(output_dir, 'tp_swvl1_correlations.csv')
+    available_cols = [col for col in export_cols if col in results_df.columns]
+    if not available_cols:
+        std_print('ERROR', 'ca', 'No valid columns to export')
+        return
+    results_df[available_cols].to_csv(outpath, index=False)
+    print(f" >> [EXPORTED] Correlation results CSV: {outpath}")
+
+def plot_scatter_analysis(ds, track_df, track_id, buffer_km = 100, output_dir = 'output'):
+    result = compute_single_track_correlation(ds, track_df, track_id, buffer_km)
+    if result is None:
+        std_print('WARN', 'ca', f'Track {track_id}', 'Insufficient flux data')
+        return
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    times = result['times']
+    tp_vals = result['tp_values']
+    sm_vals = result['swvl1_values']
+
+    ax.scatter(
+        tp_vals,
+        sm_vals,
         alpha=0.6,
         s=100,
-        color='blue',
+        color='purple',
         edgecolors='black',
         linewidth=1,
         zorder=3
     )
     # Regression line
-    if len(tp) > 2:
-        z = np.polyfit(tp, sm, 1)
-        p = np.poly1d(z)
-        x_line = np.array([tp.min(), tp.max()])
-        y_line = p(x_line)
-        r_squared = np.corrcoef(tp, p(tp))[0,1]**2
-        ax3.plot(
+    if result['n_samples'] > 2:
+        x_line = np.array([tp_vals.min(), tp_vals.max()])
+        y_line = result['regression_slope'] * x_line + result['regression_intercept']
+        ax.plot(
             x_line,
             y_line,
             'r--',
-            linewidth=2,
-            alpha=0.85,
-            zorder=4,
-            label=f'Linear Fit (r²={r_squared:.3f})'
+            linewidth=2.5,
+            alpha=0.8,
+            label=f'Linear Fit (r²={result["r_squared"]:.4f})'
         )
-    ax3.set_xlabel('Precipitation (mm/hr)', fontsize=11, fontweight='bold')
-    ax3.set_ylabel('Soil Moisture (m³/m³)', fontsize=11, fontweight='bold')
-    ax3.set_title(f'Track {track_id}: TP - SWVL1 Correlation', fontsize=13, fontweight='bold')
-    ax3.grid(True, alpha=0.5, linestyle='--')
-    ax3.legend(fontsize=8, loc='best', framealpha=0.7)
 
     # Statistics box
     stats_text = (
-        f"Pearson r: {corr:.3f}\n"
-        f"P-value:   {p_val:.4f}\n"
-        f"N samples: {len(tp)}\n"
-        f"Mean TP:   {np.mean(tp):.2f} mm/hr\n"
-        f"Mean SM:   {np.mean(sm):.3f} m³/m³"
+        f"Pearson r: {result['pearson_r']:.4f}\n"
+        f"Spearman ρ: {result['spearman_r']:.4f}\n"
+        f"P-value:   {result['pearson_p']:.4e}\n"
+        f"N samples: {result['n_samples']}\n"
+        f"Slope: {result['regression_slope']:.4f}\n"
+        f"Mean TP: {result['mean_tp']:.2f} mm/hr\n"
+        f"Mean SM: {result['mean_swvl1']:.2f} m³/m³"
     )
-    ax3.text(
+    ax.text(
         1.08,
         0.9,
         stats_text,
-        transform=ax3.transAxes,
+        transform=ax.transAxes,
         fontsize=9,
         verticalalignment='top',
         # horizontalalignment='right',
@@ -467,6 +602,12 @@ def plot_scatter_analysis(
         family='monospace',
         bbox=dict(boxstyle='round', alpha=0.3)
     )
+
+    ax.set_xlabel('Precipitation(tp) (mm/hr)', fontsize=12, fontweight='bold')
+    ax.set_ylabel('Soil Water Content(swvl1) (m³/m³)', fontsize=12, fontweight='bold')
+    ax.set_title(f'Track {track_id}: Total Precipitation (tp) - Soil water content (swvl1) Correlation', fontsize=13, fontweight='bold')
+    ax.grid(True, alpha=0.5, linestyle='--')
+    ax.legend(fontsize=8, loc='best', framealpha=0.7)
     plt.tight_layout()
 
     track_dir = os.path.join(output_dir, "scatter_plots")
@@ -474,21 +615,14 @@ def plot_scatter_analysis(
     plot_path = os.path.join(track_dir, f"track_{int(track_id)}_scatter.png")
     plt.savefig(plot_path, dpi=300, bbox_inches='tight')
     plt.close(fig)
-    std_print('SAVED', 'ca', 'Scatter plot :', plot_path)
+    std_print('SAVED', 'ca', 'Scatter plot', plot_path)
 
-
-def plot_lagged_correlation(
-    tp,
-    sm,
-    max_lag_hours,
-    track_id,
-    output_dir,
-):
+def plot_lagged_correlation(tp, sm, max_lag_hours, track_id, output_dir):
     lags, correlations_lag = lag_correlation(tp, sm, max_lag=max_lag_hours)
 
     # Ensure lags and correlations have same length
     if len(lags) != len(correlations_lag):
-        std_print('WARN', 'ca', f'Mismatch between lags ({len(lags)}) and correlations :', len(correlations_lag))
+        std_print('WARN', 'ca', f'Mismatch between lags ({len(lags)}) and correlations', len(correlations_lag))
         # Truncate to use the shorter length
         min_len = min(len(lags), len(correlations_lag))
         lags = lags[:min_len]
@@ -677,7 +811,7 @@ def plot_flux_analysis(results, output_dir, track_id):
         plt.close()
         std_print('SAVED', 'ca', 'Precipitation & Soil Moisture plot', plot1_path)
     except Exception as e:
-        std_print('ERROR', 'ca', f'Track {track_id} : Failed to create TP & SM plot:', e)
+        std_print('ERROR', 'ca', f'Track {track_id} : Failed to create TP & SM plot:', str(e))
         traceback.print_exc()
  
 

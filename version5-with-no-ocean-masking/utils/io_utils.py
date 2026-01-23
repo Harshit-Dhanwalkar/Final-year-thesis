@@ -45,7 +45,6 @@ def std_print(level=None, file_code=None, message="", value=None, unit=None):
         if value is not None:
             unit_str = f" {unit}" if unit else ""
             print(f"{indent} {message}{' ':>{spacing}}          {value}{unit_str}")
-          
         else:
             print(f"{indent} {message}")
         return
@@ -59,7 +58,7 @@ def std_print(level=None, file_code=None, message="", value=None, unit=None):
         # Format with value
         unit_str = f" {unit}" if unit else ""
         # Using a fixed width for the bracketed section to keep alignment consistent
-        print(f" >  [{level_str:<5} {f_code}] {message}{' ':>{spacing}}          {value}{unit_str}")
+        print(f" >  [{level_str:<5} {f_code}] {message}{' ':>{spacing}}      {value}{unit_str}")
     else:
         # Format without value
         print(f" >  [{level_str:<5} {f_code}] {message}")
