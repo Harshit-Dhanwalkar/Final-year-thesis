@@ -189,13 +189,14 @@
 		\begin{columns}[T, onlytextwidth]
 			\column{0.5\textwidth}
 			\centering
-			\includegraphics[width=1.01\linewidth]{images/MD-track.png}
+			% \includegraphics[width=1.01\linewidth]{images/MD-track.png}
+			\includegraphics[width=1.01\linewidth]{../version6-with-no-ocean-masking/output/MD-track.png}
 			\textit{\footnotesize Detected MD tracks using ERA5 signle level Dataset}
 
 			\column{0.5\textwidth}
-			\vspace{0.3cm}
+			\vspace{0.24cm}
 			\centering
-			\includegraphics[width=1.02\linewidth]{images/IMD-report.png}
+			\includegraphics[width=1.025\linewidth]{images/IMD-report.png}
 			\textit{\footnotesize IMD Monsoon Report 2024\footnotemark[1]}
 		\end{columns}
 
@@ -276,16 +277,16 @@
 			\begin{tabular}{p{0.030\linewidth} p{0.086\linewidth} p{0.105\linewidth} p{0.132\linewidth} p{0.106\linewidth} p{0.104\linewidth} p{0.098\linewidth}}
 				% \begin{tabular}{@{}clclllll@{}}
 				\toprule
-				                  & \multicolumn{4}{c}{\textbf{Detection using ERA5 data}} & \multicolumn{2}{c}{\textbf{IMD Monsoon Report 2024}}                                                                                                                                                   \\
+				                  & \multicolumn{4}{c}{\textbf{Detection using ERA5 data}} & \multicolumn{2}{c}{\textbf{IMD Monsoon Report 2024}}                                                                                                                                                                   \\
 				\cmidrule(lr){2-5} \cmidrule(lr){6-7}
-				\textbf{Track ID} & \textbf{Origin}                                        & \textbf{Time (2024)}                                 & \textbf{Detected Duration} & \textbf{Category \tiny{($\geq$96h (4 days))}} & \textbf{IMD reported time (2024)} & \textbf{IMD reported duration} \\
+				\textbf{Track ID} & \textbf{Origin}                                        & \textbf{Time (2024)}                                 & \textbf{Detected Duration} & \textbf{Category\footnotemark[3] \tiny{($\geq$96h (4 days))}} & \textbf{IMD reported time (2024)} & \textbf{IMD reported duration} \\
 				\midrule
-				1                 & Over Ocean                                             & 18/07 04:00 - 21/07 07:00                            & 75h ($\sim$ 3 days)        & Short-lived                                   & 19/07 - 20/07                     & 3 days                         \\
-				2                 & Over Land                                              & 01/08 19:00 - 06/08 04:00                            & 106h ($\sim$ 4.5 days)     & Long-lived                                    & 02/08 - 06/08                     & 4 days                         \\
-				3                 & Over Land                                              & 23/08 08:00 - 29/08 10:00                            & 146h ($\sim$ 6 days)       & Long-lived                                    & 25/08 - 01/09                     & 8 days                         \\
-				4                 & Over Ocean                                             & 30/08 05:00 - 02/09 08:00                            & 75h ($\sim$ 3 days)        & Short-lived                                   & 31/08 - 02/09                     & 3 days                         \\
-				5                 & Over Ocean                                             & 06/09 06:00 - 13/09 03:00                            & 165h ($\sim$ 7 days)       & Long-lived                                    & 08/09 - 13/09                     & 5 days                         \\
-				6                 & Over Land                                              & 13/09 12:00 - 18/09 07:00                            & 117h ($\sim$ 5 days)       & Long-lived                                    & 13/09 - 18/09                     & 5 days                         \\
+				1                 & Over Ocean                                             & 18/07 04:00 - 21/07 07:00                            & 75h ($\sim$ 3 days)        & Short-lived                                                   & 19/07 - 20/07                     & 3 days                         \\
+				2                 & Over Land                                              & 01/08 19:00 - 06/08 04:00                            & 106h ($\sim$ 4.5 days)     & Long-lived                                                    & 02/08 - 06/08                     & 4 days                         \\
+				3                 & Over Land                                              & 23/08 08:00 - 29/08 10:00                            & 146h ($\sim$ 6 days)       & Long-lived                                                    & 25/08 - 01/09                     & 8 days                         \\
+				4                 & Over Ocean                                             & 30/08 05:00 - 02/09 08:00                            & 75h ($\sim$ 3 days)        & Short-lived                                                   & 31/08 - 02/09                     & 3 days                         \\
+				5                 & Over Ocean                                             & 06/09 06:00 - 13/09 03:00                            & 165h ($\sim$ 7 days)       & Long-lived                                                    & 08/09 - 13/09                     & 5 days                         \\
+				6                 & Over Land                                              & 13/09 12:00 - 18/09 07:00                            & 117h ($\sim$ 5 days)       & Long-lived                                                    & 13/09 - 18/09                     & 5 days                         \\
 				\bottomrule
 			\end{tabular}
 		\end{block}
@@ -293,7 +294,7 @@
 		\tiny
 		\textit{Mean Detection Duration for all tracks is $115.2 \pm 38.3$ hours.}
 
-		\footnotetext[2]{\tiny Short or long lived MDs are Categorized based on their duration less or more than $96$ hours ($\sim 4$ days)}
+		\footnotetext[3]{\tiny Short or long lived MDs are Categorized based on their duration less or more than $96$ hours ($\sim 4$ days)}
 	\end{center}
 \end{frame}
 
@@ -301,10 +302,11 @@
 \begin{frame}{Track 1 Details}
 	\begin{center}
 		\begin{columns}[T]
-			\column{0.6\textwidth}
-			\includegraphics[width=0.95\textwidth]{../version5-with-no-ocean-masking/output/track_1/MD-track-1-detailed.png}
+			\column{0.5\textwidth}
+			\includegraphics[width=0.95\textwidth]{../version6-with-no-ocean-masking/output/track_1/MD-track-1-detailed.png}
 
-			\column{0.4\textwidth}
+			\vspace{0.05cm}
+			\footnotesize
 			\begin{block}{Statistics}
 				\begin{itemize}
 					\item Duration: 75 hours ($\sim$ 3 days)
@@ -312,69 +314,68 @@
 					\item Originated: over ocean
 				\end{itemize}
 			\end{block}
+
+			\column{0.5\textwidth}
+			\includegraphics[width=0.95\textwidth]{images/July-19-20.png}
 		\end{columns}
+
 	\end{center}
 \end{frame}
 
-% \includepdf[
-% 	pages=-,
-% 	scale=1,
-% 	frame=true,
-% 	pagecommand={\thispagestyle{empty}},  % Remove page numbers
-% 	offset=0mm 0mm,       % Adjust position
-% 	% templatesize={\textwidth}{\textheight} % Match template size
-% ]{hovmoller-slides/hov-1.pdf}
+\includepdf[
+	pages=-,
+	scale=1,
+	frame=true,
+	pagecommand={\thispagestyle{empty}},  % Remove page numbers
+	offset=0mm 0mm,       % Adjust position
+	% templatesize={\textwidth}{\textheight} % Match template size
+]{hovmoller-slides/hov-1.pdf}
 
-% \begin{frame}{Track 1 Details - Precipitation and soil moisture over time along track}
+\begin{frame}{Track 1 - Translation speed of MD}
+	\begin{center}
+		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_1/translational-speed/track_1_speed_ms.png}
+	\end{center}
+\end{frame}
+
+\begin{frame}{Track 1 - Lag Correlation}
+	\begin{center}
+		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_1/correlation_analysis/lag_correlation/track_1_lag_corr.png}
+	\end{center}
+\end{frame}
+
+\begin{frame}{Track 1 - TP - SWVL1 Correlation}
+	\begin{center}
+		\includegraphics[width=0.7\textwidth]{../version6-with-no-ocean-masking/output/track_1/correlation_analysis/scatter_plots/track_1_scatter.png}
+	\end{center}
+\end{frame}
+
+\begin{frame}{Track 1 - Spatial distribution of TP and SWVL1}
+	\begin{center}
+		\includegraphics[width=0.7\textwidth]{../version6-with-no-ocean-masking/output/track_1/correlation_analysis/time_series/track_1_tp_sm_time_series.png}
+	\end{center}
+\end{frame}
+
+% \begin{frame}{Track 1 - Heat fluxes transition}
 % 	\begin{center}
-% 		\includegraphics[width=0.8\textwidth]{../version5-with-no-ocean-masking/output/track_1/correlation_analysis/time_series/track_1_time_series.png}
+% 		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_1/flux_analysis/track_1_analysis/track_1_heat_fluxes_trasnsition.png}
 % 	\end{center}
 % \end{frame}
 
-\begin{frame}{Track 1 Details - Translation speed of MD}
+\begin{frame}{Track 1 - Heat flux analysis}
 	\begin{center}
-		\includegraphics[width=0.8\textwidth]{../version5-with-no-ocean-masking/output/track_1/translational-speed/track_1_speed_ms.png}
+		\includegraphics[width=0.6\textwidth]{../version6-with-no-ocean-masking/output/track_1/heat_flux_analysis/track_1_heat_flux_timeseries.png}
 	\end{center}
 \end{frame}
 
-\begin{frame}{Track 1 Details - Lag Correlation}
-	\begin{center}
-		\includegraphics[width=0.8\textwidth]{../version5-with-no-ocean-masking/output/track_1/correlation_analysis/lag_correlation/track_1_lag_corr.png}
-	\end{center}
-\end{frame}
-
-\begin{frame}{Track 1 Details - TP - SWVL1 Correlation}
-	\begin{center}
-		\includegraphics[width=0.7\textwidth]{../version5-with-no-ocean-masking/output/track_1/correlation_analysis/scatter_plots/track_1_scatter.png}
-	\end{center}
-\end{frame}
-
-\begin{frame}{Track 1 Details - Spatial distribution of TP and SWVL1}
-	\begin{center}
-		\includegraphics[width=0.7\textwidth]{../version5-with-no-ocean-masking/output/track_1/correlation_analysis/time_series/track_1_tp_sm_time_series.png}
-	\end{center}
-\end{frame}
-
-% \begin{frame}{Track 1 Details - Heat fluxes transition}
-% 	\begin{center}
-% 		\includegraphics[width=0.8\textwidth]{../version5-with-no-ocean-masking/output/track_1/flux_analysis/track_1_analysis/track_1_heat_fluxes_trasnsition.png}
-% 	\end{center}
-% \end{frame}
-
-\begin{frame}{Track 1 Details - Heat flux analysis}
-	\begin{center}
-		\includegraphics[width=0.6\textwidth]{../version5-with-no-ocean-masking/output/track_1/heat_flux_analysis/track_1_heat_flux_timeseries.png}
-	\end{center}
-\end{frame}
-
-% % %%%%%%%%%%%%%%%% Track 2 %%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%% Track 2 %%%%%%%%%%%%%%
 \begin{frame}{Track 2 Details}
 	\begin{center}
 		\begin{columns}[T]
-			\column{0.6\textwidth}
-			\includegraphics[width=0.95\textwidth]{../version5-with-no-ocean-masking/output/track_2/MD-track-2-detailed.png}
+			\column{0.5\textwidth}
+			\includegraphics[width=0.95\textwidth]{../version6-with-no-ocean-masking/output/track_2/MD-track-2-detailed.png}
 
-			\column{0.4\textwidth}
+			\vspace{0.05cm}
+			\footnotesize
 			\begin{block}{Statistics}
 				\begin{itemize}
 					\item Duration: 106 hours ($\sim$ 4.5 days)
@@ -382,58 +383,56 @@
 					\item Originated: over land
 				\end{itemize}
 			\end{block}
+
+			\column{0.5\textwidth}
+			\includegraphics[width=0.95\textwidth]{images/Aug-02-06.png}
 		\end{columns}
 	\end{center}
+	% Source : https://rsmcnewdelhi.imd.gov.in/download.php?path=uploads/archive/1/1_bf848c_18.%20National%20Bulletin%20No%2018-06Aug2024_0530IST.pdf
 \end{frame}
 
-% \includepdf[
-% 	pages=-,
-% 	scale=1,
-% 	frame=true,
-% 	pagecommand={\thispagestyle{empty}},  % Remove page numbers
-% 	offset=0mm 0mm,       % Adjust position
-% 	% templatesize={\textwidth}{\textheight} % Match template size
-% ]{hovmoller-slides/hov-2.pdf}
+\includepdf[
+	pages=-,
+	scale=1,
+	frame=true,
+	pagecommand={\thispagestyle{empty}},  % Remove page numbers
+	offset=0mm 0mm,       % Adjust position
+	% templatesize={\textwidth}{\textheight} % Match template size
+]{hovmoller-slides/hov-2.pdf}
 
-% \begin{frame}{Track 2 Details - Precipitation and soil moisture over time along track}
+\begin{frame}{Track 2 - Translation speed of MD}
+	\begin{center}
+		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_2/translational-speed/track_2_speed_ms.png}
+	\end{center}
+\end{frame}
+
+\begin{frame}{Track 2 - Lag Correlation}
+	\begin{center}
+		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_2/correlation_analysis/lag_correlation/track_2_lag_corr.png}
+	\end{center}
+\end{frame}
+
+\begin{frame}{Track 2 - TP - SWVL1 Correlation}
+	\begin{center}
+		\includegraphics[width=0.7\textwidth]{../version6-with-no-ocean-masking/output/track_2/correlation_analysis/scatter_plots/track_2_scatter.png}
+	\end{center}
+\end{frame}
+
+\begin{frame}{Track 2 - Spatial distribution of TP and SWVL1}
+	\begin{center}
+		\includegraphics[width=0.7\textwidth]{../version6-with-no-ocean-masking/output/track_2/correlation_analysis/time_series/track_2_tp_sm_time_series.png}
+	\end{center}
+\end{frame}
+
+% \begin{frame}{Track 2 - Heat fluxes transition}
 % 	\begin{center}
-% 		\includegraphics[width=0.8\textwidth]{../version1-with-no-ocean-masking/output/track_2/correlation_analysis/time_series/track_2_time_series.png}
+% 		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_2/flux_analysis/track_2_analysis/track_2_heat_fluxes_trasnsition.png}
 % 	\end{center}
 % \end{frame}
 
-\begin{frame}{Track 2 Details - Translation speed of MD}
+\begin{frame}{Track 2 - Heat flux analysis}
 	\begin{center}
-		\includegraphics[width=0.8\textwidth]{../version5-with-no-ocean-masking/output/track_2/translational-speed/track_2_speed_ms.png}
-	\end{center}
-\end{frame}
-
-\begin{frame}{Track 2 Details - Lag Correlation}
-	\begin{center}
-		\includegraphics[width=0.8\textwidth]{../version5-with-no-ocean-masking/output/track_2/correlation_analysis/lag_correlation/track_2_lag_corr.png}
-	\end{center}
-\end{frame}
-
-\begin{frame}{Track 2 Details - TP - SWVL1 Correlation}
-	\begin{center}
-		\includegraphics[width=0.7\textwidth]{../version5-with-no-ocean-masking/output/track_2/correlation_analysis/scatter_plots/track_2_scatter.png}
-	\end{center}
-\end{frame}
-
-\begin{frame}{Track 2 Details - Spatial distribution of TP and SWVL1}
-	\begin{center}
-		\includegraphics[width=0.7\textwidth]{../version5-with-no-ocean-masking/output/track_2/correlation_analysis/time_series/track_2_tp_sm_time_series.png}
-	\end{center}
-\end{frame}
-
-% \begin{frame}{Track 2 Details - Heat fluxes transition}
-% 	\begin{center}
-% 		\includegraphics[width=0.8\textwidth]{../version5-with-no-ocean-masking/output/track_2/flux_analysis/track_2_analysis/track_2_heat_fluxes_trasnsition.png}
-% 	\end{center}
-% \end{frame}
-
-\begin{frame}{Track 2 Details - Heat flux analysis}
-	\begin{center}
-		\includegraphics[width=0.6\textwidth]{../version5-with-no-ocean-masking/output/track_2/heat_flux_analysis/track_2_heat_flux_timeseries.png}
+		\includegraphics[width=0.6\textwidth]{../version6-with-no-ocean-masking/output/track_2/heat_flux_analysis/track_2_heat_flux_timeseries.png}
 	\end{center}
 \end{frame}
 
@@ -441,10 +440,11 @@
 \begin{frame}{Track 3 Details}
 	\begin{center}
 		\begin{columns}[T]
-			\column{0.6\textwidth}
-			\includegraphics[width=0.95\textwidth]{../version5-with-no-ocean-masking/output/track_3/MD-track-3-detailed.png}
+			\column{0.5\textwidth}
+			\includegraphics[width=0.95\textwidth]{../version6-with-no-ocean-masking/output/track_3/MD-track-3-detailed.png}
 
-			\column{0.4\textwidth}
+			\vspace{0.05cm}
+			\footnotesize
 			\begin{block}{Statistics}
 				\begin{itemize}
 					\item Duration: 146 hours ($\sim$ 6 days)
@@ -452,58 +452,55 @@
 					\item Originated: over land
 				\end{itemize}
 			\end{block}
+
+			\column{0.5\textwidth}
+			% \includegraphics[width=0.95\textwidth]{images/}
 		\end{columns}
 	\end{center}
 \end{frame}
 
-% \includepdf[
-% 	pages=-,
-% 	scale=1,
-% 	frame=true,
-% 	pagecommand={\thispagestyle{empty}},  % Remove page numbers
-% 	offset=0mm 0mm,       % Adjust position
-% 	% templatesize={\textwidth}{\textheight} % Match template size
-% ]{hovmoller-slides/hov-3.pdf}
+\includepdf[
+	pages=-,
+	scale=1,
+	frame=true,
+	pagecommand={\thispagestyle{empty}},  % Remove page numbers
+	offset=0mm 0mm,       % Adjust position
+	% templatesize={\textwidth}{\textheight} % Match template size
+]{hovmoller-slides/hov-3.pdf}
 
-% \begin{frame}{Track 3 Details - Precipitation and soil moisture over time along track}
+\begin{frame}{Track 3 - Translation speed of MD}
+	\begin{center}
+		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_3/translational-speed/track_3_speed_ms.png}
+	\end{center}
+\end{frame}
+
+\begin{frame}{Track 3 - Lag Correlation}
+	\begin{center}
+		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_3/correlation_analysis/lag_correlation/track_3_lag_corr.png}
+	\end{center}
+\end{frame}
+
+\begin{frame}{Track 3 - TP - SWVL1 Correlation}
+	\begin{center}
+		\includegraphics[width=0.7\textwidth]{../version6-with-no-ocean-masking/output/track_3/correlation_analysis/scatter_plots/track_3_scatter.png}
+	\end{center}
+\end{frame}
+
+\begin{frame}{Track 3 - Spatial distribution of TP and SWVL1}
+	\begin{center}
+		\includegraphics[width=0.7\textwidth]{../version6-with-no-ocean-masking/output/track_3/correlation_analysis/time_series/track_3_tp_sm_time_series.png}
+	\end{center}
+\end{frame}
+
+% \begin{frame}{Track 3 - Heat fluxes transition}
 % 	\begin{center}
-% 		\includegraphics[width=0.8\textwidth]{../version5-with-no-ocean-masking/output/track_3/correlation_analysis/time_series/track_3_time_series.png}
+% 		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_3/flux_analysis/track_3_analysis/track_3_heat_fluxes_trasnsition.png}
 % 	\end{center}
 % \end{frame}
 
-\begin{frame}{Track 3 Details - Translation speed of MD}
+\begin{frame}{Track 3 - Heat flux analysis}
 	\begin{center}
-		\includegraphics[width=0.8\textwidth]{../version5-with-no-ocean-masking/output/track_3/translational-speed/track_3_speed_ms.png}
-	\end{center}
-\end{frame}
-
-\begin{frame}{Track 3 Details - Lag Correlation}
-	\begin{center}
-		\includegraphics[width=0.8\textwidth]{../version5-with-no-ocean-masking/output/track_3/correlation_analysis/lag_correlation/track_3_lag_corr.png}
-	\end{center}
-\end{frame}
-
-\begin{frame}{Track 3 Details - TP - SWVL1 Correlation}
-	\begin{center}
-		\includegraphics[width=0.7\textwidth]{../version5-with-no-ocean-masking/output/track_3/correlation_analysis/scatter_plots/track_3_scatter.png}
-	\end{center}
-\end{frame}
-
-\begin{frame}{Track 3 Details - Spatial distribution of TP and SWVL1}
-	\begin{center}
-		\includegraphics[width=0.7\textwidth]{../version5-with-no-ocean-masking/output/track_3/correlation_analysis/time_series/track_3_tp_sm_time_series.png}
-	\end{center}
-\end{frame}
-
-% \begin{frame}{Track 3 Details - Heat fluxes transition}
-% 	\begin{center}
-% 		\includegraphics[width=0.8\textwidth]{../version5-with-no-ocean-masking/output/track_3/flux_analysis/track_3_analysis/track_3_heat_fluxes_trasnsition.png}
-% 	\end{center}
-% \end{frame}
-
-\begin{frame}{Track 3 Details - Heat flux analysis}
-	\begin{center}
-		\includegraphics[width=0.6\textwidth]{../version5-with-no-ocean-masking/output/track_3/heat_flux_analysis/track_3_heat_flux_timeseries.png}
+		\includegraphics[width=0.6\textwidth]{../version6-with-no-ocean-masking/output/track_3/heat_flux_analysis/track_3_heat_flux_timeseries.png}
 	\end{center}
 \end{frame}
 
@@ -511,10 +508,11 @@
 \begin{frame}{Track 4 Details}
 	\begin{center}
 		\begin{columns}[T]
-			\column{0.6\textwidth}
-			\includegraphics[width=0.95\textwidth]{../version5-with-no-ocean-masking/output/track_4/MD-track-4-detailed.png}
+			\column{0.5\textwidth}
+			\includegraphics[width=0.95\textwidth]{../version6-with-no-ocean-masking/output/track_4/MD-track-4-detailed.png}
 
-			\column{0.4\textwidth}
+			\vspace{0.05cm}
+			\footnotesize
 			\begin{block}{Statistics}
 				\begin{itemize}
 					\item Duration: 75 hours ($\sim$ 3 days)
@@ -522,70 +520,67 @@
 					\item Originated: over ocean
 				\end{itemize}
 			\end{block}
+
+			\column{0.5\textwidth}
+			\includegraphics[width=0.95\textwidth]{images/Aug-31-Sep-02.png}
 		\end{columns}
 	\end{center}
 \end{frame}
 
-% \includepdf[
-% 	pages=-,
-% 	scale=1,
-% 	frame=true,
-% 	pagecommand={\thispagestyle{empty}},  % Remove page numbers
-% 	offset=0mm 0mm,       % Adjust position
-% 	% templatesize={\textwidth}{\textheight} % Match template size
-% ]{hovmoller-slides/hov-4.pdf}
+\includepdf[
+	pages=-,
+	scale=1,
+	frame=true,
+	pagecommand={\thispagestyle{empty}},  % Remove page numbers
+	offset=0mm 0mm,       % Adjust position
+	% templatesize={\textwidth}{\textheight} % Match template size
+]{hovmoller-slides/hov-4.pdf}
 
-% \begin{frame}{Track 4 Details - Precipitation and soil moisture over time along track}
+\begin{frame}{Track 4 - Translation speed of MD}
+	\begin{center}
+		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_4/translational-speed/track_4_speed_ms.png}
+	\end{center}
+\end{frame}
+
+\begin{frame}{Track 4 - Lag Correlation}
+	\begin{center}
+		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_4/correlation_analysis/lag_correlation/track_4_lag_corr.png}
+	\end{center}
+\end{frame}
+
+\begin{frame}{Track 4 - TP - SWVL1 Correlation}
+	\begin{center}
+		\includegraphics[width=0.7\textwidth]{../version6-with-no-ocean-masking/output/track_4/correlation_analysis/scatter_plots/track_4_scatter.png}
+	\end{center}
+\end{frame}
+
+\begin{frame}{Track 4 - Spatial distribution of TP and SWVL1}
+	\begin{center}
+		\includegraphics[width=0.7\textwidth]{../version6-with-no-ocean-masking/output/track_4/correlation_analysis/time_series/track_4_tp_sm_time_series.png}
+	\end{center}
+\end{frame}
+
+% \begin{frame}{Track 4 - Heat fluxes transition}
 % 	\begin{center}
-% 		\includegraphics[width=0.8\textwidth]{../version5-with-no-ocean-masking/output/track_4/correlation_analysis/time_series/track_4_time_series.png}
+% 		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_4/flux_analysis/track_4_analysis/track_4_heat_fluxes_trasnsition.png}
 % 	\end{center}
 % \end{frame}
 
-\begin{frame}{Track 4 Details - Translation speed of MD}
+\begin{frame}{Track 4 - Heat flux analysis}
 	\begin{center}
-		\includegraphics[width=0.8\textwidth]{../version5-with-no-ocean-masking/output/track_4/translational-speed/track_4_speed_ms.png}
+		\includegraphics[width=0.6\textwidth]{../version6-with-no-ocean-masking/output/track_4/heat_flux_analysis/track_4_heat_flux_timeseries.png}
 	\end{center}
 \end{frame}
-
-\begin{frame}{Track 4 Details - Lag Correlation}
-	\begin{center}
-		\includegraphics[width=0.8\textwidth]{../version5-with-no-ocean-masking/output/track_4/correlation_analysis/lag_correlation/track_4_lag_corr.png}
-	\end{center}
-\end{frame}
-
-\begin{frame}{Track 4 Details - TP - SWVL1 Correlation}
-	\begin{center}
-		\includegraphics[width=0.7\textwidth]{../version5-with-no-ocean-masking/output/track_4/correlation_analysis/scatter_plots/track_4_scatter.png}
-	\end{center}
-\end{frame}
-
-\begin{frame}{Track 4 Details - Spatial distribution of TP and SWVL1}
-	\begin{center}
-		\includegraphics[width=0.7\textwidth]{../version5-with-no-ocean-masking/output/track_4/correlation_analysis/time_series/track_4_tp_sm_time_series.png}
-	\end{center}
-\end{frame}
-
-% \begin{frame}{Track 4 Details - Heat fluxes transition}
-% 	\begin{center}
-% 		\includegraphics[width=0.8\textwidth]{../version5-with-no-ocean-masking/output/track_4/flux_analysis/track_4_analysis/track_4_heat_fluxes_trasnsition.png}
-% 	\end{center}
-% \end{frame}
-
-\begin{frame}{Track 4 Details - Heat flux analysis}
-	\begin{center}
-		\includegraphics[width=0.6\textwidth]{../version5-with-no-ocean-masking/output/track_4/heat_flux_analysis/track_4_heat_flux_timeseries.png}
-	\end{center}
-\end{frame}
-
 
 % %%%%%%%%%%%%%%%% Track 5 %%%%%%%%%%%%%%
 \begin{frame}{Track 5 Details}
 	\begin{center}
 		\begin{columns}[T]
-			\column{0.6\textwidth}
-			\includegraphics[width=0.95\textwidth]{../version5-with-no-ocean-masking/output/track_5/MD-track-5-detailed.png}
+			\column{0.5\textwidth}
+			\includegraphics[width=0.95\textwidth]{../version6-with-no-ocean-masking/output/track_5/MD-track-5-detailed.png}
 
-			\column{0.4\textwidth}
+			\vspace{0.05cm}
+			\footnotesize
 			\begin{block}{Statistics}
 				\begin{itemize}
 					\item Duration: 165 hours ($\sim$ 7 days)
@@ -593,58 +588,55 @@
 					\item Originated: over ocean
 				\end{itemize}
 			\end{block}
+
+			\column{0.5\textwidth}
+			\includegraphics[width=0.95\textwidth]{images/Sep-08-10.png}
 		\end{columns}
 	\end{center}
 \end{frame}
 
-% \includepdf[
-% 	pages=-,
-% 	scale=1,
-% 	frame=true,
-% 	pagecommand={\thispagestyle{empty}},  % Remove page numbers
-% 	offset=0mm 0mm,       % Adjust position
-% 	% templatesize={\textwidth}{\textheight} % Match template size
-% ]{hovmoller-slides/hov-5.pdf}
+\includepdf[
+	pages=-,
+	scale=1,
+	frame=true,
+	pagecommand={\thispagestyle{empty}},  % Remove page numbers
+	offset=0mm 0mm,       % Adjust position
+	% templatesize={\textwidth}{\textheight} % Match template size
+]{hovmoller-slides/hov-5.pdf}
 
-% \begin{frame}{Track 5 Details - Precipitation and soil moisture over time along track}
+\begin{frame}{Track 5 - Translation speed of MD}
+	\begin{center}
+		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_5/translational-speed/track_5_speed_ms.png}
+	\end{center}
+\end{frame}
+
+\begin{frame}{Track 5 - Lag Correlation}
+	\begin{center}
+		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_5/correlation_analysis/lag_correlation/track_5_lag_corr.png}
+	\end{center}
+\end{frame}
+
+\begin{frame}{Track 5 - TP - SWVL1 Correlation}
+	\begin{center}
+		\includegraphics[width=0.7\textwidth]{../version6-with-no-ocean-masking/output/track_5/correlation_analysis/scatter_plots/track_5_scatter.png}
+	\end{center}
+\end{frame}
+
+\begin{frame}{Track 5 - Spatial distribution of TP and SWVL1}
+	\begin{center}
+		\includegraphics[width=0.7\textwidth]{../version6-with-no-ocean-masking/output/track_5/correlation_analysis/time_series/track_5_tp_sm_time_series.png}
+	\end{center}
+\end{frame}
+
+% \begin{frame}{Track 5 - Heat fluxes transition}
 % 	\begin{center}
-% 		\includegraphics[width=0.8\textwidth]{../version1-with-no-ocean-masking/output/track_5/correlation_analysis/time_series/track_5_time_series.png}
+% 		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_5/flux_analysis/track_5_analysis/track_5_heat_fluxes_trasnsition.png}
 % 	\end{center}
 % \end{frame}
 
-\begin{frame}{Track 5 Details - Translation speed of MD}
+\begin{frame}{Track 5 - Heat flux analysis}
 	\begin{center}
-		\includegraphics[width=0.8\textwidth]{../version5-with-no-ocean-masking/output/track_5/translational-speed/track_5_speed_ms.png}
-	\end{center}
-\end{frame}
-
-\begin{frame}{Track 5 Details - Lag Correlation}
-	\begin{center}
-		\includegraphics[width=0.8\textwidth]{../version5-with-no-ocean-masking/output/track_5/correlation_analysis/lag_correlation/track_5_lag_corr.png}
-	\end{center}
-\end{frame}
-
-\begin{frame}{Track 5 Details - TP - SWVL1 Correlation}
-	\begin{center}
-		\includegraphics[width=0.7\textwidth]{../version5-with-no-ocean-masking/output/track_5/correlation_analysis/scatter_plots/track_5_scatter.png}
-	\end{center}
-\end{frame}
-
-\begin{frame}{Track 5 Details - Spatial distribution of TP and SWVL1}
-	\begin{center}
-		\includegraphics[width=0.7\textwidth]{../version5-with-no-ocean-masking/output/track_5/correlation_analysis/time_series/track_5_tp_sm_time_series.png}
-	\end{center}
-\end{frame}
-
-% \begin{frame}{Track 5 Details - Heat fluxes transition}
-% 	\begin{center}
-% 		\includegraphics[width=0.8\textwidth]{../version5-with-no-ocean-masking/output/track_5/flux_analysis/track_5_analysis/track_5_heat_fluxes_trasnsition.png}
-% 	\end{center}
-% \end{frame}
-
-\begin{frame}{Track 5 Details - Heat flux analysis}
-	\begin{center}
-		\includegraphics[width=0.6\textwidth]{../version5-with-no-ocean-masking/output/track_5/heat_flux_analysis/track_5_heat_flux_timeseries.png}
+		\includegraphics[width=0.6\textwidth]{../version6-with-no-ocean-masking/output/track_5/heat_flux_analysis/track_5_heat_flux_timeseries.png}
 	\end{center}
 \end{frame}
 
@@ -652,10 +644,11 @@
 \begin{frame}{Track 6 Details}
 	\begin{center}
 		\begin{columns}[T]
-			\column{0.6\textwidth}
-			\includegraphics[width=0.95\textwidth]{../version5-with-no-ocean-masking/output/track_6/MD-track-6-detailed.png}
+			\column{0.5\textwidth}
+			\includegraphics[width=0.95\textwidth]{../version6-with-no-ocean-masking/output/track_6/MD-track-6-detailed.png}
 
-			\column{0.4\textwidth}
+			\vspace{0.05cm}
+			\footnotesize
 			\begin{block}{Statistics}
 				\begin{itemize}
 					\item Duration: 117 hours ($\sim$ 5 days)
@@ -663,58 +656,55 @@
 					\item Originated: over land
 				\end{itemize}
 			\end{block}
+
+			\column{0.5\textwidth}
+			\includegraphics[width=0.95\textwidth]{images/Sep-13-18.png}
 		\end{columns}
 	\end{center}
 \end{frame}
 
-% \includepdf[
-% 	pages=-,
-% 	scale=1,
-% 	frame=true,
-% 	pagecommand={\thispagestyle{empty}},  % Remove page numbers
-% 	offset=0mm 0mm,       % Adjust position
-% 	% templatesize={\textwidth}{\textheight} % Match template size
-% ]{hovmoller-slides/hov-6.pdf}
+\includepdf[
+	pages=-,
+	scale=1,
+	frame=true,
+	pagecommand={\thispagestyle{empty}},  % Remove page numbers
+	offset=0mm 0mm,       % Adjust position
+	% templatesize={\textwidth}{\textheight} % Match template size
+]{hovmoller-slides/hov-6.pdf}
 
-% \begin{frame}{Track 6 Details - Precipitation and soil moisture over time along track}
+\begin{frame}{Track 6 - Translation speed of MD}
+	\begin{center}
+		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_6/translational-speed/track_6_speed_ms.png}
+	\end{center}
+\end{frame}
+
+\begin{frame}{Track 6 - Lag Correlation}
+	\begin{center}
+		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_6/correlation_analysis/lag_correlation/track_6_lag_corr.png}
+	\end{center}
+\end{frame}
+
+\begin{frame}{Track 6 - TP - SWVL1 Correlation}
+	\begin{center}
+		\includegraphics[width=0.7\textwidth]{../version6-with-no-ocean-masking/output/track_6/correlation_analysis/scatter_plots/track_6_scatter.png}
+	\end{center}
+\end{frame}
+
+\begin{frame}{Track 6 - Spatial distribution of TP and SWVL1}
+	\begin{center}
+		\includegraphics[width=0.7\textwidth]{../version6-with-no-ocean-masking/output/track_6/correlation_analysis/time_series/track_6_tp_sm_time_series.png}
+	\end{center}
+\end{frame}
+
+% \begin{frame}{Track 6 - Heat fluxes transition}
 % 	\begin{center}
-% 		\includegraphics[width=0.8\textwidth]{../version1-with-no-ocean-masking/output/track_6/correlation_analysis/time_series/track_6_time_series.png}
+% 		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_6/flux_analysis/track_6_analysis/track_6_heat_fluxes_trasnsition.png}
 % 	\end{center}
 % \end{frame}
 
-\begin{frame}{Track 6 Details - Translation speed of MD}
+\begin{frame}{Track 6 - Heat flux analysis}
 	\begin{center}
-		\includegraphics[width=0.8\textwidth]{../version5-with-no-ocean-masking/output/track_6/translational-speed/track_6_speed_ms.png}
-	\end{center}
-\end{frame}
-
-\begin{frame}{Track 6 Details - Lag Correlation}
-	\begin{center}
-		\includegraphics[width=0.8\textwidth]{../version5-with-no-ocean-masking/output/track_6/correlation_analysis/lag_correlation/track_6_lag_corr.png}
-	\end{center}
-\end{frame}
-
-\begin{frame}{Track 6 Details - TP - SWVL1 Correlation}
-	\begin{center}
-		\includegraphics[width=0.7\textwidth]{../version5-with-no-ocean-masking/output/track_6/correlation_analysis/scatter_plots/track_6_scatter.png}
-	\end{center}
-\end{frame}
-
-\begin{frame}{Track 6 Details - Spatial distribution of TP and SWVL1}
-	\begin{center}
-		\includegraphics[width=0.7\textwidth]{../version5-with-no-ocean-masking/output/track_6/correlation_analysis/time_series/track_6_tp_sm_time_series.png}
-	\end{center}
-\end{frame}
-
-% \begin{frame}{Track 6 Details - Heat fluxes transition}
-% 	\begin{center}
-% 		\includegraphics[width=0.8\textwidth]{../version5-with-no-ocean-masking/output/track_6/flux_analysis/track_6_analysis/track_6_heat_fluxes_trasnsition.png}
-% 	\end{center}
-% \end{frame}
-
-\begin{frame}{Track 6 Details - Heat flux analysis}
-	\begin{center}
-		\includegraphics[width=0.6\textwidth]{../version5-with-no-ocean-masking/output/track_6/heat_flux_analysis/track_6_heat_flux_timeseries.png}
+		\includegraphics[width=0.6\textwidth]{../version6-with-no-ocean-masking/output/track_6/heat_flux_analysis/track_6_heat_flux_timeseries.png}
 	\end{center}
 \end{frame}
 
