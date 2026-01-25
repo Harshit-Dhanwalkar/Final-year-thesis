@@ -913,7 +913,6 @@ def consolidate_simultaneous_tracks(tracks, dist_km=350, time_tolerance_hours=1)
     if not tracks: return []
     final_tracks = []
     used_indices = set()
-
     for i in range(len(tracks)):
         if i in used_indices: continue
         base = tracks[i].copy()
@@ -980,7 +979,6 @@ def smooth_track_coordinates(track_df, window_size = 5, iterations = 2):
 def calculate_track_direction(track_data):
     if len(track_data) < 2:
         return None
-
     start_lat = track_data.iloc[0]["latitude"]
     start_lon = track_data.iloc[0]["longitude"]
     end_lat = track_data.iloc[-1]["latitude"]
@@ -1214,6 +1212,7 @@ def plot_tracks(track_df, output_dir="output"):
 
         month = track_data["month"].iloc[0]
         color = month_colors.get(month, "black")
+        common_bbox = dict(boxstyle="round,pad=0.05", facecolor="white", alpha=0.7, edgecolor="none", linewidth=0.8)
 
         # Plot all detection points
         plt.plot(
@@ -1245,7 +1244,8 @@ def plot_tracks(track_df, output_dir="output"):
             fontsize=9,
             fontweight="normal",
             color="black",
-            bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.7, edgecolor='none', linewidth=0.3),
+            # bbox=dict(boxstyle="round,pad=0.05", facecolor="white", alpha=0.7, edgecolor='none', linewidth=0.3),
+            bbox=common_bbox,
             transform=ccrs.PlateCarree(),
             zorder=4,
         )
@@ -1258,7 +1258,8 @@ def plot_tracks(track_df, output_dir="output"):
             fontsize=9,
             fontweight="normal",
             color="black",
-            bbox=dict(boxstyle="round,pad=0.05", facecolor="white", alpha=0.7, edgecolor='none', linewidth=0.3),
+            # bbox=dict(boxstyle="round,pad=0.05", facecolor="white", alpha=0.7, edgecolor='none', linewidth=0.3),
+            bbox=common_bbox,
             transform=ccrs.PlateCarree(),
             zorder=4,
         )
@@ -1421,6 +1422,7 @@ def plot_track_full_map(track_df_single, track_id, full_extent, output_dir):
     std_print('SAVED', 'md', f'Full-map for track {track_id}', outpath)
 
 def plot_single_track(track_df, track_id, output_dir):
+    track_id = int(track_id)
     # time_coord = get_time_coord(ds)
     # if time_coord not in track_df.columns:
     #     time_coord = [col for col in track_df.columns if 'time' in col.lower()][0]
@@ -1604,10 +1606,11 @@ def export_track_coordinates(track_df, output_dir):
     export_df['time'] = pd.to_datetime(export_df['time']).dt.strftime('%Y-%m-%d %H:%M:%S')
     output_filename = os.path.join(output_dir, f"MD-coordinates-ALL.csv")
     export_df.to_csv(output_filename, index=False)
-    std_print('INFO', 'md','No. of Track Coordinates to export', len(track_df))
-    std_print('EXPORT', 'md', 'Track Coordinates detections CSV', output_filename)
+    std_print('INFO', 'md', 'No. of Track Coordinates to export', len(track_df))
+    std_print('EXPORT', 'md', 'Track Coordinates detections CSV to ', output_filename)
 
 def export_single_track_coordinates(track_df, track_id, output_dir):
+    track_id = int(track_id)
     export_df = track_df[['time', 'latitude', 'longitude', 'track_id']].copy()
     export_df['time'] = pd.to_datetime(export_df['time']).dt.strftime('%Y-%m-%d %H:%M:%S')
     track_id_str = str(track_id).replace('/', '_').replace(' ', '_')
@@ -1970,27 +1973,27 @@ if __name__ == "__main__":
             std_print(None, None, 'duration', f"{(track_df['time'].max() - track_df['time'].min()).total_seconds() / 3600:.1f} hours")
             # 8) Generate Hovmöller Plots
             print("\n---------------------------------- Azimuthal Hovmoller Plots --------------------------")
-            # std_print('DEBUG', 'md', f'Skipping Hovmöller for Track {track_id}')
-            std_print('INFO', 'md', f'Computing Hovmöller for Track {track_id}')
-            hov_dir = os.path.join(track_dir, "hovmoller")
-            os.makedirs(hov_dir, exist_ok=True)
-            hov_data, track_times, landfall_index = compute_azimuthal_hovmoller(
-                ds=ds,
-                track_df=track_df,
-                radii_km=radii,
-                variables=variables,
-                n_theta=72
-            )
-            for var in variables:
-                std_print('INFO', 'md', 'Plotting Hovmöller for variable', var)
-                plot_hovmoller(
-                    hov_arr=hov_data[var],
-                    track_times=track_times,
-                    radii_km=radii,
-                    var_name=var,
-                    track_df=track_df,
-                    output_dir=hov_dir
-                )
+            std_print('DEBUG', 'md', f'Skipping Hovmöller for Track {track_id}')
+            # std_print('INFO', 'md', f'Computing Hovmöller for Track {track_id}')
+            # hov_dir = os.path.join(track_dir, "hovmoller")
+            # os.makedirs(hov_dir, exist_ok=True)
+            # hov_data, track_times, landfall_index = compute_azimuthal_hovmoller(
+            #     ds=ds,
+            #     track_df=track_df,
+            #     radii_km=radii,
+            #     variables=variables,
+            #     n_theta=72
+            # )
+            # for var in variables:
+            #     std_print('INFO', 'md', 'Plotting Hovmöller for variable', var)
+            #     plot_hovmoller(
+            #         hov_arr=hov_data[var],
+            #         track_times=track_times,
+            #         radii_km=radii,
+            #         var_name=var,
+            #         track_df=track_df,
+            #         output_dir=hov_dir
+            #     )
             # 9) Antecedent Soil Moisture Analysis
             print("\n-------------------------------- Antecedent Soil Moisture Analysis ---------------------")
             # std_print('DEBUG', 'md', f'Skipping antecedent SM for Track {track_id}')

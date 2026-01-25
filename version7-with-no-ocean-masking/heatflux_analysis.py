@@ -22,7 +22,7 @@ from utils import (
     find_landfall_time,
     add_land_ocean_shading,
     calculate_buffer_deg,
-    get_time_coord, 
+    get_time_coord,
     export_results_to_csv,
 )
 
@@ -103,63 +103,76 @@ def extract_heat_flux_timeseries(ds, track_df, track_id, buffer_km=100):
         idx_now  = np.argmin(np.abs(ds_times - t_now))
         idx_prev = np.argmin(np.abs(ds_times - t_prev))
         try:
-            # Create bounds for spatial selection
+           # Create bounds for spatial selection
             lat_min = lat_c - lat_buf
             lat_max = lat_c + lat_buf
             lon_min = lon_c - lon_buf
             lon_max = lon_c + lon_buf
-            ds_now = ds.isel({time_coord: idx_now})
-            # Create spatial mask
-            lat_mask = (ds_now.latitude >= lat_min) & (ds_now.latitude <= lat_max)
-            lon_mask = (ds_now.longitude >= lon_min) & (ds_now.longitude <= lon_max)
 
-            # Apply masks
-            if lat_mask.any() and lon_mask.any():
-                sub_now = ds_now.where(lat_mask & lon_mask, drop=True)
-                # Check for heat flux variables
-                if 'avg_slhtf' in sub_now.data_vars and 'avg_ishf' in sub_now.data_vars:
-                    slhf_w = float(sub_now["avg_slhtf"].mean().values)
-                    sshf_w = float(sub_now["avg_ishf"].mean().values)
-                elif 'slhf' in sub_now.data_vars and 'sshf' in sub_now.data_vars:
-                    # Select previous time data for deaccumulation
-                    ds_prev = ds.isel({time_coord: idx_prev})
-                    sub_prev = ds_prev.where(lat_mask & lon_mask, drop=True)
-                    # De-accumulate accumulated fluxes J m-2 -> W m-2
-                    dt_seconds = 3600.0  # Assuming 1-hour difference
-                    if 'slhf' in sub_now.data_vars and 'slhf' in sub_prev.data_vars:
-                        slhf_w = -(float(sub_now["slhf"].mean().values) - float(sub_prev["slhf"].mean().values)) / dt_seconds
-                    else:
-                        slhf_w = np.nan
-                    if 'sshf' in sub_now.data_vars and 'sshf' in sub_prev.data_vars:
-                        sshf_w = -(float(sub_now["sshf"].mean().values) - float(sub_prev["sshf"].mean().values)) / dt_seconds
-                    else:
-                        sshf_w = np.nan
+            # Clamp to dataset bounds
+            lat_min = max(lat_min, float(ds.latitude.min()))
+            lat_max = min(lat_max, float(ds.latitude.max()))
+            lon_min = max(lon_min, float(ds.longitude.min()))
+            lon_max = min(lon_max, float(ds.longitude.max()))
+            # Check validity
+            if lat_min >= lat_max or lon_min >= lon_max:
+                continue
+
+            sub_now = ds.isel({time_coord: idx_now}).sel(
+                latitude=slice(lat_max, lat_min),  # North to South
+                longitude=slice(lon_min, lon_max)   # West to East
+            )
+            # Check valid data
+            if sub_now.sizes.get('latitude', 0) == 0 or sub_now.sizes.get('longitude', 0) == 0:
+                continue
+
+            # Check for heat flux variables
+            if 'avg_slhtf' in sub_now.data_vars and 'avg_ishf' in sub_now.data_vars:
+                slhf_w = float(sub_now["avg_slhtf"].mean().values)
+                sshf_w = float(sub_now["avg_ishf"].mean().values)
+            elif 'slhf' in sub_now.data_vars and 'sshf' in sub_now.data_vars:
+                # Select previous time data for deaccumulation
+                sub_prev = ds.isel({time_coord: idx_prev}).sel(
+                    latitude=slice(lat_max, lat_min),  # North to South
+                    longitude=slice(lon_min, lon_max)   # West to East
+                )
+                # De-accumulate accumulated fluxes J m-2 -> W m-2
+                dt_seconds_flux = 3600.0  # 1-hour difference
+                if 'slhf' in sub_now.data_vars and 'slhf' in sub_prev.data_vars:
+                    slhf_now = float(sub_now["slhf"].mean().values)
+                    slhf_prev = float(sub_prev["slhf"].mean().values)
+                    slhf_w = -(slhf_now - slhf_prev) / dt_seconds_flux
                 else:
-                    std_print('WARN', 'hf', f'No valid heat flux variables found at:', t_now)
-                    continue
-                if np.isnan(slhf_w) or np.isnan(sshf_w):
-                    std_print('WARN', 'hf', f'Track {track_id} : NaN values encountered at {t_now}', f'SLHF={slhf_w:.1f}, SSHF={sshf_w:.1f}')
-                    continue
-
-                flux_records.append({
-                    "time": t_now,
-                    "latent_heat_flux": slhf_w,
-                    "sensible_heat_flux": sshf_w,
-                    "total_heat_flux": slhf_w + sshf_w,
-                    "latitude": lat_c,
-                    "longitude": lon_c,
-                    "is_land": is_land,
-                })
+                    slhf_w = np.nan
+                if 'sshf' in sub_now.data_vars and 'sshf' in sub_prev.data_vars:
+                    sshf_now = float(sub_now["sshf"].mean().values)
+                    sshf_prev = float(sub_prev["sshf"].mean().values)
+                    sshf_w = -(sshf_now - sshf_prev) / dt_seconds_flux
+                else:
+                    sshf_w = np.nan
             else:
-                std_print('WARN', 'hf', f'No data within buffer at', t_now)
+                std_print('WARN', 'hf', f'No valid heat flux variables found at:', t_now)
+                continue
+            if np.isnan(slhf_w) or np.isnan(sshf_w):
+                std_print('WARN', 'hf', f'Track {track_id} : NaN values encountered at {t_now}', f'SLHF={slhf_w:.1f}, SSHF={sshf_w:.1f}')
+                continue
+
+            flux_records.append({
+                "time": t_now,
+                "latent_heat_flux": slhf_w,
+                "sensible_heat_flux": sshf_w,
+                "total_heat_flux": slhf_w + sshf_w,
+                "latitude": lat_c,
+                "longitude": lon_c,
+                "is_land": is_land,
+            })
         except Exception as e:
             std_print('ERROR', 'hf', f'Error processing time step at {t_now}', str(e))
+            traceback.print_exc()
             continue
-
     if not flux_records:
         std_print('WARN', 'hf', f'Track {track_id}', 'No heat-flux data extracted')
         return None
-
     std_print('INFO', 'hf', f'Extracted heat flux records for Track {track_id}', f'{len(flux_records)} records')
     return pd.DataFrame(flux_records)
 
@@ -181,10 +194,7 @@ def analyze_flux_transition(ds, track_df, track_id, hours_before=24, hours_after
     # Find first landfall
     # Ensure is_land column exists
     if 'is_land' not in track_df.columns:
-        track_df['is_land'] = track_df.apply(
-            lambda row: is_point_land(row['latitude'], row['longitude']),
-            axis=1
-        )
+        track_df['is_land'] = track_df.apply(lambda row: is_point_land(row['latitude'], row['longitude']), axis=1)
     landfall_time = find_landfall_time(track_df)
     if landfall_time is None:
         std_print('INFO', 'hf', f'Track {track_id} No landfall detected', 'Using track midpoint as reference')

@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 # Clipped domain for Indian monsoon region
 CLIPPED_MIN_LAT = 10.0
@@ -45,15 +46,6 @@ def calculate_buffer_deg(lat, buffer_km):
     return lat_buffer, lon_buffer
 
 # def extract_spatial_subset(ds, lat, lon, time, buffer_km=100, time_coord='time'):
-#     """Extract regional data around a point with latitude-dependent buffering
-#     Args:
-#         ds: xarray Dataset
-#         lat: Latitude (degrees)
-#         lon: Longitude (degrees)
-#         time: Time (numpy datetime or pandas Timestamp)
-#         buffer_km: Buffer distance (km)
-#         time_coord: Name of time coordinate ('time' or 'valid_time')
-#     """
 #     try:
 #         lat_buffer, lon_buffer = calculate_buffer_deg(lat, buffer_km)
 #         # order for slice (north to south)
@@ -103,3 +95,23 @@ def extract_spatial_subset(ds, lat, lon, time, buffer_km=100, time_coord='time')
     except Exception as e:
         print(f"Error in extract_spatial_subset: {e}")
         return None
+
+def extract_regional_data(ds, track_df, track_id, variable, buffer_km = 100):
+    track_id = int(track_id)
+    track = track_df[track_df['track_id'] == track_id].sort_values('time')
+    values = []
+    valid_times = []
+
+    for _, row in track.iterrows():
+        time_coord = "time" if "time" in ds.coords else "valid_time"
+        lat_c = row['latitude']
+        lon_c = row['longitude']
+        t = pd.to_datetime(row['time'])
+
+        subset = extract_spatial_subset(ds, lat_c, lon_c, t, buffer_km=buffer_km, time_coord=time_coord)
+        if variable in subset.data_vars:
+            val = float(subset[variable].mean().values)
+            if not np.isnan(val):
+                values.append(val)
+                valid_times.append(t)
+    return np.array(valid_times), np.array(values)

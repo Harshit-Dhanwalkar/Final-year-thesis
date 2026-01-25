@@ -17,7 +17,7 @@ def std_print(level=None, file_code=None, message="", value=None):
     """
     Args:
         level: 'INFO', 'WARN', 'ERROR', 'DEBUG', 'SAVED', 'EXPORT'
-        file_code: 'md', 'an', 'ca', 'sm', 'sa', 'hf', 'ba', 'ho'
+        file_code: 'md', 'an', 'ca', 'sm', 'sa', 'hf', 'ho'
         message: Message text
         value: Optional value to display
         unit: Optional unit for value

@@ -14,6 +14,7 @@ from .track_utils import (
 
 from .spatial_utils import (
     extract_spatial_subset,
+    extract_regional_data,
     calculate_buffer_deg,
     clamp_to_domain,
     haversine_distance
@@ -44,6 +45,7 @@ __all__ = [
     'classify_track_status',
     'get_landfall_status_array',
     'extract_spatial_subset',
+    'extract_regional_data',
     'calculate_buffer_deg',
     'clamp_to_domain',
     'haversine_distance',

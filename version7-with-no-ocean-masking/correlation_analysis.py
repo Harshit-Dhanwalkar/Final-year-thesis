@@ -6,11 +6,12 @@ Analyzes the temporal relationship between TP and SWVL1 during track passage
 - Lagged correlation analysis
 - Visual comparisons with landfall markers
 - Separate time series and scatter plots
+- Heat flux correlations with soil moisture
 
-1. TP vs SWVL1
+1. TP vs SWVL1 (primary feedback loop)
 2. TP vs Surface Heat Fluxes
-3. SWVL1 vs Vorticity/Intensity
-4. Heat Fluxes vs Track Characteristics
+3. Heat Fluxes vs Track Characteristics
+4. SWVL1 vs Total/Latent/Sensible Heat Flux
 """
 
 import os
@@ -22,6 +23,7 @@ from matplotlib.patches import Patch
 from scipy import stats
 from scipy.stats import pearsonr, spearmanr, linregress
 from statsmodels.tsa.stattools import acf
+
 import traceback
 
 from utils import (
@@ -31,9 +33,9 @@ from utils import (
     find_origin_type,
     add_land_ocean_shading,
     extract_spatial_subset,
+    extract_regional_data,
     setup_output_dir,
     get_time_coord,
-    add_land_ocean_shading,
     export_results_to_csv
 )
 
@@ -46,7 +48,6 @@ def lag_correlation(x, y, max_lag=48): # max_lag=72, # hrs
     x_clean = x[mask]
     y_clean = y[mask]
     if len(x_clean) < 10:
-        # Too few points for meaningful correlation
         std_print('WARN', 'ca', f'Insufficient non-NaN data for lag correlation', f'{len(x_clean)} points')
         return [], []
 
@@ -93,9 +94,12 @@ def extract_spatial_mean(ds, var_name, t, lat, lon, buffer_km):
     subset = extract_spatial_subset(ds, lat, lon, t, buffer_km=buffer_km, time_coord=time_coord)
     if subset is None or subset.sizes.get('latitude', 0) == 0:
         return np.nan
-
     if var_name in subset:
-        return float(subset[var_name].mean().values)
+        try:
+            val = float(subset[var_name].mean().values)
+            return val if not np.isnan(val) else np.nan
+        except:
+            return np.nan
     else:
         return np.nan
 
@@ -124,10 +128,9 @@ def effective_sample_size(x, y, max_lag=10):
 
 def analyze_single_track(ds, track_df, track_id, buffer_km=51, max_lag_hours=50, output_dir="output"):
     std_print('INFO', 'ca', f'Processing Correlation Analysis for Track {track_id}')
-    # Split into phases
-    ocean_phase = track_df[track_df['is_land'] == False].copy()
-    land_phase = track_df[track_df['is_land'] == True].copy()
-
+    # # Split into phases
+    # ocean_phase = track_df[track_df['is_land'] == False].copy()
+    # land_phase = track_df[track_df['is_land'] == True].copy()
     if len(track_df['track_id'].unique()) == 1:
         # Already filtered to single track
         current_track = track_df.sort_values('time').copy()
@@ -158,11 +161,13 @@ def analyze_single_track(ds, track_df, track_id, buffer_km=51, max_lag_hours=50,
         std_print('ERROR', 'ca', 'Missing variables in dataset', missing_vars)
         return None
 
+    ds, time_coord = get_time_coord(ds)
     tp_series = []
     swvl1_series = []
+    latent_hf_series = []
+    sensible_hf_series = []
     valid_times = []
 
-    ds, time_coord = get_time_coord(ds)
     for i, row in current_track.iterrows():
         t = pd.to_datetime(row['time'])
         lat, lon = row['latitude'], row['longitude']
@@ -180,10 +185,20 @@ def analyze_single_track(ds, track_df, track_id, buffer_km=51, max_lag_hours=50,
             swvl1 = float(subset['swvl1'].mean().values)
         else:
             swvl1 = np.nan
+        if 'avg_slhtf' in subset.data_vars:
+            latent_hf = float(subset['avg_slhtf'].mean().values)
+        else:
+            latent_hf = np.nan
+        if 'avg_ishf' in subset.data_vars:
+            sensible_hf = float(subset['avg_ishf'].mean().values)
+        else:
+            sensible_hf = np.nan
 
         if np.isfinite(tp) and np.isfinite(swvl1):
             tp_series.append(tp)
             swvl1_series.append(swvl1)
+            latent_hf_series.append(latent_hf)
+            sensible_hf_series.append(sensible_hf)
             valid_times.append(t)
 
     if len(valid_times) < 4:
@@ -198,22 +213,29 @@ def analyze_single_track(ds, track_df, track_id, buffer_km=51, max_lag_hours=50,
     # Units conversion
     tp_series = np.array(tp_series) * 1000 # m -> mm
     swvl1_series = np.array(swvl1_series)
+    latent_hf_series = np.array(latent_hf_series)
+    sensible_hf_series = np.array(sensible_hf_series)
 
     # Generate plots
     os.makedirs(output_dir, exist_ok=True)
     std_print('INFO', 'ca', f'Generating plots for Track {track_id}')
     try:
-        plot_tp_sm_time_series(tp_series, swvl1_series, valid_times, landfall_index, track_id, output_dir, originates_over_land)
+        plot_tp_swvl1_time_series(tp_series, swvl1_series, valid_times, landfall_index, track_id, output_dir, originates_over_land)
     except Exception as e:
-        std_print('ERROR', 'ca','Failed to create time series plot', str(e))
+        std_print('ERROR', 'ca','Failed to create TP-SWVL1 time series plot', str(e))
     try:
         plot_scatter_analysis(ds, track_df, track_id, buffer_km = 100, output_dir = output_dir)
     except Exception as e:
-        std_print('ERROR', 'ca','Failed to create tp-swl1 correlation scatter plot', str(e))
+        std_print('ERROR', 'ca','Failed to create TP-SWL1 correlation scatter plot', str(e))
     try:
         plot_lagged_correlation(tp_series, swvl1_series, max_lag_hours, track_id, output_dir)
     except Exception as e:
-        std_print('ERROR', 'ca','Failed to lag correlation plot', str(e))
+        std_print('ERROR', 'ca','Failed to TP-SWVL1 lag correlation plot', str(e))
+    try:
+        if not np.all(np.isnan(latent_hf_series)) or not np.all(np.isnan(sensible_hf_series)):
+            plot_swvl1_heat_flux_correlations(swvl1_series, latent_hf_series, sensible_hf_series, valid_times, landfall_index, track_id, output_dir, originates_over_land)
+    except Exception as e:
+        std_print('ERROR', 'ca', f'Track {track_id} SWVL1-HF plot failed', str(e))
 
     # Global Correlation
     corr, p_val = pearsonr(tp_series, swvl1_series) if np.std(tp_series) > 0 else (np.nan, np.nan)
@@ -251,6 +273,7 @@ def analyze_single_track(ds, track_df, track_id, buffer_km=51, max_lag_hours=50,
             t_stat = corr * np.sqrt(dof_eff / (1 - corr**2 + 1e-10))
             p_val = 2 * (1 - stats.t.cdf(abs(t_stat), dof_eff))
             p_val_adj = 2 * (1 - stats.t.cdf(abs(t_stat), dof_eff))
+
             std_print('INFO', 'ca', f"p_original={p_val:.4f}, p_adjusted={p_val_adj:.4f}, n_eff={n_eff:.0f}")
             correlation_results['correlation'] = corr
             correlation_results['p_value'] = p_val
@@ -268,6 +291,7 @@ def analyze_single_track(ds, track_df, track_id, buffer_km=51, max_lag_hours=50,
             correlation_results['p_value'] = p_val
         except:
             pass
+
     # Phase-based correlations
     if landfall_index != -1 and landfall_index > 0:
         # Pre-landfall
@@ -297,111 +321,8 @@ def analyze_single_track(ds, track_df, track_id, buffer_km=51, max_lag_hours=50,
     std_print(None, None, f"n={len(valid_times)}")
     return correlation_results
 
-# def plot_tp_sm_time_series(tp, sm, valid_times, landfall_index, track_id, output_dir, originates_over_land=True):
-#     # Check if we have valid data
-#     if len(tp) < 2 or len(sm) < 2:
-#         std_print('WARN', 'ca', f'Track {track_id}', 'Insufficient data for time series plot')
-#         return
-#     if all(np.isnan(tp)) or all(np.isnan(sm)):
-#         std_print('WARN', 'ca', f'Track {track_id}', 'All data is NaN for time series')
-#         return
-#
-#     fig, ax1 = plt.subplots(figsize=(12, 6))
-#     # Determine landfall status
-#     if originates_over_land:
-#         status_text = "Originates over land"
-#         status_color = 'blue'
-#     elif landfall_index == -1:
-#         status_text = "No Landfall"
-#         status_color = 'gray'
-#     else:
-#         status_text = "Landfall"
-#         status_color = 'black'
-#
-#     # Time Series (Dual Axis)
-#     color_tp = 'tab:blue'
-#     ax1.set_xlabel(
-#         'Time',
-#         fontsize=10,
-#         fontweight='bold'
-#     )
-#     ax1.set_ylabel(
-#         'Precipitation (mm/hr)',
-#         color='black',
-#         fontsize=10,
-#         fontweight='bold'
-#     )
-#     line1 = ax1.plot(
-#         valid_times,
-#         tp,
-#         '-',
-#         color=color_tp,
-#         linewidth=2,
-#         marker='o',
-#         markersize=4,
-#         label='Precipitation',
-#         alpha=0.8,
-#         zorder=3
-#     )
-#     ax1.tick_params(axis='y', labelcolor=color_tp)
-#     ax1.grid(True, alpha=0.5, linestyle='--')
-#
-#     # Landfall line
-#     if landfall_index != -1 and landfall_index < len(valid_times):
-#         landfall_time = valid_times[landfall_index]
-#         ax1.axvline(
-#             x=landfall_time,
-#             color=status_color,
-#             linestyle='--',
-#             linewidth=2,
-#             alpha=0.8,
-#             zorder=4
-#         )
-#     # Soil moisture on secondary axis
-#     ax2 = ax1.twinx()
-#     color_sm = 'tab:brown'
-#     ax2.set_ylabel(
-#         'Soil Moisture (m³/m³)',
-#         color='black',
-#         fontsize=10,
-#         fontweight='bold'
-#     )
-#     line2 = ax2.plot(
-#         valid_times,
-#         sm,
-#         's-',
-#         color=color_sm,
-#         linewidth=2,
-#         markersize=4,
-#         label='Soil Moisture',
-#         alpha=0.8,
-#         zorder=3
-#     )
-#     ax2.tick_params(axis='y', labelcolor=color_sm)
-#
-#     # Legend
-#     lines = line1 + line2
-#     labels = ['Precipitation', 'Soil Moisture']
-#     if landfall_index != -1 and landfall_index < len(valid_times):
-#         lines.append(plt.Line2D([0], [0], color=status_color, linestyle='--', linewidth=2))
-#         labels.append(status_text)
-#     ax1.legend(lines, labels, loc='best', framealpha=0.7)
-#
-#     ax1.set_title(f'Track {track_id}: Precipitation & Soil Moisture Time Series', fontsize=13, fontweight='bold', pad=10)
-#     plt.setp(
-#         ax1.xaxis.get_majorticklabels(),
-#         rotation=45,
-#         ha='right'
-#     )
-#     plt.tight_layout()
-#
-#     track_dir = os.path.join(output_dir, "time_series")
-#     os.makedirs(track_dir, exist_ok=True)
-#     plot_path = os.path.join(track_dir, f"track_{int(track_id)}_TP-SWVL1_time_series.png")
-#     plt.savefig(plot_path, dpi=300, bbox_inches='tight')
-#     plt.close(fig)
-#     std_print('SAVED', 'ca', 'Time series plot', plot_path)
-def plot_tp_sm_time_series(tp, sm, valid_times, landfall_index, track_id, output_dir, originates_over_land=True, track_df=None):
+def plot_tp_swvl1_time_series(tp, sm, valid_times, landfall_index, track_id, output_dir, originates_over_land=True, track_df=None):
+    track_id = int(track_id)
     try:
         # Validate inputs
         if not isinstance(tp, np.ndarray):
@@ -435,7 +356,7 @@ def plot_tp_sm_time_series(tp, sm, valid_times, landfall_index, track_id, output
             status_color = 'gray'
         else:
             status_text = "Landfall"
-            status_color = 'darkred'
+            status_color = 'red'
 
         if track_df is not None and 'is_land' in track_df.columns:
             # Use actual track data for most accurate shading
@@ -456,8 +377,7 @@ def plot_tp_sm_time_series(tp, sm, valid_times, landfall_index, track_id, output
         # Plot precipitation on primary axis
         color_tp = 'tab:blue'
         ax1.set_xlabel('Time', fontsize=11, fontweight='bold')
-        ax1.set_ylabel('Precipitation (mm/hr)', color=color_tp, fontsize=11, fontweight='bold')
-
+        ax1.set_ylabel('Total Precipitation (tp) (mm/hr)', color=color_tp, fontsize=11, fontweight='bold')
         line1 = ax1.plot(
             valid_times,
             tp,
@@ -490,21 +410,20 @@ def plot_tp_sm_time_series(tp, sm, valid_times, landfall_index, track_id, output
 
         # Soil moisture on secondary axis
         ax2 = ax1.twinx()
-        color_sm = 'tab:brown'
-        ax2.set_ylabel('Soil Moisture (m³/m³)', color=color_sm, fontsize=11, fontweight='bold')
-
+        color_swvl1 = 'tab:brown'
+        ax2.set_ylabel('Soil Water Volumatric Layer 1 (swvl1) (m³/m³)', color=color_swvl1, fontsize=11, fontweight='bold')
         line2 = ax2.plot(
             valid_times,
             sm,
             's-',
-            color=color_sm,
+            color=color_swvl1,
             linewidth=2.5,
             markersize=5,
             label='Soil Moisture',
             alpha=0.8,
             zorder=3
         )
-        ax2.tick_params(axis='y', labelcolor=color_sm)
+        ax2.tick_params(axis='y', labelcolor=color_swvl1)
 
         # Combined legend
         lines = line1 + line2
@@ -518,11 +437,11 @@ def plot_tp_sm_time_series(tp, sm, valid_times, landfall_index, track_id, output
         # land/ocean patches to legend
         lines.append(Patch(facecolor='lightblue', alpha=0.5, label='Ocean Phase'))
         lines.append(Patch(facecolor='wheat', alpha=0.5, label='Land Phase'))
-        labels.append('Ocean Phase')
-        labels.append('Land Phase')
+        labels += ['Ocean Phase', 'Land Phase']
 
         ax1.legend(lines, labels, loc='upper left', fontsize=10, framealpha=0.95, edgecolor='black')
-        # Set title based on track characteristics
+
+        # Title based on track characteristics
         title = f'Track {track_id}: Precipitation & Soil Moisture Evolution'
         if originates_over_land:
             title += '\n(Land-Originated MD)'
@@ -538,7 +457,7 @@ def plot_tp_sm_time_series(tp, sm, valid_times, landfall_index, track_id, output
         # Save
         track_dir = os.path.join(output_dir, "time_series")
         os.makedirs(track_dir, exist_ok=True)
-        plot_path = os.path.join(track_dir, f"track_{int(track_id)}_TP-SWVL1_time_series.png")
+        plot_path = os.path.join(track_dir, f"track_{track_id}_TP-SWVL1_time_series.png")
         plt.savefig(plot_path, dpi=300, bbox_inches='tight')
         plt.close(fig)
 
@@ -549,25 +468,24 @@ def plot_tp_sm_time_series(tp, sm, valid_times, landfall_index, track_id, output
         traceback.print_exc()
         return False
 
-def extract_regional_data(ds, track_df, track_id, variable, buffer_km = 100):
-    track_id = int(track_id)
-    track = track_df[track_df['track_id'] == track_id].sort_values('time')
-    values = []
-    valid_times = []
-
-    for _, row in track.iterrows():
-        time_coord = "time" if "time" in ds.coords else "valid_time"
-        lat_c = row['latitude']
-        lon_c = row['longitude']
-        t = pd.to_datetime(row['time'])
-
-        subset = extract_spatial_subset(ds, lat_c, lon_c, t, buffer_km=buffer_km, time_coord=time_coord)
-        if variable in subset.data_vars:
-            val = float(subset[variable].mean().values)
-            if not np.isnan(val):
-                values.append(val)
-                valid_times.append(t)
-    return np.array(valid_times), np.array(values)
+# NOTE: now extract_regional_data function included in spatial_util
+# def extract_regional_data(ds, track_df, track_id, variable, buffer_km = 100):
+#     track_id = int(track_id)
+#     track = track_df[track_df['track_id'] == track_id].sort_values('time')
+#     values = []
+#     valid_times = []
+#     for _, row in track.iterrows():
+#         time_coord = "time" if "time" in ds.coords else "valid_time"
+#         lat_c = row['latitude']
+#         lon_c = row['longitude']
+#         t = pd.to_datetime(row['time'])
+#         subset = extract_spatial_subset(ds, lat_c, lon_c, t, buffer_km=buffer_km, time_coord=time_coord)
+#         if variable in subset.data_vars:
+#             val = float(subset[variable].mean().values)
+#             if not np.isnan(val):
+#                 values.append(val)
+#                 valid_times.append(t)
+#     return np.array(valid_times), np.array(values)
 
 # Compute comprehensive correlation between TP and SWVL1 for a single track
 def compute_single_track_correlation(ds, track_df, track_id, buffer_km = 100):
@@ -580,11 +498,7 @@ def compute_single_track_correlation(ds, track_df, track_id, buffer_km = 100):
 
     # Find landfall
     if 'is_land' not in track_df.columns:
-        from utils import is_point_land
-        track_df['is_land'] = track_df.apply(
-            lambda row: is_point_land(row['latitude'], row['longitude']),
-            axis=1
-        )
+        track_df['is_land'] = track_df.apply(lambda row: is_point_land(row['latitude'], row['longitude']), axis=1)
     landfall_time = find_landfall_time(track_df)
 
     # Extract time series
@@ -601,6 +515,11 @@ def compute_single_track_correlation(ds, track_df, track_id, buffer_km = 100):
     tp_aligned = tp_vals[tp_idx] * 1000  # Convert m to mm
     sm_aligned = sm_vals[sm_idx]
     if len(tp_aligned) < 3:
+        return None
+
+    # check for zero variance
+    if np.std(tp_aligned) == 0 or np.std(sm_aligned) == 0:
+        std_print('WARN', 'ca', f'Track {track_id}', 'Zero variance in one or both variables')
         return None
 
     # Pearson correlation (linear)
@@ -631,7 +550,7 @@ def compute_single_track_correlation(ds, track_df, track_id, buffer_km = 100):
 
 # Compute correlations for all tracks.
 def analyze_all_tracks(ds, full_track_df, buffer_km=100, output_dir="output"):
-    std_print('INFO', 'ca', "Analyzing all tracks for soil moisture patterns")
+    std_print('INFO', 'ca', 'Analyzing all tracks for soil moisture patterns')
     unique_tracks = sorted(full_track_df['track_id'].unique())
     all_results = []
     for track_id in unique_tracks:
@@ -691,6 +610,7 @@ def plot_scatter_analysis(ds, track_df, track_id, buffer_km = 100, output_dir = 
     times = result['times']
     tp_vals = result['tp_values']
     sm_vals = result['swvl1_values']
+    common_bbox = dict(boxstyle="round,pad=0.05", facecolor="white", alpha=0.7, edgecolor="none", linewidth=0.8)
 
     ax.scatter(
         tp_vals,
@@ -734,11 +654,11 @@ def plot_scatter_analysis(ds, track_df, track_id, buffer_km = 100, output_dir = 
         verticalalignment='top',
         horizontalalignment='left',
         family='monospace',
-        bbox=dict(boxstyle='round', alpha=0.3)
+        bbox=common_bbox
     )
 
-    ax.set_xlabel('Precipitation(tp) (mm/hr)', fontsize=10, fontweight='bold')
-    ax.set_ylabel('Soil Water Volumatric Level-1(swvl1) (m³/m³)', fontsize=10, fontweight='bold')
+    ax.set_xlabel('Total Precipitation (tp) (mm/hr)', fontsize=10, fontweight='bold')
+    ax.set_ylabel('Soil Water Volumatric Level-1 (swvl1) (m³/m³)', fontsize=10, fontweight='bold')
     ax.set_title(f'Track {track_id}: tp - swvl1 Correlation', fontsize=13, fontweight='bold', pad=10)
     ax.grid(True, alpha=0.5, linestyle='--')
     ax.legend(fontsize=8, loc='best', framealpha=0.7)
@@ -746,12 +666,17 @@ def plot_scatter_analysis(ds, track_df, track_id, buffer_km = 100, output_dir = 
 
     track_dir = os.path.join(output_dir, "correlation_scatter_plots")
     os.makedirs(track_dir, exist_ok=True)
-    plot_path = os.path.join(track_dir, f"track_{int(track_id)}_TP-SWVL1_correlation.png")
+    plot_path = os.path.join(track_dir, f"track_{track_id}_TP-SWVL1_correlation.png")
     plt.savefig(plot_path, dpi=300, bbox_inches='tight')
     plt.close(fig)
-    std_print('SAVED', 'ca', 'Tp-SWVL1 Correlation Scatter plot', plot_path)
+    std_print('SAVED', 'ca', 'TP-SWVL1 Correlation Scatter plot', plot_path)
 
 def plot_lagged_correlation(tp, sm, max_lag_hours, track_id, output_dir):
+    """
+    Plot lag correlation showing temporal sequencing between TP and SWVL1.
+    Negative lag: TP leads SWVL1 (precipitation causes soil moisture increase)
+    Positive lag: SWVL1 leads TP (antecedent moisture affects rainfall)
+    """
     lags, correlations_lag = lag_correlation(tp, sm, max_lag=max_lag_hours)
 
     # Ensure lags and correlations have same length
@@ -787,6 +712,7 @@ def plot_lagged_correlation(tp, sm, max_lag_hours, track_id, output_dir):
     else:
         std_print('WARN', 'ca', f'Track {track_id} Lag mismatch', 'lags and r_lag lengths differ')
 
+    common_bbox = dict(boxstyle="round,pad=0.05", facecolor="white", alpha=0.7, edgecolor="none", linewidth=0.8)
     # Plot correlation
     ax.plot(
         lags,
@@ -801,7 +727,16 @@ def plot_lagged_correlation(tp, sm, max_lag_hours, track_id, output_dir):
     # Reference lines
     ax.axvline(0, color='black', linestyle='--', linewidth=1, alpha=0.6, label='Zero lag')
     ax.axhline(0, color='gray', linestyle=':', linewidth=1, alpha=0.6)
-    ax.text(0.98, 0.02, lag_interpretation, transform=ax.transAxes, fontsize=10, va='bottom', ha='right', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
+    ax.text(
+        1.02,
+        0.92,
+        lag_interpretation,
+        transform=ax.transAxes,
+        fontsize=10,
+        va='bottom',
+        ha='right',
+        bbox=common_bbox
+    )
     ax.set_xlabel("Lag (hours)", fontsize=10, fontweight='bold')
     ax.set_ylabel("Correlation (r)", fontsize=10, fontweight='bold')
     ax.set_title(f"Track {track_id}: Lagged Precipitation-Soil Moisture Correlation", fontsize=13, fontweight='bold', pad=10)
@@ -817,8 +752,111 @@ def plot_lagged_correlation(tp, sm, max_lag_hours, track_id, output_dir):
     plt.close(fig)
     std_print('SAVED', 'ca', 'Lag Ccrelation plot', plot_path)
 
+def plot_swvl1_heat_flux_correlations(swvl1, latent_hf, sensible_hf, valid_times, landfall_index, track_id, output_dir, originates_over_land=True):
+    """
+    Plot SWVL1 correlations with surface heat fluxes (Latent, Sensible, Total).
+    Relationships:
+    - SWVL1 <-> Latent HF: Soil moisture affects evaporative cooling
+    - SWVL1 <-> Sensible HF: Dry soil increases sensible heating
+    - SWVL1 <-> Total HF: Combined surface energy budget impact
+    """
+    # Calculate total heat flux
+    total_hf = latent_hf + sensible_hf
+    
+    # Remove NaN values for correlation calculation
+    valid_mask = ~(np.isnan(swvl1) | np.isnan(latent_hf) | np.isnan(sensible_hf) | np.isnan(total_hf))
+    valid_count = np.sum(valid_mask)
+    
+    if valid_count < 5:
+        std_print('WARN', 'ca', f'Track {track_id}', f'Insufficient heat flux data ({valid_count} valid points)')
+        return False
+    
+    # Calculate correlations
+    try:
+        r_latent, p_latent = pearsonr(swvl1[valid_mask], latent_hf[valid_mask])
+        r_sensible, p_sensible = pearsonr(swvl1[valid_mask], sensible_hf[valid_mask])
+        r_total, p_total = pearsonr(swvl1[valid_mask], total_hf[valid_mask])
+    except:
+        std_print('WARN', 'ca', f'Track {track_id}', 'Could not compute heat flux correlations')
+        return False
+    
+    # Create 3-panel figure
+    fig, axes = plt.subplots(1, 3, figsize=(16, 5))
+    
+    # Determine landfall status text
+    if originates_over_land:
+        status_text = "Land-Originated"
+        status_color = 'blue'
+    elif landfall_index == -1:
+        status_text = "No Landfall"
+        status_color = 'gray'
+    else:
+        status_text = "Landfall"
+        status_color = 'darkred'
+    
+    # Panel 1: SWVL1 vs Latent HF
+    ax = axes[0]
+    ax.scatter(swvl1[valid_mask], latent_hf[valid_mask], alpha=0.6, s=80, color='green', edgecolors='black', linewidth=0.5)
+    
+    # Regression line
+    if np.std(swvl1[valid_mask]) > 0:
+        z = np.polyfit(swvl1[valid_mask], latent_hf[valid_mask], 1)
+        p = np.poly1d(z)
+        x_line = np.linspace(swvl1[valid_mask].min(), swvl1[valid_mask].max(), 100)
+        ax.plot(x_line, p(x_line), 'r--', linewidth=2, alpha=0.7)
+    
+    ax.set_xlabel('Soil Moisture (m³/m³)', fontsize=10, fontweight='bold')
+    ax.set_ylabel('Latent Heat Flux (W/m²)', fontsize=10, fontweight='bold')
+    ax.set_title(f'SWVL1 ↔ Latent HF\nr={r_latent:.3f}, p={p_latent:.4f}', fontsize=11, fontweight='bold')
+    ax.grid(True, alpha=0.4, linestyle='--')
+    
+    # Panel 2: SWVL1 vs Sensible HF
+    ax = axes[1]
+    ax.scatter(swvl1[valid_mask], sensible_hf[valid_mask], alpha=0.6, s=80, color='orange', edgecolors='black', linewidth=0.5)
+    
+    # Regression line
+    if np.std(swvl1[valid_mask]) > 0:
+        z = np.polyfit(swvl1[valid_mask], sensible_hf[valid_mask], 1)
+        p = np.poly1d(z)
+        x_line = np.linspace(swvl1[valid_mask].min(), swvl1[valid_mask].max(), 100)
+        ax.plot(x_line, p(x_line), 'r--', linewidth=2, alpha=0.7)
+    
+    ax.set_xlabel('Soil Moisture (m³/m³)', fontsize=10, fontweight='bold')
+    ax.set_ylabel('Sensible Heat Flux (W/m²)', fontsize=10, fontweight='bold')
+    ax.set_title(f'SWVL1 ↔ Sensible HF\nr={r_sensible:.3f}, p={p_sensible:.4f}', fontsize=11, fontweight='bold')
+    ax.grid(True, alpha=0.4, linestyle='--')
+    
+    # Panel 3: SWVL1 vs Total HF
+    ax = axes[2]
+    ax.scatter(swvl1[valid_mask], total_hf[valid_mask], alpha=0.6, s=80, color='purple', edgecolors='black', linewidth=0.5)
+    
+    # Regression line
+    if np.std(swvl1[valid_mask]) > 0:
+        z = np.polyfit(swvl1[valid_mask], total_hf[valid_mask], 1)
+        p = np.poly1d(z)
+        x_line = np.linspace(swvl1[valid_mask].min(), swvl1[valid_mask].max(), 100)
+        ax.plot(x_line, p(x_line), 'r--', linewidth=2, alpha=0.7)
+    
+    ax.set_xlabel('Soil Moisture (m³/m³)', fontsize=10, fontweight='bold')
+    ax.set_ylabel('Total Heat Flux (W/m²)', fontsize=10, fontweight='bold')
+    ax.set_title(f'SWVL1 ↔ Total HF\nr={r_total:.3f}, p={p_total:.4f}', fontsize=11, fontweight='bold')
+    ax.grid(True, alpha=0.4, linestyle='--')
+    
+    fig.suptitle(f'Track {track_id}: Soil Moisture ↔ Surface Heat Flux Correlations ({status_text})', 
+                 fontsize=13, fontweight='bold', y=1.00)
+    plt.tight_layout()
+    
+    # Save
+    track_dir = os.path.join(output_dir, "heat_flux_soil_moisture_correlations")
+    os.makedirs(track_dir, exist_ok=True)
+    plot_path = os.path.join(track_dir, f"track_{int(track_id)}_SWVL1-HF_correlations.png")
+    plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+    plt.close(fig)
+    std_print('SAVED', 'ca', 'SWVL1-HF Correlations plot', plot_path)
+    return True
+
 def analyze_flux_correlations(ds, track_df, track_id, buffer_km=100):
-    time_coord = get_time_coord(ds)
+    ds, time_coord = get_time_coord(ds)
     ds_times = pd.to_datetime(ds[time_coord].values)
 
     time_series = []
