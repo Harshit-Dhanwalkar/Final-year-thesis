@@ -105,7 +105,7 @@ def compute_antecedent_sm(ds, track_df, track_id, hours_before_landfall, exclude
     subset_track = track[(pd.to_datetime(track['time']) >= t_start) & (pd.to_datetime(track['time']) <= t_end)]
 
     if subset_track.empty:
-        std_print('WARN', 'an', f'Track {track_id} : No track points in time window')
+        std_print('WARN', 'an', f'Track {track_id}', 'No track points in time window')
         return np.nan
     std_print('INFO', 'an', f'Track {track_id} Points in time window', f'{len(subset_track)} points')
 
@@ -152,7 +152,7 @@ def compute_antecedent_sm(ds, track_df, track_id, hours_before_landfall, exclude
 
         except Exception as e:
             ocean_cells_excluded += 1
-            std_print('ERROR', 'an', f'Track {track_id} Processing point failed:', str(e))
+            std_print('ERROR', 'an', f'Track {track_id} Processing point failed', str(e))
             continue
 
     # Diagnostic
@@ -166,10 +166,10 @@ def compute_antecedent_sm(ds, track_df, track_id, hours_before_landfall, exclude
     if sm_vals:
         asm_mean = np.mean(sm_vals)
         asm_std = np.std(sm_vals)
-        std_print('INFO', 'an', f'Track {track_id} ASM :', f'{asm_mean:.4f} ± {asm_std:.4f}', 'm³/m³')
+        std_print('INFO', 'an', f'Track {track_id} ASM', f'{asm_mean:.4f} ± {asm_std:.4f} m³/m³')
         return asm_mean
     else:
-        std_print('WARN', 'an', f'Track {track_id} : No valid land-based SM values extracted')
+        std_print('WARN', 'an', f'Track {track_id}', 'No valid land-based SM values extracted')
         return np.nan
 
 def compute_antecedent_sm_multiwindow(ds, track_df, track_id, buffer_km=100, land_only=False):
@@ -300,7 +300,7 @@ def compute_antecedent_sm_post_landfall(ds, track_df, track_id, hours_after_land
         std_print('WARN', 'an', f'Track {track_id}', 'No points in post-landfall tim e window')
         return np.nan
 
-    std_print('INFO', 'an', f'Track {track_id} Points in post-landfall window :', len(subset_track))
+    std_print('INFO', 'an', f'Track {track_id} Points in post-landfall window', len(subset_track))
 
     # Extract soil moisture along track in the time window
     for _, row in subset_track.iterrows():
@@ -360,10 +360,10 @@ def compute_antecedent_sm_post_landfall(ds, track_df, track_id, hours_after_land
     # Return sm_mean or NaN if insufficient data
     if sm_vals:
         asm_mean = np.mean(sm_vals)
-        std_print('INFO', 'an', f'Track {track_id} Post-landfall SM (6h)', f'{asm_mean:.4f}', 'm³/m³')
+        std_print('INFO', 'an', f'Track {track_id} Post-landfall SM (6h)', f'{asm_mean:.4f}  m³/m³')
         return asm_mean
     else:
-        std_print('WARN', 'an', f'Track {track_id} : No valid post-landfall SM values extracted')
+        std_print('WARN', 'an', f'Track {track_id}', 'No valid post-landfall SM values extracted')
         return np.nan
 
 def export_multiwindow_results(track_id, multiwindow_results, output_dir):
@@ -387,7 +387,7 @@ def export_multiwindow_results(track_id, multiwindow_results, output_dir):
     for window_name, window_data in multiwindow_results.items():
         val = window_data.get('value', np.nan)
         val_str = f"{val:7.4f}" if isinstance(val, (int, float)) else "N/A"
-        std_print(None, None, f'   {window_name}', val_str, 'm³/m³')
+        std_print(None, None, f'   {window_name}', f'{val_str}  m³/m³')
     return asm_multiwindow_df
 
 def compute_antecedent_sm_all_tracks(ds, full_track_df, hours_before_landfall, exclude_last_hours, buffer_km = 100):
@@ -409,7 +409,7 @@ def compute_antecedent_sm_all_tracks(ds, full_track_df, hours_before_landfall, e
         if origin_type == 'land_originated':
             # FIX:
             # For land-originated tracks, won't be "antecedent" in the traditional sense
-            std_print('INFO', 'an', f'Track {track_id}: Land-originated - computing soil moisture at start')
+            std_print('INFO', 'an', f'Track {track_id} Land-originated - computing soil moisture at start')
             # Compute soil moisture at track start
             asm_24h = compute_soil_moisture_at_start(ds, track, buffer_km)
             has_landfall = False
@@ -433,9 +433,9 @@ def compute_antecedent_sm_all_tracks(ds, full_track_df, hours_before_landfall, e
             'origin_type': origin_type
         })
         if not pd.isna(asm_24h):
-            std_print('INFO', 'an', f'Track {track_id} ASM_24h', f'{asm_24h:.4f}', 'm³/m³')
+            std_print('INFO', 'an', f'Track {track_id} ASM_24h', f'{asm_24h:.4f} m³/m³')
         else:
-            std_print('WARN', 'an', f'Track {track_id}: No landfall or insufficient data')
+            std_print('WARN', 'an', f'Track {track_id}', 'No landfall or insufficient data')
     return pd.DataFrame(results)
 
 # Helper for compute_antecedent_sm_all_tracks function
@@ -466,7 +466,7 @@ def compute_soil_moisture_at_start(ds, track, buffer_km=100):
 def compute_asm_tp_correlation(ds, full_track_df, asm_results_df, buffer_km=100, output_dir='output'):
     """
     Correlate antecedent soil moisture with precipitation during track passage.
-    Research question: Does low ASM lead to different rainfall patterns?
+    Question: Does low ASM lead to different rainfall patterns?
     """
     std_print('INFO', 'an', 'ASM - Precipitation correlation analysis')
     correlation_data = []
@@ -551,8 +551,8 @@ def compute_asm_tp_correlation(ds, full_track_df, asm_results_df, buffer_km=100,
         })
         std_print(None, 'an', f'Track {track_id} ASM analysis')
         std_print(None, 'an', 'ASM value', f'{asm_24h:.4f}')
-        std_print(None, 'an', 'Mean TP', f'{tp_mean:.3f}', 'mm/hr')
-        std_print(None, 'an', 'Max TP', f'{tp_max:.3f}', 'mm/hr')
+        std_print(None, 'an', 'Mean TP', f'{tp_mean:.3f} mm/hr')
+        std_print(None, 'an', 'Max TP', f'{tp_max:.3f} mm/hr')
     if not correlation_data:
         std_print('WARN', 'an', 'No correlation data computed')
         return None
@@ -594,7 +594,7 @@ def compute_asm_tp_correlation(ds, full_track_df, asm_results_df, buffer_km=100,
 def compute_asm_duration_correlation(asm_results_df, duration_df, output_dir='output'):
     """
     Correlate antecedent soil moisture with MD duration.
-    Research question: Does drier soil cause faster weakening?
+    Question: Does drier soil cause faster weakening?
     """
     std_print('INFO', 'an', 'ASM - Duration correlation analysis')
     # Merge datasets
@@ -678,7 +678,7 @@ def compute_asm_duration_correlation(asm_results_df, duration_df, output_dir='ou
     if len(short_lived) > 0:
         short_lived_asm = short_lived['ASM_24h_clean'].dropna()
         if len(short_lived_asm) > 0:
-            std_print(None, None, 'Short-lived MDs (<96h) - Mean ASM', f"{short_lived_asm.mean():.4f} ± {short_lived_asm.std():.4f}", 'm³/m³')
+            std_print(None, None, 'Short-lived MDs (<96h) - Mean ASM', f"{short_lived_asm.mean():.4f} ± {short_lived_asm.std():.4f} m³/m³")
         std_print(None, None, 'Short-lived MDs (<96h) - Mean Duration', f"{short_lived['duration_hours'].mean():.1f} ± {short_lived['duration_hours'].std():.1f} hours")
         std_print(None, None, 'Short-lived MDs count', len(short_lived))
 

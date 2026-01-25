@@ -126,7 +126,7 @@ if not os.path.exists(output_dir):
     os.makedirs(output_dir)
     std_print('INFO', 'md', 'Created output directory', output_dir)
 else:
-    std_print('INFO', 'md', 'Using existing output directory', output_dir, '\n')
+    std_print('INFO', 'md', 'Using existing output directory', output_dir)
 
 DATA_DIR = os.path.join("..", "Data", "single-levels", "ncfiles")
 MONTH_DIRS = [
@@ -421,7 +421,7 @@ def check_moisture_criteria(data_slice, lat, lon):
             std_print('WARN', 'md', f'Missing `tp`. Skipping check')
             return False
     except KeyError as e:
-        std_print('ERROR', 'md', f'Missing variable for moisture check:', str(e), 'Skipping this check.')
+        std_print('ERROR', 'md', f'Missing variable for moisture check:', str(e))
         return False
 
 def compute_surface_heat_fluxes(ds, lat, lon, buffer_km=100):
@@ -513,7 +513,7 @@ def diagnose_temporal_issues(ds):
     std_print('INFO', 'md', ' --- Time continuity check ---')
     negative_gaps = np.where(time_diffs < 0)[0]
     if len(negative_gaps) > 0:
-        std_print(None, None, 'Found Time reversals', len(negative_gaps), 'backward jumps')
+        std_print(None, None, 'Found Time reversals', f'{len(negative_gaps)}  backward jumps')
         for idx in negative_gaps[:5]:
             std_print(None, None, f'Jump backward at index {idx}', f'{times[idx]} -> {times[idx+1]} (difference: {time_diffs[idx]:.1f} hours)')
     else:
@@ -522,11 +522,11 @@ def diagnose_temporal_issues(ds):
     # Detect zero-gaps (identical consecutive times)
     zero_gaps = np.where(time_diffs == 0)[0]
     if len(zero_gaps) > 0:
-        std_print('INFO', 'md', 'Found identical consecutive timestamps', len(zero_gaps))
+        std_print('INFO', 'md', 'Found identical consecutive timestamps', f'{len(zero_gaps)}')
     if n_duplicates > 0:
-        std_print('INFO', 'md', 'Duplicates present', n_duplicates, 'repeated timestamps')
+        std_print('INFO', 'md', 'Duplicates present', f'{n_duplicates} repeated timestamps')
     if len(negative_gaps) > 0:
-        std_print('INFO', 'md', 'Time reversals', len(negative_gaps), 'backward jumps')
+        std_print('INFO', 'md', 'Time reversals', f'{len(negative_gaps)} backward jumps')
     if len(month_changes) > 0 and len(unique_diffs) > 1:
         std_print('INFO', 'md', 'Files likely concatenated', 'Different resolutions at month boundaries')
     return {
@@ -543,7 +543,7 @@ def diagnose_temporal_issues(ds):
 def fix_temporal_resolution(ds, target_resolution_hours=1):
     ds, time_coord = get_time_coord(ds)
     times = pd.to_datetime(ds[time_coord].values)
-    std_print('INFO', 'md', 'Dataset temporal resolution', len(times), 'time points')
+    std_print('INFO', 'md', 'Dataset temporal resolution', f'{len(times)} time points')
     # Create regular time grid
     time_start = times[0]
     time_end = times[-1]
@@ -743,7 +743,7 @@ def find_low_pressure_center(data_slice, time_step, prev_center, search_radius_k
             #     std_print('DEBUG', 'md', f't={time_step}: {debug_info}')
             #     return None
     except Exception as e:
-        std_print('ERROR', 'md', f'Finding low pressure center at {time_step} :', e)
+        std_print('ERROR', 'md', f'Finding low pressure center at {time_step}', str(e))
         return None
 
 def track_monsoon_depressions(detections, max_speed_ms=15, search_radius_km = TRACKING_SEARCH_RADIUS_KM, max_time_gap_hours = MAX_GAP_HOURS):
@@ -1170,7 +1170,7 @@ def process_files(ds):
             track_df_with_ids['month'] = pd.to_datetime(
                 track_df_with_ids['time']
             ).dt.strftime("%B")
-        std_print('FINAL', 'md', 'Tracks ready for analysis', len(smoothed_tracks))
+        std_print('INFO', 'md', 'Final No. of Tracks ready for analysis', len(smoothed_tracks))
         return track_df_with_ids
     except Exception as e:
         std_print('ERROR', 'md', 'process_files', str(e))
@@ -1778,7 +1778,7 @@ def generate_summary_report(all_correlation_results, all_flux_results, all_landf
             f.write(f"   Tracks analyzed:                                 {len(df_sm)}\n")
             f.write(f"   Mean soil moisture:                              {df_sm['mean_swvl1'].mean():.3f} m³/m³\n")
             f.write(f"   Mean precipitation:                              {df_sm['mean_tp'].mean():.2f} mm/hr\n\n")
-    std_print("SAVED", 'md', 'Summary report', report_path)
+    std_print('SAVED', 'md', 'Summary report', report_path)
     return report_path
 
 if __name__ == "__main__":
@@ -1835,7 +1835,7 @@ if __name__ == "__main__":
     if result_container["success"]:
         ds = result_container["ds"]
         end_processing_time = time.time()
-        std_print('INFO', 'md', 'Time for load and combine files', f'{end_processing_time - start_processing_time:.2f}', 'seconds')
+        std_print('INFO', 'md', 'Time for load and combine files', f'{end_processing_time - start_processing_time:.2f} seconds')
 
         # Diagnose temporal issues
         diag_report = diagnose_temporal_issues(ds)
@@ -1890,8 +1890,8 @@ if __name__ == "__main__":
         #     initial_track_count = len(full_track_df['track_id'].unique())
         #     full_track_df = full_track_df[full_track_df['track_id'].isin(desired_tracks)].copy()
         #     filtered_track_count = len(full_track_df['track_id'].unique())
-        #     print(f"\n >   [INFO md   ] Filtered tracks for Azimuthal-Hovmöller analysis.")
-        #     print(f" >   [INFO md   ] Retaining {filtered_track_count} tracks ({desired_tracks}) out of {initial_track_count} total.")
+        #     std_print('INFO', 'md', 'Filtered tracks for Azimuthal-Hovmöller analysis.")
+        #     std_print('INFO', 'md', f'Retaining {filtered_track_count} tracks ({desired_tracks}) out of {initial_track_count} total.')
         # else:
         #     print(" >  [WARN ]: 'track_id' column not found. Skipping track filter.")
         plot_tracks(full_track_df, output_dir)
@@ -1900,11 +1900,11 @@ if __name__ == "__main__":
         pad = 0.5
         try:
             full_extent = [ds_lon_min - pad, ds_lon_max + pad, ds_lat_min - pad, ds_lat_max + pad]
-            print(f"[DEBUG   ] Full extent (Detected)                  :          {full_extent}")
+            std_print('DEBUG', 'md', 'Full extent (Detected)', full_extent)
         except Exception:
             # full_extent = [70, 100, 5, 30]
             full_extent = [70, 95, 10, 30]
-            print(f"[DEBUG   ] Full extent (Mannual)                   :          {full_extent}")
+            std_print('DEBUG', 'md', 'Full extent (Mannual)', full_extent)
 
         full_track_df['is_land'] = full_track_df.apply(lambda row: is_point_land(row['latitude'], row['longitude']), axis=1)
         unique_track_ids = sorted([int(tid) for tid in full_track_df['track_id'].unique()])
@@ -1963,7 +1963,7 @@ if __name__ == "__main__":
             distance_km = track_df['distance_km'].dropna()
             std_print('INFO', 'md', f'Speed Statistics for Track {track_id}')
             std_print(None, None, 'mean', f"{speed_kmh.mean():.2f} km/h ({speed_ms.mean():.2f} m/s)")
-            std_print(None, None, 'median' f"{speed_kmh.median():.2f} km/h ({speed_ms.median():.2f} m/s)")
+            std_print(None, None, 'median', f"{speed_kmh.median():.2f} km/h ({speed_ms.median():.2f} m/s)")
             std_print(None, None, 'std deviation', f"{speed_kmh.std():.2f} km/h ({speed_ms.std():.2f} m/s)")
             std_print(None, None, 'min/max', f"{speed_kmh.min():.2f}/{speed_kmh.max():.2f} km/h")
             std_print(None, None, 'total distance', f"{distance_km.sum():.1f} km")
@@ -2009,7 +2009,7 @@ if __name__ == "__main__":
                     if isinstance(asm_24h_value, dict):
                         asm_24h_value = asm_24h_value.get('value', np.nan)
                         asm_results_list.append({'track_id': track_id, 'ASM_24h': asm_24h_value, 'has_landfall': True})
-                        print(f"DEBUG  md Track {track_id} Multi-window ASM computed")
+                        std_print('DEBUG', 'md', f'Track {track_id}', 'Multi-window ASM computed')
                     # No need of this since 'land_only=true'
                     # # Plot timeseries if landfall detected
                     # landfall_detected = any(
@@ -2052,7 +2052,7 @@ if __name__ == "__main__":
                         'landfall_index': correlation_result.get('landfall_index')
                     })
             except Exception as e:
-                std_print('ERROR', 'md', 'Correlation analysis failed', e)
+                std_print('ERROR', 'md', 'Correlation analysis failed', str(e))
             flux_dir = os.path.join(track_dir, "flux_analysis")
             os.makedirs(flux_dir, exist_ok=True)
             try:
@@ -2101,7 +2101,7 @@ if __name__ == "__main__":
                     plot_spatial_tp_swvl1(ds, track_df, track_id, buffer_deg=5.0, output_dir=sm_dir)
                     std_print('SAVED', 'md', f'Soil moisture analysis plots for Track {track_id}', sm_dir)
             except Exception as e:
-                 std_print('ERROR', 'md', f"Soil moisture analysis failed for Track {track_id}")
+                 std_print('ERROR', 'md', f"Soil moisture analysis failed for Track {track_id}", str(e))
             # 13) Heat Flux Analysis and MD Duration Classification
             print("\n------------------------------------ Heat Flux & Duration Analysis ---------------------")
             # std_print('DEBUG', 'md', f'Skipping Heat Flux and Duration Analysis for Track {track_id}')
@@ -2148,7 +2148,7 @@ if __name__ == "__main__":
                 else:
                     std_print('WARN', 'md', f'Could not analyze flux transition for Track {track_id}')
             except Exception as e:
-                std_print('ERROR', 'md', f'Flux transition analysis failed for Track {track_id}',   str(e))
+                std_print('ERROR', 'md', f'Flux transition analysis failed for Track {track_id}', str(e))
                 traceback.print_exc()
 
         # Coupling metrics

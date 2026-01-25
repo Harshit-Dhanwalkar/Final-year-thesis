@@ -1,7 +1,6 @@
 # Python
-/venv
-/__pycache__
-/report/temp
+/venv/
+/report/temp/
 
 # LaTex
 *.acn

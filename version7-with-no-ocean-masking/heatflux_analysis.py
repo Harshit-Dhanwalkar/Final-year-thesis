@@ -60,7 +60,7 @@ def extract_heat_flux_timeseries(ds, track_df, track_id, buffer_km=100):
     2. Instantaneous Average: avg_slhtf, avg_ishf (W m⁻²) 
     """
     track_id = int(track_id)
-    std_print('INFO', 'hf', 'Dataset variables available :', list(ds.data_vars.keys()))
+    std_print('INFO', 'hf', 'Dataset variables available', list(ds.data_vars.keys()))
     ds, time_coord = get_time_coord(ds)
     ds_times = pd.to_datetime(ds.time.values)
 
@@ -72,10 +72,10 @@ def extract_heat_flux_timeseries(ds, track_df, track_id, buffer_km=100):
     has_accumulated = 'slhf' in ds.data_vars and 'sshf' in ds.data_vars
     has_average = 'avg_slhtf' in ds.data_vars and 'avg_ishf' in ds.data_vars
     if not (has_accumulated or has_average):
-        std_print('ERROR', 'hf',  'No valid heat flux variables found. Check dataset variables :', list(ds.data_vars))
+        std_print('ERROR', 'hf',  'No valid heat flux variables found. Check dataset variables', list(ds.data_vars))
         return None
     flux_type = 'average' if has_average else 'accumulated'
-    std_print('INFO', 'hf', 'Using flux type :', flux_type)
+    std_print('INFO', 'hf', 'Using flux type', flux_type)
 
     # Container
     flux_records = []
@@ -157,10 +157,10 @@ def extract_heat_flux_timeseries(ds, track_df, track_id, buffer_km=100):
             continue
 
     if not flux_records:
-        std_print('WARN', 'hf', f'Track {track_id} :', 'No heat-flux data extracted')
+        std_print('WARN', 'hf', f'Track {track_id}', 'No heat-flux data extracted')
         return None
 
-    std_print('INFO', 'hf', f'Extracted heat flux records for Track {track_id} :', len(flux_records), 'records')
+    std_print('INFO', 'hf', f'Extracted heat flux records for Track {track_id}', f'{len(flux_records)} records')
     return pd.DataFrame(flux_records)
 
 def analyze_flux_transition(ds, track_df, track_id, hours_before=24, hours_after=24):
@@ -187,7 +187,7 @@ def analyze_flux_transition(ds, track_df, track_id, hours_before=24, hours_after
         )
     landfall_time = find_landfall_time(track_df)
     if landfall_time is None:
-        std_print('INFO', 'hf', f'Track {track_id} :', 'No landfall detected, Using track midpoint as reference')
+        std_print('INFO', 'hf', f'Track {track_id} No landfall detected', 'Using track midpoint as reference')
         midpoint_idx = len(track_df) // 2
         landfall_time = pd.to_datetime(track_df.iloc[midpoint_idx]['time'])
 
@@ -293,16 +293,16 @@ def analyze_flux_transition(ds, track_df, track_id, hours_before=24, hours_after
         std_print('INFO', 'hf', f'Track {track_id}', 'Landfall flux transition')
     else:
         std_print('INFO', 'hf', f'Track {track_id}', 'Heat flux transition (no landfall)')
-    std_print(None, None, 'Before Total HF', f"{results['before']['total']:.1f}", 'W/m²')
-    std_print(None, None, 'After Total HF', f"{results['after']['total']:.1f}", 'W/m²')
-    std_print(None, None, 'Total HF Change', f"{results['change']['total']:.1f}", 'W/m²')
+    std_print(None, None, 'Before Total HF', f"{results['before']['total']:.1f} W/m²")
+    std_print(None, None, 'After Total HF', f"{results['after']['total']:.1f} W/m²")
+    std_print(None, None, 'Total HF Change', f"{results['change']['total']:.1f} W/m²")
     return results
 
 def analyze_heat_flux_evolution(flux_df, track_df, track_id):
     """Analyze heat flux statistics and ocean/land phase differences"""
     track_id = int(track_id)
     if flux_df is None or len(flux_df) < 5:
-        std_print('WARN', 'hf', f'Track {track_id} :', 'Insufficient flux data', len(flux_df) if flux_df is not None else 0)
+        std_print('WARN', 'hf', f'Track {track_id} Insufficient flux data', len(flux_df) if flux_df is not None else 0)
         return None
     results = {
         'track_id': track_id,
@@ -338,14 +338,14 @@ def analyze_heat_flux_evolution(flux_df, track_df, track_id):
 
 def compute_flux_tp_correlation(flux_df, track_df, track_id):
     if flux_df is None or len(flux_df) < 5:
-        std_print('WARN', 'hf', f'Track {track_id} :', 'Insufficient flux data for correlation', len(flux_df) if flux_df is not None else 0)
+        std_print('WARN', 'hf', f'Track {track_id} Insufficient flux data for correlation', f'{len(flux_df) if flux_df is not None else 0}')
         return None
 
     flux_times = pd.to_datetime(flux_df['time'])
     track_times = pd.to_datetime(track_df['time'])
     common_times = np.intersect1d(flux_times, track_times)
     if len(common_times) < 3:
-        std_print('WARN', 'hf', f'Track {track_id} :', 'Insufficient common times for flux-tp correlation', len(common_times))
+        std_print('WARN', 'hf', f'Track {track_id} Insufficient common times for flux-tp correlation', len(common_times))
         return None
 
     flux_aligned = flux_df[flux_df['time'].isin(common_times)]['total_heat_flux'].values
@@ -378,14 +378,14 @@ def plot_heat_flux_timeseries(flux_df, track_id, output_dir):
         track_id = int(track_id)
         # Validate input
         if flux_df is None or len(flux_df) < 3:
-            std_print('WARN', 'hf', f'Track {track_id}', f'Insufficient data points: {len(flux_df) if flux_df is not None else 0} < 3')
+            std_print('WARN', 'hf', f'Track {track_id} Insufficient data points', f'{len(flux_df) if flux_df is not None else 0} < 3')
             return False
 
         # Check required columns
         required_cols = ['time', 'latent_heat_flux', 'sensible_heat_flux', 'total_heat_flux']
         missing_cols = [col for col in required_cols if col not in flux_df.columns]
         if missing_cols:
-            std_print('ERROR', 'hf', f'Track {track_id}', f'Missing columns: {missing_cols}')
+            std_print('ERROR', 'hf', f'Track {track_id} Missing columns', missing_cols)
             return False
 
         # Ensure is_land column exists
@@ -398,7 +398,7 @@ def plot_heat_flux_timeseries(flux_df, track_id, output_dir):
         try:
             times = pd.to_datetime(flux_df['time'])
         except Exception as e:
-            std_print('ERROR', 'hf', f'Track {track_id}', f'Time conversion failed: {e}')
+            std_print('ERROR', 'hf', f'Track {track_id} Time conversion failed', str(e))
             return False
 
         is_land_array = flux_df['is_land'].values
@@ -488,7 +488,7 @@ def plot_heat_flux_timeseries(flux_df, track_id, output_dir):
         std_print('SAVED', 'hf', 'Heat flux timeseries', plot_path)
         return True
     except Exception as e:
-        std_print('ERROR', 'hf', f'Track {track_id}', f'Heat flux timeseries plot failed: {str(e)}')
+        std_print('ERROR', 'hf', f'Track {track_id} Heat flux timeseries plot failed', str(e))
         traceback.print_exc()
         return False
 
@@ -546,15 +546,15 @@ def print_md_classification_summary(classifications, output_dir='output'):
     df = pd.DataFrame(classifications)
     short_mds = df[~df['is_long_lived']]
     long_mds = df[df['is_long_lived']]
-    std_print('INFO', 'hf', 'Total MDs detected', len(df), 'tracks')
-    std_print(None, None, 'Short-lived MDs (< 96h)', len(short_mds), f"({100*len(short_mds)/len(df):.1f}%)")
-    std_print(None, None, 'Long-lived MDs (≥ 96h)', len(long_mds), f"({100*len(long_mds)/len(df):.1f}%)")
+    std_print('INFO', 'hf', 'Total MDs detected tracks', len(df))
+    std_print(None, None, 'Short-lived MDs (< 96h)', f"{len(short_mds)} ({100*len(short_mds)/len(df):.1f}%)")
+    std_print(None, None, 'Long-lived MDs (≥ 96h)', f"{len(long_mds)} ({100*len(long_mds)/len(df):.1f}%)")
     if len(short_mds) > 0:
-        std_print(None, None, 'Short-lived MD mean duration', f"{short_mds['duration_hours'].mean():.1f} ± {short_mds['duration_hours'].std():.1f}", 'hours')
-        std_print(None, None, 'Short-lived MD range', f"{short_mds['duration_hours'].min():.1f} - {short_mds['duration_hours'].max():.1f}", 'hours')
+        std_print(None, None, 'Short-lived MD mean duration', f"{short_mds['duration_hours'].mean():.1f} ± {short_mds['duration_hours'].std():.1f} hours")
+        std_print(None, None, 'Short-lived MD range', f"{short_mds['duration_hours'].min():.1f} - {short_mds['duration_hours'].max():.1f} hours")
     if len(long_mds) > 0:
-        std_print(None, None, 'Long-lived MD mean duration', f"{long_mds['duration_hours'].mean():.1f} ± {long_mds['duration_hours'].std():.1f}", 'hours')
-        std_print(None, None, 'Long-lived MD range', f"{long_mds['duration_hours'].min():.1f} - {long_mds['duration_hours'].max():.1f}", 'hours')
+        std_print(None, None, 'Long-lived MD mean duration', f"{long_mds['duration_hours'].mean():.1f} ± {long_mds['duration_hours'].std():.1f} hours")
+        std_print(None, None, 'Long-lived MD range', f"{long_mds['duration_hours'].min():.1f} - {long_mds['duration_hours'].max():.1f} hours")
 
     classification_summary_path = os.path.join(output_dir, f'classification_summary.txt')
-    std_print('SAVED', 'hf', 'Classification Summary :', classification_summary_path)
+    std_print('SAVED', 'hf', 'Classification Summary', classification_summary_path)

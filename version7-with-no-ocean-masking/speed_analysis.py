@@ -68,8 +68,7 @@ def plot_speed_analysis_kmh(track_df, track_id, output_dir):
         track_id = int(track_id)
         # Validate input
         if track_df is None or len(track_df) < 2:
-            std_print('WARN', 'sa', f'Track {track_id}',
-                     f'Insufficient data: {len(track_df) if track_df is not None else 0} points')
+            std_print('WARN', 'sa', f'Track {track_id} Insufficient data', f'{len(track_df) if track_df is not None else 0} points')
             return False
         # Check required columns
         if 'time' not in track_df.columns:
@@ -138,7 +137,7 @@ def plot_speed_analysis_kmh(track_df, track_id, output_dir):
         std_print('SAVED', 'sa', 'Speed plot (km/h) with ocean/land shading', outpath)
         return True
     except Exception as e:
-        std_print('ERROR', 'sa', f'Track {track_id}', f'Speed plot (km/h) failed: {str(e)}')
+        std_print('ERROR', 'sa', f'Track {track_id} Speed plot (km/h) failed', str(e))
         traceback.print_exc()
         return False
 
@@ -147,7 +146,7 @@ def plot_speed_analysis_ms(track_df, track_id, output_dir):
         track_id = int(track_id)
         # Validate input
         if track_df is None or len(track_df) < 2:
-            std_print('WARN', 'sa', f'Track {track_id}', f'Insufficient data: {len(track_df) if track_df is not None else 0} points')
+            std_print('WARN', 'sa', f'Track {track_id} Insufficient data', f'{len(track_df) if track_df is not None else 0} points')
             return False
         # Check required columns
         if 'time' not in track_df.columns:
@@ -216,7 +215,7 @@ def plot_speed_analysis_ms(track_df, track_id, output_dir):
         std_print('SAVED', 'sa', 'Speed plot (m/s) with ocean/land shading', outpath)
         return True
     except Exception as e:
-        std_print('ERROR', 'sa', f'Track {track_id}', f'Speed plot (m/s) failed: {str(e)}')
+        std_print('ERROR', 'sa', f'Track {track_id} Speed plot (m/s) failed', str(e))
         traceback.print_exc()
         return False
 
@@ -228,7 +227,7 @@ def main():
     if not track_files:
         std_print('ERROR', 'sa', 'No Track CSV files found in', input_dir)
         return
-    std_print('INFO', 'sa', f'Track files found for speed analysis:', len(track_files))
+    std_print('INFO', 'sa', f'Track files found for speed analysis', len(track_files))
 
     all_tracks_data = {}
     success_count = 0

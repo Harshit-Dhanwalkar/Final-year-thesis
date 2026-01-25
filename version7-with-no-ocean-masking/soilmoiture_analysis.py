@@ -121,4 +121,4 @@ def plot_spatial_tp_swvl1(ds, track_df, track_id, output_dir='output', buffer_de
     outpath = os.path.join(spactial_tp_sm_dir, f'track_{int(track_id)}_spatial_tp_sm.png')
     plt.savefig(outpath, dpi=300, bbox_inches='tight')
     plt.close(fig)
-    std_print('SAVED', 'sm', 'Spatial TP-SWVL1 plot', outpath)
+    std_print('SAVED', 'sm', f'Spatial TP-SWVL1 plot for Track {track_id}', outpath)
