@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+START_TIME=$(date +%s)
+
 TEMP_DIR="temp"
 mkdir -p "$TEMP_DIR"
 
@@ -36,7 +38,7 @@ compile_tex() {
     local dir=$(dirname "$file")
     local base=$(basename "$file" .tex)
 
-    echo ">> Compiling: $file"
+    echo ">  [Compiling] $file"
     pdflatex -interaction=nonstopmode -output-directory="$dir" "$file" > /dev/null
     pdflatex -interaction=nonstopmode -output-directory="$dir" "$file" > /dev/null
 
@@ -59,9 +61,11 @@ if [ -f "project-update.tex" ]; then
     compile_tex "project-update.tex"
 fi
 
-# echo "--- Compiling Summary ---"
-# if [ -f "summary.tex" ]; then
-#     compile_tex "summary.tex"
-# fi
+END_TIME=$(date +%s)
+ELAPSED_TIME=$((END_TIME - START_TIME))
+
+MINS=$((ELAPSED_TIME / 60))
+SECS=$((ELAPSED_TIME % 60))
 
 echo -e "\n Done! PDFs updated. Aux files moved to ./$TEMP_DIR"
+echo "Total Compilation Time: ${MINS}m ${SECS}s"

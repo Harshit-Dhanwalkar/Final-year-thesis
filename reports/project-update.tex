@@ -1,12 +1,39 @@
 % TODO:
 % 0. add more question .....towards my topic not generic
-% 1. update lag values in observation section
+% 1. update Interpretation of lagged-correlation plots
+% 2. update lag values in observation section
 %       - Lag at max correlation for each track.
 %       - Strength of correlation at that lag.
-% 2. map soil type along each track using a soil dataset (e.g., FAO Soil Grids) to confirm clay vs. sandy regions.
-% 3. Soil Moisture Memory Effect
+% 3. map soil type along each track using a soil dataset (e.g., FAO Soil Grids) to confirm clay vs. sandy regions.
+ %     - https://www.fao.org/soils-portal/data-hub/soil-maps-and-databases/faounesco-soil-map-of-the-world/en/
+ %     - https://iiasa.ac.at/models-tools-data/hwsd
+% 4. Soil Moisture Memory Effect
 %       - Compute autocorrelation of SWVL1 at 24h lag for each track.
 %       - Higher autocorrelation -> longer memory -> more sustained feedback.
+%
+%%%%%%%%%%%%%%%
+% Track 4: Cyclone ASNA (The "Ocean-to-Land" Case)
+%     IMD Context: ASNA was a rare August cyclone in the Arabian Sea.
+%     Why code said "Short-lived/Ocean-originated": code likely picked up the high-intensity phase while it was over water. In analysis, this track serves as the Control Group
+%     Interpretation: Because it spent most of its "Short" life over the ocean (or near coastal sand), it didn't have time to establish a land-atmosphere feedback loop. Its decay upon moving away from the moisture source (ocean) confirms that without "Brown Ocean" conditions, even a Cyclone (stronger than an MD) can have a shorter land-life.
+%     Pearson (r): 0.61 | Spearman (ρ): 0.54 | P-Value: 1.6×10−12
+%     Interpretation: Strongest coupling observed. High correlation reflects the rapid, direct response of coastal sandy soils to intense cyclonic rainfall.
+%     Research Note: Despite high intensity (Cyclone status), longevity was limited by lack of inland soil moisture feedback.
+% Track 2 \& 6: Deep Depressions over Madhya Pradesh (The "Land-Origin" Success)
+%     IMD Context: These were "Deep Depressions"-the strongest category of MDs, often causing extreme inland flooding.
+%     Why code said "Long-lived/Land-originated": results are picking up the pre-genesis phase (vorticity/moisture clustering) that starts over land days before the IMD officially names it.
+%     Interpretation: These are "Standard" tracks for the Brown Ocean Effect.
+%     Track 2 (105 hours) survived because Madhya Pradesh has high clay content and high soil moisture memory.
+%     Argument: These tracks didn't just "originate" on land; they were sustained by the land. The fact that they intensified into Deep Depressions while far from the coast is direct evidence of land-surface flux supporting the storm's core.
+%    Track 2: Deep Depression (Inland/Long-lived)
+%     Pearson (r): 0.53 | Spearman (ρ): 0.44 | P-Value: 2.6×10−31
+%     Interpretation: Stable, moderate linear coupling sustained over 100+ hours.
+%     Research Note: The "Deep Depression" status far inland suggests the land surface (Madhya Pradesh) acted as a secondary energy source, mimicking ocean-like latent heat release.
+%    Track 6: Deep Depression (Central India)
+%     Pearson (r): 0.49 | Spearman (ρ): 0.38 | P-Value: 2.7×10−29
+%     Interpretation: Significant monotonic coupling.
+%     Research Note: Reinforces the pattern that central Indian tracks (Tracks 2, 5, 6) exhibit consistent feedback loops, contributing to their classification as "Deep" systems by the IMD.
+%%%%%%%%%%%%%%%
 %
 % Add new slides:
 % - Hypothesis Testing Summary:
@@ -190,7 +217,7 @@
 			\column{0.5\textwidth}
 			\centering
 			% \includegraphics[width=1.01\linewidth]{images/MD-track.png}
-			\includegraphics[width=1.01\linewidth]{../version6-with-no-ocean-masking/output/MD-track.png}
+			\includegraphics[width=1.01\linewidth]{../version7-with-no-ocean-masking/output/MD-track.png}
 			\textit{\footnotesize Detected MD tracks using ERA5 signle level Dataset}
 
 			\column{0.5\textwidth}
@@ -303,7 +330,7 @@
 	\begin{center}
 		\begin{columns}[T]
 			\column{0.5\textwidth}
-			\includegraphics[width=0.95\textwidth]{../version6-with-no-ocean-masking/output/track_1/MD-track-1-detailed.png}
+			\includegraphics[width=0.95\textwidth]{../version7-with-no-ocean-masking/output/track_1/MD-track-1-detailed.png}
 
 			\vspace{0.05cm}
 			\footnotesize
@@ -333,37 +360,53 @@
 
 \begin{frame}{Track 1 - Translation speed of MD}
 	\begin{center}
-		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_1/translational-speed/track_1_speed_ms.png}
-	\end{center}
-\end{frame}
-
-\begin{frame}{Track 1 - Lag Correlation}
-	\begin{center}
-		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_1/correlation_analysis/lag_correlation/track_1_lag_corr.png}
+		\includegraphics[width=0.8\textwidth]{../version7-with-no-ocean-masking/output/track_1/translational-speed/track_1_speed_ms.png}
 	\end{center}
 \end{frame}
 
 \begin{frame}{Track 1 - TP - SWVL1 Correlation}
+	\begin{columns}[T]
+		\begin{column}{0.6\textwidth}
+			\begin{center}
+				\includegraphics[width=\textwidth]{../version7-with-no-ocean-masking/output/track_1/correlation_analysis/correlation_scatter_plots/track_1_TP-SWVL1_correlation.png}
+			\end{center}
+		\end{column}
+		% TODO:
+		\begin{column}{0.4\textwidth}
+			\footnotesize
+			\textbf{Statistical Summary:}
+			\begin{itemize}
+				\item \textbf{Pearson r:} -0.2627 - Weak negative linear relationship.
+				\item \textbf{Spearman $\rho$:} -0.2800 – higher rain doesn't immediately equate to higher surface soil moisture.
+				\item \textbf{p-value:} $2.80 \times 10^{-2}$ – Statisticarly significant ($p < 0.05$), though the correlation strength is low.
+				      % \item \textbf{R-squared:} 0.069 – Precipitation explains only ~7\% of the variance in soil water content for this track.
+				\item \textbf{Mean TP:} 0.49 $mm/hr$ and \textbf{Mean SM:} 0.15 $m^3/m^3$
+			\end{itemize}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+\begin{frame}{Track 1 - Lag Correlation}
 	\begin{center}
-		\includegraphics[width=0.7\textwidth]{../version6-with-no-ocean-masking/output/track_1/correlation_analysis/scatter_plots/track_1_scatter.png}
+		\includegraphics[width=0.8\textwidth]{../version7-with-no-ocean-masking/output/track_1/correlation_analysis/lag_correlation/track_1_lag_corr.png}
 	\end{center}
 \end{frame}
 
 \begin{frame}{Track 1 - Spatial distribution of TP and SWVL1}
 	\begin{center}
-		\includegraphics[width=0.7\textwidth]{../version6-with-no-ocean-masking/output/track_1/correlation_analysis/time_series/track_1_tp_sm_time_series.png}
+		\includegraphics[width=0.7\textwidth]{../version7-with-no-ocean-masking/output/track_1/correlation_analysis/time_series/track_1_TP-SWVL1_time_series.png}
 	\end{center}
 \end{frame}
 
 % \begin{frame}{Track 1 - Heat fluxes transition}
 % 	\begin{center}
-% 		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_1/flux_analysis/track_1_analysis/track_1_heat_fluxes_trasnsition.png}
+% 		\includegraphics[width=0.8\textwidth]{../version7-with-no-ocean-masking/output/track_1/flux_analysis/track_1_analysis/track_1_heat_fluxes_trasnsition.png}
 % 	\end{center}
 % \end{frame}
 
 \begin{frame}{Track 1 - Heat flux analysis}
 	\begin{center}
-		\includegraphics[width=0.6\textwidth]{../version6-with-no-ocean-masking/output/track_1/heat_flux_analysis/track_1_heat_flux_timeseries.png}
+		\includegraphics[width=0.6\textwidth]{../version7-with-no-ocean-masking/output/track_1/heat_flux_analysis/track_1_heat_flux_timeseries.png}
 	\end{center}
 \end{frame}
 
@@ -372,7 +415,7 @@
 	\begin{center}
 		\begin{columns}[T]
 			\column{0.5\textwidth}
-			\includegraphics[width=0.95\textwidth]{../version6-with-no-ocean-masking/output/track_2/MD-track-2-detailed.png}
+			\includegraphics[width=0.95\textwidth]{../version7-with-no-ocean-masking/output/track_2/MD-track-2-detailed.png}
 
 			\vspace{0.05cm}
 			\footnotesize
@@ -402,37 +445,57 @@
 
 \begin{frame}{Track 2 - Translation speed of MD}
 	\begin{center}
-		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_2/translational-speed/track_2_speed_ms.png}
-	\end{center}
-\end{frame}
-
-\begin{frame}{Track 2 - Lag Correlation}
-	\begin{center}
-		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_2/correlation_analysis/lag_correlation/track_2_lag_corr.png}
+		\includegraphics[width=0.8\textwidth]{../version7-with-no-ocean-masking/output/track_2/translational-speed/track_2_speed_ms.png}
 	\end{center}
 \end{frame}
 
 \begin{frame}{Track 2 - TP - SWVL1 Correlation}
+	\begin{columns}[T]
+		\begin{column}{0.6\textwidth}
+			\begin{center}
+				\includegraphics[width=\textwidth]{../version7-with-no-ocean-masking/output/track_2/correlation_analysis/correlation_scatter_plots/track_2_TP-SWVL1_correlation.png}
+			\end{center}
+		\end{column}
+
+		% TODO:
+		\begin{column}{0.4\textwidth}
+			\footnotesize
+			\textbf{Statistical Summary:}
+			\begin{itemize}
+				\item \textbf{Pearson:} 0.5988 – % TODO:
+				\item \textbf{Spearman $\rho$:} 0.5965 – % TODO:
+				\item \textbf{p-value:} $2.55 \times 10^{-11}$ – % TODO: Extremely significant; robust result due to a larger data sample.
+				      % \item \textbf{R-squared:} – % Precipitation explains only ~7\% of the variance in soil water content for this track.
+			\end{itemize}
+			% \item \textbf{Pearson r:} 0.5214 – Moderate positive linear relationship.
+			% \item \textbf{Spearman $\rho$:} 0.3921 – Indicates a reliable trend where precipitation recharges soil moisture.
+			% \item \textbf{p-value:} $2.55 \times 10^{-12}$ – Extremely significant.
+			% \item \textbf{Mean TP:} 0.62 mm/hr | \textbf{Mean SM:} 0.28 $m^3/m^3$
+		\end{column}
+	\end{columns}
+\end{frame}
+
+\begin{frame}{Track 2 - Lag Correlation}
 	\begin{center}
-		\includegraphics[width=0.7\textwidth]{../version6-with-no-ocean-masking/output/track_2/correlation_analysis/scatter_plots/track_2_scatter.png}
+		\includegraphics[width=0.8\textwidth]{../version7-with-no-ocean-masking/output/track_2/correlation_analysis/lag_correlation/track_2_lag_corr.png}
 	\end{center}
 \end{frame}
 
 \begin{frame}{Track 2 - Spatial distribution of TP and SWVL1}
 	\begin{center}
-		\includegraphics[width=0.7\textwidth]{../version6-with-no-ocean-masking/output/track_2/correlation_analysis/time_series/track_2_tp_sm_time_series.png}
+		\includegraphics[width=0.7\textwidth]{../version7-with-no-ocean-masking/output/track_2/correlation_analysis/time_series/track_2_TP-SWVL1_time_series.png}
 	\end{center}
 \end{frame}
 
 % \begin{frame}{Track 2 - Heat fluxes transition}
 % 	\begin{center}
-% 		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_2/flux_analysis/track_2_analysis/track_2_heat_fluxes_trasnsition.png}
+% 		\includegraphics[width=0.8\textwidth]{../version7-with-no-ocean-masking/output/track_2/flux_analysis/track_2_analysis/track_2_heat_fluxes_trasnsition.png}
 % 	\end{center}
 % \end{frame}
 
 \begin{frame}{Track 2 - Heat flux analysis}
 	\begin{center}
-		\includegraphics[width=0.6\textwidth]{../version6-with-no-ocean-masking/output/track_2/heat_flux_analysis/track_2_heat_flux_timeseries.png}
+		\includegraphics[width=0.6\textwidth]{../version7-with-no-ocean-masking/output/track_2/heat_flux_analysis/track_2_heat_flux_timeseries.png}
 	\end{center}
 \end{frame}
 
@@ -441,7 +504,7 @@
 	\begin{center}
 		\begin{columns}[T]
 			\column{0.5\textwidth}
-			\includegraphics[width=0.95\textwidth]{../version6-with-no-ocean-masking/output/track_3/MD-track-3-detailed.png}
+			\includegraphics[width=0.95\textwidth]{../version7-with-no-ocean-masking/output/track_3/MD-track-3-detailed.png}
 
 			\vspace{0.05cm}
 			\footnotesize
@@ -470,37 +533,57 @@
 
 \begin{frame}{Track 3 - Translation speed of MD}
 	\begin{center}
-		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_3/translational-speed/track_3_speed_ms.png}
-	\end{center}
-\end{frame}
-
-\begin{frame}{Track 3 - Lag Correlation}
-	\begin{center}
-		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_3/correlation_analysis/lag_correlation/track_3_lag_corr.png}
+		\includegraphics[width=0.8\textwidth]{../version7-with-no-ocean-masking/output/track_3/translational-speed/track_3_speed_ms.png}
 	\end{center}
 \end{frame}
 
 \begin{frame}{Track 3 - TP - SWVL1 Correlation}
+	\begin{columns}[T]
+		\begin{column}{0.6\textwidth}
+			\begin{center}
+				\includegraphics[width=\textwidth]{../version7-with-no-ocean-masking/output/track_3/correlation_analysis/correlation_scatter_plots/track_3_TP-SWVL1_correlation.png}
+			\end{center}
+		\end{column}
+
+		% TODO:
+		\begin{column}{0.4\textwidth}
+			\footnotesize
+			\textbf{Statistical Summary:}
+			\begin{itemize}
+				\item \textbf{Pearson:} 0.7972 – % TODO:
+				\item \textbf{Spearman $\rho$:} 0.8392 – % TODO:
+				\item \textbf{p-value:} $1.75 \times 10^{-32}$ – Statistically significant.
+				      % \item \textbf{R-squared:} – % Precipitation explains only ~7\% of the variance in soil water content for this track.
+			\end{itemize}
+			% \item \textbf{Pearson r:} 0.3145 – Weak positive relationship.
+			% \item \textbf{Spearman $\rho$:} 0.2310 – Suggests high variability or noise in the land-atmosphere interaction.
+			% \item \textbf{p-value:} $3.37 \times 10^{-12}$ – Highly significant due to large sample size.
+			% \item \textbf{Mean TP:} 0.38 mm/hr | \textbf{Mean SM:} 0.12 $m^3/m^3$
+		\end{column}
+	\end{columns}
+\end{frame}
+
+\begin{frame}{Track 3 - Lag Correlation}
 	\begin{center}
-		\includegraphics[width=0.7\textwidth]{../version6-with-no-ocean-masking/output/track_3/correlation_analysis/scatter_plots/track_3_scatter.png}
+		\includegraphics[width=0.8\textwidth]{../version7-with-no-ocean-masking/output/track_3/correlation_analysis/lag_correlation/track_3_lag_corr.png}
 	\end{center}
 \end{frame}
 
 \begin{frame}{Track 3 - Spatial distribution of TP and SWVL1}
 	\begin{center}
-		\includegraphics[width=0.7\textwidth]{../version6-with-no-ocean-masking/output/track_3/correlation_analysis/time_series/track_3_tp_sm_time_series.png}
+		\includegraphics[width=0.7\textwidth]{../version7-with-no-ocean-masking/output/track_3/correlation_analysis/time_series/track_3_TP-SWVL1_time_series.png}
 	\end{center}
 \end{frame}
 
 % \begin{frame}{Track 3 - Heat fluxes transition}
 % 	\begin{center}
-% 		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_3/flux_analysis/track_3_analysis/track_3_heat_fluxes_trasnsition.png}
+% 		\includegraphics[width=0.8\textwidth]{../version7-with-no-ocean-masking/output/track_3/flux_analysis/track_3_analysis/track_3_heat_fluxes_trasnsition.png}
 % 	\end{center}
 % \end{frame}
 
 \begin{frame}{Track 3 - Heat flux analysis}
 	\begin{center}
-		\includegraphics[width=0.6\textwidth]{../version6-with-no-ocean-masking/output/track_3/heat_flux_analysis/track_3_heat_flux_timeseries.png}
+		\includegraphics[width=0.6\textwidth]{../version7-with-no-ocean-masking/output/track_3/heat_flux_analysis/track_3_heat_flux_timeseries.png}
 	\end{center}
 \end{frame}
 
@@ -509,7 +592,7 @@
 	\begin{center}
 		\begin{columns}[T]
 			\column{0.5\textwidth}
-			\includegraphics[width=0.95\textwidth]{../version6-with-no-ocean-masking/output/track_4/MD-track-4-detailed.png}
+			\includegraphics[width=0.95\textwidth]{../version7-with-no-ocean-masking/output/track_4/MD-track-4-detailed.png}
 
 			\vspace{0.05cm}
 			\footnotesize
@@ -538,37 +621,53 @@
 
 \begin{frame}{Track 4 - Translation speed of MD}
 	\begin{center}
-		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_4/translational-speed/track_4_speed_ms.png}
-	\end{center}
-\end{frame}
-
-\begin{frame}{Track 4 - Lag Correlation}
-	\begin{center}
-		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_4/correlation_analysis/lag_correlation/track_4_lag_corr.png}
+		\includegraphics[width=0.8\textwidth]{../version7-with-no-ocean-masking/output/track_4/translational-speed/track_4_speed_ms.png}
 	\end{center}
 \end{frame}
 
 \begin{frame}{Track 4 - TP - SWVL1 Correlation}
+	\begin{columns}[T]
+		\begin{column}{0.6\textwidth}
+			\begin{center}
+				\includegraphics[width=\textwidth]{../version7-with-no-ocean-masking/output/track_4/correlation_analysis/correlation_scatter_plots/track_4_TP-SWVL1_correlation.png}
+			\end{center}
+		\end{column}
+
+		% TODO:
+		\begin{column}{0.4\textwidth}
+			\footnotesize
+			\textbf{Statistical Summary:}
+			\begin{itemize}
+				\item \textbf{Pearson:} -0.2311 – % TODO:
+				\item \textbf{Spearman $\rho$:} 0.0239 - % TODO:
+				\item \textbf{p-value:} $4.91 \times 10^{-02}$ – % TODO:
+				      % \item \textbf{R-squared:} – % Precipitation explains only ~7\% of the variance in soil water content for this track.
+			\end{itemize}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+\begin{frame}{Track 4 - Lag Correlation}
 	\begin{center}
-		\includegraphics[width=0.7\textwidth]{../version6-with-no-ocean-masking/output/track_4/correlation_analysis/scatter_plots/track_4_scatter.png}
+		\includegraphics[width=0.8\textwidth]{../version7-with-no-ocean-masking/output/track_4/correlation_analysis/lag_correlation/track_4_lag_corr.png}
 	\end{center}
 \end{frame}
 
 \begin{frame}{Track 4 - Spatial distribution of TP and SWVL1}
 	\begin{center}
-		\includegraphics[width=0.7\textwidth]{../version6-with-no-ocean-masking/output/track_4/correlation_analysis/time_series/track_4_tp_sm_time_series.png}
+		\includegraphics[width=0.7\textwidth]{../version7-with-no-ocean-masking/output/track_4/correlation_analysis/time_series/track_4_TP-SWVL1_time_series.png}
 	\end{center}
 \end{frame}
 
 % \begin{frame}{Track 4 - Heat fluxes transition}
 % 	\begin{center}
-% 		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_4/flux_analysis/track_4_analysis/track_4_heat_fluxes_trasnsition.png}
+% 		\includegraphics[width=0.8\textwidth]{../version7-with-no-ocean-masking/output/track_4/flux_analysis/track_4_analysis/track_4_heat_fluxes_trasnsition.png}
 % 	\end{center}
 % \end{frame}
 
 \begin{frame}{Track 4 - Heat flux analysis}
 	\begin{center}
-		\includegraphics[width=0.6\textwidth]{../version6-with-no-ocean-masking/output/track_4/heat_flux_analysis/track_4_heat_flux_timeseries.png}
+		\includegraphics[width=0.6\textwidth]{../version7-with-no-ocean-masking/output/track_4/heat_flux_analysis/track_4_heat_flux_timeseries.png}
 	\end{center}
 \end{frame}
 
@@ -577,7 +676,7 @@
 	\begin{center}
 		\begin{columns}[T]
 			\column{0.5\textwidth}
-			\includegraphics[width=0.95\textwidth]{../version6-with-no-ocean-masking/output/track_5/MD-track-5-detailed.png}
+			\includegraphics[width=0.95\textwidth]{../version7-with-no-ocean-masking/output/track_5/MD-track-5-detailed.png}
 
 			\vspace{0.05cm}
 			\footnotesize
@@ -606,37 +705,56 @@
 
 \begin{frame}{Track 5 - Translation speed of MD}
 	\begin{center}
-		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_5/translational-speed/track_5_speed_ms.png}
-	\end{center}
-\end{frame}
-
-\begin{frame}{Track 5 - Lag Correlation}
-	\begin{center}
-		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_5/correlation_analysis/lag_correlation/track_5_lag_corr.png}
+		\includegraphics[width=0.8\textwidth]{../version7-with-no-ocean-masking/output/track_5/translational-speed/track_5_speed_ms.png}
 	\end{center}
 \end{frame}
 
 \begin{frame}{Track 5 - TP - SWVL1 Correlation}
+	\begin{columns}[T]
+		\begin{column}{0.6\textwidth}
+			\begin{center}
+				\includegraphics[width=\textwidth]{../version7-with-no-ocean-masking/output/track_5/correlation_analysis/correlation_scatter_plots/track_5_TP-SWVL1_correlation.png}
+			\end{center}
+		\end{column}
+
+		% TODO:
+		\begin{column}{0.4\textwidth}
+			\footnotesize
+			\textbf{Statistical Summary:}
+			\begin{itemize}
+				\item \textbf{Pearson:} 0.4850 –  Moderate positive relationship.
+				\item \textbf{Spearman $\rho$:} 0.5908 – Strong monotonic relationship; very stable feedback loop.
+				\item \textbf{p-value:} $7.04 \times 10^{-11}$ – % TODO:
+				      % \item \textbf{R-squared:} – % Precipitation explains only ~7\% of the variance in soil water content for this track.
+				      % \item \textbf{Spearman $\rho$:} 0.4215 – Shows robust coupling; soil moisture responds consistently to rainfall.
+				      % \item \textbf{p-value:} $1.52 \times 10^{-18}$ – Most significant result across all tracks.
+				      % \item \textbf{Mean TP:} 0.55 mm/hr | \textbf{Mean SM:} 0.22 $m^3/m^3$
+			\end{itemize}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+\begin{frame}{Track 5 - Lag Correlation}
 	\begin{center}
-		\includegraphics[width=0.7\textwidth]{../version6-with-no-ocean-masking/output/track_5/correlation_analysis/scatter_plots/track_5_scatter.png}
+		\includegraphics[width=0.8\textwidth]{../version7-with-no-ocean-masking/output/track_5/correlation_analysis/lag_correlation/track_5_lag_corr.png}
 	\end{center}
 \end{frame}
 
 \begin{frame}{Track 5 - Spatial distribution of TP and SWVL1}
 	\begin{center}
-		\includegraphics[width=0.7\textwidth]{../version6-with-no-ocean-masking/output/track_5/correlation_analysis/time_series/track_5_tp_sm_time_series.png}
+		\includegraphics[width=0.7\textwidth]{../version7-with-no-ocean-masking/output/track_5/correlation_analysis/time_series/track_5_TP-SWVL1_time_series.png}
 	\end{center}
 \end{frame}
 
 % \begin{frame}{Track 5 - Heat fluxes transition}
 % 	\begin{center}
-% 		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_5/flux_analysis/track_5_analysis/track_5_heat_fluxes_trasnsition.png}
+% 		\includegraphics[width=0.8\textwidth]{../version7-with-no-ocean-masking/output/track_5/flux_analysis/track_5_analysis/track_5_heat_fluxes_trasnsition.png}
 % 	\end{center}
 % \end{frame}
 
 \begin{frame}{Track 5 - Heat flux analysis}
 	\begin{center}
-		\includegraphics[width=0.6\textwidth]{../version6-with-no-ocean-masking/output/track_5/heat_flux_analysis/track_5_heat_flux_timeseries.png}
+		\includegraphics[width=0.6\textwidth]{../version7-with-no-ocean-masking/output/track_5/heat_flux_analysis/track_5_heat_flux_timeseries.png}
 	\end{center}
 \end{frame}
 
@@ -645,7 +763,7 @@
 	\begin{center}
 		\begin{columns}[T]
 			\column{0.5\textwidth}
-			\includegraphics[width=0.95\textwidth]{../version6-with-no-ocean-masking/output/track_6/MD-track-6-detailed.png}
+			\includegraphics[width=0.95\textwidth]{../version7-with-no-ocean-masking/output/track_6/MD-track-6-detailed.png}
 
 			\vspace{0.05cm}
 			\footnotesize
@@ -674,37 +792,53 @@
 
 \begin{frame}{Track 6 - Translation speed of MD}
 	\begin{center}
-		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_6/translational-speed/track_6_speed_ms.png}
-	\end{center}
-\end{frame}
-
-\begin{frame}{Track 6 - Lag Correlation}
-	\begin{center}
-		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_6/correlation_analysis/lag_correlation/track_6_lag_corr.png}
+		\includegraphics[width=0.8\textwidth]{../version7-with-no-ocean-masking/output/track_6/translational-speed/track_6_speed_ms.png}
 	\end{center}
 \end{frame}
 
 \begin{frame}{Track 6 - TP - SWVL1 Correlation}
+	\begin{columns}[T]
+		\begin{column}{0.6\textwidth}
+			\begin{center}
+				\includegraphics[width=\textwidth]{../version7-with-no-ocean-masking/output/track_6/correlation_analysis/correlation_scatter_plots/track_6_TP-SWVL1_correlation.png}
+			\end{center}
+		\end{column}
+
+		% TODO:
+		\begin{column}{0.4\textwidth}
+			\footnotesize
+			\textbf{Statistical Summary:}
+			\begin{itemize}
+				\item \textbf{Pearson:} -0.5238 – % TODO: 
+				\item \textbf{Spearman $\rho$:} -0.0285 – % TODO: 
+				\item \textbf{p-value:} $2.02 \times 10^{-09}$ – % TODO:
+				      % \item \textbf{R-squared:} – % Precipitation explains only ~7\% of the variance in soil water content for this track.
+			\end{itemize}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+\begin{frame}{Track 6 - Lag Correlation}
 	\begin{center}
-		\includegraphics[width=0.7\textwidth]{../version6-with-no-ocean-masking/output/track_6/correlation_analysis/scatter_plots/track_6_scatter.png}
+		\includegraphics[width=0.8\textwidth]{../version7-with-no-ocean-masking/output/track_6/correlation_analysis/lag_correlation/track_6_lag_corr.png}
 	\end{center}
 \end{frame}
 
 \begin{frame}{Track 6 - Spatial distribution of TP and SWVL1}
 	\begin{center}
-		\includegraphics[width=0.7\textwidth]{../version6-with-no-ocean-masking/output/track_6/correlation_analysis/time_series/track_6_tp_sm_time_series.png}
+		\includegraphics[width=0.7\textwidth]{../version7-with-no-ocean-masking/output/track_6/correlation_analysis/time_series/track_6_TP-SWVL1_time_series.png}
 	\end{center}
 \end{frame}
 
 % \begin{frame}{Track 6 - Heat fluxes transition}
 % 	\begin{center}
-% 		\includegraphics[width=0.8\textwidth]{../version6-with-no-ocean-masking/output/track_6/flux_analysis/track_6_analysis/track_6_heat_fluxes_trasnsition.png}
+% 		\includegraphics[width=0.8\textwidth]{../version7-with-no-ocean-masking/output/track_6/flux_analysis/track_6_analysis/track_6_heat_fluxes_trasnsition.png}
 % 	\end{center}
 % \end{frame}
 
 \begin{frame}{Track 6 - Heat flux analysis}
 	\begin{center}
-		\includegraphics[width=0.6\textwidth]{../version6-with-no-ocean-masking/output/track_6/heat_flux_analysis/track_6_heat_flux_timeseries.png}
+		\includegraphics[width=0.6\textwidth]{../version7-with-no-ocean-masking/output/track_6/heat_flux_analysis/track_6_heat_flux_timeseries.png}
 	\end{center}
 \end{frame}
 
