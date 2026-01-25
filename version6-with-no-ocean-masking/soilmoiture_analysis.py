@@ -9,6 +9,7 @@ Key Questions:
 """
 
 # TODO: add shade region for land (like in latent heat flux transiton and in speed plots)
+# FIX: use buffer_km instaed of buffer_deg
 
 import os
 import numpy as np
@@ -19,14 +20,13 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 from scipy.stats import pearsonr, spearmanr, linregress
 
-
 from utils import (
     std_print,
     setup_map_extent,
     clamp_to_domain,
 )
-
-def plot_spatial_tp_sm(ds, track_df, track_id, output_dir = 'output', buffer_deg = 5.0):
+def plot_spatial_tp_sm(ds, track_df, track_id, output_dir='output', buffer_deg=5.0):
+# def plot_spatial_tp_swvl1(ds, track_df, track_id, output_dir='output', buffer_km=100):
     """2-panel spatial maps of TP and SWVL1 during track passage."""
     track_id = int(track_id)
     track = track_df.sort_values('time')

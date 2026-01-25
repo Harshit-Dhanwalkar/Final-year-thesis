@@ -37,12 +37,7 @@ from utils import (
 )
 
 # Helper functions
-def lag_correlation(
-    x,
-    y,
-    max_lag=48, # hrs
-    # max_lag=72, # hrs
-):
+def lag_correlation(x, y, max_lag=48): # max_lag=72, # hrs
     x = np.asarray(x)
     y = np.asarray(y)
     # Remove NaN values while keeping alignment
@@ -216,7 +211,7 @@ def analyze_single_track(ds, track_df, track_id, buffer_km=51, max_lag_hours=50,
     try:
         plot_scatter_analysis(ds, track_df, track_id, buffer_km = 100, output_dir = output_dir)
     except Exception as e:
-        std_print('WARN', 'ca','Failed to create scatter plot:', str(e))
+        std_print('WARN', 'ca','Failed to create tpswl1 correlation scatter plot:', str(e))
     try:
         plot_lagged_correlation(tp_series, swvl1_series, max_lag_hours, track_id, output_dir)
     except Exception as e:
@@ -404,7 +399,7 @@ def analyze_single_track(ds, track_df, track_id, buffer_km=51, max_lag_hours=50,
 #
 #     track_dir = os.path.join(output_dir, "time_series")
 #     os.makedirs(track_dir, exist_ok=True)
-#     plot_path = os.path.join(track_dir, f"track_{int(track_id)}_tp_sm_time_series.png")
+#     plot_path = os.path.join(track_dir, f"track_{int(track_id)}_TP-SWVL1_time_series.png")
 #     plt.savefig(plot_path, dpi=300, bbox_inches='tight')
 #     plt.close(fig)
 #     std_print('SAVED', 'ca', 'Time series plot :', plot_path)
@@ -545,11 +540,11 @@ def plot_tp_sm_time_series(tp, sm, valid_times, landfall_index, track_id, output
         # Save
         track_dir = os.path.join(output_dir, "time_series")
         os.makedirs(track_dir, exist_ok=True)
-        plot_path = os.path.join(track_dir, f"track_{int(track_id)}_tp_sm_time_series.png")
+        plot_path = os.path.join(track_dir, f"track_{int(track_id)}_TP-SWVL1_time_series.png")
         plt.savefig(plot_path, dpi=300, bbox_inches='tight')
         plt.close(fig)
 
-        std_print('SAVED', 'ca', 'Enhanced TP-SM time series with correct land/ocean shading', plot_path)
+        std_print('SAVED', 'ca', 'TP-SM time series', plot_path)
         return True
     except Exception as e:
         std_print('ERROR', 'ca', f'Track {track_id} TP-SM plot failed', str(e))
@@ -674,13 +669,11 @@ def analyze_all_tracks(ds, full_track_df, buffer_km=100, output_dir="output"):
         'detailed_results': results_df
     }
 
-# FIX:  use  export_results_to_csv
+# FIX: use  export_results_to_csv
 def export_results(results_df, output_dir = 'output'):
     """Export correlation results to CSV"""
     os.makedirs(output_dir, exist_ok=True)
-    export_cols = [
-        'track_id', 'n_samples', 'mean_tp', 'mean_swvl1', 'pearson_r', 'pearson_p', 'spearman_r', 'spearman_p', 'regression_slope', 'r_squared'
-    ]
+    export_cols = ['track_id', 'n_samples', 'mean_tp', 'mean_swvl1', 'pearson_r', 'pearson_p', 'spearman_r', 'spearman_p', 'regression_slope', 'r_squared']
 
     tp_swvl1_correlations_path = os.path.join(output_dir, 'tp_swvl1_correlations.csv')
     available_cols = [col for col in export_cols if col in results_df.columns]
@@ -697,7 +690,6 @@ def plot_scatter_analysis(ds, track_df, track_id, buffer_km = 100, output_dir = 
         return
 
     fig, ax = plt.subplots(figsize=(10, 6))
-
     times = result['times']
     tp_vals = result['tp_values']
     sm_vals = result['swvl1_values']
@@ -721,46 +713,45 @@ def plot_scatter_analysis(ds, track_df, track_id, buffer_km = 100, output_dir = 
             y_line,
             'r--',
             linewidth=2.5,
-            alpha=0.8,
+            alpha=0.7,
             label=f'Linear Fit (r²={result["r_squared"]:.4f})'
         )
 
     # Statistics box
     stats_text = (
-        f"Pearson r: {result['pearson_r']:.4f}\n"
+        f"Pearson r:  {result['pearson_r']:.4f}\n"
         f"Spearman ρ: {result['spearman_r']:.4f}\n"
-        f"P-value:   {result['pearson_p']:.4e}\n"
-        f"N samples: {result['n_samples']}\n"
-        f"Slope: {result['regression_slope']:.4f}\n"
-        f"Mean TP: {result['mean_tp']:.2f} mm/hr\n"
-        f"Mean SM: {result['mean_swvl1']:.2f} m³/m³"
+        f"P-value:    {result['pearson_p']:.4e}\n"
+        f"N samples:  {result['n_samples']}\n"
+        f"Slope:      {result['regression_slope']:.4f}\n"
+        f"Mean TP:    {result['mean_tp']:.2f} mm/hr\n"
+        f"Mean SM:    {result['mean_swvl1']:.2f} m³/m³"
     )
     ax.text(
-        1.08,
-        0.9,
+        1.02,
+        0.85,
         stats_text,
         transform=ax.transAxes,
-        fontsize=9,
+        fontsize=10,
         verticalalignment='top',
-        # horizontalalignment='right',
         horizontalalignment='left',
         family='monospace',
         bbox=dict(boxstyle='round', alpha=0.3)
     )
 
-    ax.set_xlabel('Precipitation(tp) (mm/hr)', fontsize=12, fontweight='bold')
-    ax.set_ylabel('Soil Water Content(swvl1) (m³/m³)', fontsize=12, fontweight='bold')
-    ax.set_title(f'Track {track_id}: Total Precipitation (tp) - Soil water content (swvl1) Correlation', fontsize=13, fontweight='bold')
+    ax.set_xlabel('Precipitation(tp) (mm/hr)', fontsize=10, fontweight='bold')
+    ax.set_ylabel('Soil Water Volumatric Level-1(swvl1) (m³/m³)', fontsize=10, fontweight='bold')
+    ax.set_title(f'Track {track_id}: tp - swvl1 Correlation', fontsize=13, fontweight='bold', pad=10)
     ax.grid(True, alpha=0.5, linestyle='--')
     ax.legend(fontsize=8, loc='best', framealpha=0.7)
     plt.tight_layout()
 
-    track_dir = os.path.join(output_dir, "scatter_plots")
+    track_dir = os.path.join(output_dir, "correlation_scatter_plots")
     os.makedirs(track_dir, exist_ok=True)
-    plot_path = os.path.join(track_dir, f"track_{int(track_id)}_scatter.png")
+    plot_path = os.path.join(track_dir, f"track_{int(track_id)}_TP-SWVL1_correlation.png")
     plt.savefig(plot_path, dpi=300, bbox_inches='tight')
     plt.close(fig)
-    std_print('SAVED', 'ca', 'Scatter plot', plot_path)
+    std_print('SAVED', 'ca', 'Tp-SWVL1 Correlation Scatter plot', plot_path)
 
 def plot_lagged_correlation(tp, sm, max_lag_hours, track_id, output_dir):
     lags, correlations_lag = lag_correlation(tp, sm, max_lag=max_lag_hours)
@@ -786,9 +777,9 @@ def plot_lagged_correlation(tp, sm, max_lag_hours, track_id, output_dir):
     max_corr_lag = lags[max_corr_idx]
     max_corr_value = correlations_lag[max_corr_idx]
     if max_corr_lag < 0:
-        lag_interpretation = f"TP LEADS SM by {abs(max_corr_lag)}h\n(Infiltration lag)"
+        lag_interpretation = f"TP LEADS SWVL1 by {abs(max_corr_lag)}h\n(Infiltration lag)"
     elif max_corr_lag > 0:
-        lag_interpretation = f"SM LEADS TP by {max_corr_lag}h\n(Antecedent moisture)"
+        lag_interpretation = f"SWVL1 LEADS TP by {max_corr_lag}h\n(Antecedent moisture)"
     else:
         lag_interpretation = "Simultaneous\n(Immediate feedback)"
 
@@ -812,11 +803,9 @@ def plot_lagged_correlation(tp, sm, max_lag_hours, track_id, output_dir):
     # Reference lines
     ax.axvline(0, color='black', linestyle='--', linewidth=1, alpha=0.6, label='Zero lag')
     ax.axhline(0, color='gray', linestyle=':', linewidth=1, alpha=0.6)
-    ax.text(0.98, 0.02, lag_interpretation, transform=ax.transAxes,
-            fontsize=10, va='bottom', ha='right',
-            bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
-    ax.set_xlabel("Lag (hours)", fontsize=12, fontweight='bold')
-    ax.set_ylabel("Correlation (r)", fontsize=12, fontweight='bold')
+    ax.text(0.98, 0.02, lag_interpretation, transform=ax.transAxes, fontsize=10, va='bottom', ha='right', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
+    ax.set_xlabel("Lag (hours)", fontsize=10, fontweight='bold')
+    ax.set_ylabel("Correlation (r)", fontsize=10, fontweight='bold')
     ax.set_title(f"Track {track_id}: Lagged Precipitation-Soil Moisture Correlation", fontsize=13, fontweight='bold', pad=10)
     ax.grid(True, alpha=0.5, linestyle='--')
     # ax.set_ylim([-1, 1])
@@ -829,7 +818,6 @@ def plot_lagged_correlation(tp, sm, max_lag_hours, track_id, output_dir):
     plt.savefig(plot_path, dpi=300, bbox_inches='tight')
     plt.close(fig)
     std_print('SAVED', 'ca', 'Lag Ccrelation plot :', plot_path)
-
 
 def analyze_flux_correlations(ds, track_df, track_id, buffer_km=100):
     time_coord = "time" if "time" in ds.coords else "valid_time"
@@ -951,12 +939,12 @@ def analyze_flux_correlations(ds, track_df, track_id, buffer_km=100):
 #         ax1.legend(all_handles, all_labels, loc='best', framealpha=0.7)
 #         ax1.grid(True, alpha=0.5, linestyle='--')
 #
-#         plot1_path = os.path.join(track_dir, f"track_{track_id}_tp_sm.png")
+#         plot1_path = os.path.join(track_dir, f"track_{track_id}_TP-SWVL1.png")
 #         plt.savefig(plot1_path, dpi=300, bbox_inches='tight')
 #         plt.close()
 #         std_print('SAVED', 'ca', 'Precipitation & Soil Moisture plot', plot1_path)
 #     except Exception as e:
-#         std_print('ERROR', 'ca', f'Track {track_id} : Failed to create TP & SM plot:', str(e))
+#         std_print('ERROR', 'ca', f'Track {track_id} : Failed to create TP & SWVL1 plot:', str(e))
 #         traceback.print_exc()
 #  
 #
@@ -1001,7 +989,7 @@ def analyze_flux_correlations(ds, track_df, track_id, buffer_km=100):
 #         std_print('ERROR', 'hf', f'Track {track_id} Failed to create heat flux plot :', e)
 #         traceback.print_exc()
 #
-#     # PLOT 3: Scatter Plot (Flux vs. Soil Moisture)
+#     # PLOT 3: Scatter Plot (Flux vs. Soil Water Volumatric Level-1)
 #     try:
 #         fig = plt.figure(figsize=(10, 5))
 #         if len(df) > 2:
@@ -1038,7 +1026,7 @@ def analyze_flux_correlations(ds, track_df, track_id, buffer_km=100):
 #                         zorder=5
 #                     )
 #             plt.title(
-#                 f"Track {track_id}: SM vs Total Flux\n{corr_text}",
+#                 f"Track {track_id}: SWVL1 vs Total Flux\n{corr_text}",
 #                 fontsize=13,
 #                 fontweight='bold'
 #             )
@@ -1054,17 +1042,17 @@ def analyze_flux_correlations(ds, track_df, track_id, buffer_km=100):
 #                 fontsize=12,
 #                 transform=plt.gca().transAxes
 #             )
-#             plt.title(f"Track {track_id}: SM vs Flux (Insufficient Data)")
+#             plt.title(f"Track {track_id}: SWVL1 vs Flux (Insufficient Data)")
 #
 #         plt.xlabel('Soil Moisture (m³/m³)', fontweight='bold', fontsize=11)
 #         plt.ylabel('Total Heat Flux (W/m²)', fontweight='bold', fontsize=11)
 #         plt.legend(loc='best', framealpha=0.7)
 #         plt.grid(True, alpha=0.5, linestyle='--')
 #
-#         plot3_path = os.path.join(track_dir, f"track_{track_id}_correlation_scatter.png")
+#         plot3_path = os.path.join(track_dir, f"track_{track_id}_SWVL1-THF_correlation_scatter.png")
 #         plt.savefig(plot3_path, dpi=300, bbox_inches='tight')
 #         plt.close(fig)
-#         std_print('SAVED', 'ca', 'SM vs Flux Correlation plot :', plot3_path)
+#         std_print('SAVED', 'ca', 'SWVL1 vs Flux Correlation plot :', plot3_path)
 #     except Exception as e:
 #         std_print('ERROR', 'ca', f'Track {track_id} Failed to create Scatter plot :', e)
 #         traceback.print_exc()
@@ -1084,14 +1072,14 @@ def plot_flux_analysis(results, output_dir, track_id):
             std_print('WARN', 'ca', f'Track {track_id}', 'Empty or invalid DataFrame')
             return False
         if len(df) < 3:
-            std_print('WARN', 'ca', f'Track {track_id}', f'Insufficient data points: {len(df)} < 3')
+            std_print('WARN', 'ca', f'Track {track_id} Insufficient data points:', f'{len(df)} < 3')
             return False
 
         # Ensure required columns exist
         required_cols = ['time', 'tp', 'swvl1']
         missing_cols = [col for col in required_cols if col not in df.columns]
         if missing_cols:
-            std_print('WARN', 'ca', f'Track {track_id}', f'Missing columns: {missing_cols}')
+            std_print('WARN', 'ca', f'Track {track_id} Missing columns', missing_cols)
             return False
 
         # Ensure is_land column
@@ -1110,7 +1098,7 @@ def plot_flux_analysis(results, output_dir, track_id):
         os.makedirs(track_dir, exist_ok=True)
 
         success_plots = 0
-        # PLOT 1: Precipitation & Soil Moisture
+        # Precipitation & Soil Moisture
         try:
             if 'tp' not in df.columns or 'swvl1' not in df.columns:
                 raise ValueError("Missing tp or swvl1 columns")
@@ -1135,20 +1123,20 @@ def plot_flux_analysis(results, output_dir, track_id):
 
             # Soil Moisture (secondary Y)
             ax2 = ax1.twinx()
-            color_sm = 'tab:brown'
-            ax2.set_ylabel('Soil Moisture (m³/m³)', color=color_sm, fontsize=11, fontweight='bold')
+            color_swvl1 = 'tab:brown'
+            ax2.set_ylabel('Soil Moisture (m³/m³)', color=color_swvl1, fontsize=11, fontweight='bold')
             p2, = ax2.plot(
                 df['time'],
                 df['swvl1'],
                 's-',
-                color=color_sm,
+                color=color_swvl1,
                 linewidth=2.5,
                 markersize=4,
                 label='Soil Moisture',
                 alpha=0.8,
                 zorder=3
             )
-            ax2.tick_params(axis='y', labelcolor=color_sm)
+            ax2.tick_params(axis='y', labelcolor=color_swvl1)
 
             # Add land/ocean shading
             add_land_ocean_shading(ax1, df['time'], df['is_land'].values, land_color='wheat', ocean_color='lightblue')
@@ -1166,13 +1154,13 @@ def plot_flux_analysis(results, output_dir, track_id):
             plt.setp(ax1.xaxis.get_majorticklabels(), rotation=45, ha='right')
             plt.tight_layout()
 
-            plot1_path = os.path.join(track_dir, f"track_{track_id}_tp_sm.png")
+            plot1_path = os.path.join(track_dir, f"track_{track_id}_TP-SWVL1.png")
             plt.savefig(plot1_path, dpi=300, bbox_inches='tight')
             plt.close(fig)
-            std_print('SAVED', 'ca', 'TP-SM plot', plot1_path)
+            std_print('SAVED', 'ca', 'TP-SWVL1 plot', plot1_path)
             success_plots += 1
         except Exception as e:
-            std_print('WARN', 'ca', f'Track {track_id}', f'TP-SM plot failed: {str(e)[:100]}')
+            std_print('WARN', 'ca', f'Track {track_id}', f'TP-SWVL1 plot failed: {str(e)[:100]}')
 
         # PLOT 2: Heat Fluxes with Ocean/Land Shading
         try:
@@ -1257,20 +1245,20 @@ def plot_flux_analysis(results, output_dir, track_id):
             except:
                 corr_text = 'Correlation unavailable'
 
-            plt.title(f'Track {track_id}: Soil Moisture vs Total Heat Flux\n{corr_text}', fontsize=13, fontweight='bold', pad=10)
-            plt.xlabel('Soil Moisture (m³/m³)', fontsize=11, fontweight='bold')
-            plt.ylabel('Total Heat Flux (W/m²)', fontsize=11, fontweight='bold')
+            plt.title(f'Track {track_id}: Soil Water Volumatric Level 1 vs Total Heat Flux\n{corr_text}', fontsize=13, fontweight='bold', pad=10)
+            plt.xlabel('Soil Water Volumatric Level-1 (m³/m³)', fontsize=10, fontweight='bold')
+            plt.ylabel('Total Heat Flux (W/m²)', fontsize=10, fontweight='bold')
             plt.legend(fontsize=10, loc='best', framealpha=0.95)
             plt.grid(True, alpha=0.4, linestyle='--')
             plt.tight_layout()
 
-            plot3_path = os.path.join(track_dir, f"track_{track_id}_correlation_scatter.png")
+            plot3_path = os.path.join(track_dir, f"track_{track_id}_SWVL1-THF-correlation_scatter.png")
             plt.savefig(plot3_path, dpi=300, bbox_inches='tight')
             plt.close(fig)
-            std_print('SAVED', 'ca', 'Scatter plot', plot3_path)
+            std_print('SAVED', 'ca', 'SWVL1 - Totla HF Scatter plot', plot3_path)
             success_plots += 1
         except Exception as e:
-            std_print('WARN', 'ca', f'Track {track_id}', f'Scatter plot failed: {str(e)[:100]}')
+            std_print('WARN', 'ca', f'Track {track_id}', f' SWVL1 - Totla HF Scatter plot failed: {str(e)[:100]}')
 
         if success_plots == 0:
             std_print('WARN', 'ca', f'Track {track_id}', 'No plots generated successfully')

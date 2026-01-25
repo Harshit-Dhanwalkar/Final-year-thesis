@@ -95,7 +95,7 @@ def plot_speed_analysis_kmh(track_df, track_id, output_dir):
             times,
             track_df['speed_kmh'],
             '-o',
-            color='black',
+            color='blue',
             linewidth=2.5,
             markersize=6,
             label='Translation Speed',
@@ -173,15 +173,14 @@ def plot_speed_analysis_ms(track_df, track_id, output_dir):
             times,
             track_df['speed_ms'],
             '-o',
-            color='black',
+            color='blue',
             linewidth=2.5,
             markersize=6,
             label='Translation Speed',
             alpha=0.85,
             zorder=3
         )
-
-        # ocean/land shading using utility function
+        # ocean/land shading
         add_land_ocean_shading(ax, times, is_land_array, land_color='wheat', ocean_color='lightblue')
 
         # Labels and title

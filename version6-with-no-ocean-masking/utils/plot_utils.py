@@ -50,7 +50,6 @@ def setup_map_extent(track_df, buffer_deg=5.0):
 
     return min_lon, max_lon, min_lat, max_lat
 
-
 def add_land_ocean_shading(ax, time_data, is_land_data, land_color='bisque', ocean_color='azure'):
     # Shade land regions
     ax.fill_between(

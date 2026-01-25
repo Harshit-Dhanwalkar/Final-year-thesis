@@ -1695,8 +1695,8 @@ def diagnose_detection_issues(ds, track_df):
 
     large_gaps = time_diffs[time_diffs > 6]
     if len(large_gaps) > 0:
-        print(f" >  [INFO md   ] Tracks with time gaps >6 hours    :          {len(large_gaps)} ")
-        print(f" >  [INFO md   ] Max gap                           :           {time_diffs.max():.1f} hours")
+        std_print('INFO', 'md' , 'Tracks with time gaps >6 hours', len(large_gaps))
+        std_print('INFO', 'md' , 'Max gap', f'{time_diffs.max():.1f} hours')
     else:
         std_print('INFO', 'md', 'No large time gaps detected')
 
@@ -1704,10 +1704,10 @@ def diagnose_detection_issues(ds, track_df):
     if 'distance_km' in track_df.columns:
         large_jumps = track_df[track_df['distance_km'] > 150]
         if len(large_jumps) > 0:
-            print(f" >  [INFO md   ] Tracks position jumps (>150 km)   :          {len(large_jumps)}")
-            print(f" >  [INFO md   ] Max jump                          :          {track_df['distance_km'].max():.1f} km")
+            std_print('INFO', 'md' , 'Tracks position jumps (>150 km)', len(large_jumps))
+            std_print('INFO', 'md' , 'Max jump', f"{track_df['distance_km'].max():.1f} km")
         else:
-            print(f" >  [INFO md   ] No suspicious position jumps")
+            std_print('INFO', 'md', 'No suspicious position jumps')
 
     # 3. Check speed consistency
     if 'speed_kmh' in track_df.columns:
@@ -1715,10 +1715,10 @@ def diagnose_detection_issues(ds, track_df):
         if len(speeds) > 0:
             unrealistic = speeds[(speeds < 3) | (speeds > 30)]
             if len(unrealistic) > 0:
-                print(f" >  [INFO md   ] Tracks with unrealistic speeds    :          {len(unrealistic)}")
-                print(f" >  [INFO md   ] Range                             :          {speeds.min():.1f} - {speeds.max():.1f} km/h")
+                std_print('INFO', 'md', 'Tracks with unrealistic speeds', len(unrealistic))
+                std_print('INFO', 'md', 'Range', f'{speeds.min():.1f} - {speeds.max():.1f} km/h')
             else:
-                print(f" >  [INFO md   ] All speeds within reasonable range")
+                std_print('INFO', 'md', 'All speeds within reasonable range')
 
     # 4. Check track direction consistency
     if len(track_df) >= 3:

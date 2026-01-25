@@ -382,12 +382,12 @@ def export_multiwindow_results(track_id, multiwindow_results, output_dir):
     output_path = os.path.join(output_dir, f'asm_multiwindow_results_track_{track_id}.csv')
     asm_multiwindow_df.to_csv(output_path, index=False)
     export_results_to_csv(asm_multiwindow_df, output_dir, f'antecedent_soil_moisture_track_{track_id}', 'an')
-    std_print('SAVED', 'an', 'Multi-window ASM results', output_path)
+    std_print('SAVED', 'an', 'Multi-window ASM CSV', output_path)
     std_print('INFO', 'an', f'Summary for Track {track_id}')
     for window_name, window_data in multiwindow_results.items():
         val = window_data.get('value', np.nan)
         val_str = f"{val:7.4f}" if isinstance(val, (int, float)) else "N/A"
-        std_print('INFO', 'an', f'   {window_name}', val_str, 'm³/m³')
+        std_print(None, None, f'   {window_name}', val_str, 'm³/m³')
     return asm_multiwindow_df
 
 def compute_antecedent_sm_all_tracks(ds, full_track_df, hours_before_landfall, exclude_last_hours, buffer_km = 100):
@@ -589,7 +589,7 @@ def compute_asm_tp_correlation(ds, full_track_df, asm_results_df, buffer_km=100,
     export_path = os.path.join(output_dir, 'asm_tp_correlation.csv')
     os.makedirs(output_dir, exist_ok=True)
     corr_df.to_csv(export_path, index=False)
-    std_print('SAVED', 'an', 'ASM-TP correlation results', export_path)
+    std_print('SAVED', 'an', 'ASM-TP correlation CSV', export_path)
     return corr_df
 
 
@@ -704,7 +704,7 @@ def compute_asm_duration_correlation(asm_results_df, duration_df, output_dir='ou
     export_path = os.path.join(output_dir, 'asm_duration_correlation.csv')
     os.makedirs(output_dir, exist_ok=True)
     merged_df.to_csv(export_path, index=False)
-    std_print('SAVED', 'an', 'ASM-Duration correlation results', export_path)
+    std_print('SAVED', 'an', 'ASM-Duration correlation CSV', export_path)
     return merged_df
 
 def create_asm_summary_report(asm_results_df, corr_tp_df, corr_duration_df, output_dir='output'):
