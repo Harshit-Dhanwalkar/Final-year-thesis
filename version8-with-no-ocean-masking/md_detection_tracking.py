@@ -1852,7 +1852,7 @@ if __name__ == "__main__":
                     std_print('INFO', 'md', 'Change          :')
                     std_print(None, None, 'Total', f"{landfall_result['change']['total']:+.1f} W/m²")
                     all_landfall_results.append(landfall_result)
-                    landfall_csv = os.path.join(flux_dir, f'track_{track_id}_landfall_flux.csv')
+                    landfall_csv = os.path.join(correlation_dir, f'track_{track_id}_landfall_flux.csv')
                     pd.DataFrame([landfall_result]).to_csv(landfall_csv, index=False)
                     std_print('SAVED', 'md', 'Landfall flux transition', landfall_csv)
             except Exception as e:
