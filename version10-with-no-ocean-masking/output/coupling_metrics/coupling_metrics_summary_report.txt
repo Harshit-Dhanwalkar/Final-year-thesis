@@ -1,0 +1,29 @@
+Monsoon Depression Coupling Metrics analysis
+
+1. Feedback Strength Index (FSI)
+Tracks analyzed:                             6
+Mean FSI:                                    0.3077
+Std Dev FSI:                                 0.2267
+Max FSI:                                     0.6368
+Min FSI:                                     0.0635
+
+Component Contributions:
+  Correlation Strength (mean):               0.4973
+  Capacity Index (mean):                     0.5409
+  Significant Results (p<0.05):              6/6
+
+2. Diurnal sensible heat flux amplitude
+Land-phase amplitude (mean):                 56.75 W/m²
+Ocean-phase amplitude (mean):                13.54 W/m²
+Amplitude change (mean, Land-Ocean):         46.91 W/m²
+
+Mean SHF by Phase:
+  Ocean phase:                               -11.66 W/m²
+  Land phase:                                4.07 W/m²
+
+3. Coupling efficiency
+Mean coupling efficiency:                    7.2664
+Std Dev:                                     5.0958
+Tracks with strong coupling (CE > 0.5):      6
+Tracks with weak coupling (CE < 0.3):        0
+
