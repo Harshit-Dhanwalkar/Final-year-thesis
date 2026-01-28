@@ -15,9 +15,9 @@ from utils import (
 VARIABLE_UNITS = {
     'u10': 'm/s',
     'v10': 'm/s',
-    'wind10': 'm/s',  # wind10 = sqrt(u10^2 + v10^2)
-    'vr10': 'm/s',    # Radial Wind
-    'vt10': 'm/s',    # Tangential Wind
+    'wind10': 'm/s',    # wind10 = sqrt(u10^2 + v10^2)
+    'vr10': 'm/s',      # Radial Wind
+    'vt10': 'm/s',      # Tangential Wind
     'speed_kmh': 'km/h',
     'speed_ms': 'm/s',
     'msl': 'Pa',
@@ -28,7 +28,7 @@ VARIABLE_UNITS = {
     'swvl1': 'm³/m³',
     'avg_slhtf': 'W/m²',
     'avg_ishf': 'W/m²',
-    'total_hf': 'W/m²' # Total surface heat flux = avg_ishf + avg_slhtf
+    'total_hf': 'W/m²'   # Total surface heat flux = avg_ishf + avg_slhtf
 }
 
 # list of variable for plotting
@@ -41,10 +41,10 @@ VARIABLE_NAMES = {
     'speed_kmh': 'Translation Speed',
     'msl': 'Mean Sea Level Pressure',
     'tp': 'Total Precipitation',
-    't2m': '2m Temperature',
+    't2m': '2m Air Temperature',
     # 'sp': 'Surface Pressure',
     'stl1': 'Soil Temperature (0-7cm)',
-    'swvl1': 'Soil Water Content (0-7cm)',
+    'swvl1': 'Soil Water Volumatric Layer-1 (0-7cm)',
     'avg_slhtf': 'Surface Latent Heat Flux',
     'avg_ishf': 'Surface Sensible Heat Flux',
     'total_hf': 'Total Surface Heat Flux'
@@ -53,12 +53,7 @@ VARIABLE_NAMES = {
 EARTH_R = 6371.0 # km
 
 # Helper function
-def get_polar_points(
-    lon_c,
-    lat_c,
-    radius_km,
-    n_theta=72,
-):
+def get_polar_points(lon_c, lat_c, radius_km, n_theta=72):
     angles = np.linspace(0, 2 * np.pi, n_theta, endpoint=False)
     d_lat = radius_km / 111.0
     d_lon = radius_km / (111.0 * np.cos(np.radians(lat_c)))
@@ -214,10 +209,7 @@ def plot_hovmoller(hov_arr, track_times, radii_km, var_name, track_df, output_di
 
     if 'is_land' not in track_df.columns:
          # Attempting to use the utility you imported in Step 1
-         track_df['is_land'] = track_df.apply(
-            lambda row: is_point_land(row['latitude'], row['longitude']),
-            axis=1
-        )
+         track_df['is_land'] = track_df.apply(lambda row: is_point_land(row['latitude'], row['longitude']), axis=1)
     land_status = track_df['is_land'].fillna(False).values
     landfall_indices = np.where(np.diff(land_status.astype(int)) == 1)[0] + 1
     landfall_index = -1
@@ -247,14 +239,7 @@ def plot_hovmoller(hov_arr, track_times, radii_km, var_name, track_df, output_di
     ax.clabel(contours, inline=True, fontsize=8, fmt='%1.1f')
     # Landfall line
     if landfall_index != -1 and landfall_index < N_steps:
-        ax.axhline(
-            y=landfall_index,
-            color='black',
-            linestyle='--',
-            linewidth=2,
-            label='Landfall',
-            alpha=0.9,
-        )
+        ax.axhline(y=landfall_index, color='black', linestyle='--', linewidth=2, label='Landfall', alpha=0.9)
     cbar = plt.colorbar(im, pad=0.02)
     label = f"{var_label} ({var_unit})" if var_unit else var_label
     cbar.set_label(label, fontsize=12)
@@ -286,23 +271,12 @@ def plot_hovmoller(hov_arr, track_times, radii_km, var_name, track_df, output_di
     # Set x-ticks
     ax.set_xticks(radii_km[::2])
     ax.set_xticklabels(radii_km[::2], fontsize=10)
-
+    common_bbox =  dict(facecolor='white', alpha=0.8, edgecolor='none', pad=3)
     # Landfall annotation at top right
     if landfall_index != -1 and landfall_index < N_steps:
         landfall_time_str = pd.to_datetime(track_times[landfall_index]).strftime("%m/%d %H:%M")
         landfall_text = f"Landfall: {landfall_time_str}"
-        ax.text(
-            0.75,   # x
-            1.015,  # y
-            landfall_text,
-            transform=ax.transAxes,
-            verticalalignment='bottom',
-            horizontalalignment='left',
-            fontsize=10,
-            fontweight='bold',
-            color='black',
-            bbox=dict(facecolor='white', alpha=0.8, edgecolor='none', pad=3)
-        )
+        ax.text(0.75, 1.015, landfall_text, transform=ax.transAxes, verticalalignment='bottom', horizontalalignment='left', fontsize=10, fontweight='bold', color='black', bbox=common_bbox)
 
     # Legend if landfall line is plotted
     if landfall_index != -1 and landfall_index < N_steps:

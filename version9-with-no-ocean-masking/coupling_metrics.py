@@ -171,14 +171,8 @@ def compute_diurnal_shf_amplitude(flux_df, land_only=True):
 def compute_diurnal_amplitude_by_phase(flux_df, track_df):
     if flux_df is None or flux_df.empty:
         return {
-            'ocean_phase': {
-                'amplitude': np.nan,
-                'n_points': 0
-            },
-            'land_phase': {
-                'amplitude': np.nan,
-                'n_points': 0
-            }
+            'ocean_phase': {'amplitude': np.nan, 'n_points': 0},
+            'land_phase': {'amplitude': np.nan, 'n_points': 0}
         }
 
     flux_df = flux_df.copy()
@@ -188,22 +182,12 @@ def compute_diurnal_amplitude_by_phase(flux_df, track_df):
     if 'is_land' in track_df.columns:
         land_rows = track_df[track_df['is_land'] == True]
         if not land_rows.empty:
+            # FIX:
             landfall_time = pd.to_datetime(land_rows.iloc[0]['time'])
+            # landfall_time = pd.to_datetime(land_rows.iloc[0]['valid_time'])
     results = {
-        'ocean_phase': {
-            'amplitude': np.nan,
-            'max_shf': np.nan,
-            'min_shf': np.nan,
-            'mean_shf': np.nan,
-            'n_points': 0
-        },
-        'land_phase': {
-            'amplitude': np.nan,
-            'max_shf': np.nan,
-            'min_shf': np.nan,
-            'mean_shf': np.nan,
-            'n_points': 0
-        }
+        'ocean_phase': {'amplitude': np.nan, 'max_shf': np.nan, 'min_shf': np.nan, 'mean_shf': np.nan, 'n_points': 0},
+        'land_phase': {'amplitude': np.nan, 'max_shf': np.nan, 'min_shf': np.nan, 'mean_shf': np.nan, 'n_points': 0}
     }
 
     # Ocean phase: before landfall
@@ -277,10 +261,11 @@ def compute_diurnal_amplitude_all_tracks(flux_results_dict, track_df_dict):
 
 def compute_coupling_efficiency(fsi_df, correlation_df, amplitude_df, duration_df):
     """
-    Coupling Efficiency = (FSI × Diurnal Amplitude) / (1 + Duration_Decay_Factor)
+    Coupling Efficiency = (FSI x Diurnal Amplitude) / (1 + Duration_Decay_Factor)
     - Stronger FSI & larger diurnal amplitude = tighter coupling
     - Longer-lived systems may show weaker coupling (system adjustment)
     """
+    # FIX: f any of these DataFrames are empty, the merge will fail or produce unexpected results
     merged = fsi_df.merge(correlation_df, on='track_id', how='outer')
     merged = merged.merge(amplitude_df, on='track_id', how='outer')
     merged = merged.merge(duration_df, on='track_id', how='outer')
@@ -295,10 +280,11 @@ def compute_coupling_efficiency(fsi_df, correlation_df, amplitude_df, duration_d
         amp_norm = np.tanh(amp / 100)  # Saturation curve
         # Duration decay: systems > 120h show reduced coupling signal
         if np.isnan(duration):
-            duration_decay = 1.0
+            duration_factor = 1.0
         else:
-            duration_decay = 1.0 / (1.0 + np.exp((duration - 120) / 48))
-        coupling_efficiency = (fsi * amp_norm) * duration_decay
+            duration_factor = max(1.0, duration / 48)  # 48h as reference
+            # duration_factor = 1.0 / (1.0 + np.exp((duration - 120) / 48))
+        coupling_efficiency = (fsi * amp) / duration_factor
         return coupling_efficiency
     merged['coupling_efficiency'] = merged.apply(compute_ce, axis=1)
     return merged
@@ -326,7 +312,7 @@ def export_coupling_metrics(fsi_df, amplitude_df, coupling_efficiency_df, output
 def generate_coupling_metrics_report(fsi_df, amplitude_df, coupling_efficiency_df, output_dir='output'):
     report_path = os.path.join(output_dir, 'coupling_metrics_summary_report.txt')
     with open(report_path, 'w') as f:
-        f.write("MONSOON DEPRESSION COUPLING METRICS ANALYSIS\n\n")
+        f.write("Monsoon Depression Coupling Metrics analysis\n\n")
         # FSI Summary
         f.write("1. Feedback Strength Index (FSI)\n")
         f.write(f"Tracks analyzed:                             {len(fsi_df)}\n")
@@ -353,7 +339,7 @@ def generate_coupling_metrics_report(fsi_df, amplitude_df, coupling_efficiency_d
         f.write(f"Mean coupling efficiency:                    {coupling_efficiency_df['coupling_efficiency'].mean():.4f}\n")
         f.write(f"Std Dev:                                     {coupling_efficiency_df['coupling_efficiency'].std():.4f}\n")
         f.write(f"Tracks with strong coupling (CE > 0.5):      {(coupling_efficiency_df['coupling_efficiency'] > 0.5).sum()}\n")
-        f.write(f"Tracks with weak coupling (CE < 0.2):        {(coupling_efficiency_df['coupling_efficiency'] < 0.2).sum()}\n")
+        f.write(f"Tracks with weak coupling (CE < 0.3):        {(coupling_efficiency_df['coupling_efficiency'] < 0.3).sum()}\n")
         f.write("\n")
         # Interpretation
         # f.write("4. INTERPRETATION & IMPLICATIONS\n")

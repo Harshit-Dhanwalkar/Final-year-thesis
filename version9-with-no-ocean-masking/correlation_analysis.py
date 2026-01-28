@@ -399,8 +399,7 @@ def plot_tp_swvl1_time_series(tp, swvl1, valid_times, landfall_index, track_id, 
         lines.append(Patch(facecolor='wheat', alpha=0.5, label='Land Phase'))
         labels += ['Ocean Phase', 'Land Phase']
 
-        ax1.legend(lines, labels, loc='upper left', fontsize=10, framealpha=0.95, edgecolor='black')
-
+        ax1.legend(lines, labels, loc='upper left', fontsize=10, framealpha=0.95, edgecolor='none')
         # Title based on track characteristics
         title = f'Track {track_id}: Precipitation & Soil Water Content Evolution'
         if originates_over_land:
@@ -593,7 +592,7 @@ def plot_tp_swvl1_correlation(ds, track_df, track_id, buffer_km = 100, output_di
     ax.text(1.02, 0.85, stats_text, transform=ax.transAxes, fontsize=10, verticalalignment='top', horizontalalignment='left', family='monospace', bbox=common_bbox)
     ax.set_xlabel('Total Precipitation (tp) (mm/hr)', fontsize=10, fontweight='bold')
     ax.set_ylabel('Soil Water Volumatric Level-1 (swvl1) (m³/m³)', fontsize=10, fontweight='bold')
-    ax.set_title(f'Track {track_id}: tp - swvl1 Correlation', fontsize=13, fontweight='bold', pad=10)
+    ax.set_title(f'Track {track_id}: TP - SWVL1 Correlation', fontsize=13, fontweight='bold', pad=10)
     ax.grid(True, alpha=0.5, linestyle='--')
     ax.legend(fontsize=8, loc='best', framealpha=0.7)
     plt.tight_layout()
@@ -653,7 +652,7 @@ def plot_tp_swvl1_lag_correlation(tp, sm, max_lag_hours, track_id, output_dir):
     # Reference lines
     ax.axvline(0, color='black', linestyle='--', linewidth=1, alpha=0.6, label='Zero lag')
     ax.axhline(0, color='gray', linestyle=':', linewidth=1, alpha=0.6)
-    common_bbox = dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8, edgecolor="gray")
+    common_bbox = dict(boxstyle="round,pad=0.05", facecolor="white", alpha=0.7, edgecolor="none", linewidth=0.8)
     ax.text(0.98, 0.94, lag_interpretation, transform=ax.transAxes, fontsize=9, va='bottom', ha='right', bbox=common_bbox)
     ax.set_xlabel("Lag (hours)", fontsize=10, fontweight='bold')
     ax.set_ylabel("Correlation (r)", fontsize=10, fontweight='bold')
@@ -716,7 +715,7 @@ def plot_swvl1_hf_lag_correlation(sm, hf, max_lag_hours, track_id, hf_name, outp
     # Reference lines
     ax.axvline(0, color='black', linestyle='--', linewidth=1, alpha=0.6)
     ax.axhline(0, color='gray', linestyle=':', linewidth=1, alpha=0.6)
-    common_bbox = dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8, edgecolor="gray")
+    common_bbox = dict(boxstyle="round,pad=0.05", facecolor="white", alpha=0.7, edgecolor="none", linewidth=0.8)
     ax.text(0.98, 0.94, interp, transform=ax.transAxes, fontsize=9, va='top', ha='right', bbox=common_bbox)
     ax.set_xlabel("Lag (hours)", fontsize=10, fontweight='bold')
     ax.set_ylabel("Correlation (r)", fontsize=10, fontweight='bold')
@@ -759,7 +758,7 @@ def plot_swvl1_hf_correlation(swvl1, latent_hf, sensible_hf, valid_times, landfa
         return False
 
     # 3-panel figure
-    fig, axes = plt.subplots(1, 3, figsize=(16, 7))
+    fig, axes = plt.subplots(1, 3, figsize=(16, 6))
     # Determine landfall status text
     if originates_over_land:
         status_text = "Land-Originated"
@@ -771,48 +770,60 @@ def plot_swvl1_hf_correlation(swvl1, latent_hf, sensible_hf, valid_times, landfa
         status_text = "Landfall"
         status_color = 'darkred'
 
+    common_bbox = dict(boxstyle="round,pad=0.05", facecolor="white", alpha=0.7, edgecolor="none", linewidth=0.8)
     # Panel 1: SWVL1 vs Latent HF
     ax = axes[0]
     ax.scatter(swvl1[valid_mask], latent_hf[valid_mask], alpha=0.6, s=80, color='green', edgecolors='black', linewidth=0.5)
-    # Regression line
+    # Regression line with slope label
     if np.std(swvl1[valid_mask]) > 0:
         z = np.polyfit(swvl1[valid_mask], latent_hf[valid_mask], 1)
+        slope_latent = z[0]
         p = np.poly1d(z)
         x_line = np.linspace(swvl1[valid_mask].min(), swvl1[valid_mask].max(), 100)
-        ax.plot(x_line, p(x_line), 'r--', linewidth=2, alpha=0.7)
+        ax.plot(x_line, p(x_line), 'r--', linewidth=2, alpha=0.7, label=f'Slope = {slope_latent:.3f}')
+        # Add slope annotation to the plot
+        ax.annotate(f'Slope: {slope_latent:.3f}', xy=(0.05, 0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='red', bbox=common_bbox, verticalalignment='top')
     ax.set_xlabel('Soil Water Volumatric Level 1 (m³/m³)', fontsize=10, fontweight='bold')
     ax.set_ylabel('Latent Heat Flux (W/m²)', fontsize=10, fontweight='bold')
     ax.set_title(f'SWVL1 ↔ Latent HF\nr={r_latent:.3f}, p={p_latent:.4f}', fontsize=11, fontweight='bold')
     ax.grid(True, alpha=0.4, linestyle='--')
+    ax.legend(loc='lower right', fontsize=9)
 
     # Panel 2: SWVL1 vs Sensible HF
     ax = axes[1]
     ax.scatter(swvl1[valid_mask], sensible_hf[valid_mask], alpha=0.6, s=80, color='orange', edgecolors='black', linewidth=0.5)
-    # Regression line
+    # Regression line with slope label
     if np.std(swvl1[valid_mask]) > 0:
         z = np.polyfit(swvl1[valid_mask], sensible_hf[valid_mask], 1)
+        slope_sensible = z[0]
         p = np.poly1d(z)
         x_line = np.linspace(swvl1[valid_mask].min(), swvl1[valid_mask].max(), 100)
-        ax.plot(x_line, p(x_line), 'r--', linewidth=2, alpha=0.7)
-    ax.set_xlabel('Soil Water Volumatric Level 1 (m³/m³)', fontsize=10, fontweight='bold')
+        ax.plot(x_line, p(x_line), 'r--', linewidth=2, alpha=0.7, label=f'Slope = {slope_sensible:.3f}')
+        # Add slope annotation to the plot
+        ax.annotate(f'Slope: {slope_sensible:.3f}', xy=(0.05, 0.05), xycoords='axes fraction', fontsize=10, fontweight='bold', color='red', bbox=common_bbox,verticalalignment='bottom')
+        ax.set_xlabel('Soil Water Volumatric Level 1 (m³/m³)', fontsize=10, fontweight='bold')
     ax.set_ylabel('Sensible Heat Flux (W/m²)', fontsize=10, fontweight='bold')
     ax.set_title(f'SWVL1 ↔ Sensible HF\nr={r_sensible:.3f}, p={p_sensible:.4f}', fontsize=11, fontweight='bold')
     ax.grid(True, alpha=0.4, linestyle='--')
+    ax.legend(loc='lower right', fontsize=9)
 
     # Panel 3: SWVL1 vs Total HF
     ax = axes[2]
     ax.scatter(swvl1[valid_mask], total_hf[valid_mask], alpha=0.6, s=80, color='purple', edgecolors='black', linewidth=0.5)
-    # Regression line
+    # Regression line with slope label
     if np.std(swvl1[valid_mask]) > 0:
         z = np.polyfit(swvl1[valid_mask], total_hf[valid_mask], 1)
+        slope_total = z[0]
         p = np.poly1d(z)
         x_line = np.linspace(swvl1[valid_mask].min(), swvl1[valid_mask].max(), 100)
-        ax.plot(x_line, p(x_line), 'r--', linewidth=2, alpha=0.7)
-
+        ax.plot(x_line, p(x_line), 'r--', linewidth=2, alpha=0.7, label=f'Slope = {slope_total:.3f}')
+        # Add slope annotation to the plot
+        ax.annotate(f'Slope: {slope_total:.3f}', xy=(0.05, 0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='red', bbox=common_bbox, verticalalignment='top')
     ax.set_xlabel('Soil Water Volumatric Level 1 (m³/m³)', fontsize=10, fontweight='bold')
     ax.set_ylabel('Total Heat Flux (W/m²)', fontsize=10, fontweight='bold')
     ax.set_title(f'SWVL1 ↔ Total HF\nr={r_total:.3f}, p={p_total:.4f}', fontsize=11, fontweight='bold')
     ax.grid(True, alpha=0.4, linestyle='--')
+    ax.legend(loc='lower right', fontsize=9)
 
     fig.suptitle(f'Track {track_id}: SWVL1 ↔ Surface HF Correlation ({status_text})', fontsize=13, fontweight='bold', y=1.00)
     plt.tight_layout()

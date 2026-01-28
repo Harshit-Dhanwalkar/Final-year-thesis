@@ -33,9 +33,6 @@ from typing import Optional, Tuple, List, Dict
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import matplotlib.pyplot as plt
-from numba import none
-from numba.core.serialize import custom_rebuild
-from numba.core import analysis
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -82,7 +79,7 @@ from antecedent_analysis import (
     plot_antecedent_spatial_map,
     analyze_antecedent_correlations,
     analyze_antecedent_trend,
-    analyze_antecedent_for_all_tracks,
+    analyze_antecedent_for_all_tracks
 )
 
 from correlation_analysis import (
@@ -95,6 +92,8 @@ from correlation_analysis import (
 )
 from soilmoiture_analysis import (
     plot_spatial_tp_swvl1,
+    compute_soil_moisture_memory,
+    analyze_soil_memory_by_track
 )
 
 from heatflux_analysis import (
@@ -113,7 +112,7 @@ from coupling_metrics import (
     compute_diurnal_amplitude_all_tracks,
     compute_coupling_efficiency,
     export_coupling_metrics,
-    generate_coupling_metrics_report,
+    generate_coupling_metrics_report
 )
 
 output_dir = "output"
@@ -139,23 +138,26 @@ clipped_max_lon = 95.0  # E
 
 # desired_tracks = [1, 3, 4, 5]
 
-TRACKING_SEARCH_RADIUS_KM = 50    # Hourly tracking
-LINKING_SEARCH_RADIUS_KM = 100    # Multi-hour gaps
 # for wind creterion : https://mausam.imd.gov.in/imd_latest/monsoonreport2024.pdf page: 284
-WIND_SPEED_LOWER_BOUND_MS = 5     # == 17knots  # 8     # m/s
-WIND_SPEED_UPPER_BOUND_MS = 19    # == 27knots  # 16    # m/s
+WIND_SPEED_LOWER_BOUND_MS = 5     # == 17 knots  # 8     # m/s
+WIND_SPEED_UPPER_BOUND_MS = 19    # == 27 knots  # 16    # m/s
 MSL_LOWER_BOUND_PA = 100000       # Pa
+
 PRECIPITATION_THRESHOLD_MM = 0.3  # mm/hr
+# SWVL1 Range: $0.02-0.55$ m³/m³
+
 VORTICITY_THRESHOLD = 5e-6        # > 0 /s
 MAX_SPEED_MS = 15
-MAX_GAP_HOURS = 12                # Bridge small gaps In Detection
-STITCH_DISTANCE_KM = 300          # For gap bridging
-MERGE_DISTANCE_KM = 225           # For simultaneous systems, distance to consider two detections as same MD
+MAX_GAP_HOURS = 12                # hr Bridge small gaps In Detection
+TRACKING_SEARCH_RADIUS_KM = 50    # km Hourly tracking
+LINKING_SEARCH_RADIUS_KM = 100    # km Multi-hour gaps
 MIN_TRACK_DURATION_HOURS = 24
-MIN_NET_DISPLACEMENT_KM = 250    # MD travel distance
-BUFFER = 5.0                     # deg
+MIN_NET_DISPLACEMENT_KM = 250     # km MD travel distance
+STITCH_DISTANCE_KM = 300          # km For gap bridging
+MERGE_DISTANCE_KM = 225           # km For simultaneous systems, distance to consider two detections as same MD
+BUFFER = 5.0                      # degrees
 
-EARTH_R = 6371.0 # km
+EARTH_R = 6371.0                  # km
 
 month_colors = {
     "June": "orange",
@@ -1122,6 +1124,7 @@ def process_files(ds):
         traceback.print_exc()
         return None
     finally:
+        # FIX: Memory Leak Risk: ds is passed as a parameter, so closing it here might cause issues elsewhere
         if 'ds' in locals():
             ds.close()
 
@@ -1205,27 +1208,24 @@ def plot_track_full_map(track_df_single, track_id, full_extent, output_dir):
     gl.xformatter = LongitudeFormatter()
     gl.yformatter = LatitudeFormatter()
 
-    # time_coord = get_time_coord(ds)
-    # time_coord = 'time' if 'time' in track_df_single.columns else 'valid_time'
-    # if time_coord not in track_df_single.columns:
-    #     time_coord = [col for col in track_df_single.columns if 'time' in col.lower()][0]
-    # track_times = pd.to_datetime(track_df["time"])
     track_data = track_df_single.sort_values("time")
     month = track_data["month"].iloc[0]
     track_color = month_colors.get(month, "black")
     common_bbox = dict(boxstyle="round,pad=0.05", facecolor="white", alpha=0.7, edgecolor="none", linewidth=0.8)
 
-    ax.plot(track_data["longitude"], track_data["latitude"], "-o", color=track_color, transform=ccrs.PlateCarree(), linewidth=1, markersize=2, zorder=5)
-    # annotate start/end
+    # time_coord = get_time_coord(ds)
+    # time_coord = 'time' if 'time' in track_df_single.columns else 'valid_time'
+    # if time_coord not in track_df_single.columns:
+    #     time_coord = [col for col in track_df_single.columns if 'time' in col.lower()][0]
+    # track_times = pd.to_datetime(track_df["time"])
+
+    # start/end (for annotate)
     start_time = track_data.iloc[0]
     end_time = track_data.iloc[-1]
     start_time_str = pd.to_datetime(start_time["time"]).strftime('%d/%m %H:%M')
     end_time_str = pd.to_datetime(end_time["time"]).strftime('%d/%m %H:%M')
 
-    # start_time = track_times.iloc[0]
-    # end_time = track_data.iloc[-1]
-    # start_time_str = start_time.strftime('%d/%m/%Y %H:%M')
-    # end_time_str = track_times.iloc[-1].strftime('%d/%m/%Y %H:%M')
+    ax.plot(track_data["longitude"], track_data["latitude"], "-o", color=track_color, transform=ccrs.PlateCarree(), linewidth=1, markersize=2, zorder=5)
 
     ax.annotate(start_time_str, xy=(start_time["longitude"], start_time["latitude"]), xytext=(5,-5), textcoords="offset points", fontsize=8, bbox=common_bbox, transform=ccrs.PlateCarree(), zorder=6)
     ax.annotate(end_time_str, xy=(end_time["longitude"], end_time["latitude"]), xytext=(5,-5), textcoords="offset points", fontsize=8, bbox=common_bbox, transform=ccrs.PlateCarree(), zorder=6)
@@ -1263,15 +1263,16 @@ def plot_single_track(track_df, track_id, output_dir):
     # if time_coord not in track_df.columns:
     #     time_coord = [col for col in track_df.columns if 'time' in col.lower()][0]
     track_data = track_df.sort_values("time")
-
-    # track_times = pd.to_datetime(track_df[time_coord])
-    track_times = pd.to_datetime(track_df["time"])
-    start_time = track_times.iloc[0]
-    start_time_str = start_time.strftime('%d/%m/%Y %H:%M')
-    end_time_str = track_times.iloc[-1].strftime('%d/%m/%Y %H:%M')
-
     month = track_data["month"].iloc[0]
     track_color = month_colors.get(month, "teal")
+    common_bbox = dict(boxstyle="round,pad=0.05", facecolor="white", alpha=0.7, edgecolor="none", linewidth=0.8)
+
+    start_datetime = pd.to_datetime(track_data.iloc[0]["time"])
+    end_datetime = pd.to_datetime(track_data.iloc[-1]["time"])
+    start_time_str = start_datetime.strftime('%d/%m %H:%M')
+    end_time_str = end_datetime.strftime('%d/%m %H:%M')
+
+    track_times = pd.to_datetime(track_data["time"])
 
     fig = plt.figure(figsize=(13, 10))
     ax: GeoAxes = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree()) # type: ignore[assignment]
@@ -1303,23 +1304,12 @@ def plot_single_track(track_df, track_id, output_dir):
     gl.xformatter = LongitudeFormatter()
     gl.yformatter = LatitudeFormatter()
 
-    common_bbox = dict(boxstyle="round,pad=0.05", facecolor="white", alpha=0.7, edgecolor="none", linewidth=0.8)
     # Plot connecting lines
     ax.plot(track_df["longitude"], track_df["latitude"], "-", color=track_color, alpha=0.8, linewidth=1.5, transform=ccrs.PlateCarree(), zorder=2)
-
     # Plot small markers for all points (hourly detections)
-    ax.plot(
-        track_df["longitude"],
-        track_df["latitude"],
-        "o",
-        color=track_color,
-        markersize=2,
-        alpha=0.5,
-        transform=ccrs.PlateCarree(),
-        zorder=3
-    )
+    ax.plot(track_df["longitude"], track_df["latitude"], "o", color=track_color, markersize=2, alpha=0.5, transform=ccrs.PlateCarree(), zorder=3)
     # 12-hour interval markers
-    hours_elapsed = (track_times - start_time).dt.total_seconds() / 3600
+    hours_elapsed = (track_times - start_datetime).dt.total_seconds() / 3600
     # INFO:
     # std_print('DEBUG', 'md', f"Track {track_id} time gaps: {track_df[time_coord].diff().value_counts()}")
     # There time gaps present 5hr, 3 hr and 1 hour gap for track 1
@@ -1697,8 +1687,8 @@ if __name__ == "__main__":
         asm_results_list = []
         track_dict = {}
         flux_dict = {}
-        all_sm_results = None
-        all_asm_results = None
+        all_sm_results = []
+        all_asm_results = []
         # Process each track
         for track_id in unique_track_ids:
             track_id = int(track_id)
@@ -1762,8 +1752,8 @@ if __name__ == "__main__":
             print("\n-------------------------------- Antecedent Soil Moisture Analysis ---------------------")
             # std_print('DEBUG', 'md', f'Skipping antecedent SM for Track {track_id}')
             # Ensure is_land column exists for antecedent analysis
-            track_df['is_land'] = track_df.apply(lambda row: is_point_land(row['latitude'], row['longitude']), axis=1)
-            std_print('DEBUG', 'md', 'Land/ocean classification computed', f'{track_df["is_land"].sum()} land points')
+            # track_df['is_land'] = track_df.apply(lambda row: is_point_land(row['latitude'], row['longitude']), axis=1)
+            # std_print('DEBUG', 'md', 'Land/ocean classification computed', f'{track_df["is_land"].sum()} land points')
             try:
                 asm_dir = os.path.join(track_dir, "antecedent_sm")
                 os.makedirs(asm_dir, exist_ok=True)
@@ -1780,6 +1770,8 @@ if __name__ == "__main__":
             os.makedirs(correlation_dir, exist_ok=True)
             try:
                 correlation_result = analyze_single_track(ds=ds, track_df=track_df, track_id=track_id, buffer_km=100, max_lag_hours=24, output_dir=correlation_dir)
+                # FIX: If analyze_single_track returns None,
+                # line 'landfall_time': correlation_result.get('landfall_time') will fail
                 if correlation_result:
                     all_correlation_results.append({
                         'track_id': track_id,
@@ -1801,7 +1793,7 @@ if __name__ == "__main__":
                     pd.DataFrame([flux_results]).to_csv(flux_csv_path, index=False)
                     std_print('EXPORT', 'md', 'Heat flux summary CSV', flux_csv_path)
             except Exception as e:
-                std_print('ERROR', 'md', f'Heat Flux analysis failed for Track {track_id}', str(e))
+                std_print('ERROR', 'md', f'Track {track_id} Heat Flux analysis failed', str(e))
             # 11) Landfall flux analysis
             print("\n----------------------------------- Landfall Flux Analysis -----------------------------")
             # std_print('DEBUG', 'md', f'Skipping Land Flux Analysis for Track {track_id}')
@@ -1822,7 +1814,7 @@ if __name__ == "__main__":
                     pd.DataFrame([landfall_result]).to_csv(landfall_csv, index=False)
                     std_print('SAVED', 'md', 'Landfall flux transition', landfall_csv)
             except Exception as e:
-                std_print('ERROR', 'md', f'Landfall Flux analysis failed for Track {track_id}', str(e))
+                std_print('ERROR', 'md', f'Track {track_id} Landfall Flux analysis failed', str(e))
             # 12) Soil moisture analysis
             print("\n---------------------------------- Soil Moisture Analysis ------------------------------")
             # std_print('DEBUG', 'md', f'Skipping Soil Moisture Analysis for Track {track_id}')
@@ -1834,9 +1826,9 @@ if __name__ == "__main__":
                     sm_dir = os.path.join(track_dir, "soilmoiture_analysis")
                     os.makedirs(sm_dir, exist_ok=True)
                     plot_spatial_tp_swvl1(ds, track_df, track_id, buffer_deg=5.0, output_dir=sm_dir)
-                    std_print('SAVED', 'md', f'Soil moisture analysis plots for Track {track_id}', sm_dir)
+                    std_print('SAVED', 'md', f'Track {track_id} Soil moisture analysis plots', sm_dir)
             except Exception as e:
-                 std_print('ERROR', 'md', f"Soil moisture analysis failed for Track {track_id}", str(e))
+                 std_print('ERROR', 'md', f'Track {track_id} Soil moisture analysis failed', str(e))
             # 13) Heat Flux Analysis and MD Duration Classification
             print("\n------------------------------------ Heat Flux & Duration Analysis ---------------------")
             # std_print('DEBUG', 'md', f'Skipping Heat Flux and Duration Analysis for Track {track_id}')
@@ -1851,6 +1843,7 @@ if __name__ == "__main__":
             flux_df = extract_heat_flux_timeseries(ds, track_df, track_id, buffer_km=100)
             if flux_df is not None:
                 flux_dict[track_id] = flux_df.copy() # store for coupling metrics
+                # std_print('DEBUG', 'md', f'Track {track_id} flux columns', list(flux_df.columns))
                 std_print('INFO', 'md', 'Heat flux data extracted', f'{len(flux_df)} points')
                 flux_analysis = analyze_heat_flux_evolution(flux_df, track_df, track_id)
                 if flux_analysis:
@@ -1871,7 +1864,7 @@ if __name__ == "__main__":
                         std_print(None, None, 'Change (Ocean->Land)', f"{flux_analysis['total_hf_change']:+.1f} W/m²")
                 plot_heat_flux_timeseries(flux_df, track_id, hf_dir)
             else:
-                 std_print('WARN', 'md', f"No heat flux data for Track {track_id}")
+                 std_print('WARN', 'md', f'Track {track_id}', 'No heat flux data')
             std_print('INFO', 'md', f'Heat flux transition analysis for track {track_id}')
             try:
                 landfall_result = analyze_flux_transition(ds=ds, track_df=track_df, track_id=track_id, hours_before=24, hours_after=24)
@@ -1881,7 +1874,7 @@ if __name__ == "__main__":
                     pd.DataFrame([landfall_result]).to_csv(landfall_csv, index=False)
                     std_print('SAVED', 'md', 'Flux transition analysis', landfall_csv)
                 else:
-                    std_print('WARN', 'md', f'Could not analyze flux transition for Track {track_id}')
+                    std_print('WARN', 'md', f'Track {track_id}', 'Could not analyze flux transition')
             except Exception as e:
                 std_print('ERROR', 'md', f'Flux transition analysis failed for Track {track_id}', str(e))
                 traceback.print_exc()

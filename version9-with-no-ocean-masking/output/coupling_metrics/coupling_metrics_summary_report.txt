@@ -1,4 +1,4 @@
-MONSOON DEPRESSION COUPLING METRICS ANALYSIS
+Monsoon Depression Coupling Metrics analysis
 
 1. Feedback Strength Index (FSI)
 Tracks analyzed:                             6
@@ -22,8 +22,8 @@ Mean SHF by Phase:
   Land phase:                                3.77 W/m²
 
 3. Coupling efficiency
-Mean coupling efficiency:                    0.0742
-Std Dev:                                     0.0487
-Tracks with strong coupling (CE > 0.5):      0
-Tracks with weak coupling (CE < 0.2):        6
+Mean coupling efficiency:                    7.1827
+Std Dev:                                     4.4867
+Tracks with strong coupling (CE > 0.5):      6
+Tracks with weak coupling (CE < 0.3):        0
 

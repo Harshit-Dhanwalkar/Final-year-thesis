@@ -20,9 +20,9 @@ Monsoon depression analysis - summary
 
 4. Landfall flux transitions
    Tracks with landfall data:                       12
-   Mean before landfall:                            -153.6 W/m²
-   Mean after landfall:                             -82.1 W/m²
-   Mean change (ocean→land):                        +71.5 W/m²
+   Mean before landfall:                            -142.1 W/m²
+   Mean after landfall:                             -81.5 W/m²
+   Mean change (ocean→land):                        +60.6 W/m²
 
 5. Soil moisture analysis
    Tracks analyzed:                                 115
