@@ -6,13 +6,15 @@
 % 3. map soil type along each track using a soil dataset (e.g., FAO Soil Grids) to confirm clay vs. sandy regions.
  %     - https://www.fao.org/soils-portal/data-hub/soil-maps-and-databases/faounesco-soil-map-of-the-world/en/
  %     - https://iiasa.ac.at/models-tools-data/hwsd
+ %     - https://data.isric.org/geonetwork/srv/eng/catalog.search#/metadata/a351682c-330a-4995-a5a1-57ad160e621c
+ %     - https://esdac.jrc.ec.europa.eu/
 % 4. Soil Moisture Memory Effect (all_tracks_soil_memory.csv) ( DONE but to be added in slides)
 %       - Compute autocorrelation of SWVL1 at 24h lag for each track.
-%         +  Track 1: -0.061 (negative autocorrelation)
-%         +  Track 2: -0.079 (negative autocorrelation)
+%         +  Track 1: -0.061 (negative autocorrelation - oscillatory)
+%         +  Track 2: -0.079 (negative autocorrelation - oscillatory)
 %         +  Track 3: 0.350 (positive autocorrelation)
 %         +  Track 4: 0.032 (weak positive autocorrelation)
-%         +  Track 5: 0.584 (strong positive autocorrelation)
+%         +  Track 5: 0.584 (strong positive autocorrelation - very strong memory)
 %         +  Track 6: 0.034 (weak positive autocorrelation)
 %       - Higher autocorrelation -> longer memory -> more sustained feedback.
 %         +  Strong memory (autocorrelation > 0.3):
@@ -22,42 +24,41 @@
 %            * Track 4 (0.032) and Track 6 (0.034): Very weak memory → soil moisture doesn't persist → minimal feedback sustainability
 %         +  Negative memory (autocorrelation < 0):
 %            * Track 1 (-0.061) and Track 2 (-0.079): Anti-persistence → soil moisture shows oscillatory behavior → feedback might be interrupted or reversed
+% 5. CAUSALITY VS. CORRELATION:
+%        - Positive TP-SWVL1 correlation could reflect: (a) rain → wet soil, or (b) wet soil → more rain (true feedback)
+%         ->  Need stronger evidence for direction of causality
+% 6. Add significance testing: Bootstrap confidence intervals for FSI; Test difference between clay vs. sandy tracks
 % FIX:
-% 1. Coupling Efficiency Formula Mismatch
-% defined: CE = (FSI x SHF Amplitude) / (1 + Duration Decay)
-% But in coupling_metrics_efficiency.csv, the values don't match this calculation:
-%     Track 1: FSI=0.0635, Amplitude=58.07 -> Product = 3.69, but CE=0.0234
-%     This suggests "Duration Decay" factor isn't 1+X
-%       - CE is NOT (FSI x SHF Amplitude) / (1 + Duration Decay)
-%       - Actual definition: CE = FSI × (Diurnal Amplitude) / (Duration + constant)
-%       - coupling_metrics.py lines 200-220 for actual implementation
-% 2. Mean Values Don't Match
+% 1. Mean Values Don't Match
 % From coupling_metrics_FSI.csv:
 %     Mean TP and SM are much higher than shown in slides
 %     Example: Track 2 has mean TP=1.41 mm/hr (not 0.65 as in your earlier text)
 %
 %%%%%%%%%%%%%%%
-% Track 4: Cyclone ASNA (The "Ocean-to-Land" Case)
-%     IMD Context : ASNA was a rare August cyclone in the Arabian Sea.
-%     Why code said "Short-lived/Ocean-originated": code likely picked up the high-intensity phase while it was over water. In analysis, this track serves as the Control Group
-%     Interpretation: Because it spent most of its "Short" life over the ocean (or near coastal sand), it didn't have time to establish a land-atmosphere feedback loop. Its decay upon moving away from the moisture source (ocean) confirms that without "Brown Ocean" conditions, even a Cyclone (stronger than an MD) can have a shorter land-life.
-%     Pearson (r): 0.61 | Spearman (ρ): 0.54 | P-Value: 1.6 $\times$ 10−12
-%     Interpretation: Strongest coupling observed. High correlation reflects the rapid, direct response of coastal sandy soils to intense cyclonic rainfall.
-%     Research Note: Despite high intensity (Cyclone status), longevity was limited by lack of inland soil moisture feedback.
-% Track 2 \& 6: Deep Depressions over Madhya Pradesh (The "Land-Origin" Success)
-%     IMD Context : These were "Deep Depressions"-the strongest category of MDs, often causing extreme inland flooding.
-%     Why code said "Long-lived/Land-originated": results are picking up the pre-genesis phase (vorticity/moisture clustering) that starts over land days before the IMD officially names it.
-%     Interpretation: These are "Standard" tracks for the Brown Ocean Effect.
-%     Track 2 (105 hours) survived because Madhya Pradesh has high clay content and high soil moisture memory.
-%     Argument : These tracks didn't just "originate" on land; they were sustained by the land. The fact that they intensified into Deep Depressions while far from the coast is direct evidence of land-surface flux supporting the storm's core.
-%    Track 2: Deep Depression (Inland/Long-lived)
-%     Pearson (r): 0.53 | Spearman (ρ): 0.44 | P-Value: 2.6$\times$10−31
-%     Interpretation: Stable, moderate linear coupling sustained over 100+ hours.
-%     Research Note: The "Deep Depression" status far inland suggests the land surface (Madhya Pradesh) acted as a secondary energy source, mimicking ocean-like latent heat release.
-%    Track 6: Deep Depression (Central India)
-%     Pearson (r): 0.49 | Spearman (ρ): 0.38 | P-Value: 2.7$\times$10−29
-%     Interpretation: Significant monotonic coupling.
-%     Research Note: Reinforces the pattern that central Indian tracks (Tracks 2, 5, 6) exhibit consistent feedback loops, contributing to their classification as "Deep" systems by the IMD.
+% INFO:
+% Cyclonic Storm ASNA (Aug 25 – Sep 02): This was a rare land-origin system. It intensified over Rajasthan/Gujarat and moved westward into the Arabian Sea.
+% Depression (Aug 31 – Sep 02): This was a separate, shorter-lived system that formed in the Bay of Bengal and moved into Andhra Pradesh/Telangana.
+%     Track 4: Cyclone ASNA (The "Ocean-to-Land" Case)
+%         IMD Context : ASNA was a rare August cyclone in the Arabian Sea.
+%         Why code said "Short-lived/Ocean-originated": code likely picked up the high-intensity phase while it was over water. In analysis, this track serves as the Control Group
+%         Interpretation: Because it spent most of its "Short" life over the ocean (or near coastal sand), it didn't have time to establish a land-atmosphere feedback loop. Its decay upon moving away from the moisture source (ocean) confirms that without "Brown Ocean" conditions, even a Cyclone (stronger than an MD) can have a shorter land-life.
+%         Pearson (r): 0.61 | Spearman (ρ): 0.54 | P-Value: 1.6 $\times$ 10−12
+%         Interpretation: Strongest coupling observed. High correlation reflects the rapid, direct response of coastal sandy soils to intense cyclonic rainfall.
+%         Research Note: Despite high intensity (Cyclone status), longevity was limited by lack of inland soil moisture feedback.
+%     Track 2 \& 6: Deep Depressions over Madhya Pradesh (The "Land-Origin" Success)
+%         IMD Context : These were "Deep Depressions"-the strongest category of MDs, often causing extreme inland flooding.
+%         Why code said "Long-lived/Land-originated": results are picking up the pre-genesis phase (vorticity/moisture clustering) that starts over land days before the IMD officially names it.
+%         Interpretation: These are "Standard" tracks for the Brown Ocean Effect.
+%         Track 2 (105 hours) survived because Madhya Pradesh has high clay content and high soil moisture memory.
+%         Argument : These tracks didn't just "originate" on land; they were sustained by the land. The fact that they intensified into Deep Depressions while far from the coast is direct evidence of land-surface flux supporting the storm's core.
+%        Track 2: Deep Depression (Inland/Long-lived)
+%         Pearson (r): 0.53 | Spearman (ρ): 0.44 | P-Value: 2.6$\times$10−31
+%         Interpretation: Stable, moderate linear coupling sustained over 100+ hours.
+%         Research Note: The "Deep Depression" status far inland suggests the land surface (Madhya Pradesh) acted as a secondary energy source, mimicking ocean-like latent heat release.
+%        Track 6: Deep Depression (Central India)
+%         Pearson (r): 0.49 | Spearman (ρ): 0.38 | P-Value: 2.7$\times$10−29
+%         Interpretation: Significant monotonic coupling.
+%         Research Note: Reinforces the pattern that central Indian tracks (Tracks 2, 5, 6) exhibit consistent feedback loops, contributing to their classification as "Deep" systems by the IMD.
 %%%%%%%%%%%%%%%
 %
 % Add new slides:
@@ -76,25 +77,22 @@
 
 % Refined Hypotheses
 % H0 (Null): Long-lived monsoon depressions over land show no systematic difference in precipitation-soil moisture coupling, diurnal land-surface heating, or soil memory compared to short-lived systems.
-% H1: Soil Type Sets the Stage
-%     Clay soils enhance water retention, enabling longer TP-SWVL1 feedback loops (positive correlation). Sandy soils promote runoff, breaking the feedback loop or creating negative correlations.
-%     Evidence: Tracks 2,3,6 (Indo-Gangetic clay plains) show strong positive correlation and long duration. Tracks 1,4 (coastal sandy) show weak or negative correlation and shorter duration.
-% H2: Coupling Strength (FSI) Determines Longevity
+% H1: Coupling Strength (FSI) Determines Longevity
 %     Long-lived MDs show strong Feedback Strength Index (>0.4), driven by:
 %       - Strong TP-SWVL1 correlation (r > 0.5 when positive)
 %       - High soil water capacity (mean SWVL1 > 0.4)
 %       - Statistical significance (p < 0.01)
 %     Short-lived MDs show weak FSI (<0.1), low correlation, or poor capacity.
-% H3: Diurnal Land Coupling Sustains Longevity
+% H2: Diurnal Land Coupling Sustains Longevity
 %     Over land, strong diurnal sensible heat flux (SHF) cycles amplify instability:
 %       - Ocean phase: diurnal amplitude ~13-17 $W/m^2$ (weak, suppressed by marine boundary layer)
 %       - Land phase: diurnal amplitude ~58-65 $W/m^2$ (strong, enhanced by land heating)
 %       - Duration scales with amplitude change: Longer MDs show 46-47 $W/m^2$ amplitude change
-% H4: Soil Moisture Memory Sustains Feedback
+% H3: Soil Moisture Memory Sustains Feedback
 %     High autocorrelation at 24-hour lag (>0.35) indicates soil moisture persists day-to-day, enabling sustained feedback loops.
 %     Long-lived MDs (Tracks 2,3,5,6) need memory to maintain coupling;
 %     short-lived MDs (Tracks 1,4) show negative or weak memory.
-% H5: Heat Flux Transition at Landfall is a Signature of Brown Ocean Effect
+% H4: Heat Flux Transition at Landfall is a Signature of Brown Ocean Effect
 %     System behavior depends on pre-landfall conditions:
 %       - Ocean-to-Land transition (Tracks 1,4,5):
 %         * Before landfall: LHF ≈ -115 to -147 $W/m^2$, SHF ≈ -10 to -15 $W/m^2$
@@ -103,6 +101,9 @@
 %       - Land-originated MDs (Tracks 2,3,6):
 %         * No landfall event; sustained over land throughout passage
 %         * Maintain positive coupling with pre-existing soil moisture
+% H5: Soil Type Sets the Stage
+%     Clay soils enhance water retention, enabling longer TP-SWVL1 feedback loops (positive correlation). Sandy soils promote runoff, breaking the feedback loop or creating negative correlations.
+%     Evidence: Tracks 2,3,6 (Indo-Gangetic clay plains) show strong positive correlation and long duration. Tracks 1,4 (coastal sandy) show weak or negative correlation and shorter duration.
 % H6: Antecedent Soil Moisture (ASM) Enables but Doesn't Ensure Survival
 %     High ASM (>0.3 $m^3/m^3$) provides fuel, but without:
 %       - Clay soil texture, AND
@@ -127,6 +128,7 @@
 \usepackage{graphicx}
 \usepackage{xcolor}
 \usepackage{tikz}
+\usepackage{pifont}
 \usepackage{subcaption}
 \usepackage{multicol}
 \usepackage{booktabs}
@@ -144,8 +146,22 @@
 	pdfsubject = v1.0.0,
 	pdfkeywords = {Physics, Atmosphere, Ocean, Monsoon, Depression, Ocean, Soil Moisture, Precipitation, Heat flux}
 }
+\usepackage[style=authoryear, backend=biber]{biblatex}
+\addbibresource{references.bib}
+\setbeamertemplate{bibliography entry title}{}
+\setbeamertemplate{bibliography entry location}{}
+\setbeamertemplate{bibliography entry note}{}
+\setbeamerfont{bibliography item}{size=\footnotesize}
+\setbeamerfont{bibliography entry author}{size=\footnotesize}
+\setbeamerfont{bibliography entry title}{size=\footnotesize}
+\setbeamerfont{bibliography entry journal}{size=\footnotesize}
+\setbeamerfont{bibliography entry note}{size=\footnotesize}
+
 \setbeamercolor{bibliography item}{fg=blue!90}
 \setbeamercolor{footnote mark}{fg=blue!90}
+
+\definecolor{darkgreen}{RGB}{0,100,0}
+\definecolor{darkred}{RGB}{139,0,0}
 
 % Title and author information
 \title{Monsoon Depression Tracking \& Analysis}
@@ -220,7 +236,17 @@
 			\item \textbf{Coupling Efficiency:} How does TP-SWVL1 coupling efficiency quantitatively predict MD longevity post-landfall?
 			\item \textbf{Energy Budget Transition:} What is the exact heat flux threshold change at landfall that separates surviving vs. decaying MDs?
 			\item \textbf{Landfall Transition :} How does the surface energy budget shift during ocean-to-land transition, and why do some MDs survive this transition while others decay rapidly?
-			      % \item \textbf{Track Classification :} Based on coupling characteristics, can we develop a predictive framework for MD behavior post-landfall?
+			      % \item \textbf{Track Classification :} Based on coupling characteristics, develop a predictive framework for MD behavior post-landfall?
+			\item
+			      % TODO:  My analysis anaswers following :\ldots.need to be formulate questions
+			      % Temporal Evolution of Coupling: Lag correlation analysis reveals the time scale of feedback (hours); Different tracks show different optimal lag times
+			      % Spatial Patterns of Feedback: Azimuthal Hovmöller diagrams show radial structure of MD variables; Can identify where coupling is strongest relative to MD center
+			      % Phase-Dependent Behavior: Ocean vs. land phase differences quantified; Landfall transition characterized
+			      % Predictive Indicators: FSI could potentially predict MD longevity; Soil moisture memory is a useful precursor indicator
+			      % Q: Why is Track 2's memory negative despite high soil moisture? % A: "Capacity and persistence are different. Track 2 can hold water initially, but loses it rapidly each day—possibly due to high evapotranspiration or drainage. This is why it survives only 100 hours despite high SM, while Track 5 survives 174 hours with lower SM but better memory."
+			      % Q: How do you know 0.35 is the right threshold? % A: "natural break: Tracks above 0.35 (5, 3) average 149 hours, tracks below average 89 hours. This 60-hour difference is significant for a 3-7 day system. The threshold separates 'self-sustaining' (Track 5: 7 days) from 'limited' (Track 6: 4 days) persistence."
+			      % Q: Does memory alone explain duration? % A: "No. Memory explains 60% of variance. The remaining 40% comes from FSI (whether rain actually couples to soil) and capacity (how much water is available). Track 2 shows this: high capacity but negative memory limits it to 100 hours."
+			      % Q: Can this framework predict new cases? % A: "Yes. (assuming) soil type (clay -> high memory) and measure memory ACF in the region, we can estimate expected MD duration."
 		\end{enumerate}
 	\end{block}
 \end{frame}
@@ -282,8 +308,9 @@
 \end{frame}
 
 \begin{frame}{Monsoon Depression Detection Algorithm}
+	\vspace{-0.1cm}
 	\begin{columns}[T, onlytextwidth]
-		\column{0.32\textwidth}
+		\column{0.5\textwidth}
 		\footnotesize
 		\textbf{MD Detections Criteria:}
 		\begin{itemize}
@@ -300,7 +327,7 @@
 			\item \textbf{Max MD centre speed :} $15$ m/s
 		\end{itemize}
 
-		\column{0.32\textwidth}
+		\column{0.5\textwidth}
 		\footnotesize
 		\textbf{Tracking \& Post-Processing:}
 		\begin{itemize}
@@ -312,8 +339,13 @@
 			\item \textbf{Landfall Detection:} Coastline crossing using land mask
 			\item \textbf{Output:} Track IDs, coordinates, time stamps
 		\end{itemize}
+	\end{columns}
 
-		\column{0.32\textwidth}
+	\vspace{0.3cm}
+	\begin{columns}[T, onlytextwidth]
+		\column{0.5\textwidth}
+
+		\column{0.5\textwidth}
 		\footnotesize
 		\textbf{Analysis Parameters:}
 		\begin{itemize}
@@ -365,16 +397,16 @@
 % \end{frame}
 
 \begin{frame}{Correlation Analysis}
-	\begin{block}{Why Correlation Matters}
-		Quantifies coupling strength: Does increased rainfall lead to increased soil moisture?
-		\vspace{0.3cm}
-		Positive coupling $\Rightarrow$ Self-sustaining feedback possible
-		\vspace{0.3cm}
-		Negative or weak coupling $\Rightarrow$ No reinforcing feedback
-	\end{block}
+	Quantifies coupling strength: Does increased rainfall lead to increased soil moisture?
+
+	\vspace{0.2cm}
+	Positive coupling $\Rightarrow$ Self-sustaining feedback possible
+
+	\vspace{0.2cm}
+	Negative or weak coupling $\Rightarrow$ No reinforcing feedback
 
 	\vspace{0.3cm}
-
+	\footnotesize
 	\begin{block}{Method}
 		For each track points :
 		\begin{enumerate}
@@ -407,66 +439,89 @@
 	\end{itemize}
 \end{frame}
 
-\begin{frame}{Coupling Metrics: Quantifying Land-Atmosphere Interactions [1/3]}
-    \textbf{Three Key Metrics for Analysis :}
+\begin{frame}{Coupling Metrics: Quantifying Land-Atmosphere Interactions [1/4]}
+	\textbf{Three Key Metrics for Analysis :}
 
-    \vspace{0.3cm}
-    \footnotesize
-    \begin{block}{1. Feedback Strength Index (FSI)}
-        \small
-        \textbf{Mathematical Definition:}
-        \[
-        \text{FSI} = |\text{Correlation}(TP, SWVL1)| \times \text{Capacity Index} \times \text{Significance Factor}
-        \]
-        where:
-        \begin{itemize}
-            \item \textbf{Capacity Index} = $\dfrac{\text{mean SWVL1} - 0.02}{0.55 - 0.02}$, clipped to [0,1]
-            \begin{itemize}
-                \item 0.02 $m^3/m^3$ = dry soil (wilting point)
-                \item 0.55 $m^3/m^3$ = saturated soil
-            \end{itemize}
-            \item \textbf{Significance Factor} = 1.0 if p < 0.05, else 0.5
-        \end{itemize}
+	\vspace{0.3cm}
+	\footnotesize
+	\begin{block}{1. Feedback Strength Index (FSI)}
+		\small
+		\textbf{Mathematical Definition:}
+		\[
+			\text{FSI} = |\text{Correlation}(TP, SWVL1)| \times \text{Capacity Index} \times \text{Significance Factor}
+		\]
+		where:
+		\begin{itemize}
+			\item \textbf{Capacity Index} = $\dfrac{\text{mean SWVL1} - 0.02}{0.55 - 0.02}$, clipped to [0,1]
+			      \begin{itemize}
+				      \item 0.02 $m^3/m^3$ = dry soil (wilting point)
+				      \item 0.55 $m^3/m^3$ = saturated soil
+			      \end{itemize}
+			\item \textbf{Significance Factor} = 1.0 if p < 0.05, else 0.5
+		\end{itemize}
 
-        \vspace{0.3cm}
-        \footnotesize
-        Integrate three factors determining coupling sustainability:
-        \begin{enumerate}
-            \item \textbf{Correlation Strength :} How tightly Total Precipitation(tp) links to Soil Water Volumetric Level-1 (swvl1)? Range : 0 (no feedback) to 1 (perfect feedback).
-            \item \textbf{Soil Water Capacity Index:} How much moisture can the soil hold/release? (function of soil type) (Range : (0=dry, 1=saturated))
-            \item \textbf{Statistical significance:} Is correlation robust (p < 0.05)?
-        \end{enumerate}
-    \end{block}
+		\vspace{0.3cm}
+		\footnotesize
+		Integrate three factors determining coupling sustainability:
+		\begin{enumerate}
+			\item \textbf{Correlation Strength :} How tightly Total Precipitation(tp) links to Soil Water Volumetric Level-1 (swvl1)? Range : 0 (no feedback) to 1 (perfect feedback).
+			\item \textbf{Soil Water Capacity Index:} How much moisture can the soil hold/release? (function of soil type) (Range : (0=dry, 1=saturated))
+			\item \textbf{Statistical significance:} Is correlation robust (p < 0.05)?
+		\end{enumerate}
+	\end{block}
 \end{frame}
 
-\begin{frame}{Coupling Metrics: Quantifying Land-Atmosphere Interactions [2/3]}
-    \begin{block}{2. Diurnal Sensible Heat Flux Amplitude}
-        \small
-        \[
-        A_{\text{SHF}} = \text{SHF}_{\text{max}} - \text{SHF}_{\text{min}} \quad \text{(over land phase)}
-        \]
-        \begin{itemize}
-            \item Measures land surface's diurnal heating response
-            \item Ocean phase : $<20$ $W/m^2$ (damped by thermal inertia)
-            \item Land phase : $40-100$ $W/m^2$ (strong daytime heating)
-        \end{itemize}
-    \end{block}
+\begin{frame}{Coupling Metrics: Quantifying Land-Atmosphere Interactions [2/4]}
+	\begin{block}{2. Coupling Efficiency (CE)}
+		\small
+		\[
+			\text{CE} = \frac{\text{FSI} \times A_{\text{norm}}}{\text{Duration Factor}}
+			% \text{CE} = \frac{\text{FSI} \times \text{Amplitude}}{\text{Duration Factor}}
+		\]
+		\footnotesize
+		Where:
+		\vspace{0.05cm}
+		\begin{itemize}
+			\item \textbf{FSI} = Feedback Strength Index $\in [0, 1]$ (dimensionless)
+			\item $A_{\text{norm}} = \tanh(A_{\text{SHF}} / 100)$ = normalized amplitude (saturation curve)
+			\item \textbf{Duration Factor} = $\max(1.0, \text{Duration}_{\text{hours}} / 48)$
+		\end{itemize}
 
-    \begin{block}{3. Coupling Efficiency (CE)}
-        \small
-        \[
-        \text{CE} = \frac{\text{FSI} \times \text{SHF Amplitude}}{1 + \text{Duration Decay}}
-        \]
-        \begin{itemize}
-            \item Integrates feedback strength and surface response
-            \item Normalizes for system duration (longer MDs show weaker signal)
-            \item High CE = efficient land-atmosphere energy exchange
-        \end{itemize}
-    \end{block}
+		\vspace{0.2cm}
+		\footnotesize
+		\textbf{Physical Interpretation:}
+		\begin{itemize}
+			\item Integrates feedback strength (\textbf{FSI}) and surface response (\textbf{amplitude})
+			\item Normalizes for system duration : longer MDs show weaker coupling signal
+			\item \textbf{High CE} ($> 0.5$) = efficient land-atmosphere energy exchange $\Rightarrow$ self-sustaining feedback
+			\item \textbf{Low CE} ($< 0.3$) = weak coupling $\Rightarrow$ limited inland persistence
+		\end{itemize}
+	\end{block}
+
+	\vspace{0.2cm}
+	\begin{center}
+		\small \textit{All three metrics work together: \textbf{FSI} (correlation) + \textbf{Amplitude} (response) + \textbf{Duration} (persistence)}
+	\end{center}
 \end{frame}
 
-\begin{frame}{Diurnal SHF Amplitude}
-	\begin{block}{Physical Rationale}
+\begin{frame}{Diurnal SHF Amplitude [3/4]}
+	\begin{block}{3. Diurnal Sensible Heat Flux Amplitude}
+		\small
+		\[
+			A_{\text{SHF}} = \text{SHF}_{\text{max}} - \text{SHF}_{\text{min}} \quad \text{(over land phase)}
+		\]
+		\footnotesize
+		\begin{itemize}
+			\item Measures land surface's diurnal heating response
+			\item Ocean phase : $\lesssim 13$--$17$ $W/m^2$ (damped by thermal inertia and moisture-rich boundary layer)
+			\item Land phase : $\sim 58$--$65$ $W/m^2$ (strong daytime heating enhanced by dry air)
+			\item Amplitude change : $\Delta A = A_{\text{land}} - A_{\text{ocean}} \approx 46$--$47$ $W/m^2$ for long-lived MDs
+		\end{itemize}
+	\end{block}
+
+	\vspace{0.3cm}
+	\footnotesize
+	\begin{block}{Physical Interaction}
 		Over land, surface temperature varies with solar radiation (strong diurnal cycle).
 		\vspace{0.3cm}
 		Sensible Heat Flux: $SHF = \rho C_p u_* (T_s - T_a)$
@@ -480,7 +535,7 @@
 	\end{block}
 
 	\vspace{0.3cm}
-
+	\footnotesize
 	\begin{block}{Computation}
 		\begin{enumerate}
 			% WARN: Why 6 hourly? my data if hourly
@@ -491,6 +546,74 @@
 		\end{enumerate}
 	\end{block}
 \end{frame}
+
+\begin{frame}{Soil Moisture Memory Effect [4/4]}
+	\begin{block}{4. Autocorrelation of SWVL1 at 24-hour Lag}
+		\small
+		\textbf{Definition:} Soil moisture memory quantifies how long soil moisture persists
+		\[
+			\text{Memory Index} = \text{ACF}(\text{SWVL1, lag}=24\text{ hours})
+		\]
+		\vspace{0.3cm}
+		\textbf{Interpretation :}
+		\begin{itemize}
+			\item \textbf{High memory} ($> 0.35$): SWVL1 today strongly predicts SWVL1 tomorrow
+			      \begin{itemize}
+				      \item Soil holds water (clay soils, high capacity)
+				      \item Moisture persists across day-night cycle
+				      \item Enables sustained TP-SWVL1 feedback loops
+			      \end{itemize}
+			\item \textbf{Low/Negative memory} ($< 0.1$): SWVL1 uncorrelated with next day
+			      \begin{itemize}
+				      \item Soil drains quickly (sandy soils, low capacity)
+				      \item Moisture removed by evaporation/drainage
+				      \item Cannot sustain multi-day feedback
+			      \end{itemize}
+		\end{itemize}
+	\end{block}
+
+	% FIX: place this in Results not in Methodology
+	\vspace{0.3cm}
+	\footnotesize
+	\begin{columns}[T]
+		\column{0.5\textwidth}
+		\textbf{Strong Memory (Track 5):}
+		\begin{itemize}
+			\item Memory = $0.525$ (very strong)
+			\item Mean SWVL1 = $0.270$ $m^3/m^3$
+			\item Interpretation: Pre-existing or maintained soil moisture
+			\item Duration: 174h (longest-lived)
+		\end{itemize}
+
+		\column{0.5\textwidth}
+		\textbf{Weak Memory (Track 1):}
+		\begin{itemize}
+			\item Memory = $-0.061$ (weak/negative)
+			\item Mean SWVL1 = $0.148$ $m^3/m^3$
+			\item Interpretation: Oscillatory behavior, no persistence
+			\item Duration: 64h (short-lived)
+		\end{itemize}
+	\end{columns}
+\end{frame}
+
+% \begin{frame}{Soil Moisture Memory}
+% 	\begin{itemize}
+% 		\item \textbf{High memory} (ACF$_{24h}$ > 0.35): Moisture persists $\rightarrow$ consistent latent heat release
+% 		\item \textbf{Low memory} (ACF$_{24h}$ < 0.1): Moisture quickly dries $\rightarrow$ feedback breaks
+% 		\item \textbf{Negative memory}: Anti-persistence, oscillatory behavior
+% 	\end{itemize}
+%
+% 	\vspace{0.3cm}
+% 	\footnotesize
+% 	\begin{block}{Computation}
+% 		\begin{enumerate}
+% 			\item Extract SWVL1 time series along track
+% 			\item Compute autocorrelation function (ACF) using FFT
+% 			\item Report ACF at lag = 24 hours
+% 			\item Interpret as "soil moisture 24h ago predicts 23\% to 58\% of today's moisture"
+% 		\end{enumerate}
+% 	\end{block}
+% \end{frame}
 
 \begin{frame}{Heat Flux Transitions}
 	\footnotesize
@@ -518,32 +641,6 @@
 			\item Pre-landfall: LHF $\approx -120$ to $-140$ $W/m^2$ (ocean supply)
 			\item Post-landfall: LHF drops but remains $>$ $-80$ $W/m^2$ (moisture supply via soil (swvl1))
 		\end{itemize}
-	\end{block}
-\end{frame}
-
-\begin{frame}{Soil Moisture Memory}
-	\footnotesize
-	\begin{block}{Why Autocorrelation Matters}
-		Memory = persistence from day to day.
-
-		\vspace{0.3cm}
-		If soil moisture today is correlated with tomorrow, feedback can be sustained:
-		\begin{itemize}
-			\item \textbf{High memory} (ACF$_{24h}$ > 0.35): Moisture persists $\rightarrow$ consistent latent heat release
-			\item \textbf{Low memory} (ACF$_{24h}$ < 0.1): Moisture quickly dries $\rightarrow$ feedback breaks
-			\item \textbf{Negative memory}: Anti-persistence, oscillatory behavior
-		\end{itemize}
-	\end{block}
-
-	\vspace{0.3cm}
-	\footnotesize
-	\begin{block}{Computation}
-		\begin{enumerate}
-			\item Extract SWVL1 time series along track
-			\item Compute autocorrelation function (ACF) using FFT
-			\item Report ACF at lag = 24 hours
-			\item Interpret as "soil moisture 24h ago predicts 23\% to 58\% of today's moisture"
-		\end{enumerate}
 	\end{block}
 \end{frame}
 
@@ -711,6 +808,8 @@
 
 			\column{0.5\textwidth}
 			\includegraphics[width=0.95\textwidth]{images/July-19-20.png}
+			\vfill
+			\footnote{Source: \href{https://rsmcnewdelhi.imd.gov.in/report.php?internal_menu=MzQ=}{RSMC New Delhi Report}}
 		\end{columns}
 
 	\end{center}
@@ -853,12 +952,8 @@
 				\item \textbf{Spearman $\rho$:} 0.5965 – Confirms a strong monotonic trend; rain consistently leads to higher soil moisture.
 				\item \textbf{p-value:} $2.55 \times 10^{-11}$ – Extremely significant ($p \ll 0.001$), indicating robust statistical reliability.
 				      % \item \textbf{R-squared:} – % Precipitation explains only ~7\% of the variance in soil water content for this track.
-				      % \item \textbf{Mean TP:} 0.38 mm/hr | \textbf{Mean SM:} 0.12 $m^3/m^3$
+				\item \textbf{Mean TP:} 0.38 mm/hr | \textbf{Mean SM:} 0.12 $m^3/m^3$
 			\end{itemize}
-			% \item \textbf{Pearson r:} 0.5214 – Moderate positive linear relationship.
-			% \item \textbf{Spearman $\rho$:} 0.3921 – Indicates a reliable trend where precipitation recharges soil moisture.
-			% \item \textbf{p-value:} $2.55 \times 10^{-12}$ – Extremely significant.
-			% \item \textbf{Mean TP:} 0.62 mm/hr | \textbf{Mean SM:} 0.28 $m^3/m^3$
 		\end{column}
 	\end{columns}
 \end{frame}
@@ -1068,6 +1163,8 @@
 				\item \textbf{p-value:} $1.6 \times 10^{-12}$ – Extremely significant despite weak correlation, likely due to large sample size.
 				      % \item \textbf{R-squared:} – % Precipitation explains only ~7\% of the variance in soil water content for this track.
 				      % \item \textbf{Mean TP:} 0.38 mm/hr | \textbf{Mean SM:} 0.12 $m^3/m^3$
+				      % TODO: update mean median values
+				\item \textbf{Mean TP:} 0.38 mm/hr | \textbf{Mean SM:} 0.12 $m^3/m^3$
 			\end{itemize}
 		\end{column}
 	\end{columns}
@@ -1172,7 +1269,8 @@
 				\item \textbf{Spearman $\rho$:} 0.5908 – Strong monotonic relationship; soil moisture reliably increases with rainfall.
 				\item \textbf{p-value:} $7.04 \times 10^{-11}$ – Extremely significant ($p \ll 0.001$), confirming a stable feedback loop.
 				      % \item \textbf{R-squared:} – % Precipitation explains only ~7\% of the variance in soil water content for this track.
-				      % \item \textbf{Mean TP:} 0.55 mm/hr | \textbf{Mean SM:} 0.22 $m^3/m^3$
+				      % TODO: update mean median values
+				\item \textbf{Mean TP:} 0.55 mm/hr | \textbf{Mean SM:} 0.22 $m^3/m^3$
 			\end{itemize}
 		\end{column}
 	\end{columns}
@@ -1277,7 +1375,8 @@
 				\item \textbf{Spearman $\rho$:} -0.0285 – Very weak monotonic relationship; no consistent trend in rank order.
 				\item \textbf{p-value:} $2.02 \times 10^{-9}$ – Extremely significant ($p < 0.001$), despite weak Spearman value.
 				      % \item \textbf{R-squared:} – % Precipitation explains only ~7\% of the variance in soil water content for this track.
-				      % \item \textbf{Mean TP:} 0.38 mm/hr | \textbf{Mean SM:} 0.12 $m^3/m^3$
+				      % TODO: update mean median values
+				\item \textbf{Mean TP:} 0.38 mm/hr | \textbf{Mean SM:} 0.12 $m^3/m^3$
 			\end{itemize}
 		\end{column}
 	\end{columns}
@@ -1402,6 +1501,31 @@
 	\end{itemize}
 \end{frame}
 
+\begin{frame}{Soil Memory Analysis}
+	\centering
+	\footnotesize
+	\begin{tabular}{lccccc}
+		\toprule
+		\textbf{Track} & \textbf{Memory Index} & \textbf{Mean SWVL1} & \textbf{Category}    & \textbf{Duration} & \textbf{Inference}       \\
+		\midrule
+		1              & $-0.061$              & 0.148               & Negative             & 64h               & Oscillatory, no memory   \\
+		2              & $-0.079$              & 0.395               & Negative             & 103h              & Draining despite high SM \\
+		3              & $+0.321$              & 0.421               & \textbf{Strong}      & 124h              & Moderate persistence     \\
+		4              & $-0.197$              & 0.178               & Negative             & 72h               & Weak retention           \\
+		5              & $+0.525$              & 0.270               & \textbf{Very Strong} & 174h              & Excellent persistence    \\
+		6              & $+0.034$              & 0.428               & Weak                 & 100h              & Minimal memory           \\
+		\bottomrule
+	\end{tabular}
+
+	\vspace{0.3cm}
+	\footnotesize
+	\textbf{Classification Thresholds:}
+	\begin{itemize}
+		\item \textbf{Very Strong Memory}: $\text{ACF} > 0.35$ (Tracks 3, 5) — Multi-day feedback possible
+		\item \textbf{Weak/Negative Memory}: $\text{ACF} < 0.1$ (Tracks 1, 2, 4, 6) — Limited persistence
+	\end{itemize}
+\end{frame}
+
 \begin{frame}{Heat Flux Transitions : Ocean-to-Land Cases}
 	\begin{table}[H]
 		\small
@@ -1490,7 +1614,7 @@
 		\item \textbf{0 Lag :} Simultaneous coupling (precipitation-evaporation syncronous feedback).
 	\end{itemize}
 
-	\vspace{0.2cm}
+	\vspace{0.3cm}
 	\footnotesize
 	\textbf{Observed Peak Correlations by Track:}
 	\begin{center}
@@ -1509,7 +1633,7 @@
 		\end{tabular}
 	\end{center}
 
-	\vspace{0.2cm}
+	\vspace{0.3cm}
 	\footnotesize
 	\begin{block}{Key Insights}
 		\begin{itemize}
@@ -1560,8 +1684,8 @@
 
 \begin{frame}{Soil Water Capacity: Enabling but Not Guaranteeing Longevity}
 	\textbf{Moisture Capacity Index = Normalized soil moisture (0=dry, 1=saturated)}
-	\vspace{0.5cm}
 
+	\vspace{0.3cm}
 	\footnotesize
 	\begin{columns}[T]
 		\column{0.5\textwidth}
@@ -1581,7 +1705,7 @@
 		\end{itemize}
 	\end{columns}
 
-	\vspace{0.5cm}
+	\vspace{0.3cm}
 	\footnotesize
 	\begin{block}{Interpretation}
 		High capacity necessary but not sufficient for longevity
@@ -1596,39 +1720,42 @@
 \begin{frame}{Feedback Strength Index (FSI): Measuring TP-SWVL1 Coupling Efficiency}
 	\begin{center}
 		\begin{columns}[T]
-			\column{0.5\textwidth}
+			\column{0.4\textwidth}
+			\vspace{0.5cm}
 			\footnotesize
 			\begin{itemize}
 				\item High FSI : Efficient precipitation-soil moisture feedback
 				\item Low FSI : Inefficient or negative feedback
 			\end{itemize}
-			\vspace{0.5cm}
+			\vspace{0.3cm}
 			Higher FSI indicates more efficient land-atmosphere energy exchange
 
-			\column{0.5\textwidth}
+			\column{0.6\textwidth}
 			\footnotesize
-			\begin{tabular}{lccccc}
-				\toprule
-				\textbf{Track} & \textbf{FSI} & \textbf{Corr Str} & \textbf{Capacity} & \textbf{Durtn (h)} & \textbf{Category}    \\
-				\midrule
-				1              & 0.064        & 0.26              & 0.24              & 78                 & Weak                 \\
-				2              & 0.423        & 0.60              & 0.71              & 105                & \textbf{Strong}      \\
-				3              & 0.604        & 0.80              & 0.76              & 154                & \textbf{Very Strong} \\
-				4              & 0.088        & 0.23              & 0.38              & 75                 & Weak                 \\
-				5              & 0.210        & 0.48              & 0.43              & 165                & Moderate             \\
-				6              & 0.402        & 0.52              & 0.77              & 117                & \textbf{Strong}      \\
-				\bottomrule
-				               &              & Mean:             &                   &                    & $0.298 \pm 0.213$    \\
-				\bottomrule
-			\end{tabular}
-			\caption{Feedback Strength Index by Track}
+			\begin{table}[h]
+				\begin{tabular}{lccccc}
+					\toprule
+					\textbf{Track} & \textbf{FSI} & \textbf{Corr Str} & \textbf{Capacity} & \textbf{Durtn (h)} & \textbf{Category}    \\
+					\midrule
+					1              & 0.064        & 0.26              & 0.24              & 78                 & Weak                 \\
+					2              & 0.423        & 0.60              & 0.71              & 105                & \textbf{Strong}      \\
+					3              & 0.604        & 0.80              & 0.76              & 154                & \textbf{Very Strong} \\
+					4              & 0.088        & 0.23              & 0.38              & 75                 & Weak                 \\
+					5              & 0.210        & 0.48              & 0.43              & 165                & Moderate             \\
+					6              & 0.402        & 0.52              & 0.77              & 117                & \textbf{Strong}      \\
+					\midrule
+					               &              & Mean:             &                   &                    & $0.298 \pm 0.213$    \\
+					\bottomrule
+				\end{tabular}
+				\caption{Feedback Strength Index by Track}
+			\end{table}
 		\end{columns}
 
-		\vspace{0.5cm}
+		\vspace{0.3cm}
 		\footnotesize
 		\begin{block}{Interpretation}
 			\begin{itemize}
-				\item  FSI $>$ 0.4 tracks (2, 3, 6) live $\geq$ 105h. FSI $<$ 0.1 tracks (1, 4) die in $\approx$ 75h.
+				\item FSI $>$ 0.4 tracks (2, 3, 6) live $\geq$ 105h. FSI $<$ 0.1 tracks (1, 4) die in $\approx$ 75h.
 				\item \textbf{Positive correlation tracks (2,3,5) :} Soil moisture $\rightarrow$ Rainfall feedback
 				\item \textbf{Negative correlation tracks (1,4,6) :} Rainfall $\rightarrow$ Soil moisture infiltration
 				\item 3 tracks exhibit positive feedback (precipitation $\rightarrow$ soil moisture)
@@ -1845,68 +1972,68 @@
 	\end{block}
 \end{frame}
 
-\begin{frame}{Brown Ocean Effect Evidence Chain}
-% 	\footnotesize
-% 	\begin{block}{Supporting Evidence for Track 5}
-% 		\begin{enumerate}
-% 			% \item \textbf{Heat Flux Increase Over Land :} $+71.5$ $W/m^2$ change confirms sustained energy source
-% 			\item \textbf{Heat Flux Continuity (Increase over land):} $+71.5$ $W/m^2$ change at landfall shows energy source shift to land
-% 			\item \textbf{Comparable LHF:} Post-landfall LHF (-80.9 $W/m^2$) approaches ocean values (-134.9 $W/m^2$)
-% 			\item \textbf{Diurnal SHF Amplification :} $\approx 4$ times stronger over land enables continuous convection
-% 			\item \textbf{TP-SWVL1 Coupling :} All tracks show significant feedback relationships ($p<0.05$ for 6/6 tracks)
-% 			% \item \textbf{Land-Origin Correlation :} 3 of 3 land-origin tracks (2,3 and 6) are long-lived
-% 			\item \textbf{Ocean-Origin Survival :} Track 5 survived 165h over land despite ocean origin
-% 			\item \textbf{Soil-Driven Feedback :} Track 5 shows +6h lag (SM $\rightarrow$ TP) indicating land-driven sustenance
-% 		\end{enumerate}
-% 	\end{block}
+% \begin{frame}{Brown Ocean Effect Evidence Chain}
+% 	% 	\footnotesize
+% 	% 	\begin{block}{Supporting Evidence for Track 5}
+% 	% 		\begin{enumerate}
+% 	% 			% \item \textbf{Heat Flux Increase Over Land :} $+71.5$ $W/m^2$ change confirms sustained energy source
+% 	% 			\item \textbf{Heat Flux Continuity (Increase over land):} $+71.5$ $W/m^2$ change at landfall shows energy source shift to land
+% 	% 			\item \textbf{Comparable LHF:} Post-landfall LHF (-80.9 $W/m^2$) approaches ocean values (-134.9 $W/m^2$)
+% 	% 			\item \textbf{Diurnal SHF Amplification :} $\approx 4$ times stronger over land enables continuous convection
+% 	% 			\item \textbf{TP-SWVL1 Coupling :} All tracks show significant feedback relationships ($p<0.05$ for 6/6 tracks)
+% 	% 			% \item \textbf{Land-Origin Correlation :} 3 of 3 land-origin tracks (2,3 and 6) are long-lived
+% 	% 			\item \textbf{Ocean-Origin Survival :} Track 5 survived 165h over land despite ocean origin
+% 	% 			\item \textbf{Soil-Driven Feedback :} Track 5 shows +6h lag (SM $\rightarrow$ TP) indicating land-driven sustenance
+% 	% 		\end{enumerate}
+% 	% 	\end{block}
+% 	%
+% 	% 	\vspace{0.4cm}
+% 	% 	\footnotesize
+% 	% 	\begin{block}{Physical Mechanism}
+% 	% 		\begin{itemize}
+% 	% 			\item High pre-landfall soil moisture and clay soils over IndoGangetic plain create "brown ocean" (psedo ocean-like condition)
+% 	% 			\item Evaporation from moist soils maintains latent heat flux comparable to ocean
+% 	% 			\item Daytime heating over land (positive SHF) sustains atmospheric instability
+% 	% 			\item Feedback loop : MD precipitation $\rightarrow$ soil moisture increase $\rightarrow$ enhanced heat flux
+% 	% 		\end{itemize}
+% 	% 	\end{block}
+% 	\begin{center}
+% 		\Large
+% 		\begin{tikzpicture}[scale=0.9]
+% 			% Boxes (timeline)
+% 			\draw[thick, blue] (0,0) rectangle (3,1) node[midway] {\textbf{Pre-Landfall}};
+% 			\draw[thick, blue] (4.5,0) rectangle (7.5,1) node[midway] {\textbf{Landfall}};
+% 			\draw[thick, blue] (9,0) rectangle (12,1) node[midway] {\textbf{Post-Landfall}};
 %
-% 	\vspace{0.4cm}
-% 	\footnotesize
-% 	\begin{block}{Physical Mechanism}
-% 		\begin{itemize}
-% 			\item High pre-landfall soil moisture and clay soils over IndoGangetic plain create "brown ocean" (psedo ocean-like condition)
-% 			\item Evaporation from moist soils maintains latent heat flux comparable to ocean
-% 			\item Daytime heating over land (positive SHF) sustains atmospheric instability
-% 			\item Feedback loop : MD precipitation $\rightarrow$ soil moisture increase $\rightarrow$ enhanced heat flux
-% 		\end{itemize}
-% 	\end{block}
-	\begin{center}
-		\Large
-		\begin{tikzpicture}[scale=0.9]
-			% Boxes
-			\draw[thick, blue] (0,0) rectangle (3,1) node[midway] {\textbf{Pre-Landfall}};
-			\draw[thick, blue] (4.5,0) rectangle (7.5,1) node[midway] {\textbf{Landfall}};
-			\draw[thick, blue] (9,0) rectangle (12,1) node[midway] {\textbf{Post-Landfall}};
-
-			% Arrows and labels
-			\draw[->, thick] (3,0.5) -- (4.5,0.5);
-			\draw[->, thick] (7.5,0.5) -- (9,0.5);
-
-			% Below boxes: processes
-			\draw (0,-1) rectangle (3,-2) node[midway, text width=2.5cm, align=center, font=\small]
-				{Ocean LHF $\approx -130$ W/m² \\ SHF weak};
-
-			\draw (4.5,-1) rectangle (7.5,-2) node[midway, text width=2.8cm, align=center, font=\small]
-				{Transition: System loses ocean source};
-
-			\draw (9,-1) rectangle (12,-2) node[midway, text width=2.8cm, align=center, font=\small]
-				{Soil LHF $\approx -80$ W/m² \\ SHF positive};
-
-			% Evidence
-			\draw (0,-3) rectangle (3,-4) node[midway, text width=2.5cm, align=center, font=\small, color=darkgreen]
-				{\checkmark TP-SWVL1 corr \\ positive};
-
-			\draw (4.5,-3) rectangle (7.5,-4) node[midway, text width=2.8cm, align=center, font=\small, color=darkred]
-				{\XSolidBrush Flux $\Delta$ = 42-81 W/m² loss};
-
-			\draw (9,-3) rectangle (12,-4) node[midway, text width=2.8cm, align=center, font=\small, color=darkgreen]
-				{\checkmark Residual LHF from soil \\ \checkmark Positive SHF};
-		\end{tikzpicture}
-	\end{center}
-
-	\vspace{0.5cm}
-	\textbf{Conclusion:} Energy loss at landfall is expected, \textit{but} soil moisture supply sustains latent heat release, maintaining system structure for days.
-\end{frame}
+% 			% Arrows and labels
+% 			\draw[->, thick] (3,0.5) -- (4.5,0.5);
+% 			\draw[->, thick] (7.5,0.5) -- (9,0.5);
+%
+% 			% Below boxes: processes
+% 			\draw (0,-1) rectangle (3,-2) node[midway, text width=2.5cm, align=center, font=\small]
+% 				{Ocean LHF $\approx -130$ $W/m^2$ \\ SHF weak};
+%
+% 			\draw (4.5,-1) rectangle (7.5,-2) node[midway, text width=2.8cm, align=center, font=\small]
+% 				{Transition: System loses ocean source};
+%
+% 			\draw (9,-1) rectangle (12,-2) node[midway, text width=2.8cm, align=center, font=\small]
+% 				{Soil LHF $\approx -80$ $W/m^2$ \\ SHF positive};
+%
+% 			% Evidence - using simpler symbols
+% 			\draw (0,-3) rectangle (3,-4) node[midway, text width=2.5cm, align=center, font=\small, color=green!70!black]
+% 				{\footnotesize TP-SWVL1 corr \\ positive};
+%
+% 			\draw (4.5,-3) rectangle (7.5,-4) node[midway, text width=2.8cm, align=center, font=\small, color=red!70!black]
+% 				{\footnotesize Flux $\Delta$ = 42-81 $W/m^2$ loss};
+%
+% 			\draw (9,-3) rectangle (12,-4) node[midway, text width=2.8cm, align=center, font=\small, color=green!70!black]
+% 				{\footnotesize Residual LHF from soil \\ Positive SHF};
+% 		\end{tikzpicture}
+% 	\end{center}
+%
+% 	\vspace{0.5cm}
+% 	\textbf{Conclusion:} Energy loss at landfall is expected, \textit{but} soil moisture supply sustains latent heat release, maintaining system structure for days.
+% \end{frame}
 
 \begin{frame}{Key Limitations \& Caveats}
 	\begin{block}{Data Limitations}
@@ -1922,7 +2049,7 @@
 		\begin{itemize}
 			\item 100 km spatial buffer chosen for computational efficiency; sensitivity not tested
 			\item Pearson correlation assumes linear relationship; nonlinear effects ignored
-			% WARN: Why 6 hourly? my data if hourly
+			      % WARN: Why 6 hourly? my data if hourly
 			\item Diurnal SHF amplitude uses 6-hourly data; true maximum may be underestimated
 		\end{itemize}
 	\end{block}
@@ -2048,7 +2175,7 @@
 	Track 5 (anomaly) suggests additional factors (moisture advection).
 \end{frame}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Proposed Hypotheses}
 \begin{frame}[c]
 	\begin{center}
@@ -2528,4 +2655,9 @@
 % % 		\item Precipitation-soil feedback sets the \textbf{efficiency} also for longevity.
 % % 	\end{itemize}
 % % \end{frame}
+
+\begin{frame}[allowframebreaks]{References}
+	\nocite{*}
+	\printbibliography
+\end{frame}
 \end{document}

@@ -10,7 +10,8 @@ CLEANUP=true
 DRY_RUN=false
 
 # List of auxiliary extensions to move to temp directory
-EXTS=("aux" "fdb_latexmk" "fls" "log" "nav" "out" "snm" "synctex.gz" "toc")
+EXTS=("aux" "fdb_latexmk" "fls" "log" "nav" "out" "snm" "synctex.gz" "toc" "bcf" "bbl" "blg" "run.xml")
+# EXTS=("aux" "fdb_latexmk" "fls" "log" "nav" "out" "snm" "synctex.gz" "toc" "bcf" "run.xml")
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -128,10 +129,8 @@ compile_tex() {
     local file=$1
     local dir=$(dirname "$file")
     local base=$(basename "$file" .tex)
+    local output_dir="${dir:-.}"
 
-    if [ "$dir" == "." ]; then
-        dir=""
-    fi
     if [ ! -f "$file" ]; then
         log_warn "File not found, skipping: $file"
         return 1
@@ -141,37 +140,34 @@ compile_tex() {
         log_info "[DRY RUN] Would run : pdflatex -interaction=nonstopmode -output-directory=\"$dir\" \"$file\""
         return 0
     fi
-    # generate structure
+
+    # Pass 1: Generate the .bcf file for Biber
+    log_info "-> Pass 1 : pdflatex"
+    pdflatex -interaction=nonstopmode -output-directory="$output_dir" "$file" > /dev/null 2>&1
+    # Pass 2: Run Biber
+    log_info "-> Pass 2 : biber"
     if [ "$VERBOSE" = true ]; then
-        pdflatex -interaction=nonstopmode -output-directory="${dir:-.}" "$file"
+        biber --input-directory "$output_dir" --output-directory "$output_dir" "$base"
     else
-        pdflatex -interaction=nonstopmode -output-directory="${dir:-.}" "$file" > /dev/null 2>&1
-    fi
-    if [ $? -ne 0 ]; then
-        log_error "First compilation pass failed for $file"
-        return 1
-    fi
-    # resolve references
-    if [ "$VERBOSE" = true ]; then
-        pdflatex -interaction=nonstopmode -output-directory="${dir:-.}" "$file"
-    else
-        pdflatex -interaction=nonstopmode -output-directory="${dir:-.}" "$file" > /dev/null 2>&1
+        biber --input-directory "$output_dir" --output-directory "$output_dir" "$base" > /dev/null 2>&1
     fi
 
     if [ $? -ne 0 ]; then
-        log_error "Second compilation pass failed for $file"
-        return 1
+        log_error "Biber failed for $file. Check .bib keys!"
+        # We don't exit here, so it tries to finish the PDF anyway
     fi
+    # generate structure
+    #log_info "  -> Pass 3 & 4: pdflatex finalization"
+    # Link citations and fix labels
+    log_info "-> Pass 3 & 4: pdflatex finalization"
+    pdflatex -interaction=nonstopmode -output-directory="$output_dir" "$file" > /dev/null 2>&1
+    pdflatex -interaction=nonstopmode -output-directory="$output_dir" "$file" > /dev/null 2>&1
     # Cleanup auxiliary files
-    if [ -n "$dir" ]; then
-        cleanup_aux "$dir" "$base"
-    else
-        cleanup_aux "." "$base"
-    fi
+    cleanup_aux "$output_dir" "$base"
+
     if [ -f "${dir:-.}/$base.pdf" ]; then
         log_success "Generated : ${dir:-.}/$base.pdf"
     fi
-
     return 0
 }
 
@@ -184,7 +180,7 @@ FAILED_FILES=0
 # Compile Hovmöller Slides
 if [ "$ONLY_MAIN" = false ]; then
     echo ""
-    log_info "========== Compiling Hovmöller Slides =========="
+    log_info "======== Compiling Hovmöller Slides ========"
 
     if [ -d "slides" ]; then
         hov_files=(slides/hov-*.tex)
@@ -212,7 +208,7 @@ fi
 
 # Compile Main Project Update
 echo ""
-log_info "========== Compiling Main Project Update =========="
+log_info "====== Compiling Main Project Update ======="
 
 TOTAL_FILES=$((TOTAL_FILES + 1))
 
