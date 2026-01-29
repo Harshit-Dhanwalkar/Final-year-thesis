@@ -146,13 +146,13 @@ PRECIPITATION_THRESHOLD_MM = 0.3  # mm/hr
 # SWVL1 Range: $0.02-0.55$ m³/m³
 
 VORTICITY_THRESHOLD = 5e-6        # > 0 /s
-MAX_SPEED_MS = 15                 # m/s
+MAX_SPEED_MS = 12           # 15 # m/s == 36 km/hr
 MAX_GAP_HOURS = 12          # 6   # hr Bridge small gaps In Detection
 TRACKING_SEARCH_RADIUS_KM = 50    # km Hourly tracking
 LINKING_SEARCH_RADIUS_KM = 100    # km Multi-hour gaps
 MIN_TRACK_DURATION_HOURS = 24
 MIN_NET_DISPLACEMENT_KM = 250     # km MD travel distance
-STITCH_DISTANCE_KM = 250          # km For gap bridging
+STITCH_DISTANCE_KM = 400          # km For gap bridging (MD spped 15–25 km/h, 24 hours, the system can easily travel 23x15=360 km.)
 MERGE_DISTANCE_KM = 225           # km For simultaneous systems, distance to consider two detections as same MD
 BUFFER = 5.0                      # degrees
 

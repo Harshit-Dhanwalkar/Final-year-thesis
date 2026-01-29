@@ -1,3 +1,5 @@
+# TODO: add TP-HF corrleation plot (done TP-HF lag correaltion)
+
 import os
 import numpy as np
 import pandas as pd
@@ -730,7 +732,7 @@ def plot_swvl1_hf_correlation(swvl1, latent_hf, sensible_hf, valid_times, landfa
         x_line = np.linspace(swvl1[valid_mask].min(), swvl1[valid_mask].max(), 100)
         ax.plot(x_line, p(x_line), 'r--', linewidth=2, alpha=0.7, label=f'Slope = {slope_latent:.3f}')
         # slope annotation to the plot
-        ax.annotate(f'Slope: {slope_latent:.3f}', xy=(0.05, 0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='red', bbox=common_bbox, verticalalignment='top')
+        # ax.annotate(f'Slope: {slope_latent:.3f}', xy=(0.05, 0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='red', bbox=common_bbox, verticalalignment='top')
     ax.set_xlabel('Soil Water Volumatric Level 1 (m³/m³)', fontsize=10, fontweight='bold')
     ax.set_ylabel('Latent Heat Flux (W/m²)', fontsize=10, fontweight='bold')
     ax.set_title(f'SWVL1 ↔ Latent HF\nr={r_latent:.3f}, p={p_latent:.4f}', fontsize=11, fontweight='bold')
@@ -748,7 +750,7 @@ def plot_swvl1_hf_correlation(swvl1, latent_hf, sensible_hf, valid_times, landfa
         x_line = np.linspace(swvl1[valid_mask].min(), swvl1[valid_mask].max(), 100)
         ax.plot(x_line, p(x_line), 'r--', linewidth=2, alpha=0.7, label=f'Slope = {slope_sensible:.3f}')
         # slope annotation to the plot
-        ax.annotate(f'Slope: {slope_sensible:.3f}', xy=(0.05, 0.05), xycoords='axes fraction', fontsize=10, fontweight='bold', color='red', bbox=common_bbox,verticalalignment='bottom')
+        # ax.annotate(f'Slope: {slope_sensible:.3f}', xy=(0.05, 0.05), xycoords='axes fraction', fontsize=10, fontweight='bold', color='red', bbox=common_bbox,verticalalignment='bottom')
         ax.set_xlabel('Soil Water Volumatric Level 1 (m³/m³)', fontsize=10, fontweight='bold')
     ax.set_ylabel('Sensible Heat Flux (W/m²)', fontsize=10, fontweight='bold')
     ax.set_title(f'SWVL1 ↔ Sensible HF\nr={r_sensible:.3f}, p={p_sensible:.4f}', fontsize=11, fontweight='bold')
@@ -766,7 +768,7 @@ def plot_swvl1_hf_correlation(swvl1, latent_hf, sensible_hf, valid_times, landfa
         x_line = np.linspace(swvl1[valid_mask].min(), swvl1[valid_mask].max(), 100)
         ax.plot(x_line, p(x_line), 'r--', linewidth=2, alpha=0.7, label=f'Slope = {slope_total:.3f}')
         # slope annotation to the plot
-        ax.annotate(f'Slope: {slope_total:.3f}', xy=(0.05, 0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='red', bbox=common_bbox, verticalalignment='top')
+        # ax.annotate(f'Slope: {slope_total:.3f}', xy=(0.05, 0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='red', bbox=common_bbox, verticalalignment='top')
     ax.set_xlabel('Soil Water Volumatric Level 1 (m³/m³)', fontsize=10, fontweight='bold')
     ax.set_ylabel('Total Heat Flux (W/m²)', fontsize=10, fontweight='bold')
     ax.set_title(f'SWVL1 ↔ Total HF\nr={r_total:.3f}, p={p_total:.4f}', fontsize=11, fontweight='bold')
@@ -837,7 +839,7 @@ def plot_tp_hf_correlation(tp, latent_hf, sensible_hf, valid_times, landfall_ind
         x_line = np.linspace(tp[valid_mask].min(), tp[valid_mask].max(), 100)
         ax.plot(x_line, p(x_line), 'r--', linewidth=2, alpha=0.7, label=f'Slope = {slope_latent:.3f}')
         # slope annotation to the plot
-        ax.annotate(f'Slope: {slope_latent:.3f}', xy=(0.05, 0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='red', bbox=common_bbox, verticalalignment='top')
+        # ax.annotate(f'Slope: {slope_latent:.3f}', xy=(0.05, 0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='red', bbox=common_bbox, verticalalignment='top')
     ax.set_xlabel('Totlal Precipitation (mm/hr)', fontsize=10, fontweight='bold')
     ax.set_ylabel('Latent Heat Flux (W/m²)', fontsize=10, fontweight='bold')
     ax.set_title(f'TP ↔ Latent HF\nr={r_latent:.3f}, p={p_latent:.4f}', fontsize=11, fontweight='bold')
@@ -855,7 +857,7 @@ def plot_tp_hf_correlation(tp, latent_hf, sensible_hf, valid_times, landfall_ind
         x_line = np.linspace(tp[valid_mask].min(), tp[valid_mask].max(), 100)
         ax.plot(x_line, p(x_line), 'r--', linewidth=2, alpha=0.7, label=f'Slope = {slope_sensible:.3f}')
         # slope annotation to the plot
-        ax.annotate(f'Slope: {slope_sensible:.3f}', xy=(0.05, 0.05), xycoords='axes fraction', fontsize=10, fontweight='bold', color='red', bbox=common_bbox,verticalalignment='bottom')
+        # ax.annotate(f'Slope: {slope_sensible:.3f}', xy=(0.05, 0.05), xycoords='axes fraction', fontsize=10, fontweight='bold', color='red', bbox=common_bbox,verticalalignment='bottom')
         ax.set_xlabel('Totla precipitation (m/hr)', fontsize=10, fontweight='bold')
     ax.set_ylabel('Sensible Heat Flux (W/m²)', fontsize=10, fontweight='bold')
     ax.set_title(f'TP ↔ Sensible HF\nr={r_sensible:.3f}, p={p_sensible:.4f}', fontsize=11, fontweight='bold')
@@ -872,8 +874,8 @@ def plot_tp_hf_correlation(tp, latent_hf, sensible_hf, valid_times, landfall_ind
         p = np.poly1d(z)
         x_line = np.linspace(tp[valid_mask].min(), tp[valid_mask].max(), 100)
         ax.plot(x_line, p(x_line), 'r--', linewidth=2, alpha=0.7, label=f'Slope = {slope_total:.3f}')
-        # Add slope annotation to the plot
-        ax.annotate(f'Slope: {slope_total:.3f}', xy=(0.05, 0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='red', bbox=common_bbox, verticalalignment='top')
+        # slope annotation to the plot
+        # ax.annotate(f'Slope: {slope_total:.3f}', xy=(0.05, 0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='red', bbox=common_bbox, verticalalignment='top')
     ax.set_xlabel('Totla precipitation (m/hr)', fontsize=10, fontweight='bold')
     ax.set_ylabel('Total Heat Flux (W/m²)', fontsize=10, fontweight='bold')
     ax.set_title(f'SWVL1 ↔ Total HF\nr={r_total:.3f}, p={p_total:.4f}', fontsize=11, fontweight='bold')

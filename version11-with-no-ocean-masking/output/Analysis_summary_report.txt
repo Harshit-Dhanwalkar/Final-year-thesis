@@ -1,39 +1,39 @@
 Monsoon depression analysis - summary
 1. Track statistics
-   Total MDs detected:                              7
-   Short-lived MDs (< 96h):                         3 (42.9%)
-   Long-lived MDs (≥ 96h):                          4 (57.1%)
-   Mean duration (all):                             90.0 ± 28.0 hours
+   Total MDs detected:                              6
+   Short-lived MDs (< 96h):                         2 (33.3%)
+   Long-lived MDs (≥ 96h):                          4 (66.7%)
+   Mean duration (all):                             107.3 ± 35.3 hours
 
 2. Precipitation - soil moisture correlation
-   Tracks analyzed:                                 7
-   Mean correlation (TP vs SM):                     0.226
-   Std Dev:                                         0.563
-   Positive correlations:                           4/7
-   Significant (p < 0.05):                          6/7
+   Tracks analyzed:                                 6
+   Mean correlation (TP vs SM):                     0.125
+   Std Dev:                                         0.565
+   Positive correlations:                           3/6
+   Significant (p < 0.05):                          6/6
 
 3. Surface heat flux analysis
-   Tracks with flux data:                           7
-   Mean total heat flux:                            -79.6 ± 42.9 W/m²
-   Mean latent heat flux:                           -83.0 W/m²
-   Mean sensible heat flux:                         3.3 W/m²
+   Tracks with flux data:                           6
+   Mean total heat flux:                            -80.8 ± 40.1 W/m²
+   Mean latent heat flux:                           -82.9 W/m²
+   Mean sensible heat flux:                         2.1 W/m²
 
 4. Landfall flux transitions
-   Tracks with landfall data:                       14
+   Tracks with landfall data:                       12
    Mean before landfall:                            -142.1 W/m²
-   Mean after landfall:                             -80.5 W/m²
-   Mean change (ocean→land):                        +61.6 W/m²
+   Mean after landfall:                             -79.7 W/m²
+   Mean change (ocean→land):                        +62.4 W/m²
 
 5. Soil moisture analysis
-   Tracks analyzed:                                 7
-   Mean soil moisture:                              0.302 m³/m³
-   Mean precipitation:                              1.55 mm/hr
+   Tracks analyzed:                                 6
+   Mean soil moisture:                              0.306 m³/m³
+   Mean precipitation:                              1.39 mm/hr
 
 6. Soil Moisture Memory Analysis
-   Tracks analyzed:                                 7
-   Mean memory index (24h lag):                     -0.007
-   Std Dev:                                         0.197
-   Range:                                           -0.197 - 0.321
-   Tracks with strong memory (>0.5):                0/7 (0.0%)
+   Tracks analyzed:                                 6
+   Mean memory index (24h lag):                     0.088
+   Std Dev:                                         0.277
+   Range:                                           -0.197 - 0.525
+   Tracks with strong memory (>0.5):                1/6 (16.7%)
 
 5.ASM analysis

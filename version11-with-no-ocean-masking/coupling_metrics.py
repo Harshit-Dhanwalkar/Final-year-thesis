@@ -1,3 +1,4 @@
+# FIX: compling matrix summary report csv end before it's completion
 """
 1. Feedback Strength Index (FSI): Integrates TP-SWVL1 correlation with soil capacity
 2. Diurnal Sensible Heat Flux Amplitude: Quantifies land surface diurnal heating
