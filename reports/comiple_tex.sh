@@ -10,8 +10,13 @@ CLEANUP=true
 DRY_RUN=false
 
 # List of auxiliary extensions to move to temp directory
-EXTS=("aux" "fdb_latexmk" "fls" "log" "nav" "out" "snm" "synctex.gz" "toc" "bcf" "bbl" "blg" "run.xml")
-# EXTS=("aux" "fdb_latexmk" "fls" "log" "nav" "out" "snm" "synctex.gz" "toc" "bcf" "run.xml")
+EXTS=(
+    "aux" "fdb_latexmk" "fls" "log" "nav" "out" "snm" "synctex.gz"
+    "toc" "lof" "lot" "lol" "bcf" "bbl" "blg" "run.xml"
+    "xdv" "dvi" "ps" "bcf" "mtc" "mtc0" "maf"
+    "idx" "ilg" "ind" "acn" "acr" "alg" "glg" "glo" "gls" 
+    "ist" "slg" "syg" "syi" "synctex"
+)
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -24,6 +29,19 @@ log_info() { echo -e "${BLUE}[INFO]   ${NC} $1"; }
 log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
 log_warn() { echo -e "${YELLOW}[WARN]   ${NC} $1"; }
 log_error() { echo -e "${RED}[ERROR]  ${NC} $1"; }
+log_debug() { [ "$VERBOSE" = true ] && echo -e "${YELLOW}[DEBUG]  ${NC} $1"; }
+
+debug_list_files() {
+    local dir=$1
+    local base=$2
+    log_debug "Checking files for: $dir/$base"
+    for ext in "${EXTS[@]}"; do
+        local aux_file="$dir/$base.$ext"
+        if [ -f "$aux_file" ]; then
+            log_debug "  Found: $base.$ext"
+        fi
+    done
+}
 
 # Usage Information
 usage() {
@@ -96,31 +114,41 @@ cleanup_aux() {
     local moved_count=0
 
     if [ "$CLEANUP" = false ]; then
+        log_debug "Cleanup disabled for $base"
         return
     fi
+
+    log_debug "Starting cleanup for: $base"
+    debug_list_files "$dir" "$base"
+
+    if [ "$DRY_RUN" = false ]; then
+        mkdir -p "$TEMP_DIR"
+    fi
+
     for ext in "${EXTS[@]}"; do
         local aux_file="$dir/$base.$ext"
- 
+        local clean_dir=${dir#./}
+        local prefix=${clean_dir//\//_}
+
+        if [ -z "$prefix" ] || [ "$prefix" == "." ]; then
+            local dest_file="$TEMP_DIR/$base.$ext"
+        else
+            local dest_file="$TEMP_DIR/${prefix}_$base.$ext"
+        fi
+
         if [ -f "$aux_file" ]; then
-            local clean_dir=${dir#./}
-            local prefix=${clean_dir//\//_}
-            if [ -z "$prefix" ] || [ "$prefix" == "." ]; then
-                local dest_file="$TEMP_DIR/$base.$ext"
-            else
-                local dest_file="$TEMP_DIR/${prefix}_$base.$ext"
-            fi
             if [ "$DRY_RUN" = false ]; then
                 mv "$aux_file" "$dest_file"
                 moved_count=$((moved_count + 1))
-            fi
-            if [ "$VERBOSE" = true ]; then
-                log_info "Moved: $base.$ext -> $dest_file"
+                log_debug "  Moved: $base.$ext -> $dest_file"
+            else
+                log_debug "  [DRY RUN] Would move: $base.$ext -> $dest_file"
             fi
         fi
     done
 
     if [ "$DRY_RUN" = false ] && [ $moved_count -gt 0 ]; then
-        [ "$VERBOSE" = true ] && log_success "Moved $moved_count auxiliary files"
+        log_debug "  Total moved: $moved_count auxiliary files for $base"
     fi
 }
 
