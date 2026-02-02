@@ -1,14 +1,16 @@
 % TODO:
-% 0.1. Add marks at the location where the results answers 'Key question' (make href page number next to all question pointing to answer slide(s))
-% 0.2. Add captions to Figures
+% 0.1. Add track 1 on output (update md-detection-tracking.py)
+% 0.2. Add marks at the location where the results answers 'Key question' (make href page number next to all question pointing to answer slide(s))
+% 0.3. Add captions to Figures
+% 1. track 5 mechanisms [Slowdown period acts as "concentration zone" -> Accumulated rainfall over elevated terrain + high SM memory -> Vorticity recovers (IMD report, Sept 11) -> System re-energizes and continues inland -> Finally decays after 165 hours (resource exhaustion)
 % 1. Analyse heat flux plots as well
 % 2. ASM vs FSI scatter (r≈0 expected) [for Hypothesis 3]
 % 3. Land-origin ASM proxy: Pre-track SWVL1 mean [for Hypothesis 3]
 % 4. HWSD map Track 4/5 paths (sand->clay transition?). [for Hypothesis 3, 5]
 % 5. dSM/dTP sensitivity vs baseline SM [for hypothesis 4]
-% 6. Add Western Ghats aspect too, high elevation. clounds get pushed up, reduces TP and thus soil remain dry (explaining short  1 and 4 tracks)
+% 6. Add Eastern Ghats aspect too, high elevation. clounds get pushed up, reduces TP and thus soil remain dry (explaining short  1 and 4 tracks)
 %      - Tracks 1, 4 short-lived (70h) + weak soil memory (-0.061, 0.032) + weak TP-SWVL1 coupling
-%        Explained by: Steep Western Ghats terrain -> rapid runoff -> no infiltration -> broken feedback
+%        Explained by: Steep Eastern Ghats terrain -> rapid runoff -> no infiltration -> broken feedback
 %      - Tracks 2, 3, 5, 6 long-lived (105-167h) + strong soil memory (0.350-0.584) + positive coupling
 %        Reinforced: Plains with low elevation -> water retention -> sustained feedback
 %          +  Download elevation data (GEBCO or SRTM) => Extract elevation profiles along tracks
@@ -26,15 +28,19 @@
 %         - [ ] Compute mean elevation, max elevation, slope (°) for each track
 %         - [ ] Classify tracks: Plains/Foothills/Mountains
 %         - [ ] Compute HAND (Height Above Nearest Drainage) for runoff potential
-%         - [ ] Create 5-panel scatter plots (Duration vs. Elev, Slope, HAND, Soil Memory)
-%         - [ ] Quantify correlation: Duration vs. Mean Elevation (expect r < 1.8)
+%         - [ ] Create 4-panel scatter plots (Duration vs. Elev, Slope, HAND, Soil Memory)
+%         - [ ] Quantify correlation: Duration vs. Mean Elevation (expect r < -0.8)
 %         - [ ] Write mechanistic explanation (orographic precipitation -> runoff -> SM loss)
 %         - [ ] Revise H6 conclusion: "Soil type sets capacity, BUT elevation sets infiltration rates"
 %         - [ ] Add(ed), refine H7 hypothesis section
 %         - [ ] Add Houze, Tuttle, Kirshbaum citations
 %         - [ ] Update limitations: Resolution of DEM vs. track-scale heterogeneity
+%         - [ ] Add H7 hypothesis to refined hypotheses section
+%         - [ ] Write mechanistic explanation (orographic precipitation → runoff → SM loss)
+%         - [ ] Revise H5 conclusion: "Soil type sets capacity, BUT elevation sets infiltration rates"
+%         - [ ] Update limitations: Resolution of DEM vs. track-scale heterogeneity
 % 7. Add (H8) a topographic dimension to your existing framework.
-%      - TSI = Soil_Memory × Clay_Content × TP-SWVL1_Coupling
+%      - TSI = Soil_Memory x Clay_Content x TP-SWVL1_Coupling
 % 8. Map soil type along each track using a soil dataset (e.g., FAO Soil Grids) to confirm clay vs. sandy regions.
 %      - [x] https://soilgrids.org/ (web platform)
 %      - [x] https://isric.org/explore/soilgrids -> https://docs.isric.org/globaldata/soilgrids/SoilGrids_faqs_02.html (python option git repo - git@git.wur.nl:isric/soilgrids/soilgrids.notebooks.git)
@@ -77,7 +83,7 @@
 % TODO:  Multi-year test (2022-2025), currently one season, Sample Size: 6 tracks (1 season). Statistical power low.
 % ISSUE: Resolution: 28km smooths soil heterogeneity.
 % ISSUE: SWVL1 Bias: ERA5 coastal underestimation. -> Literature [Comprehensive evaluation of satellite-based and reanalysis soil moisture products using in situ observations over China](https://hess.copernicus.org/articles/25/4209/2021/)
-% TODO:  Orography effect -> Elevation > 500m modulation?
+% TODO:  Orography effect -> Elevation > 900m modulation?
 % TODO:  Runoff partition -> SM increase = precip - runoff - ET
 % TODO:  Nonlinear fits (GAMs) -> Saturation effects
 % TODO:  FSI regression -> Predict duration (R-sqaured target > 0.7)
@@ -136,7 +142,7 @@
 %         * Maintain positive coupling with pre-existing soil moisture
 % H5: Soil Type Sets the Stage
 %     Clay soils enhance water retention, enabling longer TP-SWVL1 feedback loops (positive correlation). Sandy soils promote runoff, breaking the feedback loop or creating negative correlations.
-%     Evidence: Tracks 2,3,6 (IndoGangetic clay plains) show strong positive correlation and long duration. Tracks 1,4 (coastal sandy) show weak or negative correlation and shorter duration.
+%     Evidence: Tracks 2,3,6 (Indo-Gangetic clay plains) show strong positive correlation and long duration. Tracks 1,4 (coastal sandy) show weak or negative correlation and shorter duration.
 %    # Add to pipeline # HWSD integration
 %            import xarray as xr
 %            soil = xr.open_dataset('HWSD_India.nc')
@@ -169,8 +175,8 @@
 %         Research Note: Reinforces the pattern that central Indian tracks (Tracks 2, 5, 6) exhibit consistent feedback loops, contributing to their classification as "Deep" systems by the IMD.
 
 
-\documentclass[8pt, aspectratio=169]{beamer}
-% \documentclass[8pt, draft]{beamer}
+% \documentclass[8pt, aspectratio=169]{beamer}
+\documentclass[8pt, aspectratio=169, draft]{beamer}
 
 \usetheme{boxes}
 \usecolortheme{whale}
@@ -212,20 +218,38 @@
     bookmarksnumbered=true,
     bookmarksopenlevel=3
 }
-\usepackage[style=authoryear, backend=biber, language=english]{biblatex}
+\usepackage[
+    style=authoryear,
+    backend=biber,
+    language=english,
+    dashed=false
+]{biblatex}
+\AtBeginBibliography{\footnotesize}
 \addbibresource{references.bib}
 \setbeamertemplate{bibliography entry title}{}
 \setbeamertemplate{bibliography entry location}{}
 \setbeamertemplate{bibliography entry note}{}
-% FIX: this font size change is not working
-% \setbeamerfont{bibliography item}{size=\tiny}
-% \setbeamerfont{bibliography entry author}{size=\tiny}
-% \setbeamerfont{bibliography entry title}{size=\tiny}
-% \setbeamerfont{bibliography entry location}{size=\tiny}
-% \setbeamerfont{bibliography entry note}{size=\tiny}
+\setbeamercolor{bibliography item}{fg=blue!80}
+\setbeamercolor{bibliography entry author}{fg=black}
+\setbeamercolor{bibliography entry title}{fg=black}
 
-\setbeamercolor{bibliography item}{fg=blue!90}
-\setbeamercolor{footnote mark}{fg=blue!90}
+% icons
+% \setbeamertemplate{bibliography item}[text]
+\setbeamertemplate{bibliography item}[triangle]
+% \setbeamertemplate{bibliography item}{}
+
+\setbeamercolor{cite}{fg=red!10!black}
+\DeclareCiteCommand{\cite}[\mkbibbrackets]
+  {\usebibmacro{prenote}}%
+  {\usebibmacro{citeindex}%
+    \printtext[bibhyperref]{\tiny \textbf{\printnames{labelname}, \printfield{year}}}}%
+  {\multicitedelim}%
+  {\usebibmacro{postnote}}%
+
+\ExecuteBibliographyOptions{dashed=false}
+
+\setbeamercolor{bibliography item}{fg=black!80}
+\setbeamercolor{footnote mark}{fg=blue!80}
 
 \definecolor{darkgreen}{RGB}{0,100,0}
 \definecolor{darkred}{RGB}{139,0,0}
@@ -302,7 +326,7 @@
             % - [x] \item Diurnal Wave Propagation : Why do Hovm\"oller waves/oscillatory patterns?% Matching MD translation speed over heterogeneous land?
             % - [x] \item \textbf{Brown Ocean Mechanism :} How does the land surface sustain Monsoon Depressions through soil moisture-heat flux feedback loops, and what determines the efficiency of this coupling?
                 \item \textbf{Brown Ocean Threshold :} What specific soil moisture levels and soil types create "Brown Ocean" conditions that sustain MDs inland?
-            % - [x] \item \textbf{Soil Type Control :} How do different soil textures (clay in IndoGangetic plain region vs. sandy in coastal) modulate TP–SWVL1 feedback strength and MD longevity over land?
+            % - [x] \item \textbf{Soil Type Control :} How do different soil textures (clay in Indo-Gangetic plain region vs. sandy in coastal) modulate TP–SWVL1 feedback strength and MD longevity over land?
                   % \item \textbf{Soil Type Modulation :} What is the critical clay content percentage that distinguishes sustaining vs. decaying MD trajectories?
                   % \item \textbf{Diurnal Pump Mechanism :} How does the diurnal SHF amplitude correlate with MD intensity maintenance over different soil types?
                   % \item \textbf{Antecedent Moisture Role :} What is the minimum antecedent soil moisture (ASM$_{24h}$) required for MD survival given specific soil textures?
@@ -313,9 +337,9 @@
             \item \textbf{Energy Budget Transition :} What is the exact heat flux threshold change at landfall that separates surviving vs. decaying MDs?
             \item \textbf{Landfall Transition :} How does the surface energy budget shift during ocean-to-land transition, and why do some MDs survive this transition while others decay rapidly?
             \item Soil Memory Paradox : Why do high-SM tracks exhibit negative ACF24h despite wet conditions? (Capacity vs persistence) % H3; Answer: drainage, e.g. Track 2
-            \item FSI Nonlinearity : Does FSI saturate above SWVL1 = $0.4 m^3/m^3$ (plateau effect)? How does IndoGangetic plains (clay soil type) modulate? % H4 and H5
+            \item FSI Nonlinearity : Does FSI saturate above SWVL1 = $0.4 m^3/m^3$ (plateau effect)? How does Indo-Gangetic plains (clay soil type) modulate? % H4 and H5
             % \item Predictive Framework : Can $FSI (>0.4)$ + $memory (>0.35) $+ $clay (>30\%$) forecast MD inland duration (target $R-sqaured>0.75$)? Test multi-year.
-            % \item Orography Modulation: How does terrain slope (>500m) alter FSI vs flat IndoGangetic plains? TODO: SRTM data
+            % \item Orography Modulation: How does terrain slope (>900m) alter FSI vs flat Indo-Gangetic plains? TODO: SRTM data
             % \item \textbf{Track Classification :} Based on coupling characteristics, develop a predictive framework for MD behavior post-landfall?
             % TODO: My analysis anaswers following : need to be formulate questions
             % Do stronger MDs generate more effective feedback loops?
@@ -364,7 +388,7 @@
 %
 %     \vspace{0.3cm}
 %     \begin{block}{Brown Ocean Effect}
-%         Over certain land regions (especially IndoGangetic plains) :
+%         Over certain land regions (especially Indo-Gangetic plains) :
 %         \begin{itemize}
 %             \item High soil moisture + clay soil = mimics ocean's latent heat release
 %             \item Soil acts as secondary energy source after ocean source disappears at landfall
@@ -395,7 +419,7 @@
 
 \subsection{Dataset Information}
 \begin{frame}{Dataset Information}
-    \begin{block}{ERA5 Single Level Reanalysis Dataser(June--September 2024) :}
+    \begin{block}{ERA5 Single Level Reanalysis Dataset (June--September 2024) \cite{hersbach2020era5} :}
         \footnotesize
         % FIX: the spatial (31 km globally) and temporal (hourly) resolutions of ERA5
         \begin{itemize}
@@ -416,8 +440,8 @@
                 \item 10-meter V wind component (\texttt{V10})
                 \item Total precipitation (\texttt{TP})
                 \item Volumetric soil water layer 1 (\texttt{SWVL1})
-                \item Surface latent heat flux (\texttt{AVG\_SLHTF})
-                \item Surface sensible heat flux (\texttt{AVG\_ISHTF})
+                \item Mean surface latent heat flux (\texttt{AVG\_SLHF})
+                \item Mean surface sensible heat flux (\texttt{AVG\_ISHF})
                 \item 2-meter temperature (\texttt{T2M})
                 \item Soil temperature level 1 (\texttt{STL1})
             \end{itemize}
@@ -584,12 +608,12 @@
     \vspace{0.2cm}
     \begin{block}{Interpretation of the Plots}
         \begin{itemize}
-            \item \textbf{X-axis (\texttt{Lag}):} Time shift (\texttt{hours}) between the two variables.
-            \item \textbf{Y-axis (Correlation \texttt{r}):} Relationship strength (\texttt{-1.0} to \texttt{1.0}).
-            \item \textbf{Significance:} Indicated by \texttt{p-values < 0.05} based on effective degrees of freedom.
-            \item \textbf{The Infiltration Peak:} A clear peak at \texttt{+3} to \texttt{+6h} indicates efficient moisture capture. A flat or zero-lag line suggests \textbf{Rapid Runoff} without storage.
-            \item \textbf{The Saturation Plateau:} If correlations collapse while SM remains high ($>0.40$), the soil has reached capacity. Additional \texttt{TP} no longer drives \texttt{SWVL1} but triggers \textbf{Surface Runoff}.
-            \item \textbf{The Memory Decay:} A broad, slowly decaying correlation curve indicates high \textbf{Soil Memory} (Persistence), vital for the "Brown Ocean" effect.
+            \item \textbf{X-axis (\texttt{Lag}) :} Time shift (\texttt{hours}) between the two variables.
+            \item \textbf{Y-axis (Correlation \texttt{r}) :} Relationship strength (\texttt{-1.0} to \texttt{1.0}).
+            \item \textbf{Significance :} Indicated by \texttt{p-values < 0.05} based on effective degrees of freedom.
+            \item \textbf{The Infiltration Peak :} A clear peak at \texttt{+3} to \texttt{+6h} indicates efficient moisture capture. A flat or zero-lag line suggests \textbf{Rapid Runoff} without storage.
+            \item \textbf{The Saturation Plateau :} If correlations collapse while SM remains high ($>0.40$), the soil has reached capacity. Additional \texttt{TP} no longer drives \texttt{SWVL1} but triggers \textbf{Surface Runoff}.
+            \item \textbf{The Memory (\texttt{ACF}) Decay :} A broad, slowly decaying correlation curve indicates high \textbf{Soil Memory} (Persistence), vital for the "Brown Ocean" effect. \cite{seneviratne2010investigating}
         \end{itemize}
     \end{block}
 
@@ -690,8 +714,8 @@
     \end{block}
 \end{frame}
 
-\subsubsection{Diurnal \texttt{SHF} Amplitude}
-\begin{frame}[label=diurnal]{Coupling Metrics [3/4]: Diurnal \texttt{SHF} Amplitude}
+\subsubsection{Diurnal \texttt{SHF} Amplitude ($A_{\text{\texttt{SHF}}}$)}
+\begin{frame}[label=diurnal]{Coupling Metrics [3/4]: Diurnal \texttt{SHF} Amplitude ($A_{\text{\texttt{SHF}}}$)}
     \footnotesize
     \begin{block}{3. Diurnal Sensible Heat Flux Amplitude ($A_{\text{\texttt{SHF}}}$)}
         \textbf{Mathematical Definition :}
@@ -751,23 +775,30 @@
         \textbf{Memory Index (\texttt{ACF}) :}
         \begin{equation}
             \text{\texttt{ACF}}(\text{\texttt{SWVL1}}, \text{lag}=\texttt{24h}) = \frac{\text{Cov}(\text{\texttt{SWVL1}}_t, \text{\texttt{SWVL1}}_{t+24})}{\sigma_{\text{\texttt{SWVL1}}}^2}
-        \end{equation}
-        \textbf{Lag Choice :} \texttt{24-hour} lag filters out the diurnal cycle (evapotranspiration vs. night recovery) to measure true multi-day persistence.
+        \end{equation} \cite{seneviratne2010investigating}
+
+
+        \textbf{Lag Choice :} \texttt{24-hour} lag filters out the diurnal cycle (evaporation + transpiration vs. night time recovery) to measure true multi-day persistence.
     \end{block}
 
     \vspace{0.2cm}
+    \footnotesize
     \textbf{Interpretation :}
         \begin{itemize}
             \item \textbf{High Memory ($> \texttt{0.35}$):} \texttt{SWVL1} today strongly predicts tomorrow.
-            \begin{itemize}
-                \item Soil holds water (e.g., clay-rich, high \texttt{Capacity Index}).
-                \item Enables sustained \texttt{TP-SWVL1} feedback loops.
-            \end{itemize}
+                \footnotesize
+                \begin{itemize}
+                    \item Soil holds water (e.g., clay-rich, high \texttt{Capacity Index}, 
+                    \tiny Only Clay has the capillary strength to hold moisture that long
+                    \footnotesize ).
+                    \item Enables sustained \texttt{TP-SWVL1} feedback loops.
+                \end{itemize}
             \item \textbf{Low/Negative Memory ($< \texttt{0.1}$):} \texttt{SWVL1} is uncorrelated with the next day.
-            \begin{itemize}
-                \item Soil drains quickly (e.g., sandy, low \texttt{Capacity Index}).
-                \item Moisture removed by rapid evaporation or drainage.
-            \end{itemize}
+                \footnotesize
+                \begin{itemize}
+                    \item Soil drains quickly (e.g., sandy, low \texttt{Capacity Index}).
+                    \item Moisture removed by rapid evaporation or drainage.
+                \end{itemize}
         \end{itemize}
 \end{frame}
 
@@ -810,33 +841,33 @@
 \subsection{\texttt{MODIS} Visualization}
 \begin{frame}{\texttt{MODIS} Visualization (\texttt{2000m} Scale)}
     \begin{center}
-    \footnotesize
-    \begin{block}{Data Acquisition \& GEE Implementation :}
-        \begin{itemize}
-            \item \textbf{Platform :} Cloud-based geospatial analysis performed via \href{https://earthengine.google.com/}{Google Earth Engine (GEE)}\footnotemark[6] using the \textbf{JavaScript API}.
-            \item \textbf{MODIS Dataset :} \texttt{MOD09GA.061} (Terra Surface Reflectance Daily \texttt{500m}).
-            \item \textbf{Spectral Visualization :} True Color Composite using:
+        \footnotesize
+        \begin{block}{Data Acquisition \& GEE Implementation :}
             \begin{itemize}
-                \footnotesize
-                \item \textbf{Red:} \texttt{sur\_refl\_b01}, \textbf{Green:} \texttt{sur\_refl\_b04}, \textbf{Blue:} \texttt{sur\_refl\_b03}
-                \item Gamma: \texttt{1.3}, Range: \texttt{[0, 10000]}
+                \item \textbf{Platform :} Cloud-based geospatial analysis performed via \href{https://earthengine.google.com/}{Google Earth Engine (GEE)}\footnotemark[6] using the \textbf{JavaScript API}.
+                \item \textbf{MODIS Dataset :} \texttt{MOD09GA.061} (Terra Surface Reflectance Daily \texttt{500m}).
+                \item \textbf{Spectral Visualization :} True Color Composite using:
+                \begin{itemize}
+                    \footnotesize
+                    \item \textbf{Red:} \texttt{sur\_refl\_b01}, \textbf{Green:} \texttt{sur\_refl\_b04}, \textbf{Blue:} \texttt{sur\_refl\_b03}
+                    \item Gamma: \texttt{1.3}, Range: \texttt{[0, 10000]}
+                \end{itemize}
+                \item \textbf{Temporal Processing :} Image collection filtered by \texttt{startDate} and \texttt{endDate} for each track; reduced using \texttt{.mean()} to create a cloud-persistent composite.
+                \item \textbf{Spatial Integration :} 
+                \begin{itemize}
+                    \footnotesize
+                    \item \textbf{Vector Overlay :} ERA5-derived \texttt{track\_id} coordinates imported as an \texttt{ee.FeatureCollection} (Asset-hosted)\footnotemark[7].
+                    \item \textbf{Geometry :} Points converted to \texttt{ee.Geometry.LineString} with a \texttt{2000m} buffer for visibility.
+                    \item \textbf{Scale \& Projection :} Exported at \texttt{2000m} resolution (EPSG:\texttt{4326}).
+                \end{itemize}
             \end{itemize}
-            \item \textbf{Temporal Processing :} Image collection filtered by \texttt{startDate} and \texttt{endDate} for each track; reduced using \texttt{.mean()} to create a cloud-persistent composite.
-            \item \textbf{Spatial Integration :} 
-            \begin{itemize}
-                \footnotesize
-                \item \textbf{Vector Overlay :} ERA5-derived \texttt{track\_id} coordinates imported as an \texttt{ee.FeatureCollection} (Asset-hosted)\footnotemark[7].
-                \item \textbf{Geometry :} Points converted to \texttt{ee.Geometry.LineString} with a \texttt{2000m} buffer for visibility.
-                \item \textbf{Scale \& Projection :} Exported at \texttt{2000m} resolution (EPSG:\texttt{4326}).
-            \end{itemize}
-        \end{itemize}
-    \end{block}
+        \end{block}
 
-    \vspace{0.2cm}
-    \begin{columns}[T]
-        \column{0.95\textwidth}
-            \tiny Note: The MODIS mean composite highlights the Central Dense Overcast (CDO). The color-coded tracks validate the spatial consistency between ERA5 low-pressure centers and real-world cloud mass.
-    \end{columns}
+        \vspace{0.2cm}
+        \begin{columns}[T]
+            \column{0.95\textwidth}
+                \tiny *Note: The MODIS mean composite highlights the Central Dense Overcast (CDO). The color-coded tracks validate the spatial consistency between ERA5 low-pressure centers and real-world cloud mass.
+        \end{columns}
     \end{center}
 
     \vspace{-0.6cm}
@@ -866,8 +897,8 @@
             \column{0.48\textwidth}
             \vspace{0.24cm}
             \centering
-            \includegraphics[width=1.08\linewidth]{images/IMD-report.png}
-            \footnotesize \textbf{Figure 2:} IMD Annual Monsoon 2024 2024\footnotemark[4]
+            \includegraphics[width=1.08\linewidth]{images/IMD-report-2024.png}
+            \footnotesize \textbf{Figure 2:} IMD Annual Monsoon report 2024 \footnotemark[4]
         \end{columns}
 
         \vspace{-0.6cm}
@@ -910,7 +941,7 @@
                 August    & 3                          \\
                 September & 2                          \\
                 \midrule
-                Total reported (D + DD)\footnotemark[2] & 6 \\
+                Total reported (D + DD)\footnotemark[5] & 6 \\
                 \bottomrule
             \end{tabular}
         \end{block}
@@ -952,6 +983,9 @@
         \footnotesize
         \textbf{Validation Result :} All match in monthly frequency and total count with just small temporal difference in start and end time for some tracks.
     \end{center}
+
+    \vfill
+    \footnotetext[5]{\tiny D $\rightarrow$ Depression and DD $\rightarrow$ Deep Depression}
 \end{frame}
 
 \begin{frame}{Overall Statistics \& Track Details}
@@ -966,7 +1000,7 @@
                 \toprule
                                   & \multicolumn{4}{c}{\textbf{Detection using ERA5 data}} & \multicolumn{2}{c}{\textbf{IMD Monsoon Report 2024}}                                                                                                                                                                   \\
                 \cmidrule(lr){2-5} \cmidrule(lr){6-7}
-                \textbf{Track ID} & \textbf{Origin}                                        & \textbf{Time (2024)}                                 & \textbf{Detected Duration} & \textbf{Category\footnotemark[5] \tiny{($\geq$96h (4 days))}} & \textbf{IMD reported time (2024)} & \textbf{IMD reported duration} \\
+                \textbf{Track ID} & \textbf{Origin}                                        & \textbf{Time (2024)}                                 & \textbf{Detected Duration} & \textbf{Category\footnotemark[6] \tiny{($\geq$96h (4 days))}} & \textbf{IMD reported time (2024)} & \textbf{IMD reported duration} \\
                 \midrule
                 1                 & Over Ocean                                             & 18/07 04:00 - 21/07 07:00                            & 75h ($\sim$ 3 days)        & Short-lived                                                   & 19/07 - 20/07                     & 3 days                         \\
                 2                 & Over Land                                              & 01/08 19:00 - 06/08 04:00                            & 106h ($\sim$ 4.5 days)     & Long-lived                                                    & 02/08 - 06/08                     & 4 days                         \\
@@ -981,7 +1015,7 @@
     \end{center}
 
     \vspace{-0.6cm}
-    \footnotetext[5]{\tiny Short or long lived MDs are Categorized based on their duration less or more than $96$ hours ($\sim 4$ days)}
+    \footnotetext[6]{\tiny Short or long lived MDs are Categorized based on their duration less or more than $96$ hours ($\sim 4$ days)}
 \end{frame}
 
 %%%%%%%%%%%%%%%% Track 1 %%%%%%%%%%%%%%
@@ -1032,7 +1066,7 @@
 %             \footnotesize
 %             \textbf{Statistical Summary:}
 %             \begin{itemize}
-%                 \item \textbf{Pearson r :} -0.2633 – Weak negative linear relationship between precipitation and soil moisture more rainfall leads lower soil moisture (why? 1. maybe because track is short-lived, 2. MD doesn't penetrate inland deep)
+%                 \item \textbf{Pearson r :} -0.2633 – Weak negative linear relationship between precipitation and soil moisture more rainfall leads lower soil moisture (why? 1. maybe because track is short-lived, 2. MD doesn't penetrate inland deep). \cite{kishtawal2013enhancement} 
 %                 \item \textbf{Spearman $\rho$ :} -0.2930 – slight negative monotonic trend suggests higher rain corresponds to lower simultaneous soil moisture.
 %                 \item \textbf{p-value :} $3.0054 \times 10^{-2}$ – Statistically significant ($p < 0.05$), though the correlation strength is low.
 %                 \item \textbf{Mean TP :} 0.49 $mm/hr$
@@ -1503,7 +1537,7 @@
 %             \footnotesize
 %             \textbf{Statistical Summary:}
 %             \begin{itemize}
-%                 \item \textbf{Pearson r :} -0.2783 – Weak negative linear relationship. Suggests rainfall and soil moisture doesn't response to each other immediately. (why? 1. maybe because track is short-lived, 2. MD doesn't penetrate inland deep)
+%                 \item \textbf{Pearson r :} -0.2783 – Weak negative linear relationship. Suggests rainfall and soil moisture doesn't response to each other immediately. (why? 1. maybe because track is short-lived, 2. MD doesn't penetrate inland deep) \cite{kishtawal2013enhancement}
 %                 \item \textbf{Spearman $\rho$ :} -0.0544 – Nearly zero monotonic relationship; no consistent rank relationship between precipitation and soil moisture.
 %                 \item \textbf{p-value :} $3.2817 \times 10^{-02}$ – %TODO: significant despite weak correlation, likely due to large sample size.
 %                 \item \textbf{Mean TP :} 0.38 $mm/hr$
@@ -1649,7 +1683,7 @@
 %         \vspace{-0.26cm}
 %         \tiny
 %         \begin{alertblock}{\tiny Discrepancy}
-%             The detected track extends further north-west, a period of weakened vorticity signal and reduction in MD centre transition speed (from 5 to 1 m/s) during the land phase on \textbf{September 10th}. Main reason could be MD encounter elevated region of \textbf{Western Ghats}.
+%             The detected track extends further north-west, a period of weakened vorticity signal and reduction in MD centre transition speed (from 5 to 1 m/s) during the land phase on \textbf{September 10th}. Main reason could be MD encounter elevated region of \textbf{Eastern Ghats}.
 %             RSMC New Delhi ignores/truncate the track after this weakening while IMD reported increase in vorticity after some period (September 11th) thus considering longer inland MD track (till Sept 13th). (I will be taking IMD report as preferred source.)
 %         \end{alertblock}
 %     \end{center}
@@ -2006,7 +2040,7 @@
 
     % TODO: udpate citation
     \begin{block}{The \texttt{LHF} Phase Shift Mechanism}
-        Over land, \texttt{LHF} (evaporation) timing is regulated by \textbf{Vapor Pressure Deficit (VPD)} and \textbf{Soil Moisture (\texttt{SWVL1})}. The maintained high evaporation rates outside peak heating hours act as a primary signature of the \textbf{Brown Ocean Effect} \cite{nair2011influence}.
+        Over land, \texttt{LHF} (evaporation) timing is regulated by \textbf{Vapor Pressure Deficit (VPD)} and \textbf{Soil Moisture (\texttt{SWVL1})}. The maintained high evaporation rates outside peak heating hours act as a primary signature of the \textbf{Brown Ocean Effect}. \cite{nair2011influence}
     \end{block}
 
     \vfill
@@ -2036,11 +2070,11 @@
             \toprule
             \textbf{Property} & \textbf{Ocean Phase} & \textbf{Land Phase} \\
             \midrule
-            \textbf{SHF Amplitude} & Weak (\texttt{5--20 W/m$^2$}) & Strong (\texttt{40--100 W/m$^2$}) \\
+            \textbf{SHF Amplitude} & Weak (\texttt{5-20 W/m$^2$}) & Strong (\texttt{40-100 W/m$^2$}) \\
             \textbf{Surface Response} & Damped (High thermal inertia) & Rapid (Low thermal inertia) \\
             \textbf{Flux Uniformity} & High (Homogeneous surface) & Low (Heterogeneous soil/terrain) \\
-            \textbf{Solar Lag} & \texttt{3--8 hours} (Slow) & \texttt{1--4 hours} (Immediate) \\
-            \textbf{Energy Source} & Deep mixed layer (\texttt{20--100 m}) & Top soil layer (\texttt{0--10 cm}) \\
+            \textbf{Solar Lag} & \texttt{3-8 hours} (Slow) & \texttt{1-4 hours} (Immediate) \\
+            \textbf{Energy Source} & Deep mixed layer (\texttt{20-100 m}) & Top soil layer (\texttt{0-7 cm}) \\
             \bottomrule
         \end{tabular}
     \end{center}
@@ -2068,15 +2102,18 @@
     \framesubtitle{How diurnal oscillations translate to inland maintenance}
 
     \footnotesize
-    \begin{block}{The Diurnal "Recharge" Cycle}
-        Over land, the \texttt{MD} survives by alternating its energy source:
+    \begin{block}{The Diurnal Recharge Cycle}
+        Over land, the \texttt{MD} survives by alternating its energy source :
         \begin{enumerate}
+            \footnotesize
             \item \textbf{Daytime (\texttt{SHF} peak) :} Warms the boundary layer, lowering surface pressure and maintaining low-level convergence.
+                \footnotesize
                 \begin{itemize}
                     \tiny
                     \item Daytime SHF $\rightarrow$ warms boundary layer $\rightarrow$ helps maintain low-level convergence
                 \end{itemize}
-            \item \textbf{Nighttime (\texttt{LHF} shift) :} Prevents the "drying out" of the storm core by tapping into soil moisture reservoirs (\texttt{SWVL1}).
+            \footnotesize
+            \item \textbf{Nighttime (\texttt{LHF} shift) :} Prevents the drying out of the storm core by using soil moisture reservoirs(Moist soil) (\texttt{SWVL1}).
                 \begin{itemize}
                     \tiny
                     \item Nighttime LHF $\rightarrow$ land supplies moisture to atmosphere in order to sustain convection overnight
@@ -2127,12 +2164,12 @@
                 \toprule
                 \textbf{Track} & \textbf{Memory Index (\texttt{ACF-24h})} & \textbf{Mean \texttt{SWVL1}} & \textbf{Category}    & \textbf{Duration} & \textbf{Inference}       \\
                 \midrule
-                1              & $-0.092$              & 0.140               & Negative             & 75h               & Oscillatory, no memory   \\
-                2              & $-0.061$              & 0.399               & Negative             & 105h              & Draining despite high SM \\
-                3              & $+0.321$              & 0.421               & \textbf{Strong}      & 124h              & Moderate persistence     \\
-                4              & $-0.197$              & 0.178               & Negative             & 65h               & Weak retention           \\
-                5              & $+0.525$              & 0.270               & \textbf{Very Strong} & 163h              & Excellent persistence    \\
-                6              & $+0.034$              & 0.428               & Weak                 & 112h              & Minimal memory           \\
+                1              & \texttt{-0.092}              & \texttt{0.140}               & Negative             & \texttt{75h}               & Oscillatory, no memory   \\
+                2              & \texttt{-0.061}              & \texttt{0.399}               & Negative             & \texttt{105h}              & Draining despite high SM \\
+                3              & \texttt{+0.321}              & \texttt{0.421}               & \textbf{Strong}      & \texttt{124h}              & Moderate persistence     \\
+                4              & \texttt{-0.197}              & \texttt{0.178}               & Negative             & \texttt{65h}               & Weak retention           \\
+                5              & \texttt{+0.525}              & \texttt{0.270}               & \textbf{Very Strong} & \texttt{163h}              & Excellent persistence    \\
+                6              & \texttt{+0.034}              & \texttt{0.428}               & Weak                 & \texttt{112h}              & Minimal memory           \\
                 \bottomrule
             \end{tabular}
         \end{table}
@@ -2201,7 +2238,7 @@
     \begin{itemize}
         \item \textbf{Energy Retention :} \texttt{LHF} remains high post-landfall (\texttt{81--97 W/m$^2$}), retaining $>\texttt{60\%}$ of oceanic moisture supply.
         \item \textbf{Brown Ocean Signature :} Sustained \texttt{LHF} over land indicates that saturated soil is replacing the ocean as the primary moisture source.
-        \item \textbf{\texttt{SHF} Reversal :} In Track 5, \texttt{SHF} turns positive (\texttt{+4.3}), showing the land surface heating the atmosphere, typical of a daytime land-coupled MD, suggesting marks the transition to land-based thermal forcing.
+        \item \textbf{\texttt{SHF} Reversal :} In Track 5, \texttt{SHF} turns positive (\texttt{+4.3 $W/m^2$}), showing the land surface heating the atmosphere, typical of a daytime land-coupled MD, suggesting marks the transition to land-based thermal forcing.
     \end{itemize}
 \end{frame}
 
@@ -2224,12 +2261,12 @@
             \toprule
             \textbf{Track} & \textbf{Peak Lag} & \textbf{Max |r|} & \textbf{Sign} & \textbf{Physical Interpretation} \\
             \midrule
-            1 & \texttt{+24 h} & \texttt{0.26} & Neg. & Diurnal antecedent moisture feedback cycle. \\
-            2 & \texttt{+17 h} & \texttt{0.57} & Pos. & Strongest land-driven recycling. \\
-            3 & \texttt{$\sim$0 h} & \texttt{0.84} & Pos. & Highest coupling efficiency (\texttt{15.35}). \\
-            4 & \texttt{-23 h} & \texttt{0.28} & Neg. & \texttt{TP} leads; Significant infiltration delay. \\
-            5 & \texttt{$\sim$0 h} & \texttt{0.44} & Pos. & Stable, simultaneous feedback loop. \\
-            6 & \texttt{+4 h} & \texttt{0.56} & Neg. & Convective triggering; moisture leads rain. \\
+            1 & \texttt{+24 h} & \texttt{0.26} & Negative & Diurnal antecedent moisture feedback cycle. \\
+            2 & \texttt{+17 h} & \texttt{0.57} & Positive & Strongest land-driven recycling. \\
+            3 & \texttt{$\sim$0 h} & \texttt{0.84} & Positive & Highest coupling efficiency (\texttt{15.35}). \\
+            4 & \texttt{-23 h} & \texttt{0.28} & Negative & \texttt{TP} leads; Significant infiltration delay. \\
+            5 & \texttt{$\sim$0 h} & \texttt{0.44} & Positive & Stable, simultaneous feedback loop. \\
+            6 & \texttt{+4 h} & \texttt{0.56} & Negative & Convective triggering; moisture leads rain. \\
             \bottomrule
         \end{tabular}
     \end{center}
@@ -2248,70 +2285,67 @@
     \end{block}
 \end{frame}
 
-\subsection{Diurnal Sensible Heat Flux}
-% values from coupling_metrics_diurnal_amplitude.csv and coupling_metrics_efficiency.csv
+\subsection{Diurnal \texttt{SHF}}
 \begin{frame}{Diurnal Sensible Heat Flux : Land Amplifies Surface Heating}
     \begin{columns}[T]
-        \column{0.32\textwidth}
-        \footnotesize
-        \textbf{Amplitude : }
-        \begin{itemize}
-            \item \textbf{Land phase :} $56.26 W/m^2$ (mean)
-            \item \textbf{Ocean phase :} $13.54 W/m^2$ (mean)
-        \end{itemize}
+        \column{0.30\textwidth}
+            \footnotesize
+            \textbf{Amplitude :}
+            \begin{itemize}
+                \item \textbf{Land phase :} \texttt{56.26 $W/m^2$}
+                \item \textbf{Ocean phase :} \texttt{13.54 $W/m^2$}
+            \end{itemize}
 
-        \column{0.32\textwidth}
-        \footnotesize
-        \textbf{Land-phase Amplitudes (for tracks with landfall) :}
-        \begin{itemize}
-            \item Track 3 : $62.3 W/m^2$
-            \item Track 4 : $59.6 W/m^2$
-            \item Track 5 : $63.7 W/m^2$
-        \end{itemize}
+        \column{0.36\textwidth}
+            \footnotesize
+            \textbf{Land-phase Amplitudes :}
+            \begin{itemize}
+                \item Track 3 : \texttt{62.3 $W/m^2$}
+                \item Track 4 : \texttt{59.6 $W/m^2$}
+                \item Track 5 : \texttt{63.7 $W/m^2$}
+            \end{itemize}
 
-        \column{0.32\textwidth}
-        \footnotesize
-        \textbf{Ocean-to-land transition :}
-        \begin{itemize}
-            \item Track 1 : $+44.1 W/m^2$
-            \item Track 4 : $+46.6 W/m^2$
-            \item Track 5 : $+47.2 W/m^2$
-        \end{itemize}
+        \column{0.31\textwidth}
+            \footnotesize
+            \textbf{Transition Surge :}
+            \begin{itemize}
+                \item Track 1 : \texttt{+44.1 $W/m^2$}
+                \item Track 4 : \texttt{+46.6 $W/m^2$}
+                \item Track 5 : \texttt{+47.2 $W/m^2$}
+            \end{itemize}
     \end{columns}
 
-    \vspace{0.2cm}
+    \vspace{0.4cm}
     \footnotesize
-    \begin{block}{Physical Meaning}
-        \begin{itemize}
-            \item Larger amplitude = stronger daytime sensible heat flux driving convection.
-            \item Land surfaces create strong diurnal heating cycles due to low thermal inertia.
-            \item Ocean thermal inertia damps diurnal variations. ($13.54$ vs $56.26 W/m^2$).
-        \end{itemize}
-    \end{block}
+    \textbf{Interactions :}
+    \begin{itemize}
+        \item \textbf{Thermal Inertia :} Oceans damp diurnal cycles (\texttt{13.54 $W/m^2$}) while land's low thermal inertia drives massive daytime \texttt{SHF} spikes.
+        \item \textbf{Boundary Layer :} High \texttt{SHF} amplitudes post-landfall (\texttt{> 60 $W/m^2$}) indicate land surfaces actively forcing convection.
+    \end{itemize}
 \end{frame}
 
 \subsection{Soil Water Capacity}
 % values from coupling_metrics_FSI.csv and coupling_metrics_efficiency.csv
-\begin{frame}{Soil Water Capacity: Enabling but Not Guaranteeing Longevity}
-    \textbf{Moisture Capacity Index:} Normalized soil moisture (\texttt{0} = Dry, \texttt{1} = Saturated)
+\begin{frame}{Soil Water Capacity : Enabling but Not Guaranteeing Longevity}
+    \textbf{Moisture Capacity Index :} Normalized soil moisture (\texttt{0 = Dry}, \texttt{1 = Saturated})
 
     \vspace{0.2cm}
     \footnotesize
     \begin{columns}[T]
         \column{0.5\textwidth}
-        \textbf{Low to Moderate Capacity:}
+        \textbf{Low to Moderate Capacity :}
         \begin{itemize}
-            \item Track 1: \texttt{0.227} (Coastal/Sandy)
-            \item Track 4: \texttt{0.300} (Coastal/Sandy)
-            \item Track 5: \texttt{0.471} (Transition Zone)
+            \item Track 1 : \texttt{0.227} (Coastal/Sandy)
+            \item Track 4 : \texttt{0.300} (Coastal/Sandy)
+            \item Track 5 : \texttt{0.471} (Transition Zone)
         \end{itemize}
 
         \column{0.5\textwidth}
-        \textbf{High Capacity:}
+        \textbf{High Capacity :}
         \begin{itemize}
-            \item Track 2: \texttt{0.715} (Plains/Clay)
-            \item Track 3: \texttt{0.756} (Plains/Clay)
-            \item Track 6: \texttt{0.768} (Plains/Clay)
+            \item Track 2 : \texttt{0.715} (Plains/Clay)
+            \item Track 3 : \texttt{0.756} (Plains/Clay)
+            \item Track 6 : \texttt{0.768} (Plains/Clay)
         \end{itemize}
     \end{columns}
 
@@ -2371,18 +2405,18 @@
                \item \textbf{Positive Feedback (2, 3, 5):} Active soil moisture recharge cycles back to rainfall (\texttt{SM} $\rightarrow$ \texttt{Rainfall}).
                \item \textbf{Anomalous Persistence (Track 5):} Achieves \texttt{163h} duration despite "Moderate" FSI (\texttt{0.208}), suggesting atmospheric factors (e.g., strong mid-level vorticity) compensate for lower coupling.
 
-               \item \textbf{Negative Correlation tracks (1, 4, 6) :} Shows complex lag effects or instantaneous soil moisture drying/runoff during peak rain events. Rainfall $\rightarrow$ Soil moisture infiltration.
+               \item \textbf{Negative Correlation tracks (1, 4, 6) :} Shows complex lag effects or instantaneous soil moisture drying/runoff during peak rain events. Rainfall $\rightarrow$ Soil moisture infiltration. \cite{clapp1978empirical}
             \end{itemize}
         \end{block}
     \end{center}
 \end{frame}
 
-\subsection{Coupling Efficiency}
+\subsection{Coupling Efficiency \texttt{CE}}
 \begin{frame}{Defining Land-Atmosphere Coupling Efficiency [1/4]}
     \begin{block}{What is 'Coupling'? (Soil-Moisture Feedback)}
         \footnotesize
         \textit{Physical Mechanism: The "Brown Ocean"-like} \\
-        In this study, \textbf {Coupling} refers to the thermodynamic link between the \textbf{land surface} and the \textbf{centre/core/vortex} of MD structure :
+        In this study, \textbf{Coupling} refers to the thermodynamic link between the \textbf{land surface} and the \textbf{centre/core/vortex} of MD structure :
         \begin{itemize}
             \item \textbf{Flux Transfer :} Moist soil provides Latent Heat Flux (\texttt{LHF}), replacing the ocean's moisture supply.
             \item \textbf{Energy Pulse :} Daytime Sensible Heat Flux (\texttt{SHF}) creates the instability required to "lift" moisture into the core.
@@ -2391,17 +2425,19 @@
     \end{block}
 
     \vspace{0.2cm}
-    \textbf{Mathematical Formulation:}
+    \textbf{Mathematical Formulation :} \\
+    Feedback Strength Index (\texttt{FSI}) :
     \begin{equation}
         \text{\texttt{FSI}} = |r| \times \text{Capacity} \times \text{Significance}
     \end{equation}
+
+    and Coupling Efficiency (\texttt{CE}) :
     \begin{equation}
-        \text{\texttt{CE}} = \text{\texttt{FSI}} \times \text{\texttt{SHF}}_{amp} \times \text{Duration Factor}
+        \text{\texttt{CE}} = \text{\texttt{FSI}} \times \text{\texttt{A}}_{SHF} \times \text{Duration Factor}
     \end{equation}
 
-    \vspace{0.2cm}
-    \footnotesize
-    \textit{*Note: Significance is a binary (0 or 1) based on p-value $<$ 0.05.}
+    \vfill
+    {\let\thefootnote\relax\footnotetext{\tiny *Note: Significance is a binary (0 or 1) based on p-value \texttt{< 0.05}.}}
 \end{frame}
 
 % values from coupling_metrics_efficiency.csv
@@ -2430,7 +2466,7 @@
     \footnotesize
     \begin{block}{Patterns observed}
         \begin{itemize}
-            \item \textbf{Land-origin tracks (2, 3, 6)} generally have significantly higher coupling efficiency ($>7.0$). Soil moisture memory (\texttt{ACF}) and high capacity in the IndoGangetic plains (with clay soil) provide a stable conditions for these tracks to sustain longer.
+            \item \textbf{Land-origin tracks (2, 3, 6)} generally have significantly higher coupling efficiency ($>7.0$). Soil moisture memory (\texttt{ACF}) and high capacity in the Indo-Gangetic plains (with clay soil) provide a stable conditions for these tracks to sustain longer.
             \item \textbf{Ocean-origin short-lived tracks (1, 4)} have the lowest efficiency (\textbf{\textit{due to sandy soils (low capacity)?}}).
             \item Ocean-origin long-lived track (5) survives \texttt{163h} despite low \texttt{CE (3.90)}. High \texttt{ACF (0.525)} acts as a "buffer" for energy supply. Also other reason could be large-scale atmospheric forcing (vorticity/moisture advection) rather than local land-surface coupling.
         \end{itemize}
@@ -2443,7 +2479,7 @@
     \footnotesize
     \begin{center}
         \begin{columns}[T]
-            \column{0.33\textwidth}
+            \column{0.30\textwidth}
             \textbf{I. Strongly Coupled} \textit{(Tracks 2, 3, 6)}
             \begin{itemize}
                 \item \textbf{FSI:} \texttt{0.41 -- 0.64}
@@ -2453,7 +2489,7 @@
                 \item \textbf{High SM (soil was already moist) + positive feedback}
             \end{itemize}
 
-            \column{0.33\textwidth}
+            \column{0.37\textwidth}
             \textbf{II. Memory Sustained} \textit{(Track 5)}
             \begin{itemize}
                 \item \textbf{FSI :} \texttt{0.21}
@@ -2464,7 +2500,7 @@
                 \item \textit{Anomaly}. Longest track via soil buffer.
             \end{itemize}
 
-            \column{0.33\textwidth}
+            \column{0.35\textwidth}
             \textbf{III. Weakly Coupled} \textit{(Tracks 1, 4)}
             \begin{itemize}
                 \item \textbf{FSI :} \texttt{0.06 -- 0.08}
@@ -2476,14 +2512,16 @@
     \end{center}
 
     \begin{block}{\footnotesize Longevity is driven by two distinct modes :}
-        \footnotesize
         \begin{enumerate}
+            \footnotesize
             \item \textbf{Efficiency Mode :} High \texttt{CE} fuels the low pressure system (Tracks 2, 3, 6).
             \item \textbf{Persistence Mode :} High \texttt{Memory} buffers the low pressure system (Track 5).
         \end{enumerate}
+        \footnotesize
         Short-lived Ocean-origin (Coastal) tracks lack both and dissipate shortly.
     \end{block}
 
+    \footnotesize
     \begin{block}{Key Patterns observed}
         \begin{itemize}
             \item \textbf{Direct Coupling :} For 5 out of 6 tracks (with exception of track 5), longevity is a linear function of coupling efficiency (higher \texttt{CE} = more hours over land).
@@ -2533,15 +2571,15 @@
     \footnotesize
     \textbf{Interpretation :}
         \begin{itemize}
-            \item \textbf{Latent Heat Dominance :} \texttt{LHF} is the primary energy driver ($\approx 83$ $W/m^2$) over land. By converting soil moisture into atmosphere moisture (via evaporation) sustain  the MD's core.
-            \item \textbf{The "Moisture Cut-off" :} Total heat flux becomes significantly less negative upon landfall ($+51.2$ $W/m^2$ change).  The \texttt{+51.2 W/m$^2$} change indicates the system is receiving significantly less moisture from land than it did from the ocean. This represents the reduction in moisture availability (moisture cut-off) while sensible heating from the land surface increases. Longevity depends on how slowly this "decay" happens.
+            \item \textbf{Latent Heat Dominance :} \texttt{LHF} is the primary energy driver (\texttt{$\approx$ 83 W/m$^2$}) over land. By converting soil moisture into atmosphere moisture (via evaporation) sustain  the MD's core.
+            \item \textbf{The "Moisture Cut-off" :} Total heat flux becomes significantly less negative upon landfall (\texttt{+51.2 W/m$^2$} change).  The \texttt{+51.2 W/m$^2$} change indicates the system is receiving significantly less moisture from land than it did from the ocean. This represents the reduction in moisture availability (moisture cut-off) while sensible heating from the land surface increases. Longevity depends on how slowly this "decay" happens.
             \item \textbf{Thermodynamic Maintenance :} The negative total flux implies the surface is cooling. To maintain the vortex, the MD must rely on the internal release of Latent Heat (condensation) within the core to overcome surface losses.
         \end{itemize}
 
     \footnotetext[6]{\tiny Averaged across all tracks during the land-only phase.}
 \end{frame}
 
-\subsection{Diurnal Sensible Heat Flux Amplitude}
+\subsection{Diurnal \texttt{SHF} Amplitude (\texttt{$A_{\texttt{SHF}}$})}
 % values from coupling_metrics_diurnal_amplitude.csv
 \begin{frame}{Diurnal Sensible Heat Flux (\texttt{SHF}) Amplitude}
     \vspace{-0.5cm}
@@ -2555,8 +2593,8 @@
             \textbf{Phase} & \textbf{Mean \texttt{SHF} Amplitude} & \textbf{\(\Delta\)\texttt{SHF}} \\
                                &  \texttt{$\left(\frac{\Sigma \texttt{SHF}_{\texttt{24}}}{\texttt{24 h}}\right)$} &  \texttt{$\left(\texttt{SHF}_{\text{max}} - \texttt{SHF}_{\text{min}}\right)$} \\
                 \midrule
-                Ocean phase & \texttt{13.54 W/m$^2$} & \texttt{-11.66 W/m$^2$} \\
-                Land phase  & \texttt{56.26 W/m$^2$} & \texttt{+4.45 W/m$^2$} \\
+                Ocean phase & \texttt{+13.54 W/m$^2$} & \texttt{-11.66 W/m$^2$} \\
+                Land phase  & \texttt{+56.26 W/m$^2$} & \texttt{+4.45 W/m$^2$} \\
                 \midrule
                 \textbf{Difference} & \textbf{\texttt{+42.72 W/m$^2$}} & \textbf{\texttt{+16.11 W/m$^2$}} \\
                 \bottomrule
@@ -2578,38 +2616,38 @@
     \textbf{Physical Implications for MD Longevity :}
     \begin{itemize}
         \item \textbf{Thermal Forcing :} Upon landfall, the surface switches from a heat sink to a \textbf{heat source} (\texttt{\(\Delta\)SHF} turns positive).
-        \item \textbf{The "Convective Pump" :} The \texttt{56.26 W/m$^2$} daily amplitude acts as a periodic trigger, destabilizing the boundary layer and lifting soil-derived moisture into the MD core. This enhanced diurnal heating compensates for the loss of ocean moisture, particularly in high-capacity soil regions (Land origin Tracks 2, 3, 6).
+        \item \textbf{The "Convective Pump" :} The \texttt{+56.26 W/m$^2$} daily amplitude acts as a periodic trigger, destabilizing the boundary layer and lifting soil-derived moisture into the MD core. This enhanced diurnal heating compensates for the loss of ocean moisture, particularly in high-capacity soil regions (Land origin Tracks 2, 3, 6).
         \item \textbf{System Maintenance :} This massive increase in diurnal forcing is what allows "Strongly Coupled" tracks (2, 3, 6) to maintain vortex intensity despite the loss of consistent oceanic evaporation.
         \item \textbf{Directional Shift :} \texttt{SHF} becomes positive (upward$\uparrow$) over land, indicating the land surface is directly heating the MD's environment during the day.
-        \item \textbf{Thermodynamic Coupling :} The high diurnal amplitude over land ($56.26$ $W/m^2$) fuels the Coupling Efficiency (\texttt{CE}) metric, providing the energy pulses needed to sustain convection.
+        \item \textbf{Thermodynamic Coupling :} The high diurnal amplitude over land (\texttt{+56.26 W/m$^2$}) fuels the Coupling Efficiency (\texttt{CE}) metric, providing the energy pulses needed to sustain convection.
     \end{itemize}
 \end{frame}
 
 \subsection{Terrain and Runoff Dynamics}
 \begin{frame}[label=terrain]{Terrain Constraints : Why Coastal Tracks 1 \& 4 Fail}
     \begin{columns}[T]
-        \column{0.45\textwidth}
-        \begin{block}{The Western Ghats Barrier :}
+        \column{0.49\textwidth}
+        \begin{block}{The Eastern Ghats Barrier :}
             \footnotesize
             \begin{itemize}
                 \item \textbf{Steep Elevation :} Rapid ascent causes precipitation to fall as early and heavy, localized bursts.
-                \item \textbf{High Runoff Index:} Gravity-driven runoff on steep slopes prevents the vertical infiltration required to replenish moisture in soil.
+                \item \textbf{High Runoff :} Gravity-driven runoff on steep slopes prevents the vertical infiltration required to replenish moisture in soil. \cite{clapp1978empirical}
                 \item \textbf{Broken Feedback :} Without a sub-surface reservoir, \texttt{LHF} cannot be sustained, leading to the weak \texttt{FSI < 0.1} observed.
             \end{itemize}
         \end{block}
 
-        \column{0.45\textwidth}
-        \begin{block}{The Indo-Gangetic/Northern Plains :}
+        \column{0.49\textwidth}
+        \begin{block}{The Indo-Gangetic Plains :}
             \footnotesize
             \begin{itemize}
                 \item \textbf{Low Elevation :} Flat terrain facilitates water ponding and slow, deep infiltration.
                 \item \textbf{Retention :} Clay-heavy soils sustain soil moisture (\texttt{SWVL1}) maintaining the moisture reservoir for coming MD.
-                \item \textbf{Sustained Loop :} This explains high \texttt{CE} seen in Land-origin Tracks 2 , 3, and 6 (\texttt{CE} $\approx$\texttt{11}); and relative high \texttt{CE} for Ocean-origin track 5 (\texttt{3.90}) than tracks 1 and 4 (\texttt{CE} $\approx$\texttt{3})
+                \item \textbf{Sustained Loop :} This explains high \texttt{CE} seen in Land-origin Tracks 2, 3, and 6 (\texttt{CE} $\approx$\texttt{11}); and relative high \texttt{CE} for Ocean-origin track 5 (\texttt{3.90}) than tracks 1 and 4 (\texttt{CE} $\approx$\texttt{3}).
             \end{itemize}
         \end{block}
     \end{columns}
 
-    \vspace{0.2cm}
+    \vspace{0.15cm}
     \begin{table}
         \tiny
         \centering
@@ -2617,23 +2655,40 @@
             \toprule
             \textbf{Track} & \textbf{Origin} &  \textbf{Transit} & \textbf{Terrain Type} & \textbf{Dominant Process} & \textbf{Longevity(Mean Duration)} \\
             \midrule
-            1, 4 & Ocean & Near Coast, then Western Ghats & Sand, then Steep & Rapid Runoff/Low Infiltration & Short-lived(\texttt{70h}) \\
-            2, 3, 6 & Land&  Over Plains & Plains/Clay & High Retention/Deep Infiltration & Long-lived(\texttt{115h})\\
-            5 & Land & Coast, Ghats, IndoGangetic Plains & Mixed & Infiltration $\approx$ Memory & Long-lived(\texttt{163h}) \\
+            1, 4 & Ocean & Near Coast, then Eastern Ghats & Sand, then Steep & Rapid Runoff/Low Infiltration & Short-lived(\texttt{70h}) \\
+            2, 3, 6 & Land &  Over Plains & Plains/Clay & High Retention/Deep Infiltration & Long-lived(\texttt{115h})\\
+            5 & Ocean & Coast, Eastern Ghats, Indo-Gangetic Plains & Mixed & Infiltration $\approx$ Memory & Long-lived(\texttt{163h}) \\
             \bottomrule
         \end{tabular}
     \end{table}
 
     \begin{block}{The Slope-Saturation :}
         \footnotesize
-        Longevity is inhibited by Topographic Steepness. Even with high precipitation (\texttt{TP}), the gravity-driven runoff on the Western Ghats prevents the soil from reaching the saturation levels needed to initiate the Brown Ocean effect. This weaken track 5 but later replenish when reached over plain (clay soil, high moisture content).
+        Longevity is inhibited by Topographic Steepness. Even with high precipitation (\texttt{TP}), the gravity-driven runoff on the Eastern Ghats (elevation range from \texttt{900 to 1400 m}) prevents the soil from reaching the saturation levels which is required to initiate the Brown Ocean effect. This weaken track 5 but later replenish when reached over plain (clay soil, high moisture content).
     \end{block}
 \end{frame}
 
-\subsection{Soil Moisture Memory}
+\subsection{Elevation map}
+\begin{frame}[label=elevationmap]{Terrain Constraints}
+    \begin{columns}[T]
+        \column{0.49\textwidth}
+        \begin{block}{Monsoon Depressions}
+            \centering
+            \includegraphics[width=1.16\linewidth]{../version12-with-no-ocean-masking/output/MD-track.png}
+        \end{block}
+
+        \column{0.49\textwidth}
+        \vspace{0.1cm}
+        \begin{block}{Elevation Map of India}
+            \centering
+            \includegraphics[width=0.94\linewidth]{images/Elevation-map-of-India.jpg}
+        \end{block}
+    \end{columns}
+\end{frame}
+
+\subsection{Soil Moisture Memory (\texttt{ACF$_{24h}$}}
 % values from all_tracks_soil_memory.csv
-\subsection{Soil Moisture Memory}
-\begin{frame}{Soil Moisture Memory : The Persistence Factor}
+\begin{frame}{Soil Moisture Memory (\texttt{ACF$_{24h}$}) : The Persistence Factor}
     \begin{table}[H]
         \footnotesize
         \centering
@@ -2656,8 +2711,8 @@
     \begin{block}{Key Findings :}
         \begin{itemize}
             \item \textbf{The Survival Buffer :} Track 5 survives \texttt{163h} (the longest) despite moderate \texttt{CE}. Its \texttt{ACF} of \texttt{0.525} acts as an energy "battery" that sustains the vortex during dynamic forcing (like elevated terrain, lower soil moisture(\texttt{SWVL1}). Thus Memory Index \texttt{ACF} compensates for its lower immediate coupling efficiency by providing a steady energy source.
-            \item \textbf{Memory Threshold :} Long-lived tracks (2, 3, 5, 6) all maintain non-negative or positive memory, whereas short-lived tracks (1, 4) show negative \texttt{ACF}, indicating indicates "oscillatory" behavior meaning moisture is lost faster than it can be recycled,  rapid moisture depletion.
-            \item \textbf{Inland Stability :} Track 3 shows the best combination of high baseline moisture ($0.421$) and moderate memory ($0.321$), fueling the highest coupling efficiency observed among all tracks.
+            \item \textbf{Memory Threshold :} Long-lived tracks (2, 3, 5, 6) all maintain non-negative or positive memory, whereas short-lived tracks (1, 4) show negative autocorrelation (\texttt{ACF < 0}), indicating "oscillatory" behavior $\Rightarrow$ moisture is lost faster than it can be recycled,  rapid moisture depletion.
+            \item \textbf{Inland Stability :} Track 3 shows the best combination of high baseline moisture (\texttt{0.42 m$^3$/m$^3$}) and moderate memory (\texttt{0.321}), fueling the highest coupling efficiency observed among all tracks.
         \end{itemize}
     \end{block}
 \end{frame}
@@ -2665,7 +2720,7 @@
 % TODO:
 % \subsection{Elevation as Feedback Breaker}
 % \begin{frame}{Elevation Breaks Precipitation-Soil Moisture Feedback}
-%     When an MD encounters elevation > 500m (Western Ghats region), three processes weaken TP-SWVL1 coupling :
+%     $$When an MD encounters elevation > 900m (Eastern Ghats region), three processes weaken TP-SWVL1 coupling :
 %       FIX : update this table vlaues
 %     \begin{table}
 %     \centering
@@ -2685,32 +2740,38 @@
 %     \end{table}
 %
 %     \begin{enumerate}
-%         \item Orographic Precipitation Efficiency  : Forced ascent produces intense rainfall with high runoff (not infiltration)
+%         \item Orographic Precipitation Efficiency  : Forced ascent produces intense rainfall with high runoff (not infiltration). \cite{clapp1978empirical}
 %         \item Drainage Acceleration : Steep slopes ($> 8^\circ$) increase drainage by 2-3 times vs. flat terrain $\rightarrow$ soil doesn't retain moisture
 %         \item Reduced Latent Heating : Rapid runoff leaves surface dry -> lower evaporative cooling -> weaker LHF feedback
 %     \end{enumerate}
 %
 %        \begin{itemize}{Prediction :}
-%         \item Tracks 1, 4 (Western Ghats, elev 600-900m) show shorter duration ($\sim$ $70h$) and weak autocorrelation (<0.1) despite possible pre-landfall moisture.
-%         \item Tracks 2, 3, 5, 6 (Plains, elev <200m) show long duration (~130h) and strong autocorrelation (>0.3).
+%         \item Tracks 1, 4 (Eastern Ghats, elev range 900-1600 m) show shorter duration ($\sim$ $70h$) and weak autocorrelation (< 0.1) despite possible pre-landfall moisture.
+%         \item Tracks 2, 3, 5, 6 (Plains, avg. elev $\approx$200 m) show long duration (~130h) and strong autocorrelation (>0.3).
 %         \item Plains (tracks 2,3,[5],6) : rainfall $\rightarrow$ infiltration $\rightarrow$ soil moisture $\uparrow$ $\rightarrow$ heat flux $\uparrow$ $\rightarrow$ sustains MD $\rightarrow$ long duration.
 %         \item High elevated region/western Ghats (tracks 1,4) : rainfall $\rightarrow$ rapid runoff $\rightarrow$ soil moisture $\downarrow$ $\rightarrow$ heat flux $\downarrow$ $\rightarrow$ md weakens $\rightarrow$ short duration (due to steep slopes \& rapid drainage)
 %     \end{itemize}
 % \end{frame}
 
-% TODO: check this
-\subsection{Brown Ocean Effect Evidence Chain}
-\begin{frame}{The Brown Ocean Effect : Evidence Chain}
-    \vspace{-0.2cm}
+% TODO: update this BoE chain mechanism
+\subsection{BoE Evidence}
+\begin{frame}{The Brown Ocean Effect : Evidence}
+    \vspace{-0.3cm}
     \footnotesize
     \begin{columns}[T]
         \column{0.52\textwidth}
+        % FIX: HF values
         \begin{block}{Supporting Evidence}
             \begin{itemize}
                 \item \textbf{Flux Continuity :} Landfall total flux change is only \texttt{+51.2 W/m$^2$}, proving the "moisture cut-off" from Ocean.
                 \item \textbf{LHF Maintenance :} Post-landfall \texttt{LHF} (\texttt{-82.9 W/m$^2$}) remains the dominant energy driver.
                 \item \textbf{Diurnal Pumping :} Mean \texttt{SHF} Amplitude is $\approx 4$ times stronger over land, enabling continuous daily convection.
                 \item \textbf{Lag Dynamics :} Track 5 shows a clear \texttt{+6h} lag (\texttt{SWVL1} $\rightarrow$ \texttt{TP}), proving the soil moisture is providing moisture to atmosphere (MD) via evaporation.
+                % FIX: chose above or below or mix them
+                % \item \textbf{Flux Continuity :} Landfall total flux change is only \texttt{+51.2 W/m$^2$}, mitigating the "moisture cut-off."
+                % \item \textbf{LHF Maintenance :} Post-landfall \texttt{LHF} (\texttt{-82.9 W/m$^2$}) remains the dominant energy driver.
+                % \item \textbf{Diurnal Pumping :} \texttt{SHF} Amplitude is $\approx 4\times$ stronger over land, fueling daily convection.
+                % \item \textbf{Lag Dynamics :} Track 5 \texttt{+6h} lag (\texttt{SM} $\rightarrow$ \texttt{TP}) proves the soil is the moisture source.
             \end{itemize}
         \end{block}
 
@@ -2718,7 +2779,7 @@
         \begin{block}{Physical Mechanism}
             \begin{itemize}
                 \item \textbf{Pseudo-Ocean over Land :} Clay soils over the Plains act as a "Brown Ocean" reservoir.
-                \item \textbf{Survival :} Daytime \texttt{SHF} pulse maintains instability while \texttt{LHF} feeds the core.
+                \item \textbf{Survival Strategy :} Daytime \texttt{SHF} pulse maintains instability while \texttt{LHF} feeds the core.
                 \item \textbf{The Feedback Loop :} 
                     \begin{equation}
                         \text{\texttt{TP}} \xrightarrow{\text{recharge}} \text{\texttt{SWVL1}} \xrightarrow{\text{flux}} \text{\texttt{LHF}} \xrightarrow{\text{evaporation}} \text{\texttt{TP}}
@@ -2727,77 +2788,49 @@
         \end{block}
     \end{columns}
 
-    \vspace{-0.2cm}
-    \begin{center}
-        \textbf{Lags Hours} \\
-        \footnotesize
-        \begin{tabular}{lcccc}
-            \toprule
-            \textbf{Track Type} & \texttt{TP} $\rightarrow$ \texttt{SM} & \texttt{SM} $\rightarrow$ \texttt{LHF} & \texttt{LHF} $\rightarrow$ \texttt{TP} & \textbf{Status} \\
-            \midrule
-            Track 3 (Land-Orig) & \texttt{0 h} & \texttt{+1 h} & \texttt{+2 h} & \textbf{Strong Coupling} \\
-            Track 5 (Ocean-Orig) & \texttt{0 h} & \texttt{+3 h} & \texttt{+5 h} & \textbf{Memory Sustained} \\
-            Track 1 (Coastal) & \texttt{+24 h} & \texttt{None} & \texttt{None} & \textbf{Broken Feedback} \\
-            \bottomrule
-        \end{tabular}
-    \end{center}
+    % FIX: values from lag plots
+    % \vspace{-0.3cm}
+    % \begin{center}
+    %     \textbf{Lead-Lag Phase Relationship (Hours)} \\
+    %     \vspace{0.1cm}
+    %     \tiny
+    %     \begin{tabular}{lccccc}
+    %         \toprule
+    %         \textbf{Track ID} & \textbf{Origin} & \texttt{TP} $\rightarrow$ \texttt{SWVL1} & \texttt{SWVL1} $\rightarrow$ \texttt{LHF} & \texttt{LHF} $\rightarrow$ \texttt{TP} & \textbf{Feedback Status} \\
+    %         \midrule
+    %         Track 1 &        & \texttt{+12 to +24 h} & \texttt{None} & \texttt{None} & \textbf{Broken (Eastern Ghats)} \\
+    %         Track 2 &        & \texttt{0 h} & \texttt{+1 h} & \texttt{+3 h} & \textbf{Strong Coupling} \\
+    %         Track 3 &        & \texttt{0 h} & \texttt{+1 h} & \texttt{+2 h} & \textbf{Strong Coupling} \\
+    %         Track 4 &        & \texttt{+12 to +24 h} & \texttt{None} & \texttt{None} & \textbf{Broken (Eastern Ghats)} \\
+    %         Track 5 &        & \texttt{0 h} & \texttt{+2 h} & \texttt{+4 h} & \textbf{Memory Sustained} \\
+    %         Track 6 &        & \texttt{0 h} & \texttt{+1 h} & \texttt{+3 h} & \textbf{Memory Sustained} \\
+    %         \bottomrule
+    %     \end{tabular}
+    % \end{center}
+    % same table as above
+    % \begin{center}
+    %     \textbf{Lead-Lag Relationship (Hours)} \\
+    %     \tiny
+    %     \begin{tabular}{lcccc}
+    %         \toprule
+    %         \textbf{Track Type} & \texttt{TP} $\rightarrow$ \texttt{SM} & \texttt{SM} $\rightarrow$ \texttt{LHF} & \texttt{LHF} $\rightarrow$ \texttt{TP} & \textbf{Status} \\
+    %         \midrule
+    %         Track 3 (Land-Orig) & \texttt{0 h} & \texttt{+1 h} & \texttt{+2 h} & \textbf{Strong Coupling} \\
+    %         Track 5 (Ocean-Orig) & \texttt{0 h} & \texttt{+3 h} & \texttt{+5 h} & \textbf{Memory Sustained} \\
+    %         Track 1 (Coastal) & \texttt{+24 h} & \texttt{None} & \texttt{None} & \textbf{Broken Feedback} \\
+    %         \bottomrule
+    %     \end{tabular}
+    % \end{center}
 
     \footnotesize
     \begin{itemize}
-        \item \textbf{Loop Breeak (1, 4) :} Topographic runoff (Western Ghats) breaks the feedback loop by draining the moisture before the loop can begin.
-        \item \textbf{Closed Loop (2, 3, 5) :} Moisture cycles from surface to core within a single diurnal cycle, sustaining the MD (from rain to soil to flux.).  uses high soil memory to buffer decay after slowdown. Avoids terrain/elevation runoff.
+        \item \textbf{Loop Break (1, 4) :} Topographic runoff (Eastern Ghats) breaks the feedback loop by draining the moisture before the loop can begin. \cite{clapp1978empirical}
+        \item \textbf{Closed Loop (2, 3, 5) :} Moisture cycles from surface to core within a single diurnal cycle, sustaining the MD (from rain to soil to flux.). Uses high soil memory to buffer decay after slowdown. Avoids terrain/elevation runoff.
     \end{itemize}
 
     \begin{block}{Conclusion}
         \footnotesize
-        \textbf{The Brown Ocean is a Geography dependent :} Survival of low-pressure mesoscale systems depends on hitting the soil type (Plains/Clay) where soil moisture can effectively replace the ocean-driven system.
-    \end{block}
-\end{frame}
-
-\begin{frame}[label=boeevidence]{The Brown Ocean Effect: Evidence Chain}
-    \vspace{-0.2cm}
-    \footnotesize
-    \begin{columns}[T]
-        \column{0.52\textwidth}
-        \begin{block}{Supporting Evidence :}
-            \begin{itemize}
-                \item \textbf{Flux Continuity :} Landfall total flux change is only \texttt{+51.2 W/m$^2$}, mitigating the "moisture cut-off."
-                \item \textbf{LHF Maintenance :} Post-landfall \texttt{LHF} (\texttt{-82.9 W/m$^2$}) remains the dominant energy driver.
-                \item \textbf{Diurnal Pumping :} \texttt{SHF} Amplitude is $\approx 4\times$ stronger over land, fueling daily convection.
-                \item \textbf{Lag Dynamics :} Track 5 \texttt{+6h} lag (\texttt{SM} $\rightarrow$ \texttt{TP}) proves the soil is the moisture source.
-            \end{itemize}
-        \end{block}
-
-        \column{0.48\textwidth}
-        \begin{block}{Physical Mechanism :}
-            \begin{itemize}
-                \item \textbf{Pseudo-Ocean :} Clay soils over the Plains act as a "Brown Ocean" reservoir.
-                \item \textbf{Survival Strategy :} Daytime \texttt{SHF} pulse maintains instability while \texttt{LHF} feeds the core.
-                \item \textbf{The Feedback Loop :} 
-                    \begin{equation*}
-                        \text{\texttt{TP}} \xrightarrow{\text{recharge}} \text{\texttt{SWVL1}} \xrightarrow{\text{flux}} \text{\texttt{LHF}} \xrightarrow{\text{evaporation}} \text{\texttt{TP}}
-                    \end{equation*}
-            \end{itemize}
-        \end{block}
-    \end{columns}
-
-    \vspace{-0.2cm}
-    \begin{center}
-        \textbf{Lead-Lag Relationship (Hours)} \\
-        \tiny
-        \begin{tabular}{lcccc}
-            \toprule
-            \textbf{Track Type} & \texttt{TP} $\rightarrow$ \texttt{SM} & \texttt{SM} $\rightarrow$ \texttt{LHF} & \texttt{LHF} $\rightarrow$ \texttt{TP} & \textbf{Status} \\
-            \midrule
-            Track 3 (Land-Orig) & \texttt{0 h} & \texttt{+1 h} & \texttt{+2 h} & \textbf{Strong Coupling} \\
-            Track 5 (Ocean-Orig) & \texttt{0 h} & \texttt{+3 h} & \texttt{+5 h} & \textbf{Memory Sustained} \\
-            Track 1 (Coastal) & \texttt{+24 h} & \texttt{None} & \texttt{None} & \textbf{Broken Feedback} \\
-            \bottomrule
-        \end{tabular}
-    \end{center}
-
-    \begin{block}{The Geography is also a factory  :}
-        \tiny \textbf{Verdict :} Survival depends on hitting the soil type (Plains/Clay) where soil moisture can effectively replace the ocean-driven engine.
+        \textbf{The Brown Ocean is a geography dependent :} Survival of low-pressure mesoscale systems depends on hitting the soil type (Plains/Clay) where soil moisture can effectively replace the ocean-driven system. With the condition, MD survive or avoid high elevation of steep Eastern Ghats.
     \end{block}
 \end{frame}
 
@@ -2807,12 +2840,12 @@
         \column{0.32\textwidth}
         \begin{block}{Track 1 (Failed)}
             \begin{itemize}\scriptsize
-                \item \textbf{Path :} Ocean $\rightarrow$ Western Ghats
+                \item \textbf{Path :} Ocean $\rightarrow$ Eastern Ghats
                 \item \textbf{Soil :} Sandy / Rock
                 \item \textbf{Capacity :} \texttt{0.140} (Low)
                 \item \textbf{Feedback :} \texttt{-0.092} (Negative)
                 \item \textbf{Lag :} \texttt{-24h} (Runoff)
-                \item \textbf{Duration :} 75h
+                \item \textbf{Duration :} \texttt{75h}
             \end{itemize}
         \end{block}
 
@@ -2824,7 +2857,7 @@
                 \item \textbf{Capacity :} \texttt{0.178} (Low)
                 \item \textbf{Feedback :} \texttt{-0.197} (Negative)
                 \item \textbf{Lag :} \texttt{None} (Broken)
-                \item \textbf{Duration :} 65h
+                \item \textbf{Duration :} \texttt{65h}
             \end{itemize}
         \end{block}
 
@@ -2835,8 +2868,8 @@
                 \item \textbf{Soil :} \textbf{Clay / Silt}
                 \item \textbf{Capacity :} \textbf{\texttt{0.270}} (High)
                 \item \textbf{Feedback :} \texttt{+0.525} (\textbf{Strong})
-                \item \textbf{Lag :} SM $\rightarrow$ TP (\textbf{\texttt{+6h})}
-                \item \textbf{Duration :} \textbf{163h}
+                \item \textbf{Lag :} \texttt{+6h} (\texttt{SM} $\rightarrow$ \texttt{TP})
+                \item \textbf{Duration :} \texttt{163h}
             \end{itemize}
         \end{block}
     \end{columns}
@@ -2849,10 +2882,6 @@
             \item \textbf{Memory Threshold :} Soil Moisture \texttt{ACF$_{24h}$} must remain non-negative.
             \item \textbf{Coupling Efficiency :} SM must lead Precipitation (\texttt{Lag $>0$}) or be synchronous.
         \end{enumerate}
-        \vspace{0.2cm}
-        \centering
-        \footnotesize
-        \textbf{Track 5 :} 3/3 Criteria Met \quad $|$ \quad \textbf{Tracks 1 \& 4:} 0/3 Criteria Met
     \end{block}
 \end{frame}
 
@@ -2860,19 +2889,15 @@
 \begin{frame}{Synthesis: Two-Level Control Mechanism}
     \footnotesize
     \begin{block}{Level 1: Soil Type (Capacity)}
+        \centering
         \begin{tabular}{lcc}
-            \hline
+            \toprule
             \textbf{Region Type} & \textbf{Mean Duration} & \textbf{Soil Texture}          \\
-            \hline
-            Coastal (1, 4)       & 76h                    & Sandy (low moisture retention) \\
-            Plains (2, 3, 5, 6)  & 135h                   & Clay (high moisture retention) \\
-            \hline
+            \midrule
+            Coastal (1, 4)       & \texttt{76h}                    & Sandy (low moisture retention) \\
+            Plains (2, 3, 5, 6)  & \texttt{135h}                   & Clay (high moisture retention) \\
+            \bottomrule
         \end{tabular}
-
-        \vspace{0.3cm}
-        \begin{itemize}
-            \item \textbf{80\% longer duration} over IndoGangetic Plains (clay-rich  soil) regions
-        \end{itemize}
     \end{block}
 
     \vspace{0.3cm}
@@ -2887,35 +2912,36 @@
 
     \vspace{0.3cm}
     \footnotesize
-    Track 5 (anomaly) suggests additional factors (moisture advection).
+    Track 5 (anomaly) suggests additional factors (moisture advection, surviving Eastern Ghats elevation mechanism and efficient soil moisture extraction from land to sustainability, unlike track 1 and 4).
 \end{frame}
 
 \begin{frame}[label=twolevelmechanism]{Two-Level Control Mechanism}
     \footnotesize
     \begin{block}{Level 1: Geographical Constraint}
-        \begin{tabular}{lcc}
+        \centering
+        \begin{tabular}{lccc}
             \toprule
-            \textbf{Region / Tracks} & \textbf{Mean Duration} & \textbf{Primary Constraint} \\
+            \textbf{Tracks} & \textbf{Mean Dur.} & \textbf{Primary Constraint} & Terrain \\
             \midrule
-            Coastal/Ghats (1, 4) & 70h & Sandy/Rocky: Rapid Runoff (Low Capacity) \\
-            IG Plains (2, 3, 5, 6) & 142h & Clay-Rich: High Water Retention (High Capacity) \\
+            1, 4   & \texttt{70h} & Steep terrain, Rapid Runoff (Low Capacity) & Eastern Ghat (Elevation \texttt{900-1400 m})\\
+            2, 3, 5, 6 & \texttt{142h} & Clay-Rich, High Water Retention (High Capacity) & Indo-Gangetic plains (Elevation \texttt{< 200 m}) \\
             \bottomrule
         \end{tabular}
 
         \vspace{0.2cm}
         \begin{itemize}
-            \item Geographicaly MDs that hit the Indo-Gangetic Plains live \textbf{twice as long} as those hitting the Western Ghats/Coastal sands. 
+            \item Geographicaly MDs that hit the Indo-Gangetic Plains live \textbf{twice as long} as those hitting the Eastern Ghats/Coastal sands. 
 
-                (this might be over generalisation? need more data for generalisation : TODO: analysis for 2023 to 2025)
+                (this might be over generalisation? need more data for analysis. TODO: analysis for 2023 to 2025)
         \end{itemize}
     \end{block}
 
     \vspace{0.2cm}
     \begin{block}{Level 2: Dynamic Feedback}
         \begin{itemize}
-            \item \textbf{Antecedent SM:} Sets the initial fuel state 24h before landfall.
-            \item \textbf{Coupling Efficiency (CE):} Determines if the feedback (\texttt{TP} $\leftrightarrow$ \texttt{SWVL1}) is fast enough to sustain the vortex core within a diurnal cycle.
-            \item \textbf{Diurnal SHF Amplitude:} Triggers daily convection.
+            \item \textbf{Antecedent SM :} Sets the initial state \texttt{24h} before landfall.
+            \item \textbf{Coupling Efficiency (CE) :} Determines if the feedback (\texttt{TP} $\leftrightarrow$ \texttt{SWVL1}) is fast enough to sustain the vortex core within a diurnal cycle.
+            \item \textbf{Diurnal SHF Amplitude :} Triggers daily convection.
         \end{itemize}
     \end{block}
 
@@ -2936,7 +2962,7 @@
 \subsection{Hypothesis 1}
 \begin{frame}{Hypothesis 1 : The Moisture-Recycling Efficiency [1/2]}
     \vspace{-0.1cm}
-    \begin{block}{The longevity of an MD depends on the phase-locking of the \texttt{TP-SWVL1-LHF} loop. Long-lived systems exhibit positive lags and high soil memory, whereas short-lived systems are dominated by runoff and negative lags.}\end{block}
+    \begin{block}{The longevity of an MD depends on the phase-locking of the \texttt{TP-SWVL1-LHF} loop. Long-lived systems exhibit positive lags and high soil memory, whereas short-lived systems are dominated by runoff and negative lags}\end{block}
 
     \vspace{0.15cm}
     \footnotesize
@@ -2944,7 +2970,7 @@
 
     \vspace{0.2cm}
     \footnotesize
-Longevity is proportional to the strength and sign of the \textbf{Land-Atmosphere Coupling}. Positive feedback (\texttt{TP}$\uparrow \rightarrow$\texttt{SWVL1}$\uparrow \rightarrow$ \texttt{LHF}$\uparrow \rightarrow$ Convection$\uparrow$) creates a \textbf{"Secondary Pseudo-Ocean"} effect.
+    Longevity is proportional to the strength and sign of the \textbf{Land-Atmosphere Coupling}. Positive feedback (\texttt{TP}$\uparrow \rightarrow$\texttt{SWVL1}$\uparrow \rightarrow$ \texttt{LHF}$\uparrow \rightarrow$ Convection$\uparrow$) creates a \textbf{"Secondary Pseudo-Ocean"} effect. \cite{hunt2017effect}
 
     \vspace{0.2cm}
     \footnotesize
@@ -2955,7 +2981,7 @@ Longevity is proportional to the strength and sign of the \textbf{Land-Atmospher
     \footnotesize
     \textbf{Loop Failure (Tracks 1 \& 4) :}
     \begin{itemize}
-        \item \textbf{Broken Lags (\texttt{> 12h}) :} Indicates \textbf{Topographic Runoff} (Western Ghats) or \textbf{Saturation Excess} (Sandy Coast).
+        \item \textbf{Broken Lags (\texttt{> 12h}) :} Indicates \textbf{Topographic Runoff} (Eastern Ghats) or \textbf{Saturation Excess} (Sandy Coast).
         \item \textbf{Negative Memory (\texttt{ACF $\approx -0.15$}) :} Prevents the soil from "storing" the energy recharge from precipitation.
     \end{itemize}
 \end{frame}
@@ -2995,7 +3021,7 @@ Longevity is proportional to the strength and sign of the \textbf{Land-Atmospher
 \subsection{Hypothesis 2}
 \begin{frame}{Hypothesis 2 : Landfall Energy Budget Transition [1/2]}
     \vspace{-0.1cm}
-    \begin{block}{The ocean-to-land transition creates an abrupt "Energy Gap" where MD survival depends on the land's ability to switch from a \texttt{LHF} dominant region to a Diurnal \texttt{SHF} amplified region.}\end{block}
+    \begin{block}{The ocean-to-land transition creates an abrupt "Energy Gap" where MD survival depends on the land's ability to switch from a \texttt{LHF} dominant region to a Diurnal \texttt{SHF} amplified region}\end{block}
 
     \vspace{0.15cm}
     \footnotesize
@@ -3028,18 +3054,18 @@ Longevity is proportional to the strength and sign of the \textbf{Land-Atmospher
     \begin{itemize}
         \item \textbf{Ocean-Origin Short-lived (Tracks 1, 4) :}
             \begin{itemize}\footnotesize
-                \item \textbf{The Shock :} \texttt{THF} magnitude dropped by \textbf{\texttt{+41} to \texttt{+65 W/m$^2$}} after landfall.
+                \item \textbf{The Shock :} \texttt{THF} magnitude dropped by \textbf{\texttt{+41} to \texttt{+65 W/m$^2$}} after landfall. \cite{nair2011influence}
                 \item \textbf{The Failure :} Low soil capacity and Negative memory (\texttt{ACF < 0}) prevent the land from compensating for the loss of ocean evaporation. "Energy Gap" could not be filled; core moisture starved within \texttt{$\approx$70h}.
             \end{itemize}
         \item \textbf{Ocean-Origin Long-lived (Track 5 - The Buffer) :}
             \begin{itemize}\footnotesize
                 \item \textbf{The Shock :} Experienced the \textbf{largest} landfall shift (\texttt{$+70.5$ W/m$^2$}).
-            \item \textbf{Result :} High \textbf{Soil Moisture Memory (\texttt{ACF = 0.584})} acted as a thermodynamic buffer, sustaining the vortex until it reached the Indo-Gangetic Plain "Brown Ocean." This "Energy Gap" could be filled; thus core moisture sustained for \texttt{$\approx$163h}, despite a massive drop in immediate flux magnitude \texttt{$\Delta$ THF = +70.5 $W/m^2$} (Before landfall \texttt{$\approx$-155.3  $W/m^2$ $\rightarrow$ $\approx$-84.8 $W/m^2$} after landfall, \scriptsize 70.5 units closer to zero\footnotesize).
+            \item \textbf{Result :} High \textbf{Soil Moisture Memory (\texttt{ACF = 0.584})} acted as a thermodynamic buffer, sustaining the vortex until it reached the Indo-Gangetic Plain "Brown Ocean." This "Energy Gap" could be filled; thus core moisture sustained for \texttt{$\approx$163h}, despite a massive drop in immediate flux magnitude \texttt{$\Delta$ THF = +70.5 $W/m^2$} (Before landfall \texttt{$\approx$-155.3  $W/m^2$ $\rightarrow$ $\approx$-84.8 $W/m^2$} after landfall, \scriptsize 70.5 units closer to zero\footnotesize). \cite{nair2011influence}
             \end{itemize}
         \item \textbf{Land-Origin Long-lived (Tracks 2, 3, 6) :}
             \begin{itemize}\footnotesize
-                \item No discrete landfall shock; energy derived entirely from terrestrial recycling (\texttt{$ACF_{24h}$}).
-                \item Represents the theoretical upper limit of coupling efficiency (\texttt{CE=15.35}) where land mimics ocean.
+                \item No discrete landfall shock; energy derived entirely from terrestrial recycling (\texttt{$ACF_{24h}$}). \cite{chang2009}
+                \item Represents the theoretical upper limit of coupling efficiency (\texttt{CE=15.35}) where land mimics ocean. \cite{hunt2017effect}
             \end{itemize}
     \end{itemize}
 
@@ -3058,8 +3084,9 @@ Longevity is proportional to the strength and sign of the \textbf{Land-Atmospher
 \end{frame}
 
 \subsection{Hypothesis 3}
+% Hyp 3 (ASM) is the Fuel in the tank.
 \begin{frame}{Hypothesis 3 : The Antecedent Moisture Paradox [1/2]}
-    \begin{block}{Antecedent Soil Moisture (\texttt{ASM$_{24h}$}) enables initial infiltration, but it is \underline{\texttt{not}} a direct predictor of longevity. Duration is governed by Retention (Memory \texttt{ACF}) and Soil Texture.}\end{block}
+    \begin{block}{Antecedent Soil Moisture (\texttt{ASM$_{24h}$}) enables initial infiltration, but it is \underline{\texttt{not}} a direct predictor of longevity. Duration is governed by Retention (Memory \texttt{ACF}) and Soil Texture}\end{block}
     %
     % \vspace{0.15cm}
     % The antecedent soil moisture condition (24 hours pre-landfall) is a stronger predictor of monsoon depression behavior and energy budget characteristics than instantaneous precipitation during passage. Drier antecedent soils enhance infiltration capacity; wet antecedent conditions promote surface runoff and rapid downslope transport.
@@ -3090,8 +3117,8 @@ Longevity is proportional to the strength and sign of the \textbf{Land-Atmospher
     \footnotesize
     \textbf{The "Paradox" Evidence :}
     \begin{itemize}
-        \item \textbf{Track 4 (Shortest, 65h) :} Had the \textbf{highest} memory (\texttt{ASM = 0.071 $m^3/m^3$}) yet dissipated rapidly due to sandy soil over coast and moisture runoff by steep elevated terrain (Western Ghats).
-        \item \textbf{Track 5 (Longest, 163h) :} Had the \textbf{lowest} memory (\texttt{ASM = 0.028 $m^3/m^3$}). Survival was driven by the transition into the Indo-Gangetic Plain (with Clay soil with high moisture holding capacity) and avoiding/surviving the rapid runoff by high-elevation region (Western Ghats) by maintaining \texttt{CE > 10.5}.
+        \item \textbf{Track 4 (Shortest, 65h) :} Had the \textbf{highest} memory (\texttt{ASM = 0.071 $m^3/m^3$}) yet dissipated rapidly due to sandy soil over coast and moisture runoff by steep elevated terrain (Eastern Ghats). \cite{clapp1978empirical}
+        \item \textbf{Track 5 (Longest, 163h) :} Had the \textbf{lowest} memory (\texttt{ASM = 0.028 $m^3/m^3$}). Survival was driven by the transition into the Indo-Gangetic Plain (with Clay soil with high moisture holding capacity) and avoiding/surviving the rapid runoff by high-elevation region (Eastern Ghats) by maintaining \texttt{CE > 10.5}.
     \end{itemize}
 
     \vspace{0.2cm}
@@ -3134,9 +3161,10 @@ Longevity is proportional to the strength and sign of the \textbf{Land-Atmospher
 \end{frame}
 
 \subsection{Hypothesis 4}
+% Hyp 4 (Coupling) is the Engine efficiency.
 \begin{frame}{Hypothesis 4 : Nonlinear Moisture-Precipitation Dynamics [1/2]}
     \vspace{-0.1cm}
-    \begin{block}{The \texttt{TP-SWVL1} relationship is fundamentally time-lagged. Instantaneous correlations ($r \approx 0.144$) hide the true feedback strength, which peaks at $+3$ to $+6$ hours post-rainfall.}\end{block}
+    \begin{block}{The \texttt{TP-SWVL1} relationship is fundamentally time-lagged. Instantaneous correlations ($r \approx 0.144$) hide the true feedback strength, which peaks at $+3$ to $+6$ hours post-rainfall}\end{block}
 
     \vspace{0.15cm}
     \footnotesize
@@ -3146,7 +3174,7 @@ Longevity is proportional to the strength and sign of the \textbf{Land-Atmospher
 
     \vspace{0.2cm}
     \footnotesize
-    $\Rightarrow$ \textbf{Key Dynamic :} Low correlation instantaneous ($r=0.144$) hides peak coupling lags ($+3/+6h$); survival depends on avoiding the saturation cooling (saturation plateau in wet soils) .
+    $\Rightarrow$ \textbf{Key Dynamic :} Low correlation instantaneous ($r=0.144$) hides peak coupling lags ($+3/+6h$); survival depends on avoiding the saturation cooling (saturation plateau in wet soils)
 
     \vspace{0.2cm}
     \footnotesize
@@ -3154,8 +3182,8 @@ Longevity is proportional to the strength and sign of the \textbf{Land-Atmospher
     \begin{itemize}
 %        \item Weak instantaneous correlation (r = 0.144) may reflect temporal mismatch
         \item \textbf{The Correlation Paradox :} Mean instantaneous correlation is low ($0.144$), but lag analysis reveals peak coupling at $+3$ to $+6$ hours for long-lived tracks.
-        \item \textbf{The Saturation Plateau :} In high soil moisture Tracks(3 and 6), \texttt{SWVL1} plateaus at \texttt{0.42-0.45 $m^3/m^3$}. where additional TP does not increase SM but significantly increases \textbf{Runoff}, potentially cooling the surface and limiting FSI.
-        \item \textbf{Sensitivity Shift :} Drier soils for Track 2 and Track 5 (post-10th Sept, post-weakening after surviving elevated terrain of Western Ghats) shows the highest relative sensitivity, allowing small rainfall pulses to trigger large \texttt{LHF} and maintain feedback loop (\texttt{TP-SWVL1-LHF}).
+        \item \textbf{The Saturation Plateau :} In high soil moisture Tracks(3 and 6), \texttt{SWVL1} plateaus at \texttt{0.42-0.45 $m^3/m^3$}. where additional TP does not increase SM but significantly increases \textbf{Runoff}, potentially cooling the surface and limiting FSI. \cite{clapp1978empirical}
+        \item \textbf{Sensitivity Shift :} Drier soils for Track 2 and Track 5 (post-10th Sept, post-weakening after surviving elevated terrain of Eastern Ghats) shows the highest relative sensitivity, allowing small rainfall pulses to trigger large \texttt{LHF} and maintain feedback loop (\texttt{TP-SWVL1-LHF}). \cite{hunt2017effect}
     \end{itemize}
 \end{frame}
 
@@ -3164,20 +3192,22 @@ Longevity is proportional to the strength and sign of the \textbf{Land-Atmospher
     \textbf{Evidence (Temporal \& Physical Non-linearity) :}
     \begin{itemize}
         \item \textbf{Asymmetric Response :} Soil moisture rises rapidly during precipitation (Infiltration) but decays slowly (Evaporation(\texttt{LHF}) and Memory(\texttt{ACF})), creating the positive \texttt{ACF} seen in long-lived tracks.
-        \item \textbf{Runoff vs. Feedback :} In Tracks 1 and 4, the absence of a lag-peak indicates that rainfall is lost to runoff before it can recharge the \texttt{SWVL1} layer.
+        \item \textbf{Runoff vs. Feedback :} In Tracks 1 and 4, the absence of a lag-peak indicates that rainfall is lost to runoff before it can recharge the \texttt{SWVL1} layer. \cite{clapp1978empirical}
     \end{itemize}
 
     \vspace{0.1cm}
+    % FIX: check from lag plots
     \begin{center}
-    \begin{tabular}{lccc}
-        \toprule
-        \textbf{System State} & \textbf{Correlation Type} & \textbf{Typical Value ($r$)} & \textbf{Physical Result} \\
-        \midrule
-        Instantaneous & Linear (Mismatch) & 0.144 & Under-represents coupling \\
-        \textbf{Lagged ($+6h$)} & \textbf{Process-based} & \textbf{0.45 - 0.62} & \textbf{Feedback Peak} \\
-        Saturated & Nonlinear (Plateau) & $\rightarrow 0$ & Runoff / Cooling \\
-        \bottomrule
-    \end{tabular}
+        \begin{tabular}{lcccc}
+            \toprule
+            \textbf{System State} & \textbf{Tracks} & \textbf{Correlation Type} & \textbf{Value (\texttt{r})} & \textbf{Physical Result} \\
+            \midrule
+            Instantaneous & All (1--6) & Linear Mismatch & \texttt{0.144} & Under-represents coupling \\
+            \textbf{Lagged (\texttt{+6h})} & \textbf{2, 5} & \textbf{Process-based} & \texttt{0.45--0.62} & \textbf{Feedback Peak} \\
+            Saturated & 3, 6 & Nonlinear Plateau & \texttt{$\approx$0} & Runoff / Cooling \\
+            Broken/Decoupled & 1, 4 & Weak/Negative & \texttt{< 0.1} & Rapid Runoff \\
+            \bottomrule
+        \end{tabular}
     \end{center}
 
     \vspace{0.3cm}
@@ -3187,133 +3217,204 @@ Longevity is proportional to the strength and sign of the \textbf{Land-Atmospher
     \end{itemize}
 \end{frame}
 
-% \subsection{Hypothesis 5}
+\subsection{Hypothesis 5}
+% FIX: update and refinement and furthur analysis required for this hypothesis
+\begin{frame}{Hypothesis 5 : Two-Tier Control Mechanism}
+    % TODO : Concept behind this hypothesis
+    % - [x] Evidence A: Geographic Location. Your track data shows Tracks 3, 5, and 6 moved into the Indo-Gangetic Plains. Scientifically, this region is globally recognized as being dominated by Alluvial Clay/Silt. Tracks 1 and 4 are in Coastal/Ghats regions, which are known for Sandy/Loamy/Rocky soils.
+    % - [x] Evidence B: The Autocorrelation Function (ACF). Your soilmoiture_analysis.py calculates Soil Memory.
+    % - [x]     High Memory (ACF > 0.5): This is a physical "fingerprint" of Clay. Only Clay has the capillary strength to hold moisture that long.
+    % - [x]     Low Memory (ACF < 0.2): This is a "fingerprint" of Sand.
+    % - [x] Evidence C: The Saturation Plateau. In your coupling_metrics.py and correlation results, you saw SWVL1 cap out at 0.42–0.45. This specific value is the Porosity (Saturation Point) for typical Clay-Silt soils. Sandy soils usually saturate much lower (around 0.30–0.35).
+    \vspace{-0.1cm}
+    \begin{block}{MD longevity is governed by a hierarchical control: Soil Texture (Tier 1) sets the capacity, while the Coupling Efficiency and ASM (Tier 2) determine the realization of that capacity}\end{block}
+    % TODO: Mildly supporting Literature : [Observed increase in the peak rain rates of monsoon depressions](https://www.nature.com/articles/s41612-023-00436-w) and [Persistence in Physical Systems: An Application to Soil Moisture Memory](https://journals.aps.org/prl/abstract/10.1103/djz5-2lsn)
+
+    \vspace{-0.5cm}
+    \begin{alertblock}{\tiny Needs furthur analysis, maybe by using soil map data accurately finding Clapp-Hornberger ($\beta$)}\end{alertblock}
+
+    \vspace{-0.3cm}
+    % \vspace{0.15cm}
+    \footnotesize
+    \textbf{Statement :} The "Brown Ocean" effect is not a binary state but a two-tier mechanism. \textbf{Tier 1 (Geographical)}: Soil hydraulic properties (Clay vs. Sand) determine the theoretical lifespan. \textbf{Tier 2 (Dynamic)}: Pre-landfall moisture and feedback synchrony determine if that lifespan is achieved.
+
+    \vspace{0.2cm}
+    \tiny
+    While I did not used a static soil texture map, the \texttt{ERA5-Land SWVL1} variable I analyzed is itself a product of the model's underlying soil parameters. By analyzing the Soil Memory (\texttt{ACF}) and the Saturation Plateau (\texttt{0.45 $m^3/m^3$}) in my results, I have identified the physical signatures of Clay-rich soils in the Indo-Gangetic Plains versus the high-drainage Sandy characteristics of the coastal tracks and steep elevation of Eastern Ghats.
+
+    \vspace{0.05cm}
+    \begin{block}{\footnotesize MD longevity is governed by a hierarchical control: Soil Texture (Tier 1) sets the capacity \cite{seneviratne2010investigating}, while the Coupling Efficiency and ASM (Tier 2) determine the realization. \cite{hunt2017effect}.}\end{block}
+
+    \vspace{0.05cm}
+    \begin{enumerate}
+        \item Clay (\texttt{$\beta$=0.1}): Mathematically, a low $\beta$ means the soil holds water tightly \cite{clapp1978empirical}.. For Tracks 3, 5, and 6 the soil moisture (\texttt{SWVL1}) stays high even after the rain stops (High Memory (\texttt{ACF})).
+        \item Sand (\texttt{$\beta$=0.35}): A high $\beta$ means the soil drains water rapidly \cite{seneviratne2010investigating}. Tracks 1 and 4 where \texttt{SWVL1} drops almost immediately after a rain pulse.
+    \end{enumerate}
+
+    \vspace{0.1cm}
+    \footnotesize
+    \begin{itemize}
+        \item \textbf{Tier 1: The Capacity (Necessary)}  
+            \begin{itemize} \footnotesize
+                \item \textbf{Clay (IG Plains):} High retention ($\beta \approx 0.1$) $\rightarrow$ Capacity for \textbf{120--180h}.
+                \item \textbf{Sand (Coastal):} Rapid drainage ($\beta \approx 0.35$) $\rightarrow$ Capacity capped at \textbf{50--100h}.
+            \end{itemize}
+        \item \textbf{Tier 2: The Efficiency (Sufficient)} 
+            \begin{itemize} \footnotesize
+                \item \textbf{Coupling Synchrony:} Peak lag $0 \pm 6h$ + High ACF $\Rightarrow$ Maximum longevity.
+                \item \textbf{Failure Mode:} Negative lags + Broken loops $\Rightarrow$ Immediate decay regardless of soil type.
+            \end{itemize}
+    \end{itemize}
+
+    \vspace{-0.1cm}
+    \footnotesize
+    \begin{exampleblock}{\footnotesize Trajectory Validation}
+        \textbf{Track 5:} Transitioned from Sandy Coast to IGP Clay $\rightarrow$ \textbf{163h} survival.\\
+        \textbf{Track 1:} Remained in Coastal/Rocky terrain $\rightarrow$ \textbf{75h} dissipation.
+    \end{exampleblock}
+\end{frame}
+
+\subsection{Hypothesis 6}
+% Hyp 6 (Soil Type) is the Road Surface. -> if the road (soil) doesn't support the grip (moisture retention), the car (MD) won't go the distance.
 % FIX: Further analysis required for this hypothesis
-% \begin{frame}{Hypothesis 5 : Soil Type Modulation}
-%     \textbf{Statement :} Soil texture (Clay vs. Sand) determines the efficiency of the "Land-act-as-Ocean" mechanism by controlling moisture retention timescales. Soil type determines the efficiency of TP $\rightarrow$ SWVL$1$ $\rightarrow$ HF energy transfer pathway. Clay soils enable longer feedback loops than sandy soils.
-%
-%     \vspace{0.15cm}
-%     \footnotesize
-%     $\Rightarrow$ Clay retention $\rightarrow$ positive ACF/FSI.
-%     \footnotesize
-%         \begin{center}
-%             \begin{tabular}{lllc}
-%                 \toprule
-%                 \textbf{Region} & \textbf{Soil Type} & \textbf{Tracks} & \textbf{Avg. Duration} \\
-%                 \midrule
-%                 Coastal/Delta   & Sandy              & 1, 4            & \textbf{70h}           \\
-%                 Central Plains  & Clay/Loam          & 2, 3, 5, 6      & \textbf{126h}          \\
-%                 \bottomrule
-%             \end{tabular}
-%         \end{center}
-%
-%     \vspace{0.15cm}
-%     \footnotesize
-%     \textbf{Findings :}
-%     \begin{itemize}
-%         \item \textbf{Clay Dominance :} IndoGangetic tracks (Clay) exhibit positive SM-memory (\textbf{ACF $> 0.3$}) and high FSI (\textbf{$>0.4$}), facilitating feedback loops that double the MD lifespan.
-%         \item \textbf{Sandy Constraint :} Coastal tracks (Sand) suffer from "Flash Infiltration"—moisture vanishes from the top layer too quickly to sustain LHF, leading to negative autocorrelation.
-%     \end{itemize}
-%
-% % TODO: explicitly map soil type along each track using a soil dataset (e.g., FAO Soil Grids) to confirm clay vs. sandy regions.
-% \vspace{0.1cm}
-% Clear regional pattern : clay soils over IndoGangetic plain support longer duration.
-% \end{frame}
+\begin{frame}{Hypothesis 6 : Soil Type Modulation [1/2]}
+    \begin{block}{Soil texture determines the efficiency of the "Land-act-as-Ocean" mechanism}\end{block}
 
-% \subsection{Hypothesis 6}
-% FIX: update values and refinement and furthur analysis required for this hypothesis
-% \begin{frame}{Hypothesis 6 : Two-Tier Mechanism}
-%     \textbf{Statement :} Actual duration is determined by pre-landfall soil moisture (ASM$_{24h}$) and atmospheric TP-SWVL$_1$ coupling strength.
-%
-%     \vspace{0.15cm}
-%     \footnotesize
-%     $\Rightarrow$ Soil Type (Tier1) + ASM/FSI (Tier2)
-%     Clapp-Hornberger validated (clay β=0.1 slow drain vs sand β=0.35
-%      TODO: Mildly supporting Literature : [Observed increase in the peak rain rates of monsoon depressions](https://www.nature.com/articles/s41612-023-00436-w) and [Persistence in Physical Systems: An Application to Soil Moisture Memory](https://journals.aps.org/prl/abstract/10.1103/djz5-2lsn)
-%
-%    \vspace{0.1cm}
-%    \footnotesize
-%     \begin{block}{Integrated Mechanism}
-%         \begin{itemize}
-%             \item \textbf {Tier 1 (Necessary)} : Soil Type
-%                   \begin{itemize}
-%                       \item Clay soils: capacity for 120-180h duration
-%                       \item Sandy soils: capacity for 50-100h duration
-%                   \end{itemize}
-%             \item \textbf {Tier 2 (Sufficient)} : Pre-landfall ASM + TP-SWVL$_1$ coupling
-%                   \begin{itemize}
-%                       \item High ASM + positive feedback $\Rightarrow$ maximum duration and longer longevity
-%                       \item Low ASM + negative feedback $\Rightarrow$ minimum duration and shorter longevity
-%                   \end{itemize}
-%         \end{itemize}
-%     \end{block}
-%
-%     \vspace{0.05cm}
-%     \footnotesize
-%     \begin{block}{Example Trajectories}
-%         \begin{itemize}
-%             \item Track 5 (coastal sand$\rightarrow$ plains clay): 165h (ocean$\rightarrow$land progression)
-%             \item Track 1 (coastal sand): 71h (weak feedback loop)
-%             \item Track 3 (plains clay): 154h (strong feedback sustained)
-%         \end{itemize}
-%     \end{block}
-% \end{frame}
+    \footnotesize
+    \textbf{Statement :} Soil texture (Clay vs. Sand) determines the efficiency of the "Land-act-as-Ocean" mechanism by controlling moisture retention timescales \cite{seneviratne2010investigating}. Soil type determines the efficiency of TP $\rightarrow$ SWVL$1$ $\rightarrow$ HF energy transfer pathway \cite{hunt2017effect}. Clay soils enable longer feedback loops than sandy soils.
 
-% \subsection{Hypothesis 7}
-% FIX: Furthur analysis required for this hypothesis
-% \begin{frame}{Hypothesis 7 : Orographic Modulation of Feedback}
-%     \textbf{Elevation Breaks Precipitation-Soil Moisture Feedback}
-%     Statement: Elevation is not merely a geographic variable but a negative feedback modulator on the precipitation-soil moisture coupling that sustains MDs over land.
-%     Mechanism: When an MD encounters terrain with mean elevation > 500m (e.g., Western Ghats, elevation range 600-2600m), three processes weaken TP-SWVL₁ feedback:
-    % "Elevation > 500m slows MD translation and temporarily weakens vorticity, BUT:
-    %     If upstream soil is clay with high water capacity, AND
-    %     If soil memory is strong (autocorr > 0.35), AND
-    %     If TP-SWVL1 coupling is robust (r > 0.4, p < 0.01)
-    %     -> Then the system stalls (~1-3 m/s) but recovers and survives.
-    %     If any of these three conditions fail -> system dies during elevation crossing."
-%    When an MD encounters elevation > 500m (Western Ghats region), three processes weaken TP-SWVL₁ coupling :
-%     \begin{enumerate}
-%         \item Orographic Precipitation Efficiency : Forced ascent produces intense rainfall with high runoff (not infiltration)
-%         \item Drainage Acceleration : Steep slopes (> 8°) increase drainage by 2-3× vs. flat terrain -> soil doesn't retain moisture
-%         \item Reduced Latent Heating : Rapid runoff leaves surface dry -> lower evaporative cooling -> weaker LHF feedback. Without sustained LHF, the MD's warm core cannot be maintained—confirming your observation of rapid LHF decline post-landfall.
-%     \end{enumerate}
-%
-%     \textbf{Prediction :} Tracks 1, 4 (Western Ghats, elev 600-900m) show shorter duration (~70h) and weak autocorrelation (<0.1) despite possible  pre-landfall moisture. Tracks 2, 3, 5, 6 (Plains, elev <200m) show long duration (~130h) and strong autocorrelation (>0.3).
-%     Observed that Tracks 1 and 4, while originating from the ocean, encounter the Western Ghats mountain chain (elevation 600-2600m) shortly after landfall.
-%     This presents a natural experiment to test whether elevation disrupts the TP-SWVL1 feedback.
-%
-%       Rapid orographic precipitation -> runoff instead of infiltration
-%       Accelerated drainage on slopes -> reduced soil water retention
-%       Forced ascent -> reduced latent heating feedback
-%
-%       Predicted outcome: Tracks 1, 4 (Western Ghats) show short duration (~70h mean) despite possible pre-landfall moisture, while Tracks 2,3,5,6 (plains) show long duration (~125h) because elevation < 200m allows soil moisture to accumulate.
-%      In RESULTS AND OBSERVATION : Add Elevation Statistics by Track
-%
-%       Evidence :
-%       Tracks 1, 4 (Western Ghats, mean elevation 600-900m): Duration 63-71h, autocorr < 0.1
-%       Tracks 2, 3, 5, 6 (Plains, mean elevation 50-150m): Duration 105-167h, autocorr 0.35-0.58
-%       Correlation with maximum elevation: r = -0.87 (strong negative relationship with duration)
-%
-%    Analysis shows:
-%    \begin{itemize}
-%       \item Duration decreases significantly with elevation (r = ...)
-%       \item Soil memory is disrupted at elevations > 500m
-%       \item This explains why Tracks 1, 4 show negative autocorrelation despite antecedent moisture
-%    \end{itemize}
+    \vspace{0.1cm}
+    \begin{block}{\footnotesize Note :}
+        Identification of soil type not via soil maps, but through \textbf{physical signatures} in ERA5-Land \texttt{SWVL1} variable.
+    \end{block}
 
-%     \vspace{0.05cm}
-%     \footnotesize
-%       This finding refines H5 (Soil Type) by adding a topographic constraint: clay soils cannot sustain feedback over steep terrain because infiltration rates become limiting.
-% \end{frame}
+    \vspace{0.15cm}
+    \footnotesize
+    This Hypothesis uses Temporal Memory. By showing that Tracks 2, 3 5 and 6 have high \texttt{ACF >0.35}, proves that the soil itself is physically different (Clay-rich) from the Coastal tracks (Sand), where memory is near zero or negative.
+
+    \begin{equation*}
+        \text{\texttt{TP}} \xrightarrow{\text{recharge}} \text{\texttt{SWVL1}} \xrightarrow{\text{flux}} \text{\texttt{LHF}} \xrightarrow{\text{evaporation}} \text{\texttt{TP}}
+    \end{equation*}
+    Soil Texture (proxy (\texttt{ACF})) determines the efficiency of this entire chain. If the soil is sandy, the feedback loop (\cite{hunt2017effect}) breaks at the second link because the moisture infiltrates too deep too fast.
+
+    \vspace{0.15cm}
+    \footnotesize
+    $\Rightarrow$ Clay retention $\rightarrow$ positive ACF/FSI.
+
+    \vspace{0.15cm}
+    \footnotesize
+        \begin{center}
+            \begin{tabular}{lllc}
+                \toprule
+                \textbf{Region} & \textbf{Soil Type} & \textbf{Tracks} & \textbf{Avg. Duration} \\
+                \midrule
+                Coastal/Delta   & Sandy              & 1, 4            & \textbf{70h}           \\
+                Central Plains  & Clay/Loam          & 2, 3, 5, 6      & \textbf{126h}          \\
+                \bottomrule
+            \end{tabular}
+        \end{center}
+
+    \vspace{0.15cm}
+    \footnotesize
+    \textbf{Findings :}
+    \begin{itemize}
+        \item \textbf{Clay Dominance :} Indo-Gangetic tracks (Clay) exhibit positive SM-memory (\textbf{ACF $> 0.3$}) and high FSI (\textbf{$>0.4$}), facilitating feedback loops that double the MD lifespan.
+        \item \textbf{Sandy Constraint :} Coastal tracks (Sand) suffer from "Flash Infiltration"—moisture vanishes from the top layer too quickly to sustain LHF, leading to negative autocorrelation.
+    \end{itemize}
+
+    % TODO: explicitly map soil type along each track using a soil dataset (e.g., FAO Soil Grids) to confirm clay vs. sandy regions.
+    \vspace{0.1cm}
+    Clear regional pattern : clay soils over Indo-Gangetic plain support longer duration.
+\end{frame}
+
+\begin{frame}{Hypothesis 6 : Soil Type Modulation [2/2]}
+    \footnotesize
+    \vspace{-0.1cm}
+    \begin{columns}
+        \begin{column}{0.45\textwidth}
+            \textbf{Evidence A: Memory Signatures}
+            \begin{itemize}
+                \item \textbf{Clay Signature :} \texttt{ACF(24h) > 0.35}.
+                \item Result : Track 5 (\texttt{0.584}) and Track 3 (\texttt{0.350}) show high persistence typical of the Indo-Gangetic Clay.
+                \item \textbf{Sand Signature :} \texttt{ACF(24h) $\approx$ 0}.
+                \item Result : Track 1 (\texttt{-0.061}) shows "Flash Infiltration" where moisture drains instantly.
+            \end{itemize}
+        \end{column}
+
+        \begin{column}{0.55\textwidth}
+            \textbf{Evidence B: Saturation Plateaus}
+            \begin{itemize}
+                \item \textbf{Clay Porosity :} \texttt{SWVL1 }saturates \texttt{0.42-0.45 $m^3/m^3$}. Matches tracks 2, 5, 6. Based on the $\beta$-parameter for tight soil retention, SWVL1 saturate at \texttt{0.45}. \cite{clapp1978empirical}.
+                \item \textbf{Sandy Porosity :} \texttt{SWVL1} saturates lower (\texttt{< 0.35}). Matches coastal track 4.
+            \end{itemize}
+        \end{column}
+    \end{columns}
+
+    \vspace{0.2cm}
+    \begin{equation*}
+        \text{Clay Capacity (\texttt{160h+})} \gg \text{Sandy Capacity (\texttt{< 80h})}
+    \end{equation*}
+
+    \vspace{0.1cm}
+    \footnotesize
+    \textbf{ERA5 Correlation Findings :}
+    \begin{itemize}
+        \item \textbf{Feedback Efficiency :} Tracks 3, 5, and 6 transitioned into the Indo-Gangetic Plains. The high retention (Tier 1) allowed for sustained Latent Heat Flux even after rain pulses stopped.
+        \item \textbf{The Failure Mode :} In Sandy/Rocky terrain (Track 1), the \texttt{TP} $\rightarrow$ \texttt{SWVL1} link is broken by rapid drainage, preventing the "Brown Ocean" from ever forming.
+    \end{itemize}
+\end{frame}
+
+\subsection{Hypothesis 7}
+\begin{frame}{Hypothesis 7 : Orographic Feedback Modulation}
+    \begin{block}{The Topographic Constraint on the Brown Ocean Effect}\end{block}
+
+    \footnotesize
+    \textbf{Statement :} Elevation is the primary \textit{negative feedback modulator}. Even with optimal soil types (Hyp 6), terrain with elevation range \texttt{900-1600m} (Eastern Ghats) physically decouples the \texttt{TP} $\rightarrow$ \texttt{SWVL1} link via mechanical runoff dominance.
+
+    \vspace{0.1cm}
+    \textbf{The Three-Process Decay Mechanism:}
+    \begin{enumerate}
+        \item \textbf{Infiltration vs. Runoff :} Forced orographic ascent produces high-intensity rain pulses where \textbf{Precipitation is more than Infiltration Capacity}, forcing surface runoff.
+        \item \textbf{Gravitational Drainage :} Steep slopes ($>20^\circ$) accelerate subsurface lateral flow, reducing the residence time of water in the top layer (\texttt{SWVL1}).
+        \item \textbf{LHF Starvation :} Rapid drainage leaves the surface "effectively dry" for evaporation, starving the MD warm core of latent heat.
+    \end{enumerate}
+
+    \vspace{0.1cm}
+    \begin{columns}[T]
+        \begin{column}{0.48\textwidth}
+            \textbf{Tier 1: High Elevation (range \texttt{900-1600 m})}
+            \begin{itemize}
+                \item \textbf{Tracks :} 1, 4 (Eastern Ghats)
+                \item \textbf{Memory :} ACF $\approx 0$ (broken)
+                \item \textbf{Longevity :} \textbf{Short (~70h)}
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \textbf{Tier 2: Low Plains (\texttt{$\approx$200 m})}
+            \begin{itemize}
+                \item \textbf{Tracks :} 2, 3, 5, 6 (Indo-Gangetic)
+                \item \textbf{Memory :} ACF $> 0.35$ (sustained)
+                \item \textbf{Longevity :} \textbf{Long (~130h+)}
+            \end{itemize}
+        \end{column}
+    \end{columns}
+
+    \vspace{0.1cm}
+    \begin{exampleblock}{ERA5 Statistical Evidence}
+        \centering
+        \textbf{Max Elevation vs. Duration: $r = -0.87$} \\
+        \footnotesize (Strong negative relationship: Elevation acts as a survival ceiling for MDs.)
+    \end{exampleblock}
+\end{frame}
 
 % \subsection{Hypothesis 8}
 % FIX: Furthur analysis required for this hypothesis
 % \begin{frame}{Hypothesis 8 : Topographic Resilience Hypothesis}
 % \textbf{System Resilience During Topographic Barriers Depends on Upstream Soil Memory}
 %
-%      An MD crossing elevation > 500m will experience translational slowdown and temporary vorticity reduction. Survival depends on whether upstream soil moisture memory can sustain the TP-SWVL₁ feedback loop during this critical period.
+%      An MD crossing elevation > 900m will experience translational slowdown and temporary vorticity reduction. Survival depends on whether upstream soil moisture memory can sustain the TP-SWVL1 feedback loop during this critical period.
 % Quantitative criterion:
-%       If soil autocorrelation (24h) > 0.35 AND clay content > 40% AND TP-SWVL₁ r > 0.3 → Stall but survive If any metric falls below threshold → Stall and die
+%       If soil autocorrelation (24h) > 0.35 AND clay content > 40% AND TP-SWVL1 r > 0.3 → Stall but survive If any metric falls below threshold → Stall and die
 %
 %      Evidence:
 %      Track 5: 0.584 autocorr, ~50% clay, r=0.44 → Survives 165h despite 5→1 m/s slowdown
@@ -3327,14 +3428,14 @@ Longevity is proportional to the strength and sign of the \textbf{Land-Atmospher
 %
 %  - Wind shear reduced (blocked flow) -> vorticity decreases
 %  - Friction increased (terrain drag) -> vorticity decreases
-%  - Thermal energy sustained (TP-SWVL₁ feedback active) -> vorticity doesn't decay completely
+%  - Thermal energy sustained (TP-SWVL1 feedback active) -> vorticity doesn't decay completely
 %
 % Tracks 1,4 : Thermal energy lost -> vorticity continues decreasing -> eventual decay
 % Track 5 : Thermal energy maintained -> vorticity stabilizes -> recovers as elevation decreases
 %
 % The Stall-Recover Mechanism:
 %   + During stall: MD slows to 1 m/s, vorticity weakens temporarily
-%   + If soil memory is strong: SM remains elevated → TP-SWVL₁ feedback sustains
+%   + If soil memory is strong: SM remains elevated → TP-SWVL1 feedback sustains
 %   + System stalls for 24-48 hours but doesn't decay
 %   + Once elevation decreases: speed recovers, system re-energizes
 % \end{frame}
@@ -3479,7 +3580,7 @@ Longevity is proportional to the strength and sign of the \textbf{Land-Atmospher
 %         \item overall conclusion Heat Flux is the mediator. Soil moisture is the "reservoir," but the Heat Flux is the "pump" that transfers that energy into the MD's core, allowing it to maintain its cyclonic structure despite surface friction.
 %         \item Soil Type Sensitivity : Clay soils (higher water-holding capacity) sustain MDs longer than sandy soils
 %               \begin{itemize}
-%                   \item Track 5 propagate over IndoGangetic plains which is clayey soil (hold more moisture) than coastal region for track 1 and 4. Therefore expected longer duration of track 5 ($\sim$7 days) than track 1 ($\sim$ 3days) and 4 ($\sim$3 days)
+%                   \item Track 5 propagate over Indo-Gangetic plains which is clayey soil (hold more moisture) than coastal region for track 1 and 4. Therefore expected longer duration of track 5 ($\sim$7 days) than track 1 ($\sim$ 3days) and 4 ($\sim$3 days)
 %               \end{itemize}
 %     \end{enumerate}
 % \end{frame}
@@ -3575,8 +3676,10 @@ Longevity is proportional to the strength and sign of the \textbf{Land-Atmospher
 %     \end{itemize}
 % \end{frame}
 
+\section{References}
 \begin{frame}[allowframebreaks]{References}
     \nocite{*}
+    \scriptsize
     \printbibliography
 \end{frame}
 \end{document}
