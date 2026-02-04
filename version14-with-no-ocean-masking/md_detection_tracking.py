@@ -18,18 +18,18 @@
 # 6. Rephase CE 0.5/0.3 vs 8.0/3.0" → Standardize (use 8-15)
 # TODO:
 # 1. H4 GAM: pip install pygam; SM ~ s(TP) → Plateau fig
-# 2. H5 HWSD: 
+# 2. H5 HWSD:
 #    ds = xr.open_dataset('SoilGrids250m_CLAY.nc')
 #    tracks['CLAY_%'] = ds.CLAY.isel(depth=0).interp(lon=tracks.lon,lat=tracks.lat)
 #    # FSI ~ CLAY_% (r>0.6 expected)
-# 3. H7 SRTM: 
+# 3. H7 SRTM:
 #    !pip install richdem rioxarray
 #    dem = rioxarray.open_rasterio('SRTM_India.tif')
 #    tracks['MEAN_ELEV'] = dem.interp(...)  # r(dur,elev)<-0.7
 # 4. Add duirnal HF (LHF, SHF and THF) amplitude time series plot -> \Delta(HF) = (HF_max -HF_min)_24h -> see veriation in this \Delta(HF)
 
 
-# INFO: For 2024, 2025 expect ->  (FSI > 0.4 long; clay > 30%, ACF > 0.35).
+# INFO: For 2022, 2023, 2024, 2025 expect ->  (FSI > 0.4 long; clay > 30%, ACF > 0.35).
 
 import os
 import sys
@@ -139,7 +139,7 @@ MONSOON_SEASONS = {
         "September-2023",
     ],
     2024: [
-        "June-2024",
+        # "June-2024",
         "July-2024",
         "August-2024",
         "September-2024",
@@ -152,7 +152,7 @@ MONSOON_SEASONS = {
     ]
 }
 
-MONSOON_YEAR = 2024  # Available : [2022, 2023, 2024, 2025]
+MONSOON_YEAR = 2022                    # Available : [2022, 2023, 2024, 2025]
 MONTH_DIRS = MONSOON_SEASONS.get(MONSOON_YEAR, [])
 output_dir = f"output_{MONSOON_YEAR}"
 if not os.path.exists(output_dir):
