@@ -1,38 +1,24 @@
 # Dataset: ERA5 hourly data on single levels from 1940 to present
 
-1. 2m temperature
-2. Mean sea level pressure
-3. Surface pressure
+1. 2m Temperature
+2. Mean Sea level pressure
+3. Surface Pressure
 4. 10m u-component of wind
 5. 10m v-component of wind
-6. Mean surface latent heat flux
-7. Mean surface sensible heat flux
-8. Total precipitation
-9. Soil temperature level 1
-10. Volumetric soil water layer 1
+6. Mean Surface Latent Heat Flux
+7. Mean Surface Sensible Heat Flux
+8. Total Precipitation
+9. Soil Temperature Level 1
+10. Volumetric Soil Water Layer 1
 
 ---
 
-> check for soil moisture, time >12 days,
+[IMD](https://mausam.imd.gov.in/)
+[IMD annual reports](https://metnet.imd.gov.in/phps/imdweb_imdarep.php)
+[IMD press releases](https://internal.imd.gov.in/pages/press_release_mausam.php)
 
 ---
 
-Year 2024
-Months June, July, August, September
-days 1-30/31
-hourly
-AOI 30N70E to 5N100E
-
----
-
-- [x] time series, velocity corrections
-- [x] hovmoller diagram
-- [ ] 3 -3 hours
-
----
-
-- [x] reverse x and y axis in hov plots
-- [x] soil temp/Vwcl1
-- [ ] mixing ratio
+- [ ] Mixing ratio
 
 ---
