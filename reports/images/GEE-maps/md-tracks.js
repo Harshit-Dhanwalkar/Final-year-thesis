@@ -1,13 +1,15 @@
-var roi = ee.Geometry.Rectangle([70.0, 7.0, 95.0, 30.0]);
-
 var tracks = ee.FeatureCollection(
-  "projects/final-year-project-466515/assets/MD-coordinates-ALL",
+  "projects/final-year-project-466515/assets/MD-coordinates--2024-ALL",
 );
+
+// India State Boundaries
 var indiaStates = ee
   .FeatureCollection("FAO/GAUL/2015/level1")
   .filter(ee.Filter.eq("ADM0_NAME", "India"));
 
 var colors = ["red", "cyan", "lime", "yellow", "magenta", "orange"];
+
+// Get the track IDs
 var trackIds = tracks.aggregate_array("track_id").distinct().getInfo();
 
 trackIds.forEach(function (id, index) {
@@ -23,12 +25,13 @@ trackIds.forEach(function (id, index) {
   var line = ee.Geometry.LineString(
     specificTrackPoints.geometry().coordinates(),
   );
+
+  // 1. Prepare the MODIS Cloud Layer
   var specificModis = ee
     .ImageCollection("MODIS/061/MOD09GA")
     .filterDate(startDate, endDate)
     .select(["sur_refl_b01", "sur_refl_b04", "sur_refl_b03"])
     .mean()
-    .clip(roi)
     .visualize({
       bands: ["sur_refl_b01", "sur_refl_b04", "sur_refl_b03"],
       min: 0,
@@ -37,41 +40,46 @@ trackIds.forEach(function (id, index) {
     });
 
   var boundaryVis = indiaStates
-    .style({ fillColor: "b5b5b500", color: "black", width: 0.8 })
+    .style({ fillColor: "b5b5b500", color: "black", width: 0.5 })
     .visualize({});
-  var trackGeom = line.buffer(2000);
+
+  // MODIFIED: Create a thicker buffer for the track line (e.g., 5000 meters = 5km wide)
+  var trackBuffer = line.buffer(5000); // 5km buffer on each side = 10km total width
+
+  // Create visualization for the buffered line
   var trackVis = ee
-    .FeatureCollection([ee.Feature(trackGeom)])
-    .draw({ color: colors[index % colors.length] })
+    .FeatureCollection([ee.Feature(trackBuffer)])
+    .style({
+      color: colors[index % colors.length],
+      fillColor: colors[index % colors.length], // Solid fill
+      width: 1,
+    })
     .visualize({});
+
   var finalImage = specificModis.blend(boundaryVis).blend(trackVis);
+
   Map.addLayer(finalImage, {}, "Track " + id, false);
-  /*
-Scale,Resolution,Pixels (Approx),Export Speed,Best Use
-2000,2 km/pixel,1250×1250 ,Very Fast
-1000,1 km/pixel,2500×2500 ,Fast
-500 ,500 m/pixel,5000×5000,Medium,High-quality publications.
-250 ,250 m/pixel,10000×10000,Slow,Maximum MODIS detail (Full res).
-*/
+
   Export.image.toDrive({
     image: finalImage,
-    description: "Track_" + id + "_Clipped",
-    folder: "GEE_Fianl_Year_Clipped",
-    fileNamePrefix: "MD_Track_" + id,
-    region: roi,
+    description: "Track_" + id + "_Plot",
+    folder: "GEE_Fianl_Year_Full",
+    fileNamePrefix: "Track_" + id + "_Map",
+    region: line.buffer(500000).bounds(),
     scale: 2000,
-    fileFormat: "GeoTIFF",
+    fileFormat: "GEOTIFF",
   });
 });
 
+// Add India boundaries to the map
 Map.addLayer(
   indiaStates.style({
-    fillColor: "b5b5b500", // Transparent fill
-    color: "black", // State boundary color
-    width: 0.5,
+    fillColor: "b5b5b500",
+    color: "black",
+    width: 0.3,
   }),
   {},
   "India State Boundaries",
 );
 
-Map.centerObject(roi, 5);
+Map.centerObject(tracks, 5);

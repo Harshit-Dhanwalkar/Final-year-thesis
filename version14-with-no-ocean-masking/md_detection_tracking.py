@@ -1,4 +1,6 @@
 # FIX:
+# 0. legends error: 1477: UserWarning: No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
+#   ax.legend(loc='upper left', fontsize=9, framealpha=0.95, edgecolor='black', fancybox=True)
 # 1. No Memory Management for Large Datasets
 #    Location: md_detection_tracking.py, load_dataset_async()
 #    Issue: .compute() loads entire dataset into memory
@@ -139,7 +141,7 @@ MONSOON_SEASONS = {
         "September-2023",
     ],
     2024: [
-        # "June-2024",
+        "June-2024",
         "July-2024",
         "August-2024",
         "September-2024",
@@ -152,7 +154,7 @@ MONSOON_SEASONS = {
     ]
 }
 
-MONSOON_YEAR = 2022                    # Available : [2022, 2023, 2024, 2025]
+MONSOON_YEAR = 2024                    # Available : [2022, 2023, 2024, 2025]
 MONTH_DIRS = MONSOON_SEASONS.get(MONSOON_YEAR, [])
 output_dir = f"output_{MONSOON_YEAR}"
 if not os.path.exists(output_dir):
@@ -182,26 +184,25 @@ month_order = [
 
 # desired_tracks = [1, 3, 4, 5]
 
+
 # for wind creterion : https://mausam.imd.gov.in/imd_latest/monsoonreport2024.pdf page: 284
-WIND_SPEED_LOWER_BOUND_MS = 5       # == 17 knots  # 8     # m/s
-WIND_SPEED_UPPER_BOUND_MS = 19      # == 27 knots  # 16    # m/s
-MSL_LOWER_BOUND_PA = 100200 # 100000 # Pa
-
-PRECIPITATION_THRESHOLD_MM = 0.3    # mm/hr
+WIND_SPEED_LOWER_BOUND_MS = 5  # 8    # m/s == 17 knots
+WIND_SPEED_UPPER_BOUND_MS = 19 # 16   # m/s == 27 knots
+MSL_LOWER_BOUND_PA = 100200 # 100000  # Pa
+PRECIPITATION_THRESHOLD_MM = 0.3      # mm/hr
 # SWVL1 Range: $0.02-0.55$ m^3/m^3
-
-VORTICITY_THRESHOLD = 3e-6  # 5e-6  # > 0 /s, # Positive cyclonic
-MAX_SPEED_MS = 12           # 15    # m/s == 36 km/hr
-MAX_GAP_HOURS = 24  # 12    # 6     # hr Bridge small gaps In Detection
-TRACKING_SEARCH_RADIUS_KM = 50      # km Hourly tracking
-LINKING_SEARCH_RADIUS_KM = 100      # km Multi-hour gaps
+VORTICITY_THRESHOLD = 3e-6  # 5e-6    # > 0 /s, # Positive cyclonic
+MAX_SPEED_MS = 12           # 15      # m/s == 36 km/hr Max MD centre translational-speed
+MAX_GAP_HOURS = 24  # 12    # 6       # hr Bridge small gaps In Detection
+TRACKING_SEARCH_RADIUS_KM = 50        # km Hourly tracking
+LINKING_SEARCH_RADIUS_KM = 100        # km Multi-hour gaps
 MIN_TRACK_DURATION_HOURS = 24
-MIN_NET_DISPLACEMENT_KM = 250       # km MD travel distance
-STITCH_DISTANCE_KM = 450 # 400      # km For gap bridging (MD spped 15–25 km/h, 24 hours, the system can easily travel 23 x 15 = 360 km.)
-MERGE_DISTANCE_KM = 250 # 225       # km For simultaneous systems, distance to consider two detections as same MD
-BUFFER = 10.0 # 5.0                # degrees
-
-EARTH_R = 6371.0                    # km
+MIN_NET_DISPLACEMENT_KM = 250         # km MD travel distance
+STITCH_DISTANCE_KM = 450              # km For gap bridging (MD spped 15–25 km/h, 24 hours, the system can easily travel 23 x 15 = 360 km.)
+MERGE_DISTANCE_KM = 250 # 225         # km For simultaneous systems, distance to consider two detections as same MD
+BUFFER = 10.0  # 5.0                  # degrees
+# Constants
+EARTH_R = 6371.0                      # km
 
 # Hovmoller
 radii = [25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400]
@@ -1335,9 +1336,9 @@ def plot_track_full_map(track_df_single, track_id, full_extent, output_dir):
             ax.text(point["longitude"] - 0.1, point["latitude"] + 0.1, time_label, transform=ccrs.PlateCarree(), fontsize=5, fontweight='bold', color='black', ha='left', va='bottom', bbox=common_bbox, zorder=7)
 
     # Annotate Start point (green circle)
-    ax.plot(track_df["longitude"].iloc[0], track_df["latitude"].iloc[0], marker='o', color='green', markersize=5, markeredgewidth=5, transform=ccrs.PlateCarree(), label='Start', zorder=8)
+    ax.plot(track_df["longitude"].iloc[0], track_df["latitude"].iloc[0], marker='o', color='green', markersize=5, markeredgewidth=5, transform=ccrs.PlateCarree(), zorder=8)
     # Annotate End point (red x)
-    ax.plot(track_df["longitude"].iloc[-1], track_df["latitude"].iloc[-1], marker='o', color='orange', markersize=5, markeredgewidth=5, transform=ccrs.PlateCarree(), label='End', zorder=8)
+    ax.plot(track_df["longitude"].iloc[-1], track_df["latitude"].iloc[-1], marker='o', color='orange', markersize=5, markeredgewidth=5, transform=ccrs.PlateCarree(), zorder=8)
     # # start point (green circle with track_id inside)
     # ax.plot(start_lon, start_lat, marker='o', color='green', markersize=5, markeredgewidth=0, transform=ccrs.PlateCarree(), label='Start', zorder=8)
     # ax.text(start_lon - 0.4, start_lat, f'T{int(track_id)}', transform=ccrs.PlateCarree(), fontsize=8, fontweight='bold', color='black', ha='center', va='center', bbox=common_bbox, zorder=9)
@@ -1351,9 +1352,9 @@ def plot_track_full_map(track_df_single, track_id, full_extent, output_dir):
     # # Annotate End point
     # ax.annotate(end_time_str, xy=(end_lon, end_lat), xytext=(5,-5), textcoords="offset points", fontsize=8, bbox=common_bbox, transform=ccrs.PlateCarree(), zorder=6)
     # start point (green circle)
-    ax.plot(start_lon, start_lat, marker='o', color='green', markersize=3, markeredgewidth=5, transform=ccrs.PlateCarree(), label='Start', zorder=8)
+    ax.plot(start_lon, start_lat, marker='o', color='green', markersize=3, markeredgewidth=5, transform=ccrs.PlateCarree(), zorder=8)
     # end point (red x)
-    ax.plot(end_lon, end_lat, marker='o', color='orange', markersize=3, markeredgewidth=5, transform=ccrs.PlateCarree(), label='End', zorder=8)
+    ax.plot(end_lon, end_lat, marker='o', color='orange', markersize=3, markeredgewidth=5, transform=ccrs.PlateCarree(), zorder=8)
 
     # landfall marker (yellow square)
     if 'is_land' in track_df.columns:
@@ -1447,9 +1448,9 @@ def plot_single_track(track_df, track_id, output_dir):
             ax.text(point["longitude"] - 0.1, point["latitude"] + 0.1, time_label, transform=ccrs.PlateCarree(), fontsize=5, fontweight='bold', color='black', ha='left', va='bottom', bbox=common_bbox, zorder=7)
 
     # Annotate Start point (green circle)
-    ax.plot(track_df["longitude"].iloc[0], track_df["latitude"].iloc[0], marker='o', color='green', markersize=5, markeredgewidth=5, transform=ccrs.PlateCarree(), label='Start', zorder=8)
+    ax.plot(track_df["longitude"].iloc[0], track_df["latitude"].iloc[0], marker='o', color='green', markersize=5, markeredgewidth=5, transform=ccrs.PlateCarree(), zorder=8)
     # Annotate End point (red x)
-    ax.plot(track_df["longitude"].iloc[-1], track_df["latitude"].iloc[-1], marker='o', color='orange', markersize=5, markeredgewidth=5, transform=ccrs.PlateCarree(), label='End', zorder=8)
+    ax.plot(track_df["longitude"].iloc[-1], track_df["latitude"].iloc[-1], marker='o', color='orange', markersize=5, markeredgewidth=5, transform=ccrs.PlateCarree(), zorder=8)
     # # start point (green circle with track_id inside)
     # ax.plot(start_lon, start_lat, marker='o', color='green', markersize=5, markeredgewidth=0, transform=ccrs.PlateCarree(), label='Start', zorder=8)
     # ax.text(start_lon - 0.4, start_lat, f'T{int(track_id)}', transform=ccrs.PlateCarree(), fontsize=8, fontweight='bold', color='black', ha='center', va='center', bbox=common_bbox, zorder=9)

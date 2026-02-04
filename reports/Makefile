@@ -46,15 +46,17 @@ view:
 	zathura ./$(TARGET).pdf &
 
 # Clean everything
-clean:
+clean-all:
 	rm -rf $(TEMP_DIR)
 	rm -f *.aux *.log *.nav *.out *.snm *.toc *.bbl *.blg *.bcf *.run.xml *.synctex.gz *.fdb_latexmk *.fls
 	rm -f $(TARGET).pdf
+	rm -f ../$(TARGET).pdf
 
 # Clean only temporary files
-clean-temp:
+clean:
 	rm -rf $(TEMP_DIR)
 	rm -f *.aux *.log *.nav *.out *.snm *.toc *.bbl *.blg *.bcf *.run.xml *.synctex.gz *.fdb_latexmk *.fls
+	@echo "$(TARGET).pdf is not removed, to remove it too run 'make clean-temp'"
 
 help:
 	@echo "Usage:"
@@ -63,5 +65,5 @@ help:
 	@echo "  make quick                : Quick compile (pdflatex only)"
 	@echo "  make slides               : Compile slides only"
 	@echo "  make view                 : Opens the main PDF in Zathura"
-	@echo "  make clean                : Deletes everything including PDF"
-	@echo "  make clean-temp           : Deletes only temporary files (keeps PDF)"
+	@echo "  make clean-all            : Deletes everything including PDF"
+	@echo "  make clean                : Deletes only temporary files (keeps PDF)"
