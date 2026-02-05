@@ -3,9 +3,11 @@
 % page 23 of imadannulareport2023
 % page 7 of imadannulareport2025
 
+%%%%%%%%% FIX: values are changed!!! update the whole ppt %%%%%%%%%%%
+
 % TODO: Add mechanism behind why track 5 is anomaly and why didn't track 1 and 4 couldn't do the same
 % TODO: Add slide for this visuals representing flow :
-% Precipitation (TP) 
+% Precipitation (TP)
 %     ↓
 % Soil Moisture (SWVL1) ←─ Available Capacity ← Soil Type (→TSI)
 %     ↓
@@ -20,7 +22,6 @@
 %     |- A_SHF: Measures land heating response
 %     |- CE: Integrates all into efficiency metric
 %     L- TSI: Estimates terrain's role in this feedback
-%%%%%%%%% FIX: values are changed!!! update the whole ppt %%%%%%%%%%%
 % FIX:
 % 1. H5 Soil: "Clay proxy ACF" -> Implicit. HWSD mandatory.
 % 2. Orography r=-0.8?: Assumed -> compute SRTM.
@@ -50,11 +51,11 @@
 %            - Mountains/terrain DO affect depressions (not negligible), but they're not the ONLY factor
 
 %       OCEAN PHASE:
-%         Surface heat flux: -11.44 W/m²  (cool, stable)
-%         Diurnal range: 13.54 W/m²       (TINY daily change)
+%         Surface heat flux: -11.44 W/m$^2$  (cool, stable)
+%         Diurnal range: 13.54 W/m$^2$       (TINY daily change)
 %       LAND PHASE:
-%         Surface heat flux: +2.08 W/m²   (warm)
-%         Diurnal range: 77.57 W/m²       (HUGE daily change - 5.7x larger!)
+%         Surface heat flux: +2.08 W/m$^2$   (warm)
+%         Diurnal range: 77.57 W/m$^2$       (HUGE daily change - 5.7x larger!)
 %         What does this mean? => LAND = Strong daily heating
 %            - Triggers afternoon convection
 %            - Feeds the depression more energy
@@ -120,12 +121,12 @@
 %             Implication: Half of 2024 depressions showed strong land-atmosphere coupling. All showed at least some coupling (minimum FSI = 0.027)
 %        - Diurnal Heat Flux Amplitude
 %            + Ocean Phase:
-%             -  Mean sensible heat flux: -11.44 W/m²
-%             -  Diurnal amplitude: 13.54 W/m²
+%             -  Mean sensible heat flux: -11.44 W/m$^2$
+%             -  Diurnal amplitude: 13.54 W/m$^2$
 %             -  Interpretation: Stable, cool air with minimal daily temperature variation
 %            + Land Phase:
-%             -  Mean sensible heat flux: +2.08 W/m²
-%             -  Diurnal amplitude: 77.57 W/m² (5.7x ocean)
+%             -  Mean sensible heat flux: +2.08 W/m$^2$
+%             -  Diurnal amplitude: 77.57 W/m$^2$ (5.7x ocean)
 %             -  Interpretation: Strong diurnal heating cycle; maximum surface heating
 %         - Mechanism for Land-Phase Intensification:
 %           - OCEAN:
@@ -163,8 +164,8 @@
  
 % TODO:
 % 0.1. Add in Limitation quality of data (time gaps)
-% 0.1. Add marks at the location where the results answers 'Key question' (make href page number next to all question pointing to answer slide(s))
-% 0.2. Add captions to Figures and update figure no.s
+% 0.2. Add marks at the location where the results answers 'Key question' (make href page number next to all question pointing to answer slide(s))
+% 0.3. Add captions to Figures and update figure no.s
 % 1. track 5 mechanisms [Slowdown period acts as "concentration zone" -> Accumulated rainfall over elevated terrain + high SM memory -> Vorticity recovers (IMD report, Sept 11) -> System re-energizes and continues inland -> Finally decays after 165 hours (resource exhaustion)
 % 2. why MD doesn't go on east side? near china? -> find mechnism and explain it using my results
 % 3. Analyse heat flux plots as well
@@ -326,7 +327,7 @@
 %     -> Even wet soils cannot sustain an MD over land.
 
 %%%%%%%%%%%%%%%
-% INFO : 
+% INFO :
 % 1.  Wind field : Depth of westerlies should be maintained upto 600 hPa, in the box equator to Lat. 10ºN and Long. 55ºE to 80ºE. The zonal wind speed over the area bounded by Lat. 5-10ºN, Long. 70-80ºE should be of the order of 15 – 20 Kts. at 925 hPa. The source of data can be RSMC wind analysis/satellite derived winds. (Source : https://mausam.imd.gov.in/imd_latest/monsoonfaq.pdf, (page 13))
 % 2. Cyclonic Storm ASNA (Aug 25 – Sep 02): This was a rare land-origin system. It intensified over Rajasthan/Gujarat and moved westward into the Arabian Sea.
 % Depression (Aug 31 – Sep 02): This was a separate, short-lived system that formed in the Bay of Bengal and moved into Andhra Pradesh/Telangana.
@@ -464,7 +465,7 @@
   \leavevmode%
   \hbox{%
     \begin{beamercolorbox}[wd=0.5\paperwidth,ht=2.25ex,dp=1ex,center]{author in head/foot}
-      \usebeamerfont{author in head/foot}MD Analysis 2024
+      \usebeamerfont{author in head/foot}MD Analysis of Year 2024
     \end{beamercolorbox}%
     \begin{beamercolorbox}[wd=0.5\paperwidth,ht=2.25ex,dp=1ex,right]{date in head/foot}
       \usebeamerfont{date in head/foot}\insertframenumber{} / \inserttotalframenumber
@@ -479,14 +480,14 @@
     \titlepage
 \end{frame}
 
-% Table of Contents
+% Table of Contents (TOC)
 \begin{frame}[plain, c]
-    \vspace{-1cm}
+    \vspace{-2cm}
     % \tiny
-    \setlength{\columnsep}{0.4em}
+    \setlength{\columnsep}{0.2em}
     \setcounter{tocdepth}{3} % 2
 
-    \setbeamerfont{section in toc}{size=\fontsize{5}{6}\selectfont}
+    \setbeamerfont{section in toc}{size=\fontsize{6}{6}\selectfont}
     \setbeamerfont{subsection in toc}{size=\fontsize{4}{5}\selectfont}
     \setbeamerfont{subsubsection in toc}{size=\fontsize{3}{4}\selectfont}
     \setbeamertemplate{section in toc}[sections numbered]
@@ -524,6 +525,13 @@
 \end{frame}
 
 \subsection{Key Questions}
+% TO answer question, some insights:
+    % (2024 Analysis)
+    % Strong Coupling Found: FSI > 0.4 in 50% of depressions
+    % Land Heating Dominates: A_SHF shift is 5.7× ocean amplitude
+    % Efficient Systems: All CE > 0.5; some CE > 10 (super-couplers)
+    % Terrain Matters But Not Alone: TSI = 0.39 (39% variance)
+    % Memory Dependent: ACF varies by soil type (clay vs sand)
 \begin{frame}{}
     \begin{block}{Key Questions}
         \tiny
@@ -618,619 +626,7 @@
 % \end{frame}
 
 \section{Methodology}
-\begin{frame}[plain, noframenumbering]
-    \begin{center}
-        \Huge \textcolor{blue}{\textbf{Methodology}} \\
-        \vspace{0.5cm}
-        \large \textit{Data Processing, MD detections and Tracking}
-    \end{center}
-\end{frame}
-
-\subsection{Dataset Information}
-\begin{frame}{Dataset Information}
-    \begin{block}{ERA5 Single Level Reanalysis Dataset (June-September 2024) \tiny \cite{hersbach2020era5} :}
-        %\pdflink{2020-Hersbach-The-ERA5-global-reanalysis.pdf}{The ERA5 global reanalysis}
-        \footnotesize
-        % FIX: the spatial (31 km globally) and temporal (hourly) resolutions of ERA5
-        \begin{itemize}
-            \item \textbf{Spatial resolution :} \texttt{$0.25^\circ \times 0.25^\circ$}
-            \item \textbf{Temporal resolution :} Hourly
-            \item \textbf{Spatial Domain :} $10$--$30^\circ$ N, $70$--$95^\circ$ E (Indian Subcontinent)
-            \item \textbf{Temporal domain :} June to September 2024 (4 months, Indian monsoon season)
-        \end{itemize}
-    \end{block}
-
-    \begin{columns}[T, totalwidth=0.9\textwidth] 
-    \column{0.48\textwidth}
-        \footnotesize
-        \begin{block}{ERA5 Dataset Variables :}
-            \begin{itemize}
-                \item Mean sea level pressure (\texttt{MSL})
-                \item 10-meter U wind component (\texttt{U10})
-                \item 10-meter V wind component (\texttt{V10})
-                \item Total precipitation (\texttt{TP})
-                \item Volumetric soil water layer 1 (\texttt{SWVL1})
-                \item Mean surface latent heat flux (\texttt{AVG\_SLHF})
-                \item Mean surface sensible heat flux (\texttt{AVG\_ISHF})
-                \item 2-meter temperature (\texttt{T2M})
-                \item Soil temperature level 1 (\texttt{STL1})
-            \end{itemize}
-        \end{block}
-
-    \column{0.48\textwidth}
-        \footnotesize
-        \begin{block}{Derived Variables :}
-            \begin{itemize}
-                \item \textbf{10-meter Wind Speed (\texttt{W10}) :}
-                \begin{equation}
-                    \texttt{W10} = \sqrt{(\texttt{U10})^2 + (\texttt{V10})^2}
-                \end{equation}
-            \item \textbf{Relative Vorticity (\texttt{$\zeta$}):} Calculated using the 10-m horizontal wind components:
-                \begin{equation}
-                    \zeta = \frac{\partial(\texttt{V10)}}{\partial x} - \frac{\partial(\texttt{U10)}}{\partial y}
-                \end{equation}
-            \item \textbf{Total Heat Flux (\texttt{THF}) :} Sum of surface latent and sensible heat fluxes:
-                \begin{equation}
-                    \texttt{THF} = \texttt{SLHF} + \texttt{SSHF}
-                \end{equation} 
-            \end{itemize}
-        \end{block}
-    \end{columns}
-    % \item \textbf{Processing :} Multi-month concatenation, temporal regularization, spatial clipping
-\end{frame}
-
-\subsection{Monsoon Depression Detection Algorithm}
-\begin{frame}{Monsoon Depression Detection Algorithm}
-    \vspace{-0.1cm}
-    \begin{columns}[T, onlytextwidth]
-        \column{0.48\textwidth}
-        \footnotesize
-        \begin{block}{MD Detections Criteria :}
-            \begin{itemize}
-                \item \textbf{Pressure (\texttt{MSL}) :} \texttt{< 1002 hPa}
-                \item \textbf{Contour Closure :} Closed isobar within \texttt{5$^{\circ}$} buffer
-                \item \textbf{Track Duration :} \texttt{$\geq$ 24 hours}
-                \item \textbf{Min net displacement:} \texttt{250 km}
-                \item \textbf{Wind speed range\footnotemark[1] :} \texttt{5} to \texttt{19 m/s}
-                \item \textbf{Total Precipitation (\texttt{TP}) :} \texttt{> 0.3 mm/hr} within buffer
-                \item \textbf{Vorticity (\texttt{$\zeta$}) :} \texttt{> 0 /s} (cyclonic)
-                \item \textbf{Max MD centre speed :} \texttt{12 m/s}
-            \end{itemize}
-        \end{block}
-
-        \column{0.52\textwidth}
-        \footnotesize
-        \begin{block}{Tracking \& Post-Processing :}
-            \begin{itemize}
-                \item \textbf{Hourly Linking :} \texttt{50 km} search radius
-                \item \textbf{Gap Bridging :} Up to \texttt{24 h}
-                \item \textbf{Merge Overlaps :} \texttt{250 km} radius
-                \item \textbf{Filtering :} WNW preference (\texttt{240$^{\circ}$ – 30$^{\circ}$})
-                \item \textbf{Landfall Detection :}
-                \begin{itemize}
-                    \footnotesize
-                    \item \textbf{Database:} Natural Earth Physical Mask
-                    \item \textbf{Resolution:} \texttt{50m} (1:50M scale)
-                    \item \textbf{Method:} Point-in-polygon check
-                \end{itemize}
-            \end{itemize}
-        \end{block}
-
-        % TODO: check SWVVL@ threshold
-        \begin{block}{Analysis Parameters :}
-        \begin{itemize}
-            \item \textbf{\texttt{SWVL1} Range\footnotemark[2] :} \texttt{0.02 - 0.55 m$^3$/m$^3$}
-            \item \textbf{Max Lag :} \texttt{$\pm$ 48 hours}
-            \item \textbf{Long-lived Threshold :} \texttt{> 96 hours} (\texttt{> 4 days})
-            \item \textbf{Statistical Significance :} \texttt{p < 0.05}
-        \end{itemize}
-        \end{block}
-    \end{columns}
-
-    \vfill
-    \footnotetext[1]{\tiny Wind speed criteria based on IMD Monsoon Report 2024 (page 284), Source : \href{https://mausam.imd.gov.in/imd\_latest/monsoonreport2024.pdf}{\url{https://mausam.imd.gov.in/imd\_latest/monsoonreport2024.pdf}}}
-    \footnotetext[2]{\tiny SWVL1 range based on ERA5 climatology for Indian region, Source : \href{https://www.researchgate.net/publication/365632311\_Assessment\_of\_ERA5-Land\_volumetric\_soil\_water\_layer\_product\_using\_in-situ\_and\_SMAP\_soil\_moisture\_observations}{\url{https://www.researchgate.net/publication/365632311\_Assessment\_of\_ERA5-Land\_volumetric\_soil\_water\_layer\_product\_using\_in-situ\_and\_SMAP\_soil\_moisture\_observations}}}
-\end{frame}
-
-% WARN: check this before adding otherwise remove it
-% \begin{frame}{Track Detection Algorithm}
-%     \begin{block}{Vortex Detection (Okubo-Weiss Parameter)}
-%         \begin{enumerate}
-%             \item Extract relative vorticity and deformation rate from ERA5 wind fields
-%             \item Compute Okubo-Weiss parameter : $OW = \delta^2 + D^2 - \zeta^2$
-%             \item Identify closed circulation centers where $OW < -10^{-10}$ s$^{-2}$
-%             \item Track temporal continuity using Munkres assignment algorithm
-%         \end{enumerate}
-%     \end{block}
-% \end{frame}
-% \begin{frame}{Analysis Pipeline}
-%     \begin{block}{Processing Stages}
-%         \begin{enumerate}
-%             \item \textbf{Data Loading :} Combine monthly netCDF files, regularize to \verb|1-hour| resolution
-%             \item \textbf{Detection :} Apply MD criteria hourly, identify low-pressure centers
-%             \item \textbf{Tracking :} Link detections, stitch gaps, merge overlaps, smooth tracks
-%             \item \textbf{Per-Track Analysis :}
-%             \begin{itemize}
-%                 \item Translational speed calculation
-%                 \item Azimuthal Hovm\"oller diagrams (\verb|25–400 km| radii)
-%                 \item Soil moisture–precipitation correlation (\verb|24-hour| lags)
-%                 \item Surface heat flux evolution (\verb|latent/sensible|)
-%                 \item Landfall transition analysis (\verb|24 hours| before/after)
-%             \end{itemize}
-%             \item \textbf{Global Analysis :}
-%             \begin{itemize}
-%                 \item Coupling metrics (\verb|FSI|, diurnal amplitude, efficiency)
-%                 \item Antecedent soil moisture patterns
-%                 \item Classification (\verb|short-lived| vs. \verb|long-lived| MDs)
-%             \end{itemize}
-%             \item \textbf{output\_2024 :} Maps, plots, CSV exports, summary report
-%         \end{enumerate}
-%     \end{block}
-% \end{frame}
-
-% TODO: Verify from correlation_analysis.py
-\subsection{Correlation Analysis}
-\begin{frame}{Correlation Analysis}
-    Quantifies coupling strength : Does increase in rainfall lead to soil moisture increment?
-
-    \vspace{0.2cm}
-    Positive coupling $\Rightarrow$ Self-sustaining feedback possible \\
-    Negative or weak coupling $\Rightarrow$ No reinforcing feedback
-
-    \vspace{0.2cm}
-    \footnotesize
-    For each individual track point :
-    \begin{itemize}
-        \footnotesize
-        \item \textbf{Data Extraction :} Extract \texttt{TP} (Total Precipitation, Accumulated hourly) and \texttt{SWVL1} (Soil Water Volumetric Level-1, \texttt{0-7 cm}).
-        \item \textbf{Spatial Buffering :} Apply a \texttt{100 km} radius buffer around the MD center to capture regional interaction.
-        \item \textbf{Regional Averaging :} Compute the mean value within the buffer at each time step to reduce grid-scale noise.
-        \item \textbf{Statistical Processing :}
-        \begin{itemize}
-            \footnotesize
-            \item Calculate Pearson correlation (\texttt{r}) across lags : \texttt{0h, 6h, 12h, 24h, 48h}.
-            \item Adjust significance using \textbf{Effective Sample Size} to account for temporal autocorrelation.
-            \item Output : Identify the \textbf{Peak Lag} where \texttt{|r|} is maximized.
-        \end{itemize}
-        \item Pearson correlation with t-test significance.
-        \item Linear regression for trend analysis.
-        \item Lagged analysis for temporal relationships.
-        \item Spatial interpolation (nearest-neighbor).
-        % TODO:
-        % \item Quality Assurance:
-        % \begin{itemize}
-        %     \footnotesize
-        %     \item Outlier detection and documentation
-        %     \item Cross-validation with satellite observations
-        %     \item Sanity checks on derived quantities
-        %     \item Uncertainty quantification where possible
-        % \end{itemize}
-    \end{itemize}
-\end{frame}
-
-\subsection{Lag Correlation}
-% \begin{frame}{Methodology: Lag Correlation \& Interpretation}
-\begin{frame}{Lag Correlation}
-    \vspace{0.2cm}
-    Lag correlation identifies the temporal sequencing of physical processes, determining which variable acts as the "driver" and which as the "responder."
-
-    \vspace{0.15cm}
-    \footnotesize
-    \begin{itemize}
-        \item \textbf{Lag (Time Offset) :} The time shift (in \texttt{hours}) applied to one variable relative to another (\texttt{TP} relative to \texttt{SWVL1}).
-        \item \textbf{Leading Variable (\textit{Driver}) :} The variable shifting first. If \texttt{TP} leads \texttt{SWVL1}, rain precedes soil moisture increase.
-        \item \textbf{Lagging Variable (\textit{Responder}) :} The variable responding to the initial driver forcing.
-        \item \textbf{Peak Correlation (\texttt{r$_{max}$}) :} The lag hour where the relationship (\texttt{|r|}) is strongest, representing the system's "reaction time".
-    \end{itemize}
-    % \begin{itemize}
-    %     \item \textbf{Lag (Time Offset):} The time shift in \texttt{hours} applied to \texttt{TP} relative to \texttt{SWVL1}.
-    %     \item \textbf{Positive Lag ($+h$):} \texttt{TP} leads \texttt{SWVL1}. This confirms a physical "Handshake" where rainfall recharges the soil.
-    %     \item \textbf{Peak Correlation ($r_{max}$):} The lag hour where the relationship (\texttt{|r|}) is strongest/maximum, representing the system's \textbf{infiltration reaction time}.
-    % \end{itemize}
-
-    \vspace{0.2cm}
-    \begin{block}{Interpretation of the Plots}
-        \begin{itemize}
-            \item \textbf{X-axis (\texttt{Lag}) :} Time shift (\texttt{hours}) between the two variables.
-            \item \textbf{Y-axis (Correlation \texttt{r}) :} Relationship strength (\texttt{-1.0} to \texttt{1.0}).
-            \item \textbf{Significance :} Indicated by \texttt{p-values < 0.05} based on effective degrees of freedom.
-            \item \textbf{The Infiltration Peak :} For lag-correlation plot for \texttt{TP-SWVL1} if clear peak at \texttt{+3} to \texttt{+6h} indicates efficient moisture capture. A flat or zero-lag line suggests \textbf{Rapid Runoff} without storage.
-            \item \textbf{The Saturation Plateau :} If correlations collapse while SM remains high ($>0.40$), the soil has reached capacity. Additional \texttt{TP} no longer drives \texttt{SWVL1} but triggers \textbf{Surface Runoff}.
-            \item \textbf{The Memory (\texttt{ACF}) Decay :} A broad, slowly decaying correlation curve indicates high \textbf{Soil Memory} (Persistence), vital for the "Brown Ocean" effect. \cite{seneviratne2010investigating}
-        \end{itemize}
-    \end{block}
-
-    \vspace{0.15cm}
-    \footnotesize
-    \textbf{Significance:} Calculations use \texttt{Pearson r} with \texttt{p-values < 0.05} to ensure the feedback is not due to random noise.
-\end{frame}
-
-\subsection{Coupling Metrics}
-\begin{frame}{Coupling Metrics: Quantifying Land-Atmosphere Interactions}
-    \begin{block}{5 Key Metrics for Analysis:}
-        \begin{enumerate}
-            \item Feedback Strength Index (\texttt{FSI}, \texttt{0-1}) % Correlation strength + Capacity index
-            \item Coupling Efficiency (\texttt{CE})
-            \item Diurnal Sensible Heat Flux Amplitude ($A_{\texttt{SHF}}$)
-            \item Soil Moisture Memory Index (\texttt{ACF} of \texttt{SWVL1} at Lag \texttt{24hr})
-            \item Topographic Sensitivity Index (\texttt{TSI}, \texttt{0-1}) % MD behavior + terrain characteristics
-            % TODO: future work
-            % \item NDVI = Normalized Difference Vegetation Index = (NIR - RED) / (NIR + RED) -> Derived from: Red and near-infrared reflectances
-            % \item CAPE = Convective Available Potential Energy (J/kg) -> Derived from: Temperature, humidity, pressure profiles
-            % \item Drought Index = f(rainfall, temperature, soil moisture, ET) -> Derived from: Multiple raw parameters
-        \end{enumerate}
-    \end{block}
-
-    \vspace{0.4cm}
-    \begin{center}
-    \small \textit{All five metrics work together to define the system's state:}
-    % Feedback Strength Index (FSI)
-    %            ↓ (component of)
-    %   Coupling Efficiency (CE)    <- Diurnal Heat Flux Amplitude (A_SHF)
-    %           ↓                                ↓
-    % Topographic Sensitivity (TSI) <- Capacity Index
-    %           ↓
-    % Soil Moisture Memory (ACF)
-    %     (parallel, independent measurement)
-    \[
-        \underbrace{\mathtt{FSI}}_{\substack{\text{Correlation,} \\ \text{Coupling Strength}}}
-        + \underbrace{\mathtt{A_{SHF}}}_{\substack{\text{Surface Heat} \\ \text{Flux Amplitude} \\ \text{Tells Response}}}
-        + \underbrace{\mathtt{ACF_{24h}}}_{\substack{\text{Soil Memory} \\ \text{Water holding capacity} \\ \text{Determines Persistence}}}
-        + \underbrace{\mathtt{TSI}}_{\substack{\text{Terrain} \\ \text{Effect}}}
-        \Rightarrow \underbrace{\mathtt{CE}}_{\substack{\text{Coupling} \\ \text{Efficiency}}}
-    \]
-    \end{center}
-\end{frame}
-
-\subsubsection{Feedback Strength Index (\texttt{FSI})}
-% Formula:    FSI = |Corr(TP, SWVL1)| x Capacity Index x Significance Factor
-% Range:      [0, 1]
-% Parameters: 
-%   - SWVL1_dry   = 0.02 m³/m³ (wilting point)
-%   - SWVL1_wet   = 0.55 m³/m³ (saturation point)
-%   - p_threshold = 0.05
-%   - sig_factor  = 1.0 if p<0.05, else 0.5
-% Code:       coupling_metrics.py, lines 41-76
-% FSI data:           coupling_metrics_FSI.csv
-% 2024 Mean:  0.502 (correlation strength), 0.530 (capacity)
-% Status:     4 of 6 tracks significant (p<0.05)
-% FSI 0.0 - 0.2: Weak coupling (insufficient feedback)
-% FSI 0.2 - 0.4: Moderate coupling (some feedback)
-% FSI 0.4 - 1.0: Strong coupling (robust feedback)
-\begin{frame}{Coupling Metrics [1/5]: Feedback Strength Index (\texttt{FSI})}
-    \vspace{-0.3cm}
-    \footnotesize
-    \begin{block}{1. Feedback Strength Index (\texttt{FSI})}
-        \textbf{Mathematical Definition:}
-        \begin{equation}
-            \text{\texttt{FSI}} = |\text{Corr}(\text{\texttt{TP, SWVL1}})| \times \text{\texttt{Capacity Index}} \times \text{\texttt{Significance Factor}}
-        \end{equation}
-
-        \textbf{Parameters :}
-        \begin{itemize}
-            \item \textbf{\texttt{Capacity Index}} = $\dfrac{\text{mean}(\text{\texttt{SWVL1}}) - \texttt{0.02}}{\texttt{0.55} - \texttt{0.02}}$, clipped to $[\texttt{0,1}]$
-            \begin{itemize}
-                \footnotesize
-                \item Available soil moisture capacity relative to it's saturation
-                \item \texttt{0.02 m$^3$/m$^3$} = Wilting point (dry soil)\footnotemark[3]
-                \item \texttt{0.55 m$^3$/m$^3$} = Saturation point (wet soil)\footnotemark[3]
-            \end{itemize}
-            \item \textbf{\texttt{Significance Factor}} = \texttt{1.0} if \texttt{p < 0.05}, else \texttt{0.5}
-        \end{itemize}
-
-        Integrates three factors determining coupling sustainability:
-        \begin{enumerate}
-            \item \textbf{Correlation Strength :} How tightly \texttt{TP} links to \texttt{SWVL1}. Range: \texttt{0} (no feedback) to \texttt{1} (perfect feedback).
-            \item \textbf{Soil Water Capacity Index :} The soil's ability to hold/release moisture based on type (\texttt{0} = dry, \texttt{1} = saturated).
-            \item \textbf{Statistical Significance :} Robustness of the link (\texttt{p < 0.05}).
-        \end{enumerate}
-    \end{block}
-
-    \footnotetext[3]{\tiny \texttt{SWVL1} range based on ERA5 climatology for Indian region, Source : \href{https://www.researchgate.net/publication/365632311\_Assessment\_of\_ERA5-Land\_volumetric\_soil\_water\_layer\_product\_using\_in-situ\_and\_SMAP\_soil\_moisture\_observations}{\url{https://www.researchgate.net/publication/365632311\_Assessment\_of\_ERA5-Land\_volumetric\_soil\_water\_layer\_product\_using\_in-situ\_and\_SMAP\_soil\_moisture\_observations}}}
-\end{frame}
-
-\subsubsection{Coupling Efficiency (\texttt{CE})}
-% Formula:    CE = (FSI x A_norm) / Duration_Factor
-% Range:      [0, ∞) typically [0.5, 15]
-% Parameters:
-%   - A_norm           = tanh(A_SHF / 100)  [saturation curve]
-%   - Duration_Factor  = max(1.0, Hours / 48)
-%   - Reference point  = 48 hours
-% Code:       coupling_metrics.py, lines 264-292
-% CE data:            coupling_metrics_efficiency.csv
-% 2024 Mean:  8.76 \pm 8.80
-% 2024 Range: 0.5 - 15+
-% All Tracks: CE > 0.5 (above minimum threshold)
-% CE : 0.5 - 3.0: Weak coupling (limited persistence)
-% CE : 3.0 - 8.0: Moderate coupling (standard persistence)
-% CE : 8.0 - 15+: Strong coupling (self-sustaining)
-\begin{frame}{Coupling Metrics [2/5]: Coupling Efficiency (\texttt{CE})}
-    \vspace{-0.1cm}
-    \footnotesize
-    \begin{block}{2. Coupling Efficiency (\texttt{CE})}
-        Quantifies the energy exchange intensity relative to the system's lifespan.
-
-        \textbf{Mathematical Definition :}
-        \begin{equation}
-            \text{\texttt{CE}} = \frac{\text{\texttt{FSI}} \times A_{\text{\texttt{norm}}}}{\text{\texttt{Duration Factor}}}
-            \label{eq:couplingeff}
-        \end{equation}
-
-        \textbf{Parameters :}
-        \begin{itemize}
-            \item \textbf{\texttt{FSI}} = Feedback Strength Index $\in [\texttt{0, 1}]$
-            \item $A_{\text{\texttt{norm}}} = \tanh(A_{\text{\texttt{SHF}}} / \texttt{100})$ = Normalized amplitude, $A_{\text{\texttt{SHF}}}$ = Amplitude of \texttt{SHF}
-            \item \textbf{\texttt{Duration Factor}} = $\max(\texttt{1.0}, \text{\texttt{Duration}}_{\text{\texttt{hours}}} / \texttt{48})$
-        \end{itemize}
-
-        \begin{enumerate}
-            \item \texttt{FSI} : Measures "recharge" efficiency of rainfall to soil moisture.
-            \item \texttt{Duration Factor} : Prevents long-lived tracks from dominating purely by time accumulation; normalizes for systems $>\texttt{48 hours}$.
-        \end{enumerate}
-
-        \vspace{0.2cm}
-        \textbf{Interpretation :}
-        \begin{itemize}
-            \item \textbf{High \texttt{CE}} ($\texttt{8-15}$) = Efficient energy exchange $\Rightarrow$ Self-sustaining.
-            \item \textbf{Low \texttt{CE}} ($<\texttt{3}$) = Weak coupling $\Rightarrow$ Limited inland persistence.
-            \item Integrates feedback strength (\texttt{FSI}) and surface response (\texttt{A$_{norm}$})
-            \item Normalized for system duration (\texttt{Duration Factor}) : To not let longer MDs show weaker coupling signal
-        \end{itemize}
-
-        \vspace{0.3cm}
-        \footnotesize
-        \textbf{Key Insight :} If a MD survives long over land then \texttt{CE} helps to identifies if a track survives via energy (\textbf{High \texttt{CE}}) or "strategic" moisture management from soil and precipitation (\textbf{Low \texttt{CE}} + \textbf{High \texttt{ACF$_{24h}$}}).
-    \end{block}
-\end{frame}
-
-\subsubsection{Diurnal \texttt{SHF} Amplitude}% ($A_{\text{\texttt{SHF}}}$)  }
-% Formula:    A_SHF = SHF_max - SHF_min  (land phase only)
-% Units:      W/m²
-% Code:       coupling_metrics.py, lines 120-227
-% A_SHF data:         coupling_metrics_diurnal_amplitude.csv
-% 2024 Values (Mean \pm Range):
-%   Ocean Phase:  13.54 W/m² (mean: -11.44 W/m²)
-%   Land Phase:   77.57 W/m² (mean: +2.08 W/m²)
-%   Amplitude Shift: ΔA = 64.03 W/m² (~5.7x)
-% Physical:   SHF = ρCp u*(T_s - T_a)
-%            Land heats -> positive SHF -> CAPE enhancement
-%            Ocean stable -> negative SHF -> suppressed convection
-% A_SHF : < 30 W/m²: Minimal land impact
-% A_SHF : 30 - 50 W/m²: Moderate land heating
-% A_SHF : > 50 W/m²: Strong land heating
-\begin{frame}[label=diurnal]{Coupling Metrics [3/5]: Diurnal \texttt{SHF} Amplitude ($A_{\text{\texttt{SHF}}}$)}
-    \footnotesize
-    \begin{block}{3. Diurnal Sensible Heat Flux Amplitude ($A_{\text{\texttt{SHF}}}$)}
-        \textbf{Mathematical Definition :}
-        \begin{equation}
-            A_{\text{\texttt{SHF}}} = \text{\texttt{SHF}}_{\text{\texttt{max}}} - \text{\texttt{SHF}}_{\text{\texttt{min}}} \quad \text{(Calculated over Land Phase)}
-        \end{equation}
-
-        \begin{itemize}
-            \item \textbf{Ocean phase:} $\lesssim \texttt{13}$ -- $\texttt{17 W/m$^2$}$ (Damped by thermal inertia).
-            \item \textbf{Land phase:} $\sim \texttt{58}$ -- $\texttt{65 W/m$^2$}$ (Strong daytime heating).
-            \item \textbf{Amplitude Shift:} $\Delta A \approx \texttt{46}$ -- $\texttt{47 W/m$^2$}$ for long-lived MDs.
-        \end{itemize}
-    \end{block}
-
-    \vspace{0.2cm}
-    \textbf{Physical Mechanism :}
-    \vspace{-0.1cm}
-    \[
-    \text{Sensible Heat Flux \texttt{SHF}} = \rho C_p u_* (T_s - T_a)
-    \]
-    \begin{itemize}
-        \item Measures land surface's diurnal heating response. Over land, surface temperature varies with solar radiation (strong diurnal cycle).
-        \item \textbf{Ocean:} Water's thermal inertia suppresses the cycle $\rightarrow$ \texttt{SHF} nearly constant.
-        \item \textbf{Land:} Soil heats/cools rapidly $\rightarrow$ Large \texttt{SHF} swings.
-        \item Large amplitude $\Rightarrow$ Stronger destabilization fueling deep convection.
-    \end{itemize}
-
-    \vspace{0.2cm}
-    \textbf{Interpretation :} Measures land surface's diurnal heating response
-
-    \begin{block}{Computation Workflow}
-        \begin{enumerate}
-            \item Extract hourly \texttt{SHF} from \texttt{ERA5} along track.
-            \item Classify points using \texttt{is\_land} mask (\texttt{True/False}).
-            \item Calculate $A_{\text{\texttt{SHF}}}$  $=(Max(\text{\texttt{SHF}}) - Min(\text{\texttt{SHF}}))$ for each phase.
-            \item Determine $\Delta A = A_{\text{\texttt{SHF,land}}} - A_{\text{\texttt{SHF,ocean}}}$.
-        \end{enumerate}
-    \end{block}
-\end{frame}
-
-\subsubsection{Soil Moisture Memory (\texttt{ACF})}
-% Formula:    R(τ) = Cov(X_t, X_t+τ) / σ²
-% Lag:        24 hours (filters diurnal cycle)
-% Range:      [-1, 1]
-% Code:       soilmoiture_analysis.py, lines 23-42
-% ACF data:           soil_memory_analysis.csv
-% Library:    statsmodels.tsa.stattools.acf (FFT-based)
-% Thresholds:
-%   High:     ACF > 0.35   (clay-rich, retains water)
-%   Low:      ACF < 0.1    (sandy, drains quickly)
-% Mechanism:  Measures soil's ability to sustain feedback
-%            High ACF -> Longer feedback persistence
-%            Low ACF  -> Isolated rainfall events
-% ACF : > 0.35: High memory (multi-day persistence)
-% ACF : 0.1 - 0.35: Moderate memory (some persistence)
-% ACF : < 0.1: Low memory (isolated events)
-\begin{frame}{Coupling Metrics [4/5]: Soil Moisture Memory (\texttt{ACF})}
-    \vspace{-0.2cm}
-    \footnotesize
-    \begin{block}{4. Soil Moisture Memory Index (\texttt{ACF} at \texttt{24-hour} Lag)}
-        Persistence of soil moisture anomalies after the initial \texttt{TP} forcing has ceased.
-
-        \vspace{0.2cm}
-        \textbf{Mathematical Definition : Autocorrelation function (\texttt{ACF}):} \\
-        Correlation of variable with itself 24 hours prior.
-        \begin{equation}
-            R(\tau) = \frac{E[(X_t - \mu)(X_{t+\tau} - \mu)]}{\sigma^2}
-        \end{equation}
-        High \texttt{ACF} = High carryover of latent heat potential.
-
-        \vspace{0.2cm}
-        \textbf{Memory Index (\texttt{ACF}) :}
-        \begin{equation}
-            \text{\texttt{ACF}}(\text{\texttt{SWVL1}}, \text{lag}=\texttt{24h}) = \frac{\text{Cov}(\text{\texttt{SWVL1}}_t, \text{\texttt{SWVL1}}_{t+24})}{\sigma_{\text{\texttt{SWVL1}}}^2}
-        \end{equation} \cite{seneviratne2010investigating}
-
-
-        \textbf{Lag Choice :} \texttt{24-hour} lag filters out the diurnal cycle (evaporation + transpiration vs. night time recovery) to measure true multi-day persistence.
-    \end{block}
-
-    \vspace{0.2cm}
-    \footnotesize
-    \textbf{Interpretation :}
-        \begin{itemize}
-            \item \textbf{High Memory ($> \texttt{0.35}$):} \texttt{SWVL1} today strongly predicts tomorrow.
-                \footnotesize
-                \begin{itemize}
-                    \item Soil holds water (e.g., clay-rich, high \texttt{Capacity Index},
-                    \tiny Only Clay has the capillary strength to hold moisture that long
-                    \footnotesize ).
-                    \item Enables sustained \texttt{TP-SWVL1} feedback loops.
-                \end{itemize}
-            \item \textbf{Low/Negative Memory ($< \texttt{0.1}$):} \texttt{SWVL1} is uncorrelated with the next day.
-                \footnotesize
-                \begin{itemize}
-                    \item Soil drains quickly (e.g., sandy, low \texttt{Capacity Index}).
-                    \item Moisture removed by rapid evaporation or drainage.
-                \end{itemize}
-        \end{itemize}
-\end{frame}
-
-\subsubsection{Terrian Strength Index (\texttt{TSI})}
-% Formula:    TSI = FSI x 0.6 + Capacity Index x 0.4
-% Range:      [0, 1]
-% Weighting:
-%   - FSI (0.6):      Precipitation-feedback mechanism [dominates]
-%   - Capacity (0.4): Soil type distribution effects [modulates]
-% Code:       statistics_analysis.py, lines 291-360
-% TSI data:           h7_tsi_distribution.png (histogram)
-% 2024 Mean:  0.39 \pm 0.21
-% 2024 Range: 0.179 - 0.713
-% Interpretation: Terrain explains ~39% of depression behavior
-%                Other factors (SST, wind, humidity): ~61%
-% Physics:    - Orographic lifting -> enhanced windward precip
-%             - Barrier effects -> flow modification  
-%             - Differential heating -> boundary layer changes
-%             - Soil heterogeneity -> variable moisture
-% TSI : 0.0 - 0.2: Terrain negligible
-% TSI : 0.2 - 0.4: Terrain moderate (highest for 2024: 0.39)
-% TSI : 0.4 - 0.6: Terrain significant
-% TSI : 0.6 - 1.0: Terrain dominant
-\begin{frame}{Coupling Metrics [5/5]: Terrain Strength Index (\texttt{TSI})}
-    \vspace{-0.2cm}
-%     \footnotesize
-%     \begin{block}{5. Terrain Strength Index (\texttt{TSI})
-%             Topographic Sensitivity Index (\texttt{TSI}) is a dimensionless derived metric that quantifies the proportion of monsoon depression behavior variance attributable to topographic and elevation effects.
-% %        \vspace{0.2cm}
-% %        \textbf{Mathematical Definition : \\
-% %        \begin{equation}
-% %            % TODO:
-% %             TSI = 1 - R²(MD_metrics | without_terrain_predictors) = [Var_explained_by_terrain] / [Total_variance_in_MD]
-% %        \end{equation}
-% %         {\tiny where MD_metrics include intensity evolution, precipitation rate, track velocity, and lifetime duration.}
-% %
-% %        \vspace{0.2cm}
-% %        \begin{equation}
-% %        \end{equation} \cite{}
-%    \end{block}
-% %
-% %    \vspace{0.2cm}
-% %    \footnotesize
-% %    \textbf{Interpretation :}
-% %        RANGE: 0 ≤ TSI ≤ 1
-% %        \begin{itemize}
-% %            \item TSI = 0 : No terrain sensitivity
-% %            \item 0 < TSI < 1 : Partial terrain sensitivity
-% %            \item TSI = 1 : Complete terrain determination
-% %        \end{itemize}
-% %
-% %          CALCULATION METHOD:
-% %           1. Extract elevation along MD track (SRTM 30-m)
-% %           2. Compute terrain metrics: slope, aspect, relief, curvature
-% %           3. Build statistical model: MD_behavior ~ f(terrain_predictors)
-% %           4. Calculate R² (coefficient of determination)
-% %           5. TSI = 1 - R²
-% %      This provides a quantitative measure of the importance of terrain effects for regional MD forecasting applications.
-\end{frame}
-
-% TODO: Add SSI (Standardized Soil-moisture Index)
-
-\subsection{Heat Flux Transition}
-\begin{frame}{Heat Flux Transition \& Brown Ocean Effect}
-    \footnotesize
-    \begin{block}{The Brown Ocean Effect (BoE) Hypothesis}
-        Typically applied to Tropical Cyclones; here applied to \textbf{Monsoon Depressions (MDs)} :
-        \begin{itemize}
-            \item \textbf{Core Concept :} Wet/saturated soil acts as a "pseudo-ocean," providing latent heat to sustain the system inland.
-            \item \textbf{MD Context :} Unlike TCs, MDs are already "moisture-rich" but weak. BoE suggests that high \texttt{SWVL1} maintains the depression's core structure by preventing the standard post-landfall energy collapse.
-        \end{itemize}
-    \end{block}
-
-    \begin{block}{Heat Flux Signatures at Landfall}
-        \begin{enumerate}
-            \item \textbf{Ocean Phase :} \texttt{LHF} dominates, \texttt{SHF} remains weak.
-            \footnotesize
-            \begin{itemize}
-                \item Ocean evaporation is the primary thermodynamic fuel source.
-            \end{itemize}
-            \item \textbf{Land Phase :} \texttt{LHF} drops, but \texttt{SHF} increases due to surface heating.
-            \begin{itemize}
-                \footnotesize
-                \item \textbf{Positive \texttt{SHF} :} Diurnal land heating sustains atmospheric instability.
-                \item \textbf{Negative \texttt{SHF} :} Surface act as an energy sink $\rightarrow$ Rapid decay.
-            \end{itemize}
-        \end{enumerate}
-    \end{block}
-
-    \begin{block}{Thresholds for MD Persistence}
-        \begin{itemize}
-            \item \textbf{Pre-landfall \texttt{LHF} :} \texttt{-120} to \texttt{-160 W/m$^2$} (High wind-driven evaporation, Infinite moisture supply by ocean).
-            \item \textbf{Post-landfall \texttt{LHF} :} \texttt{>-80 W/m$^2$} (and require \texttt{SWVL1 > 0.5} to mimic ocean).
-            \item \textbf{Land \texttt{SHF} stays same :} \texttt{$\approx$ +4.5 W/m$^2$} (Transition/shift from ocean thermal inertia to rapid diurnal soil heating).
-        \end{itemize}
-    \end{block}
-\end{frame}
-
-\subsection{{\texttt{MODIS} Satellite Data}
-\begin{frame}{\texttt{MODIS} Data (\texttt{2000m} Scale) for ERA5 Tracks}
-    \begin{center}
-        \footnotesize
-        \begin{block}{Data Acquisition \& GEE Implementation :}
-            \begin{itemize}
-                \item \textbf{Platform :} Cloud-based geospatial analysis performed via \href{https://earthengine.google.com/}{Google Earth Engine (GEE)}\footnotemark[6] using the \textbf{JavaScript API}.
-                \item \textbf{\texttt{MODIS} Dataset :} \texttt{MOD09GA.061} (Terra Surface Reflectance Daily \texttt{500m}).
-                \item \textbf{Spectral Visualization :} True Color Composite using:
-                \begin{itemize}
-                    \footnotesize
-                    \item \textbf{Red:} \texttt{sur\_refl\_b01}, \textbf{Green:} \texttt{sur\_refl\_b04}, \textbf{Blue:} \texttt{sur\_refl\_b03}
-                    \item Gamma: \texttt{1.3}, Range: \texttt{[0, 10000]}
-                \end{itemize}
-                \item \textbf{Temporal Processing :} Image collection filtered by \texttt{startDate} and \texttt{endDate} for each track; reduced using \texttt{.mean()} to create a cloud-persistent composite.
-                \item \textbf{Spatial Integration :} 
-                \begin{itemize}
-                    \footnotesize
-                    \item \textbf{Vector Overlay :} ERA5-derived \texttt{track\_id} coordinates imported as an \texttt{ee.FeatureCollection} (Asset-hosted)\footnotemark[7].
-                    \item \textbf{Geometry :} Points converted to \texttt{ee.Geometry.LineString} with a \texttt{2000m} buffer for visibility.
-                    \item \textbf{Scale \& Projection :} Exported at \texttt{2000m} resolution (EPSG:\texttt{4326}).
-                \end{itemize}
-            \end{itemize}
-        \end{block}
-
-        \vspace{0.2cm}
-        \begin{columns}[T]
-            \column{0.95\textwidth}
-                \tiny *Note: The \texttt{MODIS} mean composite highlights the Central Dense Overcast (CDO). The color-coded tracks validate the spatial consistency between ERA5 low-pressure centers and real-world cloud mass.
-        \end{columns}
-    \end{center}
-
-    \vspace{-0.6cm}
-    \footnotetext[6]{\tiny Google Earth Engine (GEE) : \href{https://earthengine.google.com/}{\url{https://earthengine.google.com/}}}
-    \footnotetext[7]{\tiny GEE Implementation : \texttt{\href{https://code.earthengine.google.com/?asset=projects/final-year-project-466515/assets/MD-coordinates-ALL}{\url{projects/final-year-project-466515/assets/MD-coordinates-ALL}}}, (for now it's private/closed-source)}
-\end{frame}
+\include{methodology}
 
 \section{Results}
 \begin{frame}[plain, noframenumbering]
@@ -2691,6 +2087,25 @@
 \end{frame}
 
 \subsection{Terrain Strength Index (\texttt{TSI})}
+% Why Might 2024 Have Higher TSI?
+% Wetter Soil Effect:
+%     - 2024 wet soil (0.316) vs 2023 dry soil (0.169)
+%     - Wetter terrain -> different heating -> different orographic effects
+%     Different Track Locations:
+%     - May have occurred over more mountainous regions
+%     - Different routes -> different terrain sensitivity
+%     Different Track Orientations:
+%     - Relative to mountain ranges
+%     - Affects how much terrain influences depression
+%     Atmospheric Conditions:
+%     - Different wind shear profiles
+%     - Different CAPE distributions
+%     - Affect how terrain modulates flow
+% Interpretation:
+% - Topography effects are NOT constant across years
+% - They depend on environmental conditions
+% - Makes operational prediction more complex
+% - Need to include both terrain AND environmental state
 \begin{frame}{Terrain Strength Index (\texttt{TSI})}
     \vspace{-0.5cm}
     \footnotesize
@@ -2741,25 +2156,6 @@
         \item
     \end{itemize}
 \end{frame}
-% Why Might 2024 Have Higher TSI?
-% Wetter Soil Effect:
-%     - 2024 wet soil (0.316) vs 2023 dry soil (0.169)
-%     - Wetter terrain -> different heating -> different orographic effects
-%     Different Track Locations:
-%     - May have occurred over more mountainous regions
-%     - Different routes -> different terrain sensitivity
-%     Different Track Orientations:
-%     - Relative to mountain ranges
-%     - Affects how much terrain influences depression
-%     Atmospheric Conditions:
-%     - Different wind shear profiles
-%     - Different CAPE distributions
-%     - Affect how terrain modulates flow
-% Interpretation:
-% - Topography effects are NOT constant across years
-% - They depend on environmental conditions
-% - Makes operational prediction more complex
-% - Need to include both terrain AND environmental state
 
 \subsection{Heat Flux Transitions : Ocean-to-Land Cases}
 \begin{frame}{Heat Flux Transitions : Ocean-to-Land Cases}
@@ -3365,10 +2761,10 @@
     \begin{columns}[T]
         \column{0.52\textwidth}
         % FIX: update HF values from coupling_metrics_FSI_enhanced.csv
-            % Mean latent HF: -85.9 W/m² (2024)
-            % Mean sensible HF: -10.3 W/m²
-            % Land phase amplitude: 77.57 W/m²
-            % Ocean phase amplitude: 13.54 W/m²
+            % Mean latent HF: -85.9 W/m$^2$ (2024)
+            % Mean sensible HF: -10.3 W/m$^2$
+            % Land phase amplitude: 77.57 W/m$^2$
+            % Ocean phase amplitude: 13.54 W/m$^2$
         \begin{block}{Supporting Evidence}
             \begin{itemize}
                 \item \textbf{Flux Continuity :} Landfall total flux change is only \texttt{+51.2 W/m$^2$}, proving the "moisture cut-off" from Ocean.
