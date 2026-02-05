@@ -15,6 +15,7 @@ netCDF4
 statsmodels
 contextily
 pygam
+rasterio
 # folium
 # xrft
 # Dataset

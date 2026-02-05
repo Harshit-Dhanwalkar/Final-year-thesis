@@ -11,6 +11,12 @@
 9. Soil Temperature Level 1
 10. Volumetric Soil Water Layer 1
 
+# Elevation data
+
+[viewfinder](https://www.viewfinderpanoramas.org/Coverage%20map%20viewfinderpanoramas_org3.htm)
+
+for E44, F44, F45 (ordisa and AP for eastern ghat region)
+
 ---
 
 [IMD](https://mausam.imd.gov.in/)
