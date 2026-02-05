@@ -6,12 +6,16 @@ pyqt5
 cartopy
 shapely
 pandas
+geopandas
 xarray
 dask[distributed]
 numba
 regionmask
 netCDF4
 statsmodels
+contextily
+pygam
+# folium
 # xrft
 # Dataset
 # Basemap
