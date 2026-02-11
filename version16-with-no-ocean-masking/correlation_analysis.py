@@ -48,13 +48,11 @@ def compute_autocorrelation(data, nlags=96, fft=True):
     # Remove NaN values
     data_clean = np.array(data)
     data_clean = data_clean[~np.isnan(data_clean)]
-    
     if len(data_clean) < nlags + 1:
         nlags = max(len(data_clean) // 2, 10)
-    
     try:
         acf_values = acf(data_clean, nlags=nlags, fft=fft)
-        lags = np.arange(len(acf_values))  # in hours (assuming hourly data)
+        lags = np.arange(len(acf_values))  # in hours
         return acf_values, lags
     except Exception as e:
         print(f"Error computing ACF: {e}")
@@ -471,7 +469,6 @@ def plot_tp_swvl1_time_series(tp, swvl1, valid_times, landfall_index, track_id, 
         plot_path = os.path.join(track_dir, f"track_{track_id}_TP-SWVL1_time_series.png")
         plt.savefig(plot_path, dpi=300, bbox_inches='tight')
         plt.close(fig)
-
         std_print('SAVED', 'ca', 'TP-SWVL1 time series', plot_path)
         return True
     except Exception as e:

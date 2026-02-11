@@ -13,9 +13,7 @@
 
 # Elevation data
 
-[viewfinder](https://www.viewfinderpanoramas.org/Coverage%20map%20viewfinderpanoramas_org3.htm)
-
-for E44, F44, F45 (ordisa and AP for eastern ghat region)
+[viewfinder](https://www.viewfinderpanoramas.org/Coverage%20map%20viewfinderpanoramas_org3.htm) for whole Indian Subcontinent
 
 ---
 

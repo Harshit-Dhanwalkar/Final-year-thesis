@@ -3,7 +3,7 @@
 ./reports/temp/
 output*
 output*/
-__pychace__/
+__pychace__
 
 # LaTex
 *.acn

@@ -259,7 +259,7 @@ month_order = [
 # for wind creterion : https://mausam.imd.gov.in/imd_latest/monsoonreport2024.pdf page: 284
 WIND_SPEED_LOWER_BOUND_MS = 5         # m/s == 17 knots
 WIND_SPEED_UPPER_BOUND_MS = 19        # m/s == 27 knots
-MSL_LOWER_BOUND_PA = 100200 # 100000  # Pa
+MSL_LOWER_BOUND_PA = 100000           # Pa
 PRECIPITATION_THRESHOLD_MM = 0.1      # mm/hr
 # SWVL1 Range: $0.02-0.55$ m^3/m^3
 VORTICITY_THRESHOLD = 3e-6  # 5e-6    # > 0 /s, # Positive cyclonic
