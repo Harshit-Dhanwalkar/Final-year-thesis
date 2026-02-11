@@ -84,9 +84,9 @@ def extract_spatial_subset(ds, lat, lon, time, buffer_km=100, time_coord=None, v
         if time_coord is None:
             ds, time_coord = get_time_coord(ds)
             if verbose:
-                print(f"  [DEBUG] Auto-detected time_coord: '{time_coord}'")
+                std_print('DEBUG', f'Auto-detected time_coord: {time_coord}')
         if verbose:
-            print(f"  [DEBUG] Calculating buffer: {buffer_km} km")
+            std_print('DEBUG', f'Calculating buffer: {buffer_km} km')
         lat_buffer, lon_buffer = calculate_buffer_deg(lat, buffer_km)
         # Create bounds
         lat_min, lat_max = lat - lat_buffer, lat + lat_buffer
@@ -97,21 +97,19 @@ def extract_spatial_subset(ds, lat, lon, time, buffer_km=100, time_coord=None, v
         lon_min = max(lon_min, float(ds.longitude.min()))
         lon_max = min(lon_max, float(ds.longitude.max()))
         if verbose:
-            print(f"  [DEBUG] Bounds - Lat: [{lat_min:.2f}, {lat_max:.2f}], Lon: [{lon_min:.2f}, {lon_max:.2f}]")
+            std_print('DEBUG', f'Bounds - Lat: [{lat_min:.2f}, {lat_max:.2f}], Lon: [{lon_min:.2f}, {lon_max:.2f}]')
         # Select
         subset = ds.sel({
             time_coord: time,
             'latitude': (ds.latitude >= lat_min) & (ds.latitude <= lat_max),
             'longitude': (ds.longitude >= lon_min) & (ds.longitude <= lon_max)
         }, method='nearest')
-
         if verbose:
-            print(f"  [DEBUG] Subset shape: {subset.sizes}")
+            std_print('DEBUG', 'su', f'Subset shape : {subset.sizes}')
         return subset if subset.sizes['latitude'] > 0 else None
     except Exception as e:
         if verbose:
-            print(f"  [ERROR] extract_spatial_subset failed: {e}")
-            import traceback
+            std_print('ERROR', 'su', 'extract_spatial_subset failed', str(e))
             traceback.print_exc()
         return None
 
@@ -141,9 +139,7 @@ def extract_regional_data(ds, track_df, track_id, variable, buffer_km=100):
     return np.array(valid_times), np.array(values)
 
 def extract_and_average_variable(ds, lat, lon, time, var_name, buffer_km=None, time_coord=None, aggregation='mean', verbose=False):
-    """
-    Extract variable at point with spatial averaging.
-    """
+    """Extract variable at point with spatial averaging"""
     try:
         # time coordinate if not provided
         if time_coord is None:
@@ -153,9 +149,9 @@ def extract_and_average_variable(ds, lat, lon, time, var_name, buffer_km=None, t
         if buffer_km is None:
             buffer_km = get_default_buffer_km(var_name)
             if verbose:
-                print(f"Auto-selected buffer: {buffer_km} km for '{var_name}'")
+                std_print('DEBUG', 'su' f"Auto-selected buffer: {buffer_km} km for '{var_name}'")
         if verbose:
-            print(f"Extracting {var_name} at ({lat:.2f}°N, {lon:.2f}°E)")
+            std_print('DEBUG', 'su', f"Extracting {var_name} at ({lat:.2f}°N, {lon:.2f}°E)")
         # Extract subset
         subset = extract_spatial_subset(ds, lat, lon, time, buffer_km=buffer_km, time_coord=time_coord, verbose=verbose)
         if subset is None:
@@ -169,11 +165,11 @@ def extract_and_average_variable(ds, lat, lon, time, var_name, buffer_km=None, t
         if var_name not in subset.data_vars:
             if verbose:
                 std_print('ERROR', 'su', f"Variable '{var_name}' not in subset")
-                print(f"[DEBUG] Available variables: {list(subset.data_vars)}")
+                std_print('DEBUG', 'su', 'Available variables: {list(subset.data_vars)}')
             return np.nan
         var_data = subset[var_name]
         if verbose:
-            print(f"[DEBUG] Variable shape: {var_data.shape}")
+            std_print('DEBUG', 'su', f'Variable shape : {var_data.shape}')
         # Apply aggregation
         if aggregation == 'mean':
             result = float(var_data.mean().values)
@@ -188,10 +184,10 @@ def extract_and_average_variable(ds, lat, lon, time, var_name, buffer_km=None, t
         else:
             result = float(var_data.mean().values)
         if verbose:
-            print(f"[extract_and_average_variable] Result: {result:.6f}")
+            std_print('DEBUG', 'su', f'Result: {result:.6f}')
         return result if not np.isnan(result) else np.nan
     except Exception as e:
         if verbose:
-            print(f"[ERROR] Extraction failed: {e}")
+            std_print('ERROR', 'su', 'Extraction failed', str(e))
             traceback.print_exc()
         return np.nan
