@@ -28,7 +28,7 @@ import shutil
 from utils import std_print
 
 def load_elevation_metrics(output_dir: str) -> Optional[pd.DataFrame]:
-    """Load real TSI metrics computed from HGT elevation data."""
+    """Load TSI metrics computed from HGT elevation data."""
     paths_to_try = [
         os.path.join(output_dir, 'elevation_analysis', 'elevation_metrics.csv'),
         'output/elevation_analysis/elevation_metrics.csv',

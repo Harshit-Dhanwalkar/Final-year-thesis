@@ -38,7 +38,7 @@ def compute_soil_water_capacity_index(swvl1_values):
     capacity_index = np.clip(capacity_index, 0, 1)
     return capacity_index
 
-def compute_feedback_strength_index(correlation_value, swvl1_values, correlation_p_value=None, significance_threshold=0.05):
+def compute_feedback_strength_index(correlation_value, swvl1_values, p_value, significance_threshold=0.05):
     """Feedback Strength Index (FSI) = |correlation(TP, SWVL1)| × Soil Water Capacity Index x Significance Factor
     - Correlation strength: How tightly linked is precipitation to soil moisture?
     - Capacity: How much can the soil respond (saturation potential)?
@@ -50,15 +50,16 @@ def compute_feedback_strength_index(correlation_value, swvl1_values, correlation
             'correlation_strength': np.nan,
             'capacity_index': np.nan,
             'significance_factor': 0.0,
-            'is_significant': False
+            'is_significant': False,
+            'p_value': p_value 
         }
     # 1 Correlation strength
     corr_strength = np.abs(correlation_value)
     # 2 Soil water capacity
     capacity_idx = compute_soil_water_capacity_index(swvl1_values)
     # 3 Significance factor
-    if correlation_p_value is not None:
-        is_sig = correlation_p_value < significance_threshold
+    if p_value is not None:
+        is_sig = p_value < significance_threshold
         sig_factor = 1.0 if is_sig else 0.5  # Reduce weight if not significant
     else:
         sig_factor = 1.0
@@ -72,7 +73,7 @@ def compute_feedback_strength_index(correlation_value, swvl1_values, correlation
         'capacity_index': capacity_idx,
         'significance_factor': sig_factor,
         'is_significant': is_sig,
-        'p_value': correlation_p_value
+        'p_value': p_value
     }
 
 def compute_fsi_all_tracks(correlation_results_df, track_df_dict, ds):

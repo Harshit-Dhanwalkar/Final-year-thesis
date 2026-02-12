@@ -108,27 +108,22 @@ from utils import (
     setup_map_extent,
     add_land_ocean_shading
 )
-
 from utils.progress_utils import ProgressSpinner, ProgressBar
-
 from azimuthal_hovmoller import (
     compute_azimuthal_hovmoller,
     plot_hovmoller
 )
-
 from speed_analysis import (
     compute_track_speeds,
     plot_speed_analysis_kmh,
     plot_speed_analysis_ms
 )
-
 from antecedent_analysis import (
     plot_antecedent_spatial_map,
     analyze_antecedent_correlations,
     analyze_antecedent_trend,
     analyze_antecedent_for_all_tracks
 )
-
 from correlation_analysis import (
     analyze_single_track,
     analyze_flux_correlations,
@@ -137,12 +132,10 @@ from correlation_analysis import (
     export_results,
     plot_flux_analysis,
 )
-
 from elevation_track_vis import (
     create_elevation_vrt,
     plot_tracks_on_elevation
 )
-
 from elevation_analysis import run_elevation_analysis
 from statistics_analysis import (
     analyze_asm_fsi_relationship,
@@ -152,13 +145,11 @@ from statistics_analysis import (
     load_elevation_metrics,
     run_all_statistical_analyses
 )
-
 from soilmoiture_analysis import (
     plot_spatial_tp_swvl1,
     compute_soil_moisture_memory,
     analyze_soil_memory_by_track
 )
-
 from heatflux_analysis import (
     classify_md_duration,
     extract_heat_flux_timeseries,
@@ -169,7 +160,6 @@ from heatflux_analysis import (
     export_landfall_flux_results,
     print_md_classification_summary
 )
-
 from coupling_metrics import (
     compute_fsi_all_tracks,
     compute_diurnal_amplitude_all_tracks,
@@ -2122,7 +2112,7 @@ if __name__ == "__main__":
         # std_print('DEBUG', 'md', f'Skipping Coupling Metrics Analysis')
         correlation_df = pd.DataFrame(all_correlation_results) if all_correlation_results else pd.DataFrame()
         duration_df = pd.DataFrame(all_classifications) if all_classifications else pd.DataFrame()
-        coupling_metrics_dir = os.path.join(output_dir, "coupling_metrics")
+        coupling_metrics_dir = os.path.join(output_dir, 'coupling_metrics')
         os.makedirs(coupling_metrics_dir, exist_ok=True)
         if all_flux_results:
             flux_results_df = pd.DataFrame(all_flux_results)
@@ -2136,7 +2126,7 @@ if __name__ == "__main__":
                 std_print('INFO', 'md', 'Computing Feedback Strength Index (FSI)')
                 fsi_df = compute_fsi_all_tracks(correlation_df, track_dict, ds)
                 if not fsi_df.empty:
-                    fsi_csv = os.path.join(coupling_metrics_dir, "coupling_metrics_FSI.csv")
+                    fsi_csv = os.path.join(coupling_metrics_dir, 'coupling_metrics_FSI.csv')
                     fsi_df.to_csv(fsi_csv, index=False)
                     std_print('EXPORT', 'md', 'FSI to CSV', fsi_csv)
             else:
@@ -2158,33 +2148,27 @@ if __name__ == "__main__":
             else:
                 std_print('WARN', 'md', 'Insufficient data for coupling efficiency computation')
             if not correlation_df.empty and not fsi_df.empty:
-                fsi_df_enhanced = fsi_df.merge(
-                    correlation_df[['track_id', 'correlation', 'p_value', 'mean_tp', 'mean_swvl1']],
-                    on='track_id',
-                    how='left',
-                    suffixes=('', '_corr')
-                )
-                enhanced_fsi_path = os.path.join(coupling_metrics_dir, "coupling_metrics_FSI_enhanced.csv")
-                fsi_df_enhanced.to_csv(enhanced_fsi_path, index=False)
-                std_print('EXPORT', 'md', 'Enhanced FSI metrics with TP/SWVL1', enhanced_fsi_path)
-                fsi_path = enhanced_fsi_path
-                # FIX: verify enhanced FSI data
-                # if os.path.exists(enhanced_path):
-                #     enhanced_df = pd.read_csv(enhanced_path)
-                #     std_print('DEBUG', 'md', 'Enhanced FSI shape', f'{enhanced_df.shape}')
-                #     std_print('DEBUG', 'md', 'Enhanced FSI columns', str(list(enhanced_df.columns)))
+                fsi_df = fsi_df.merge(correlation_df[['track_id', 'correlation', 'p_value', 'mean_tp', 'mean_swvl1']], on='track_id', how='left', suffixes=('', '_corr'))
+                fsi_path = os.path.join(coupling_metrics_dir, 'coupling_metrics_FSI.csv')
+                fsi_df.to_csv(fsi_path, index=False)
+                std_print('EXPORT', 'md', 'FSI metrics with TP/SWVL1',fsi_path)
+                # FIX: verify  FSI data
+                # if os.path.exists(path):
+                #     df = pd.read_csv(path)
+                #     std_print('DEBUG', 'md', ' FSI shape', f'{df.shape}')
+                #     std_print('DEBUG', 'md', ' FSI columns', str(list(df.columns)))
                 #     # Verify it has the right columns
                 #     required_cols = ['mean_tp', 'mean_swvl1']
-                #     missing = [col for col in required_cols if col not in enhanced_df.columns]
+                #     missing = [col for col in required_cols if col not in df.columns]
                 #     if missing:
-                #         std_print('ERROR', 'md', 'Enhanced FSI missing columns', str(missing))
+                #         std_print('ERROR', 'md', ' FSI missing columns', str(missing))
                 #         # Fix by merging again
-                #         enhanced_df = fsi_df.merge(
+                #         df = fsi_df.merge(
                 #             correlation_df[['track_id', 'mean_tp', 'mean_swvl1']],
                 #             on='track_id',
                 #             how='left'
                 #         )
-                #         enhanced_df.to_csv(enhanced_path, index=False)
+                #         df.to_csv(path, index=False)
             else:
                 std_print('WARN', 'md', 'Cannot enhance FSI data', 'Missing correlation or FSI data')
         except Exception as e:
@@ -2199,7 +2183,7 @@ if __name__ == "__main__":
             all_asm_results = asm_results_df
             # Export the combined results for all tracks
             if asm_results_df is not None:
-                csv_path = os.path.join(asm_dir, "all_tracks_antecedent_sm.csv")
+                csv_path = os.path.join(asm_dir, 'all_tracks_antecedent_sm.csv')
                 asm_results_df.to_csv(csv_path, index=False)
                 std_print('EXPORT', 'md', 'Global Antecedent SM Results', csv_path)
             # ASM results reuse 
@@ -2216,11 +2200,11 @@ if __name__ == "__main__":
             os.makedirs(memory_dir, exist_ok=True)
             if 'all_memory_results' in locals() and all_memory_results:
                 memory_df = pd.DataFrame(all_memory_results)
-                memory_csv_path = os.path.join(memory_dir, "all_tracks_soil_memory.csv")
+                memory_csv_path = os.path.join(memory_dir, 'all_tracks_soil_memory.csv')
                 memory_df.to_csv(memory_csv_path, index=False)
                 std_print('EXPORT', 'md', 'Global soil memory results', memory_csv_path)
                 if not memory_df.empty:
-                    std_print('INFO', 'md', 'Soil Moisture Memory Summary:')
+                    std_print('INFO', 'md', 'Soil Moisture Memory Summary :')
                     std_print(None, None, 'Mean memory index (24h)', f"{memory_df['memory_index_24h'].mean():.3f}")
                     std_print(None, None, 'Std dev memory index', f"{memory_df['memory_index_24h'].std():.3f}")
                     std_print(None, None, 'Min memory index', f"{memory_df['memory_index_24h'].min():.3f}")
@@ -2263,7 +2247,7 @@ if __name__ == "__main__":
             # clay_data_path for H2 analysis
             clay_data_path = os.path.join("..", "Data", "soil", "clay_percentage.csv")
             # Only run statistical analyses if we have both coupling and ASM data
-            if not asm_df.empty and os.path.exists(os.path.join(coupling_metrics_dir, "coupling_metrics_FSI.csv")):
+            if not asm_df.empty and os.path.exists(os.path.join(coupling_metrics_dir, 'coupling_metrics_FSI.csv')):
                 stats_results = run_all_statistical_analyses(
                     coupling_metrics_dir=coupling_metrics_dir,
                     asm_results=asm_df,
@@ -2282,20 +2266,20 @@ if __name__ == "__main__":
                     )
                     if os.path.exists(summary_report_path):
                         with open(summary_report_path, 'a') as f:
-                            f.write("\n7. Statistical Analysis Results (Hypotheses H3-H7)\n\n")
+                            f.write("\n7. Statistical Analysis Results\n\n")
                             if stats_results.get('asm_fsi'):
-                                f.write(f"H3 (ASM-FSI): r = {stats_results['asm_fsi'].get('correlation', 'N/A'):.3f}\n")
+                                f.write(f"(ASM-FSI): r = {stats_results['asm_fsi'].get('correlation', 'N/A'):.3f}\n")
                             if stats_results.get('gam'):
                                 gam_r2 = stats_results['gam'].get('r_squared', 'N/A')
                                 r2_str = f"{gam_r2:.3f}" if isinstance(gam_r2, (int, float)) else "N/A"
-                                f.write(f"H4 (GAM plateau): r-squared = {r2_str}\n")
+                                f.write(f"(GAM plateau): r-squared = {r2_str}\n")
                             if stats_results.get('granger'):
-                                f.write(f"H5 (Granger causality): {stats_results['granger'].get('n_significant_tracks', 'N/A')} tracks significant\n")
+                                f.write(f"(Granger causality): {stats_results['granger'].get('n_significant_tracks', 'N/A')} tracks significant\n")
                             tsi_dur_corr = stats_results.get('tsi', {}).get('tsi_duration_correlation')
                             if tsi_dur_corr is not None and isinstance(tsi_dur_corr, (int, float, np.number)):
-                                f.write(f"H7 (TSI-duration): r = {tsi_dur_corr:.3f}\n")
+                                f.write(f"(TSI-duration): r = {tsi_dur_corr:.3f}\n")
                             else:
-                                f.write(f"H7 (TSI-duration): r = N/A\n")
+                                f.write(f"(TSI-duration): r = N/A\n")
                 else:
                     std_print('WARN', 'md', 'Statistical analyses returned no results')
             else:

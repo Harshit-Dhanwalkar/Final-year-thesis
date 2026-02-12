@@ -68,17 +68,13 @@ def get_default_buffer_km(variable):
     return default_buffers.get(variable.lower(), 100)
 
 def calculate_buffer_deg(lat, buffer_km):
-    """
-    Calculate lat/lon buffer in degrees from distance in km.
-    """
+    """Calculate lat/lon buffer in degrees from distance in km"""
     lat_buffer = buffer_km / 111.0
     lon_buffer = buffer_km / (111.0 * np.cos(np.radians(lat)))
     return lat_buffer, lon_buffer
 
 def extract_spatial_subset(ds, lat, lon, time, buffer_km=100, time_coord=None, verbose=False):
-    """
-    Extract regional data around a point with latitude-dependent buffering.
-    """
+    """Extract regional data around a point with latitude-dependent buffering"""
     try:
         # time coordinate if not provided
         if time_coord is None:

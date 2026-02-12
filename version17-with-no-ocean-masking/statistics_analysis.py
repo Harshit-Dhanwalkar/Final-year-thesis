@@ -26,7 +26,7 @@ from utils import std_print
 MAX_LAG = 1
 
 def load_elevation_metrics(output_dir: str) -> Optional[pd.DataFrame]:
-    """Load real TSI metrics computed from HGT elevation data."""
+    """Load TSI metrics computed from HGT elevation data."""
     paths_to_try = [
         os.path.join(output_dir, 'elevation_analysis', 'elevation_metrics.csv'),
         'output/elevation_analysis/elevation_metrics.csv',
@@ -170,7 +170,7 @@ def analyze_asm_fsi_relationship(coupling_metrics_dir: str, asm_results: pd.Data
 def analyze_tsi(elevation_metrics_df, coupling_df, output_dir):
     """
     H7 Hypothesis: Topographic effects on monsoon depression behavior
-    Analyze TSI (computed from real SRTM HGT elevation data) against:
+    Analyze TSI (computed from SRTM HGT elevation data) against:
       - Duration: TSI-duration correlation (expect r < -0.3)
       - FSI: Terrain modulation of feedback (optional)
       - ASM: Soil moisture interaction (optional)
@@ -436,7 +436,7 @@ def compute_tsi_index(coupling_df, elevation_results, output_dir):
                 'TSI_min': float(np.nanmin(tsi)),
                 'TSI_max': float(np.nanmax(tsi)),
                 'n_tracks': len(merged),
-                'source': 'real_elevation_data',
+                'source': 'elevation_data',
                 'status': 'success'
             }
         else:
@@ -475,7 +475,7 @@ def compute_tsi_index(coupling_df, elevation_results, output_dir):
                     results['interpretation'] = 'Moderate positive'
                 else:
                     results['interpretation'] = 'Weak/no relationship'
-        std_print('INFO', 'sa', 'H7 Real TSI computed', f'Mean={results["TSI_mean"]:.3f} ± {results["TSI_std"]:.3f} (from {results["source"]})')
+        std_print('INFO', 'sa', 'TSI computed', f'Mean={results["TSI_mean"]:.3f} ± {results["TSI_std"]:.3f} (from {results["source"]})')
         # Plot distribution
         plot_tsi_distribution(merged, results, output_dir)
         return results
@@ -504,12 +504,11 @@ def compute_tsi_index(coupling_df, elevation_results, output_dir):
 #         'n_tracks': len(coupling_df),
 #         'source': 'proxy_fsi_based',
 #         'status': 'proxy',
-#         'note': 'Proxy TSI - real elevation data required for accurate TSI'
+#         'note': 'Proxy TSI - elevation data required for accurate TSI'
 #     }
 #     return results
 
 def run_all_statistical_analyses(coupling_metrics_dir, asm_results, correlation_df, output_dir):
-    """Run all statistical tests H3-H7 """
     std_print('INFO', 'sa', '--- Starting Statistical Analyses ---', '')
     stats_output_dir = os.path.join(output_dir, "statistical_analysis")
     os.makedirs(stats_output_dir, exist_ok=True)
@@ -545,13 +544,13 @@ def run_all_statistical_analyses(coupling_metrics_dir, asm_results, correlation_
             std_print('ERROR', 'sa', 'No data found for analysis', '')
             return all_results
 
-    # H3: ASM-FSI relationship
-    std_print('INFO', 'sa', '1. Analyzing ASM-FSI relationship (H3)...', '')
+    # ASM-FSI relationship
+    std_print('INFO', 'sa', '1. Analyzing ASM-FSI relationship', '')
     asm_fsi_results = analyze_asm_fsi_relationship(coupling_metrics_dir, asm_results, output_dir)
     all_results['asm_fsi'] = asm_fsi_results
 
-    # H4: GAM nonlinearity (skip if < 10 tracks)
-    std_print('INFO', 'sa', '2. Running GAM nonlinear analysis (H4)...', '')
+    # GAM nonlinearity (skip if < 10 tracks)
+    std_print('INFO', 'sa', '2. Running GAM nonlinear analysis', '')
     if len(coupling_df) >= 6: # FIX: 6 is too less for GAM but i do have only 6 trakcs
         gam_results = analyze_gam_nonlinearity(coupling_metrics_dir, output_dir)
         all_results['gam'] = gam_results
@@ -559,13 +558,13 @@ def run_all_statistical_analyses(coupling_metrics_dir, asm_results, correlation_
         std_print('WARN', 'sa', 'Skipping H4 GAM', f'Need ≥10 tracks, have {len(coupling_df)}')
         all_results['gam'] = {'status': 'skipped', 'reason': f'Only {len(coupling_df)} tracks'}
 
-    # H5: Granger causality
-    std_print('INFO', 'sa', '3. Testing Granger causality (H5)...', '')
+    # Granger causality
+    std_print('INFO', 'sa', '3. Testing Granger causality', '')
     granger_results = test_granger_causality(coupling_df, output_dir)
     all_results['granger'] = granger_results
 
-    # H7: TSI from Real Elevation Data
-    std_print('INFO', 'sa', '4. Analyzing TSI with real elevation data (H7)...', '')
+    # TSI from Elevation Data
+    std_print('INFO', 'sa', '4. Analyzing TSI with elevation data', '')
     elevation_metrics_df = load_elevation_metrics(output_dir)
     if elevation_metrics_df is not None and not elevation_metrics_df.empty:
         tsi_results = analyze_tsi(elevation_metrics_df, coupling_df, output_dir)
@@ -591,7 +590,7 @@ def run_all_statistical_analyses(coupling_metrics_dir, asm_results, correlation_
                 f.write(f"Track IDs: {track_ids}\n")
                 f.write(f"Number of tracks: {len(track_ids)}\n\n")
             # H3 Results
-            f.write("1. H3: ASM-FSI Relationship\n\n")
+            f.write("1. ASM-FSI Relationship\n\n")
             if asm_fsi_results and 'correlation' in asm_fsi_results:
                 corr = asm_fsi_results['correlation']
                 f.write(f"Correlation (r): {corr:.3f}\n")
@@ -610,7 +609,7 @@ def run_all_statistical_analyses(coupling_metrics_dir, asm_results, correlation_
             f.write("\n")
 
             # H4 Results
-            f.write("2. H4: GAM Nonlinear Analysis\n\n")
+            f.write("2. GAM Nonlinear Analysis\n\n")
             if 'gam' in all_results:
                 if all_results['gam'].get('status') == 'skipped':
                     f.write(f"Status: SKIPPED - {all_results['gam'].get('reason')}\n")
@@ -622,7 +621,7 @@ def run_all_statistical_analyses(coupling_metrics_dir, asm_results, correlation_
             f.write("\n")
 
             # H5 Results
-            f.write("3. H5: Granger Causality (TP -> SWVL1)\n\n")
+            f.write("3. Granger Causality (TP -> SWVL1)\n\n")
             if granger_results and 'significant' in granger_results:
                 p_val = granger_results.get('p_value', 'N/A')
                 sig = granger_results.get('significant', False)
@@ -639,7 +638,7 @@ def run_all_statistical_analyses(coupling_metrics_dir, asm_results, correlation_
             f.write("\n")
 
             # H7 Results
-            f.write("4. H7: Topographic Sensitivity Index (Real SRTM Data)\n\n")
+            f.write("4. Topographic Sensitivity Index (SRTM Data)\n\n")
             tsi_results = all_results.get('tsi', {})
             if tsi_results and 'status' in tsi_results:
                 if tsi_results['status'] == 'completed':
@@ -655,7 +654,7 @@ def run_all_statistical_analyses(coupling_metrics_dir, asm_results, correlation_
                     f.write("Analysis incomplete or failed\n")
             f.write("\n")
             # Data Quality Note
-            f.write("DATA QUALITY NOTES\n\n")
+            f.write("Data quality :\n\n")
             if len(coupling_df) < 10:
                 f.write(f"  Only {len(coupling_df)} tracks - statistical power limited\n")
                 f.write("   Consider relaxing detection thresholds to get more tracks\n")

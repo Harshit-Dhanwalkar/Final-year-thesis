@@ -203,16 +203,16 @@ def analyze_single_track(ds, track_df, track_id, buffer_km, max_lag_hours=50, ou
     sensible_hf_series = np.array(sensible_hf_series)
     total_hf_series = np.array(total_hf_series)
 
+    # Set SWVL1 = 0 before landfall (physically impossible over ocean)
     swvl1_series_modified = swvl1_series.copy()
     if landfall_index > 0:
-        # Set all ocean phase SWVL1 to 0 (before landfall, physically impossible over ocean)
+        # Set all ocean phase SWVL1 to 0 (before landfall)
         swvl1_series_modified[:landfall_index] = 0
-        std_print('INFO', 'ca', f'Track {track_id}', 
-                  f'SWVL1 set to 0 for ocean phase (indices 0-{landfall_index}), meaningful only after landfall')
+        std_print('INFO', 'ca', f'Track {track_id}', f'SWVL1 set to 0 for ocean phase (indices 0-{landfall_index}), meaningful only after landfall')
     else:
-        std_print('DEBUG', 'ca', f'Track {track_id}', 
-                  'No landfall detected - SWVL1 valid throughout')
+        std_print('DEBUG', 'ca', f'Track {track_id}', 'No landfall - SWVL1 valid throughout')
 
+    # Plots
     os.makedirs(output_dir, exist_ok=True)
     std_print('INFO', 'ca', f' --- Generating plots for Track {track_id} ---')
     # 1. TP-SWVL1 Feedback
@@ -250,17 +250,27 @@ def analyze_single_track(ds, track_df, track_id, buffer_km, max_lag_hours=50, ou
         std_print('ERROR', 'ca', f'Autocorrelation analysis failed for Track {track_id}', str(e))
         traceback.print_exc()
 
-    # Global Correlation
-    corr, p_val = pearsonr(tp_series, swvl1_series_modified) if np.std(tp_series) > 0 and np.std(swvl1_series_modified) > 0 else (np.nan, np.nan)
-    # Phase-based Correlations
+    # Compute ONLY on land phase to avoid bias from ocean where SWVL1=0
+    corr, p_val = np.nan, np.nan
     corr_pre, corr_post = np.nan, np.nan
-    if landfall_index != -1:
-        tp_pre, sm_pre = tp_series[:landfall_index], swvl1_series_modified[:landfall_index]
-        tp_post, sm_post = tp_series[landfall_index:], swvl1_series_modified[landfall_index:]
-        if len(tp_pre) >= 3 and np.std(tp_pre) > 0 and np.std(sm_pre) > 0:
-            corr_pre, _ = pearsonr(tp_pre, sm_pre)
-        if len(tp_post) >= 3 and np.std(tp_post) > 0 and np.std(sm_post) > 0:
-            corr_post, _ = pearsonr(tp_post, sm_post)
+    if landfall_index > 0 and len(tp_series[landfall_index:]) >= 5:
+        # landfall detected: compute correlation only on land phase (post-landfall)
+        tp_land = tp_series[landfall_index:]
+        sm_land = swvl1_series_modified[landfall_index:]
+        if np.std(tp_land) > 0 and np.std(sm_land) > 0:
+            corr, p_val = pearsonr(tp_land, sm_land)
+            corr_post = corr  # Post-landfall = global correlation
+            std_print('INFO', 'ca', f'Track {track_id}', f'TP-SWVL1 Correlation (LAND PHASE ONLY): r={corr:.3f}, p={p_val:.4f}')
+        # ocean phase correlation: not computed (swvl1=0)
+        corr_pre = np.nan
+    elif originates_over_land:
+        # NO LANDFALL but land-originated: entire track is land
+        if np.std(tp_series) > 0 and np.std(swvl1_series_modified) > 0:
+            corr, p_val = pearsonr(tp_series, swvl1_series_modified)
+            corr_post = corr
+            std_print('INFO', 'ca', f'Track {track_id}', f'TP-SWVL1 Correlation (Land-Originated, Full Track): r={corr:.3f}, p={p_val:.4f}')
+    else:
+        std_print('DEBUG', 'ca', f'Track {track_id}', 'No landfall - TP-SWVL1 correlation NOT computed (SWVL1 is ocean artifact)')
 
     # Calculate correlations
     correlation_results = {
@@ -276,57 +286,6 @@ def analyze_single_track(ds, track_df, track_id, buffer_km, max_lag_hours=50, ou
         'landfall_index': landfall_index,
         'originates_over_land': originates_over_land
     }
-    if len(tp_series) >= 3 and np.std(tp_series) > 0 and np.std(swvl1_series) > 0:
-        try:
-            corr, p_val_uncorrected = pearsonr(tp_series, swvl1_series)
-            # Calculate effective sample size
-            n_eff = effective_sample_size(tp_series, swvl1_series)
-            dof_eff = max(1, int(n_eff) - 2)
-            # Recalculate p-value with effective DOF
-            t_stat = corr * np.sqrt(dof_eff / (1 - corr**2 + 1e-10))
-            p_val = 2 * (1 - stats.t.cdf(abs(t_stat), dof_eff))
-            p_val_adj = 2 * (1 - stats.t.cdf(abs(t_stat), dof_eff))
-
-            std_print('INFO', 'ca', f"p_original={p_val:.4f}, p_adjusted={p_val_adj:.4f}, n_eff={n_eff:.0f}")
-            correlation_results['correlation'] = corr
-            correlation_results['p_value'] = p_val
-            correlation_results['p_value_uncorrected'] = p_val_uncorrected
-            correlation_results['n_effective'] = n_eff
-            correlation_results['dof'] = dof_eff
-        except Exception as e:
-            std_print('ERROR', 'ca', 'Correlation calculation failed', str(e))
-
-    # Global correlation
-    if len(tp_series) >= 3 and np.std(tp_series) > 0 and np.std(swvl1_series) > 0:
-        try:
-            corr, p_val = pearsonr(tp_series, swvl1_series)
-            correlation_results['correlation'] = corr
-            correlation_results['p_value'] = p_val
-        except:
-            pass
-
-    # Phase-based correlations
-    if landfall_index != -1 and landfall_index > 0:
-        # Pre-landfall
-        if landfall_index >= 3:
-            tp_pre = tp_series[:landfall_index]
-            sm_pre = swvl1_series_modified[:landfall_index]
-            if np.std(tp_pre) > 0 and np.std(sm_pre) > 0:
-                try:
-                    corr_pre, _ = pearsonr(tp_pre, sm_pre)
-                    correlation_results['corr_pre'] = corr_pre
-                except:
-                    pass
-        # Post-landfall
-        if len(tp_series) - landfall_index >= 3:
-            tp_post = tp_series[landfall_index:]
-            sm_post = swvl1_series_modified[landfall_index:]
-            if np.std(tp_post) > 0 and np.std(sm_post) > 0:
-                try:
-                    corr_post, _ = pearsonr(tp_post, sm_post)
-                    correlation_results['corr_post'] = corr_post
-                except:
-                    pass
 
     std_print('INFO', 'ca', f'Correlation for Track {track_id} :')
     std_print(None, None, f"r={correlation_results['correlation']:.3f},")
@@ -388,8 +347,9 @@ def plot_tp_swvl1_time_series(tp, swvl1, valid_times, landfall_index, track_id, 
             std_print('WARN', 'ca', f'Track {track_id}', 'Data length mismatch between tp, swvl1, and times')
             return False
 
-        # Figure
+        # Create figure with dual axes
         fig, ax1 = plt.subplots(figsize=(15, 7))
+
         # Determine landfall status text
         if originates_over_land:
             status_text = "Originates over land"
@@ -439,6 +399,22 @@ def plot_tp_swvl1_time_series(tp, swvl1, valid_times, landfall_index, track_id, 
         line2 = ax2.plot(valid_times, swvl1, 's-', color=color_swvl1, linewidth=2.5, markersize=5, label='Soil Water Volumatric Level-1', alpha=0.8, zorder=3)
         ax2.tick_params(axis='y', labelcolor=color_swvl1)
 
+        tp_clean = tp[~np.isnan(tp)]
+        swvl1_clean = swvl1[~np.isnan(swvl1)]
+        tp_min = np.min(tp_clean) if len(tp_clean) > 0 else 0
+        tp_max = np.max(tp_clean) if len(tp_clean) > 0 else 1
+        swvl1_min = np.min(swvl1_clean) if len(swvl1_clean) > 0 else 0
+        swvl1_max = np.max(swvl1_clean) if len(swvl1_clean) > 0 else 0.1
+        tp_min = 0
+        swvl1_min = 0
+        tp_pad = (tp_max - tp_min) * 0.1 if (tp_max - tp_min) > 0 else 0.5
+        swvl1_pad = (swvl1_max - swvl1_min) * 0.1 if (swvl1_max - swvl1_min) > 0 else 0.05
+
+        ax1.set_ylim(bottom=0, top=tp_max + tp_pad)
+        ax2.set_ylim(bottom=0, top=swvl1_max + swvl1_pad)
+        ax1.axhline(y=0, color='gray', linestyle='-', linewidth=0.8, alpha=0.3, zorder=1)
+        ax2.axhline(y=0, color='gray', linestyle='-', linewidth=0.8, alpha=0.3, zorder=1)
+
         # Combined legend
         lines = line1 + line2
         labels = [l.get_label() for l in lines]
@@ -473,7 +449,6 @@ def plot_tp_swvl1_time_series(tp, swvl1, valid_times, landfall_index, track_id, 
         plot_path = os.path.join(track_dir, f"track_{track_id}_TP-SWVL1_time_series.png")
         plt.savefig(plot_path, dpi=300, bbox_inches='tight')
         plt.close(fig)
-
         std_print('SAVED', 'ca', 'TP-SWVL1 time series', plot_path)
         return True
     except Exception as e:
@@ -935,6 +910,7 @@ def plot_tp_hf_correlation(tp, latent_hf, sensible_hf, valid_times, landfall_ind
     plt.savefig(plot_path, dpi=300, bbox_inches='tight')
     plt.close(fig)
     std_print('SAVED', 'ca', 'TP-HF Correlation plot', plot_path)
+    return True
 
 def plot_swvl1_hf_lag_correlation(sm, hf, max_lag_hours, track_id, hf_name, output_dir):
     """
@@ -1381,7 +1357,6 @@ def plot_autocorrelation(ds, track_df, track_id, output_dir='output'):
     std_print('SAVED', 'ca', f'Autocorrelation plot for Track {track_id}', outpath)
 
 def plot_lagged_correlation_single_variable(data, var_name, track_id, output_dir="output"):
-    # Ensure data is a numpy array and has enough points
     values = np.array(data)
     values = values[~np.isnan(values)]
     if len(values) < 10:
@@ -1394,15 +1369,13 @@ def plot_lagged_correlation_single_variable(data, var_name, track_id, output_dir
     lags, correlations, pvalues = compute_lagged_correlation(values, max_lag=max_lag)
     valid = ~np.isnan(correlations)
  
-    fig, ax = plt.subplots(figsize=(10, 6), constrained_layout=True)
-
+    fig, ax = plt.subplots(figsize=(10, 6))
     # Plot auto correlation
     ax.plot(lags[valid], correlations[valid], 'o-', linewidth=2.5, markersize=4, color='blue', label='Lag Correlation', zorder=3)
     ax.fill_between(lags, correlations, alpha=0.2, color='steelblue')
     # Reference lines
     ax.axvline(0, color='black', linestyle='--', linewidth=1, alpha=0.6, label='Zero lag')
     ax.axhline(0, color='gray', linestyle=':', linewidth=1, alpha=0.6)
-
     ax.set_xlabel("Lag (hours)", fontsize=10, fontweight='bold')
     ax.set_ylabel('Correlation Coefficient (r)', fontsize=10, fontweight='bold')
     ax.set_title(f'{var_name}: Temporal Auto-correlation (Track {track_id})', fontsize=12, fontweight='bold')
