@@ -9,6 +9,7 @@ import numpy as np
 import rasterio
 from rasterio.vrt import WarpedVRT
 import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm
 import subprocess
 import shutil
 
@@ -30,17 +31,18 @@ try:
     subprocess.run(['gdalbuildvrt', vrt_path] + files_to_mosaic, check=True)
 except Exception as e:
     print(f"Error building VRT: {e}")
-    print("Ensure gdal-bin is installed or use rasterio.merge for very small sets.")
     exit()
 
-# 3. Validation Visualization (Downsampled)
+# 3. Visualization (Downsampled)
 with rasterio.open(vrt_path) as src:
     # Use a scale factor to avoid OOM
-    scale_factor = 1024 / src.width
+    target_width = 1024 * 15
+    scale_factor = target_width / src.width
+    # scale_factor = 0.1
     out_shape = (int(src.height * scale_factor), int(src.width * scale_factor))
     print(f"Reading downsampled preview {out_shape[1]}x{out_shape[0]}...")
     vis_data = src.read(
-        1, 
+        1,
         out_shape=out_shape,
         resampling=rasterio.enums.Resampling.bilinear
     ).astype(float)
@@ -53,12 +55,14 @@ with rasterio.open(vrt_path) as src:
     vis_data_normalized = np.clip((vis_data - vmin) / (vmax - vmin), 0, 1)
 
     plt.figure(figsize=(15, 10))
-    plt.imshow(vis_data_normalized, cmap='terrain', origin='upper')
+    # plt.imshow(vis_data_normalized, cmap='terrain', origin='upper')
+    # plt.imshow(vis_data_normalized, cmap='gist_earth', origin='upper')
+    plt.imshow(vis_data_normalized + 0.01, cmap='terrain', norm=LogNorm())
     plt.colorbar(label='Relative Elevation Intensity')
-    plt.title(f"Mosaic Validation: {len(files_to_mosaic)} tiles linked via VRT")
+    plt.title(f"Mosaic of {len(files_to_mosaic)} tiles")
     plt.axis('off')
 
-    output_png = "elevation_validation.png"
+    output_png = "elevation-Indian-Subcontinent.png"
     plt.savefig(output_png, dpi=300, bbox_inches='tight')
     print(f"Validation PNG saved as: {output_png}")
 
