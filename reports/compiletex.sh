@@ -2,14 +2,14 @@
 
 set -e  # Exit on error
 
-TEMP_DIR="temp"
+AUX_DIR="aux"
 MAIN_FILE="main.tex"
 ONLY_MAIN=false
 VERBOSE=false
 CLEANUP=true
 DRY_RUN=false
 
-# List of auxiliary extensions to move to temp directory
+# List of auxiliary extensions to move to aux directory
 EXTS=(
     "aux" "fdb_latexmk" "fls" "log" "nav" "out" "snm" "synctex.gz"
     "toc" "lof" "lot" "lol" "bcf" "bbl" "blg" "run.xml"
@@ -97,12 +97,12 @@ if [ "$DRY_RUN" = true ]; then
     log_warn "DRY RUN MODE - No actual compilation will occur"
 fi
 
-# Create temp directory if cleanup enabled
+# Create aux directory if cleanup enabled
 if [ "$CLEANUP" = true ]; then
     if [ "$DRY_RUN" = false ]; then
-        mkdir -p "$TEMP_DIR"
+        mkdir -p "$AUX_DIR"
     fi
-    log_info "Aux files will be moved to: $TEMP_DIR/"
+    log_info "Aux files will be moved to: $AUX_DIR/"
 else
     log_warn "Cleanup disabled - aux files will remain in place"
 fi
@@ -118,34 +118,78 @@ cleanup_aux() {
         return
     fi
 
-    log_debug "Starting cleanup for: $base"
+    log_debug "Starting cleanup for: $base in directory: $dir"
     debug_list_files "$dir" "$base"
 
     if [ "$DRY_RUN" = false ]; then
-        mkdir -p "$TEMP_DIR"
+        mkdir -p "$AUX_DIR"
     fi
 
+    # First, move all files matching the pattern $base.$ext
     for ext in "${EXTS[@]}"; do
         local aux_file="$dir/$base.$ext"
-        local clean_dir=${dir#./}
-        local prefix=${clean_dir//\//_}
-
-        if [ -z "$prefix" ] || [ "$prefix" == "." ]; then
-            local dest_file="$TEMP_DIR/$base.$ext"
+        local clean_dir="${dir#./}"
+        
+        # Determine destination filename
+        if [ "$clean_dir" = "." ] || [ -z "$clean_dir" ]; then
+            # Files in current directory
+            local dest_file="$AUX_DIR/$base.$ext"
         else
-            local dest_file="$TEMP_DIR/${prefix}_$base.$ext"
+            # Files in subdirectories
+            local prefix="${clean_dir//\//_}"
+            local dest_file="$AUX_DIR/${prefix}_$base.$ext"
         fi
 
         if [ -f "$aux_file" ]; then
             if [ "$DRY_RUN" = false ]; then
                 mv "$aux_file" "$dest_file"
                 moved_count=$((moved_count + 1))
-                log_debug "  Moved       : $base.$ext -> $dest_file"
+                log_debug "  Moved: $base.$ext -> $(basename $dest_file)"
             else
-                log_debug "  [DRY RUN] Would move: $base.$ext -> $dest_file"
+                log_debug "  [DRY RUN] Would move: $base.$ext"
             fi
         fi
     done
+
+    # move additional .aux files in the current directory
+    if [ "$dir" = "." ]; then
+        for aux_file in *.aux; do
+            # Check if file exists and is not the main file's aux (already moved)
+            if [ -f "$aux_file" ] && [ "$aux_file" != "$base.aux" ]; then
+                # Also check if it hasn't been moved already (defensive)
+                if [ ! -f "$AUX_DIR/$aux_file" ]; then
+                    if [ "$DRY_RUN" = false ]; then
+                        mv "$aux_file" "$AUX_DIR/"
+                        moved_count=$((moved_count + 1))
+                        log_debug "  Moved extra: $aux_file"
+                    else
+                        log_debug "  [DRY RUN] Would move extra: $aux_file"
+                    fi
+                fi
+            fi
+        done
+
+        # Also check for any other common auxiliary files that might not have .aux extension
+        for ext in "${EXTS[@]}"; do
+            if [ "$ext" = "aux" ]; then
+                continue
+            fi
+            # Look for any files with extension in current directory
+            for file in *.$ext; do
+                if [ -f "$file" ] && [ "$file" != "$base.$ext" ]; then
+                    if [ ! -f "$AUX_DIR/$file" ]; then
+                        if [ "$DRY_RUN" = false ]; then
+                            mv "$file" "$AUX_DIR/"
+                            moved_count=$((moved_count + 1))
+                            log_debug "  Moved extra: $file"
+                        else
+                            log_debug "  [DRY RUN] Would move extra: $file"
+                        fi
+                    fi
+                fi
+            done
+        done
+    fi
 
     if [ "$DRY_RUN" = false ] && [ $moved_count -gt 0 ]; then
         log_debug "  Total moved : $moved_count auxiliary files for $base"
@@ -266,9 +310,9 @@ if [ $FAILED_FILES -gt 0 ]; then
     log_error "Failed compilations : $FAILED_FILES"
 fi
 
-if [ "$CLEANUP" = true ] && [ -d "$TEMP_DIR" ]; then
-    AUX_COUNT=$(find "$TEMP_DIR" -type f 2>/dev/null | wc -l)
-    log_info "Auxiliary files moved : $TEMP_DIR/ ($AUX_COUNT files)"
+if [ "$CLEANUP" = true ] && [ -d "$AUX_DIR" ]; then
+    AUX_COUNT=$(find "$AUX_DIR" -type f 2>/dev/null | wc -l)
+    log_info "Auxiliary files moved : $AUX_DIR/ ($AUX_COUNT files)"
 fi
 
 if [ "$DRY_RUN" = true ]; then
