@@ -27,6 +27,7 @@ from utils import (
     setup_map_extent,
     clamp_to_domain,
     get_time_coord,
+    legend_style,
 )
 
 
@@ -110,17 +111,19 @@ def plot_spatial_tp_swvl1(ds, track_df, track_id, buffer_km=150, output_dir="out
     axes[0].coastlines(resolution="50m", linewidth=1)
     axes[0].add_feature(cfeature.LAND, facecolor="lightgray", alpha=0.3)
     axes[0].set_extent([min_lon, max_lon, min_lat, max_lat], crs=ccrs.PlateCarree())
-    axes[0].set_title("Total Precipitation (mm)", fontsize=12, fontweight="bold")
     cbar1 = plt.colorbar(im1, ax=axes[0], pad=0.02)
     cbar1.set_label("Total Precip (mm)", fontsize=10)
-    axes[0].legend(
-        loc="upper left",
-        fontsize=9,
-        framealpha=0.9,
-        edgecolor="none",
-        fancybox=True,
-        shadow=True,
-    )
+
+    # Legend
+    legend_handles, labels = axes[0].get_legend_handles_labels()
+    if legend_handles:
+        axes[0].legend(
+            handles=legend_handles,
+            loc="upper left",
+            **legend_style(),
+        )
+
+    axes[0].set_title("Total Precipitation (mm)", fontsize=12, fontweight="bold")
 
     # Panel 2: Mean Soil Moisture
     im2 = axes[1].contourf(
@@ -154,17 +157,19 @@ def plot_spatial_tp_swvl1(ds, track_df, track_id, buffer_km=150, output_dir="out
     axes[1].coastlines(resolution="50m", linewidth=1)
     axes[1].add_feature(cfeature.LAND, facecolor="lightgray", alpha=0.3)
     axes[1].set_extent([min_lon, max_lon, min_lat, max_lat], crs=ccrs.PlateCarree())
-    axes[1].set_title("Mean Soil Moisture (m³/m³)", fontsize=12, fontweight="bold")
     cbar2 = plt.colorbar(im2, ax=axes[1], pad=0.02)
     cbar2.set_label("Soil Moisture", fontsize=10)
-    axes[1].legend(
-        loc="upper left",
-        fontsize=9,
-        framealpha=0.9,
-        edgecolor="none",
-        fancybox=True,
-        shadow=True,
-    )
+
+    # Legend
+    legend_handles, labels = axes[1].get_legend_handles_labels()
+    if legend_handles:
+        axes[1].legend(
+            handles=legend_handles,
+            loc="upper left",
+            **legend_style(),
+        )
+
+    axes[1].set_title("Mean Soil Moisture (m³/m³)", fontsize=12, fontweight="bold")
 
     fig.suptitle(
         f"Track {track_id} Spatial Distribution of TP and SWVL1",

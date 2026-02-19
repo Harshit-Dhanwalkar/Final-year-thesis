@@ -23,7 +23,7 @@ from utils import std_print
 import traceback
 import warnings
 
-from utils import common_bbox
+from utils import common_bbox, legend_style
 
 warnings.filterwarnings("ignore", message="Mean of empty slice")
 
@@ -548,14 +548,9 @@ def plot_hovmoller_azimuthal_average(
         )
     # Legend if landfall line is plotted
     if landfall_index != -1 and landfall_index < N_steps:
-        ax.legend(
-            loc="upper right",
-            fontsize=9,
-            framealpha=0.9,
-            edgecolor="none",
-            fancybox=True,
-            shadow=True,
-        )
+        legend_handles, labels = ax.get_legend_handles_labels()
+        if legend_handles:
+            ax.legend(handles=legend_handles, loc="upper right", **legend_style())
 
     # Save plot
     plot_path = os.path.join(plot_dir, f"hov_{var_name}_azimuthal_avg.png")

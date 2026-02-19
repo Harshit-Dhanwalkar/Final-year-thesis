@@ -18,6 +18,7 @@ from utils import (
     get_time_coord,
     export_results_to_csv,
     common_bbox,
+    legend_style,
 )
 
 
@@ -798,14 +799,19 @@ def plot_lagged_correlation_single_variable(
     ax.axhline(0, color="gray", linestyle=":", linewidth=1, alpha=0.6)
     ax.set_xlabel("Lag (hours)", fontsize=11, fontweight="bold")
     ax.set_ylabel("Correlation Coefficient (r)", fontsize=11, fontweight="bold")
+    ax.grid(True, alpha=0.5, linestyle="--")
+    ax.set_ylim(-1.0, 1.05)
+
+    # Legend
+    legend_handles, labels = ax.get_legend_handles_labels()
+    if legend_handles:
+        ax.legend(handles=legend_handles, loc="best", **legend_style())
+
     ax.set_title(
         f"{var_name}: Temporal Autocorrelation (Track {track_id})",
         fontsize=13,
         fontweight="bold",
     )
-    ax.grid(True, alpha=0.5, linestyle="--")
-    ax.set_ylim(-1.0, 1.05)
-    ax.legend(loc="best", fontsize=9, framealpha=0.9, edgecolor="none", fancybox=True, shadow=True)
 
     plot_dir = os.path.join(output_dir, "autocorrelation")
     os.makedirs(plot_dir, exist_ok=True)

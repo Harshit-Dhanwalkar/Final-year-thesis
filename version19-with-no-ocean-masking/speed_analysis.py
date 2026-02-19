@@ -10,7 +10,12 @@ from matplotlib.patches import Patch
 
 import traceback
 
-from utils import std_print, is_point_land, add_land_ocean_shading
+from utils import (
+    std_print,
+    is_point_land,
+    add_land_ocean_shading,
+    legend_style,
+)
 
 input_dir = "output_*"
 EARTH_R = 6371.0  # km
@@ -141,24 +146,23 @@ def plot_speed_analysis_kmh(track_df, track_id, output_dir):
         # land_pts = np.sum(is_land_array)
         # ocean_pts = len(is_land_array) - land_pts
 
-        title = f"Track {track_id}: Translation Speed (km/h)"
-        # title += f'\nLand: {land_pts} points ({land_pct:.1f}%) | Ocean: {ocean_pts} points ({100-land_pct:.1f}%)'
-        ax.set_title(title, fontsize=13, fontweight="bold", pad=12)
-
         # Legend
         lines = [ax.get_lines()[0]]
         lines.append(Patch(facecolor="lightblue", alpha=0.5, label="Ocean Phase"))
         lines.append(Patch(facecolor="wheat", alpha=0.5, label="Land Phase"))
-        ax.legend(
-            lines,
-            ["Translation Speed", "Ocean Phase", "Land Phase"],
-            loc="upper right",
-            fontsize=9,
-            framealpha=0.9,
-            edgecolor="none",
-            fancybox=True,
-            shadow=True,
-        )
+
+        legend_handles, labels = ax.get_legend_handles_labels()
+        if legend_handles:
+            ax.legend(
+                legend_handles + lines,
+                ["Translation Speed", "Ocean Phase", "Land Phase"],
+                loc="upper right",
+                **legend_style(),
+            )
+
+        title = f"Track {track_id}: Translation Speed (km/h)"
+        # title += f'\nLand: {land_pts} points ({land_pct:.1f}%) | Ocean: {ocean_pts} points ({100-land_pct:.1f}%)'
+        ax.set_title(title, fontsize=13, fontweight="bold", pad=12)
 
         # Grid and formatting
         ax.grid(True, alpha=0.4, linestyle="--", zorder=0)
@@ -252,16 +256,15 @@ def plot_speed_analysis_ms(track_df, track_id, output_dir):
         lines = [ax.get_lines()[0]]
         lines.append(Patch(facecolor="lightblue", alpha=0.5, label="Ocean Phase"))
         lines.append(Patch(facecolor="wheat", alpha=0.5, label="Land Phase"))
-        ax.legend(
-            lines,
-            ["Translation Speed", "Ocean Phase", "Land Phase"],
-            loc="upper right",
-            fontsize=9,
-            framealpha=0.9,
-            edgecolor="none",
-            fancybox=True,
-            shadow=True,
-        )
+
+        legend_handles, labels = ax.get_legend_handles_labels()
+        if legend_handles:
+            ax.legend(
+                legend_handles + lines,
+                ["Translation Speed", "Ocean Phase", "Land Phase"],
+                loc="upper right",
+                **legend_style(),
+            )
 
         # Grid and formatting
         ax.grid(True, alpha=0.4, linestyle="--", zorder=0)

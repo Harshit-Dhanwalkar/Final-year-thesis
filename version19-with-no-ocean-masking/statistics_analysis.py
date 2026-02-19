@@ -21,7 +21,7 @@ from utils import std_print
 MAX_LAG = 1
 
 
-def load_elevation_metrics(output_dir: str) -> Optional[pd.DataFrame]:
+def load_elevation_metrics(output_dir):
     """Load TSI metrics computed from HGT elevation data."""
     paths_to_try = [
         os.path.join(output_dir, "elevation_analysis", "elevation_metrics.csv"),
@@ -42,9 +42,7 @@ def load_elevation_metrics(output_dir: str) -> Optional[pd.DataFrame]:
     return None
 
 
-def analyze_asm_fsi_relationship(
-    coupling_metrics_dir: str, asm_results: pd.DataFrame, output_dir: str
-) -> Dict:
+def analyze_asm_fsi_relationship(coupling_metrics_dir, asm_results, output_dir):
     """Hypothesis: ASM fuels but FSI sustains (r≈0 expected)"""
     try:
         if asm_results is None:
@@ -372,7 +370,7 @@ def analyze_tsi(elevation_metrics_df, coupling_df, output_dir):
         return {"status": "error", "error": str(e)}
 
 
-def analyze_gam_nonlinearity(coupling_metrics_dir: str, output_dir: str) -> Dict:
+def analyze_gam_nonlinearity(coupling_metrics_dir, output_dir):
     """Hypothesis: FSI ~ s(SM) plateau at high SM"""
     try:
         # Try multiple paths for coupling metrics
@@ -632,8 +630,6 @@ def compute_tsi_index(coupling_df, elevation_results, output_dir):
             "TSI computed",
             f"Mean={results['TSI_mean']:.3f} ± {results['TSI_std']:.3f} (from {results['source']})",
         )
-        # Plot distribution
-        plot_tsi_distribution(merged, results, output_dir)
         return results
     except Exception as e:
         std_print("ERROR", "sa", "TSI computation failed", str(e))
@@ -666,9 +662,7 @@ def compute_tsi_index(coupling_df, elevation_results, output_dir):
 #     return results
 
 
-def run_all_statistical_analyses(
-    coupling_metrics_dir, asm_results, correlation_df, output_dir
-):
+def run_all_statistical_analyses(coupling_metrics_dir, asm_results, correlation_df, output_dir):
     std_print("INFO", "sa", "--- Starting Statistical Analyses ---", "")
     stats_output_dir = os.path.join(output_dir, "statistical_analysis")
     os.makedirs(stats_output_dir, exist_ok=True)
@@ -678,9 +672,7 @@ def run_all_statistical_analyses(
     metrics_paths = [
         os.path.join(coupling_metrics_dir, "coupling_metrics_FSI_enhanced.csv"),
         os.path.join(coupling_metrics_dir, "coupling_metrics_FSI.csv"),
-        os.path.join(
-            output_dir, "coupling_metrics", "coupling_metrics_FSI_enhanced.csv"
-        ),
+        os.path.join(output_dir, "coupling_metrics", "coupling_metrics_FSI_enhanced.csv"),
         "coupling_metrics_FSI_enhanced.csv",
     ]
     coupling_df = None
@@ -749,9 +741,7 @@ def run_all_statistical_analyses(
         tsi_results = analyze_tsi(elevation_metrics_df, coupling_df, output_dir)
         all_results["tsi"] = tsi_results
     else:
-        std_print(
-            "WARN", "sa", "TSI analysis", "Elevation metrics not available - skipping"
-        )
+        std_print("WARN", "sa", "TSI analysis", "Elevation metrics not available - skipping")
         all_results["tsi"] = {
             "status": "skipped",
             "reason": "Elevation metrics file not found",
@@ -777,12 +767,8 @@ def run_all_statistical_analyses(
                 f.write(f"Correlation (r): {corr:.3f}\n")
                 if corr is not None:
                     if abs(corr) < 0.3:
-                        f.write(
-                            "Interpretation: Supports (ASM fuels but FSI sustains)\n"
-                        )
-                        f.write(
-                            "                Weak correlation suggests independent mechanisms\n"
-                        )
+                        f.write("Interpretation: Supports (ASM fuels but FSI sustains)\n")
+                        f.write("                Weak correlation suggests independent mechanisms\n")
                     elif corr > 0.7:
                         f.write("Interpretation: Strong positive correlation\n")
                         f.write("                ASM and FSI may be directly linked\n")
@@ -834,29 +820,19 @@ def run_all_statistical_analyses(
                     )
                     f.write(f"Mean TSI: {tsi_results.get('mean_tsi', 'N/A'):.3f}\n")
                     f.write(f"Track count: {tsi_results.get('n_pairs', 'N/A')}\n")
-                    f.write(
-                        f"Interpretation: {tsi_results.get('interpretation', '')}\n"
-                    )
+                    f.write(f"Interpretation: {tsi_results.get('interpretation', '')}\n")
                 elif tsi_results["status"] == "skipped":
-                    f.write(
-                        f"Status: SKIPPED - {tsi_results.get('reason', 'Unknown')}\n"
-                    )
+                    f.write(f"Status: SKIPPED - {tsi_results.get('reason', 'Unknown')}\n")
                 elif tsi_results["status"] == "incomplete":
-                    f.write(
-                        f"Status: INCOMPLETE - {tsi_results.get('reason', 'Unknown')}\n"
-                    )
+                    f.write(f"Status: INCOMPLETE - {tsi_results.get('reason', 'Unknown')}\n")
                 else:
                     f.write("Analysis incomplete or failed\n")
             f.write("\n")
             # Data Quality Note
             f.write("Data quality :\n\n")
             if len(coupling_df) < 10:
-                f.write(
-                    f"  Only {len(coupling_df)} tracks - statistical power limited\n"
-                )
-                f.write(
-                    "   Consider relaxing detection thresholds to get more tracks\n"
-                )
+                f.write(f"  Only {len(coupling_df)} tracks - statistical power limited\n")
+                f.write("   Consider relaxing detection thresholds to get more tracks\n")
             if "p_value" in coupling_df.columns:
                 nan_pct = (coupling_df["p_value"].isna().sum() / len(coupling_df)) * 100
                 if nan_pct > 20:

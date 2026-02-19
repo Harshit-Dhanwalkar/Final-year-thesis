@@ -86,15 +86,29 @@ def add_land_ocean_shading(
 
 
 def common_bbox(custom_params=None):
-    bbox_default = dict(
-        boxstyle="round,pad=0.05",
-        facecolor="white",
-        alpha=0.7,
-        edgecolor="none",
-        linewidth=0.8,
-    )
-
+    """Plot Text annotations"""
+    bbox_default = {
+        "boxstyle": "round,pad=0.05",
+        "facecolor": "white",
+        "alpha": 0.8,
+        "edgecolor": "none",
+        "linewidth": 0.8,
+    }
     if custom_params:
         bbox_default.update(custom_params)
-
     return bbox_default
+
+
+def legend_style(custom_params=None):
+    legend_default = {
+        "fontsize": 8,
+        "frameon": True,
+        "facecolor": "white",
+        "edgecolor": "none",
+        "framealpha": 0.8,
+        "fancybox": True,
+        "shadow": True,
+    }
+    if custom_params:
+        legend_default.update(custom_params)
+    return legend_default

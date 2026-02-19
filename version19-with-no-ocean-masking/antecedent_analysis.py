@@ -20,6 +20,7 @@ from utils import (
     find_origin_type,
     get_time_coord,
     common_bbox,
+    legend_style,
 )
 
 
@@ -232,8 +233,11 @@ def plot_antecedent_spatial_map(
         # Title
         title = f"Track {track_id}: Antecedent Soil Moisture\n{hours_before}h BEFORE System Formation\n({antecedent_time.strftime('%d/%m/%Y %H:%M')})"
         ax.set_title(title, fontsize=14, fontweight="bold", pad=15)
+
         # Legend
-        ax.legend(loc="lower left", fontsize=10, framealpha=0.9)
+        legend_handles, labels = ax.get_legend_handles_labels()
+        if legend_handles:
+            ax.legend(handles=legend_handles, loc="lower left", **legend_style())
         plt.tight_layout()
 
         os.makedirs(output_dir, exist_ok=True)
@@ -401,14 +405,19 @@ def create_antecedent_scatter_plot(results_df, output_dir):
 
     ax.set_xlabel("Antecedent Soil Moisture (m³/m³)", fontsize=12, fontweight="bold")
     ax.set_ylabel("Track Duration (hours)", fontsize=12, fontweight="bold")
+    ax.grid(True, alpha=0.3, linestyle="--")
+
+    # Legend
+    legend_handles, labels = ax.get_legend_handles_labels()
+    if legend_handles:
+        ax.legend(handles=legend_handles, loc="lower left", **legend_style())
+
     ax.set_title(
         "Antecedent Soil Moisture vs. MD Duration",
         fontsize=14,
         fontweight="bold",
         pad=15,
     )
-    ax.grid(True, alpha=0.3, linestyle="--")
-    ax.legend(fontsize=10, framealpha=0.9)
 
     summary_text = f"Tracks analyzed: {len(results_df)}\n"
     summary_text += (
@@ -522,7 +531,11 @@ def analyze_antecedent_trend(ds, track_df, track_id, output_dir="output"):
                 bbox=bbox_style,
             )
 
-        ax.legend(fontsize=10)
+        # Legend
+        legend_handles, labels = ax.get_legend_handles_labels()
+        if legend_handles:
+            ax.legend(handles=legend_handles, loc="lower left", **legend_style())
+
         ax.invert_xaxis()
         plt.tight_layout()
 

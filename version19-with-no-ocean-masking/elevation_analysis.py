@@ -18,7 +18,11 @@ import traceback
 from scipy.ndimage import sobel
 import matplotlib.pyplot as plt
 
-from utils import std_print, common_bbox
+from utils import (
+    std_print,
+    common_bbox,
+    legend_style,
+)
 
 
 def load_elevation_metrics(output_dir: str) -> Optional[pd.DataFrame]:
@@ -469,16 +473,15 @@ class TerrainAnalyzer:
                 "TSI (Topographic Sensitivity Index)", fontsize=11, fontweight="bold"
             )
             ax.set_ylabel("Frequency", fontsize=11)
-            ax.set_title("(a) TSI Distribution", fontsize=12, fontweight="bold")
-            ax.legend(
-                loc="best",
-                fontsize=9,
-                framealpha=0.9,
-                edgecolor="none",
-                fancybox=True,
-                shadow=True,
-            )
             ax.grid(True, alpha=0.3)
+
+            # Legend
+            legend_handles, labels = ax.get_legend_handles_labels()
+            if legend_handles:
+                ax.legend(handles=legend_handles, loc="best", **legend_style())
+
+            ax.set_title("(a) TSI Distribution", fontsize=12, fontweight="bold")
+
         # 2. TSI vs Duration
         ax = axes[0, 1]
         if "duration_h" in tsi_df.columns:

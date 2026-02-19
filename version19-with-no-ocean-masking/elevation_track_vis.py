@@ -2,6 +2,7 @@
 Overlay Monsoon Depression Tracks on SRTM Elevation Mosaic
 """
 
+from operator import le
 import os
 import glob
 import numpy as np
@@ -11,7 +12,7 @@ from matplotlib.colors import LogNorm
 import rasterio
 import subprocess
 
-from utils import std_print
+from utils import std_print, legend_style
 
 import traceback
 
@@ -152,24 +153,25 @@ def plot_tracks_on_elevation(track_df, vrt_path, output_dir="output", year=2024)
             cbar = plt.colorbar(im, fraction=0.03, pad=0.04)
             cbar.set_label("Elevation (m)", fontweight="bold", fontsize=11)
             title = f"Monsoon Depression Tracks Over SRTM Elevation ({year})"
-            ax.set_title(title, fontsize=18, fontweight="bold", pad=20)
             ax.set_xlabel("Longitude (°E)", fontsize=12, fontweight="bold")
             ax.set_ylabel("Latitude (°N)", fontsize=12, fontweight="bold")
-            handles, labels = ax.get_legend_handles_labels()
-            if handles:
-                by_label = dict(zip(labels, handles))
+            ax.grid(True, alpha=0.3, linestyle="--", zorder=1)
+
+            # Legend
+            legend_handles, labels = ax.get_legend_handles_labels()
+            if legend_handles:
+                by_label = dict(zip(labels, legend_handles))
                 ax.legend(
                     by_label.values(),
                     by_label.keys(),
+                    # handles=legend_handles,
                     loc="lower left",
-                    framealpha=0.9,
-                    fontsize=9,
-                    edgecolor="none",
-                    fancybox=True,
-                    shadow=True,
+                    **legend_style(),
                 )
-            ax.grid(True, alpha=0.3, linestyle="--", zorder=1)
+
+            ax.set_title(title, fontsize=18, fontweight="bold", pad=20)
             plt.tight_layout()
+
             # Save
             output_filename = f"MD_tracks_elevation_mosaic_{year}.png"
             output_path = os.path.join(elev_dir, output_filename)
@@ -252,27 +254,29 @@ def plot_tracks_elevation_mosaic(
                         )
             cb = plt.colorbar(im, fraction=0.03, pad=0.04)
             cb.set_label("Elevation (m)", fontweight="bold")
+            ax.set_xlabel("Longitude (°E)", fontsize=12, fontweight="bold")
+            ax.set_ylabel("Latitude (°N)", fontsize=12, fontweight="bold")
+            ax.grid(True, alpha=0.3, linestyle="--", zorder=1)
+
+            # Legend
+            legend_handles, labels = ax.get_legend_handles_labels()
+            if legend_handles:
+                by_label = dict(zip(labels, legend_handles))
+                ax.legend(
+                    by_label.values(),
+                    by_label.keys(),
+                    # handles=legend_handles,
+                    loc="lower left",
+                    **legend_style(),
+                )
+
             ax.set_title(
                 "Monsoon Depression Tracks Over SRTM Elevation",
                 fontsize=18,
                 fontweight="bold",
                 pad=20,
             )
-            ax.set_xlabel("Longitude (°E)", fontsize=12, fontweight="bold")
-            ax.set_ylabel("Latitude (°N)", fontsize=12, fontweight="bold")
-            handles, labels = ax.get_legend_handles_labels()
-            by_label = dict(zip(labels, handles))
-            ax.legend(
-                by_label.values(),
-                by_label.keys(),
-                loc="lower left",
-                framealpha=0.9,
-                fontsize=9,
-                edgecolor="none",
-                fancybox=True,
-                shadow=True,
-            )
-            ax.grid(True, alpha=0.3, linestyle="--", zorder=1)
+
             plt.tight_layout()
             plt.savefig(output_path, dpi=300, bbox_inches="tight")
             plt.close(fig)

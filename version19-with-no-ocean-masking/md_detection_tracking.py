@@ -1,24 +1,22 @@
 # FIX:
-# 0. legends error: 1477: UserWarning: No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
 # 0.1. add label for duration in detailed plots
 # 0.2. need to replace 'run_all_statistical_analyses', instaed just call individual functions
 # 1. No Memory Management for Large Datasets
 #    Location: md_detection_tracking.py, load_dataset_async()
-#    Issue: .compute() loads entire dataset into memory
-#            .compute()  # Could cause OOM for very large datasets
-# 2. refine parameters (thresholds) to match IMD report (currently only almost matches 2024, but not 2025)
-# 3. Ocean-land shading to incorporate landfall line
-# 4. Inconsistent Landfall Detection
+#    Issue   : .compute() loads entire dataset into memory
+#              .compute() # Could cause OOM for very large datasets
+# 2. Ocean-land shading to incorporate landfall line
+# 3. Inconsistent Landfall Detection
 #    Location: Multiple files (antecedent_analysis.py, correlation_analysis.py)
-#    Issue: Different logic for detecting landfall in different functions
+#    Issue   : Different logic for detecting landfall in different functions
 #    antecedent_analysis.py: is_point_land()
 #    correlation_analysis.py: row.get('is_land', False)
-#    Fix: Standardize to use pre-computed 'is_land' column
-# 5. Inconsistent Parameter Names
-# Location: Multiple functions use buffer_km vs buffer_deg
+#    Fix     : Standardize to use pre-computed 'is_land' column
+# 4. Inconsistent Parameter Names
+#    Location: Multiple functions use buffer_km vs buffer_deg
 #    antecedent_analysis.py uses buffer_km=100
 #    plot_sm_tp_map() uses buffer_deg=5.0
-# 6. Rephase CE 0.5/0.3 vs 8.0/3.0" → Standardize (use 8-15)
+# 5. Rephase CE 0.5/0.3 vs 8.0/3.0" → Standardize (use 8-15)
 # TODO:
 # 1. Add mosac of all tiles in Data/HGT-files
 # 2. H4 GAM: pip install pygam; SM ~ s(TP) → Plateau fig
@@ -33,8 +31,8 @@
 # 5. Add duirnal HF (LHF, SHF and THF) amplitude time series plot -> \Delta(HF) = (HF_max -HF_min)_24h -> see veriation in this \Delta(HF)
 # 6. Add land-surface-mask (Data/nc-files/lsm.nc)
 # 7. from utils.debug_utils.py
-#    # At the start of your main section
-#    debug_logger = DebugLogger(output_dir)
+#      # At the start of your main section
+#      debug_logger = DebugLogger(output_dir)
 # 8. Before each major analysis section
 #    debug_logger.log_function_call("process_files", args=(ds))
 #    debug_logger.log_data_shape("combined_dataset", ds)
@@ -44,24 +42,24 @@
 #       debug_logger.log_warning(f"Number of tracks: {len(full_track_df['track_id'].unique())}")
 # 9. In each track loop
 #    for track_id in unique_track_ids:
-#        debug_logger.log_function_call(f"process_track_{track_id}")
-#        # ... code ...
-#        # After each analysis
-#        debug_logger.log_data_shape(f"track_{track_id}_correlation", pd.DataFrame([correlation_result]) if correlation_result else None)
-# # At the end, generate diagnostic report
-# all_data = {
-#     'full_track_df': full_track_df,
-#     'all_correlation_results': all_correlation_results,
-#     'all_flux_results': all_flux_results,
-#     'all_landfall_results': all_landfall_results,
-#     'all_classifications': all_classifications,
-#     'all_asm_results': all_asm_results,
-#     'all_memory_results': all_memory_results,
-#     'fsi_df': fsi_df,
-#     'amplitude_df': amplitude_df,
-#     'coupling_efficiency_df': coupling_efficiency_df
-# }
-# diagnostic_report = generate_diagnostic_report(all_data, output_dir)
+#       debug_logger.log_function_call(f"process_track_{track_id}")
+#       # ... code ...
+#       # After each analysis
+#       debug_logger.log_data_shape(f"track_{track_id}_correlation", pd.DataFrame([correlation_result]) if correlation_result else None)
+#    # At the end, generate diagnostic report
+#    all_data = {
+#        'full_track_df': full_track_df,
+#        'all_correlation_results': all_correlation_results,
+#        'all_flux_results': all_flux_results,
+#        'all_landfall_results': all_landfall_results,
+#        'all_classifications': all_classifications,
+#        'all_asm_results': all_asm_results,
+#        'all_memory_results': all_memory_results,
+#        'fsi_df': fsi_df,
+#        'amplitude_df': amplitude_df,
+#        'coupling_efficiency_df': coupling_efficiency_df
+#    }
+#    diagnostic_report = generate_diagnostic_report(all_data, output_dir)
 
 
 # INFO: For 2020, 2021, 2022, 2023, 2024, 2025 expect ->  (FSI > 0.4 long; clay > 30%, ACF > 0.35).
@@ -103,6 +101,7 @@ from utils import (
     setup_map_extent,
     add_land_ocean_shading,
     common_bbox,
+    legend_style,
 )
 from azimuthal_hovmoller import (
     compute_azimuthal_hovmoller_sectors,
@@ -252,7 +251,7 @@ PRECIPITATION_THRESHOLD_MM = 0.1  # mm/hr
 # SWVL1 Range: $0.02-0.55$ m^3/m^3
 VORTICITY_THRESHOLD = 3e-6  # 5e-6    # > 0 /s, # Positive cyclonic
 MAX_SPEED_MS = 12  # m/s  (36 km/hr Max MD centre translational-speed)
-MAX_GAP_HOURS = 24  # hr Bridge small gaps In Detection
+MAX_GAP_HOURS = 24  # hr Bridge small gaps in Detection
 TRACKING_SEARCH_RADIUS_KM = 50  # km Hourly tracking
 LINKING_SEARCH_RADIUS_KM = 100  # km Multi-hour gaps
 MIN_TRACK_DURATION_HOURS = 24
@@ -683,7 +682,7 @@ def diagnose_temporal_issues(ds):
     if month_changes:
         std_print("INFO", "md", f"Found {len(month_changes)} month transitions :")
         for idx, prev_time, curr_time, gap in month_changes:
-            std_print(None, None, f"Index {idx}: {prev_time.strftime('%d/%m/%Y %H:%M')} -> {curr_time.strftime('%d/%m/%Y %H:%M')}  (gap: {gap:.1f} hours)")
+            std_print(None, None, f"Index {idx}: {prev_time.strftime('%d/%m/%Y %H:%M')} -> {curr_time.strftime('%d/%m/%Y %H:%M')}", f"(gap: {gap:.1f} hours)")
     else:
         std_print("INFO", "md", "No month transitions detected (single continuous month)")
 
@@ -986,7 +985,7 @@ def track_monsoon_depressions(
 
         # Only proceed if time gap is reasonable
         if time_diff_hours > max_time_gap_hours:
-            std_print(None, None, "Large time gap (hours)", f"{time_diff_hours:.1f}   (from {prev_hour} to {current_hour})")
+            std_print(None, None, "Large time gap (hours)", f"{time_diff_hours:.1f}  (from {prev_hour} to {current_hour})")
             # End all current tracks
             for track_id, points in list(active_tracks.items()):
                 if len(points) >= 3:
@@ -1557,21 +1556,41 @@ def plot_tracks(track_df, output_dir="output"):
         )
 
         # Plot connecting lines
-        line, = ax.plot(
+        # line, = ax.plot(
+        #     track_data["longitude"],
+        #     track_data["latitude"],
+        #     "-",
+        #     color=color,
+        #     alpha=0.8,
+        #     linewidth=1.2,
+        #     transform=ccrs.PlateCarree(),
+        #     zorder=2,
+        # )
+        # # Legend
+        # if month not in months_in_plot:
+        #     proxy_line = plt.Line2D([0], [0], color=color, linewidth=1.2, label=f"Low-press. sys. Track ({month})")
+        #     legend_handles.append(proxy_line)
+        #     months_in_plot.add(month)
+        line, = plt.plot(
             track_data["longitude"],
             track_data["latitude"],
             "-",
             color=color,
             alpha=0.8,
             linewidth=1.2,
+            label=f"Low-press. sys. Track ({month})",
             transform=ccrs.PlateCarree(),
-            zorder=2,
+            zorder=2
         )
-        # legend
-        if month not in months_in_plot:
-            proxy_line = plt.Line2D([0], [0], color=color, linewidth=1.2, label=f"Low-press. sys. Track ({month})")
-            legend_handles.append(proxy_line)
-            months_in_plot.add(month)
+
+        # Legend
+        month_already_in_legend = False
+        for handle in legend_handles:
+            if hasattr(handle, 'get_label') and handle.get_label() == f"Low-press. sys. Track ({month})":
+                month_already_in_legend = True
+                break
+        if not month_already_in_legend:
+            legend_handles.append(line)
 
         # Annotate Start point
         ax.plot(
@@ -1647,6 +1666,16 @@ def plot_tracks(track_df, output_dir="output"):
             bbox=bbox_style,
         )
 
+    # Legend
+    legend_handles, labels = ax.get_legend_handles_labels()
+    bbox_style = common_bbox()
+    if legend_handles:
+        ax.legend(
+            handles=legend_handles,
+            loc="lower left",
+            **legend_style()
+        )
+
     ax.set_title(
         f"Detected MD Tracks ({month_order[0]}-{month_order[-1]}, {MONSOON_YEAR})",
         fontsize=13,
@@ -1656,18 +1685,6 @@ def plot_tracks(track_df, output_dir="output"):
     ax.set_xlabel("Longitude (°E)", fontsize=11, fontweight="bold")
     ax.set_ylabel("Latitude (°N)", fontsize=11, fontweight="bold")
     ax.grid(True, linestyle="--", alpha=0.5)
-
-    # Add legend
-    if legend_handles:
-        ax.legend(
-            handles=legend_handles,
-            loc="lower left",
-            fontsize=9,
-            framealpha=0.9,
-            edgecolor="none",
-            fancybox=True,
-            shadow=True,
-        )
     plt.tight_layout()
 
     output_filename = os.path.join(output_dir, f"MD_track_{MONSOON_YEAR}.png")
@@ -1818,22 +1835,23 @@ def plot_track_full_map(track_df_single, track_id, full_extent, output_dir):
                     bbox=bbox_style,
                     zorder=8,
                 )
+
+    # Legend
+    legend_handles, labels = ax.get_legend_handles_labels()
+    if legend_handles:
+        ax.legend(
+            handles=legend_handles,
+            loc="lower left",
+            **legend_style()
+        )
+
     ax.set_title(
         f"Monsoon Depression Track {track_id}\n{start_time_str} to {end_time_str}, {MONSOON_YEAR} ",
         fontsize=13,
         fontweight="bold",
         pad=12,
     )
-    handles, labels = ax.get_legend_handles_labels()
-    if handles:
-        ax.legend(
-            loc="upper left",
-            fontsize=9,
-            framealpha=0.95,
-            edgecolor="none",
-            fancybox=True,
-            shadow=True,
-        )
+
     plt.tight_layout()
     outpath = os.path.join(output_dir, f"track_{int(track_id)}_full_map.png")
     fig.savefig(outpath, bbox_inches="tight", dpi=300)
@@ -2012,19 +2030,21 @@ def plot_single_track(track_df, track_id, output_dir):
                     bbox=bbox_style,
                     zorder=8,
                 )
+
+    # Legend
+    legend_handles, labels = ax.get_legend_handles_labels()
+    if legend_handles:
+        ax.legend(
+            handles=legend_handles,
+            loc="upper left",
+            **legend_style()
+        )
+
     ax.set_title(
         f"Monsoon Depression Track {track_id}\n{start_time_str} to {end_time_str}, {MONSOON_YEAR}",
         fontsize=12,
         fontweight="bold",
         pad=10,
-    )
-    ax.legend(
-        loc="upper left",
-        fontsize=9,
-        framealpha=0.95,
-        edgecolor="none",
-        fancybox=True,
-        shadow=True,
     )
     plt.tight_layout()
     file_name = f"MD_track_{track_id}_detailed.png"

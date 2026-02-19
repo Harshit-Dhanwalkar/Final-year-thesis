@@ -13,6 +13,7 @@ from utils import (
     calculate_buffer_deg,
     get_time_coord,
     common_bbox,
+    legend_style,
 )
 
 
@@ -286,7 +287,7 @@ def tp_swvl1_timeseries(
 
         # Figure
         fig, ax1 = plt.subplots(figsize=(18, 6))
-        # bbox_style = common_bbox()
+        bbox_style = common_bbox()
 
         # Determine landfall status
         if originates_over_land:
@@ -394,32 +395,29 @@ def tp_swvl1_timeseries(
         )
 
         # Legend
-        lines = line1 + line2
-        labels = [l.get_label() for l in lines]
+        handles = []
+        labels = []
+        handles.extend(line1 + line2)
+        labels.extend([l.get_label() for l in line1 + line2])
+
         if (
             landfall_index != -1
             and landfall_index < len(valid_times)
             and not originates_over_land
         ):
-            lines.append(
+            handles.append(
                 plt.Line2D([0], [0], color=status_color, linestyle="--", linewidth=2.5)
             )
             labels.append(status_text)
 
-        lines.append(Patch(facecolor="lightblue", alpha=0.5, label="Ocean Phase"))
-        lines.append(Patch(facecolor="wheat", alpha=0.5, label="Land Phase"))
-        labels += ["Ocean Phase", "Land Phase"]
+        handles.append(Patch(facecolor="lightblue", alpha=0.5))
+        labels.append("Ocean Phase")
+        handles.append(Patch(facecolor="wheat", alpha=0.5))
+        labels.append("Land Phase")
 
-        ax1.legend(
-            lines,
-            labels,
-            fontsize=10,
-            loc="upper left",
-            framealpha=0.9,
-            edgecolor="none",
-            fancybox=True,
-            shadow=True,
-        )
+        legend_handles, labels = ax1.get_legend_handles_labels()
+        if legend_handles:
+            ax1.legend(handles, labels, loc="upper right", **legend_style())
 
         title = f"Track {track_id}: Precipitation & Soil Water Content Evolution"
         if originates_over_land:
@@ -496,7 +494,7 @@ def hf_timeseries(flux_df, track_id, output_dir):
 
         # Figure with 3 subplots
         fig, axes = plt.subplots(3, 1, figsize=(16, 12))
-        # bbox_style = common_bbox()
+
         # plot 1: latent heat flux
         ax1 = axes[0]
         ax1.plot(
@@ -506,8 +504,7 @@ def hf_timeseries(flux_df, track_id, output_dir):
             linewidth=2.5,
             marker="o",
             markersize=6,
-            label="Latent Heat Flux",
-            alpha=0.85,
+            alpha=0.8,
             zorder=3,
         )
         # ocean/land shading
@@ -515,27 +512,12 @@ def hf_timeseries(flux_df, track_id, output_dir):
             ax1, times, is_land_array, land_color="wheat", ocean_color="lightblue"
         )
         ax1.set_ylabel("Latent Heat Flux (W/m²)", fontsize=11, fontweight="bold")
+        ax1.grid(True, alpha=0.4, linestyle="--", zorder=0)
         ax1.set_title(
             f"Track {track_id}: Surface Heat Flux Evolution",
             fontsize=13,
             fontweight="bold",
             pad=12,
-        )
-
-        ax1.grid(True, alpha=0.4, linestyle="--", zorder=0)
-        # Legend for latent plot
-        lines_lat = [ax1.get_lines()[0]]
-        lines_lat.append(Patch(facecolor="lightblue", alpha=0.5, label="Ocean Phase"))
-        lines_lat.append(Patch(facecolor="wheat", alpha=0.5, label="Land Phase"))
-        ax1.legend(
-            lines_lat,
-            ["Latent Heat Flux", "Ocean Phase", "Land Phase"],
-            fontsize=10,
-            loc="upper left",
-            framealpha=0.9,
-            edgecolor="none",
-            fancybox=True,
-            shadow=True,
         )
 
         # subplot 2: sensible heat flux
@@ -547,8 +529,7 @@ def hf_timeseries(flux_df, track_id, output_dir):
             linewidth=2.5,
             marker="s",
             markersize=6,
-            label="Sensible Heat Flux",
-            alpha=0.9,
+            alpha=0.8,
             zorder=3,
         )
         # ocean/land shading
@@ -557,20 +538,6 @@ def hf_timeseries(flux_df, track_id, output_dir):
         )
         ax2.set_ylabel("Sensible Heat Flux (W/m²)", fontsize=11, fontweight="bold")
         ax2.grid(True, alpha=0.4, linestyle="--", zorder=0)
-        # Legend for sensible plot
-        lines_sen = [ax2.get_lines()[0]]
-        lines_sen.append(Patch(facecolor="lightblue", alpha=0.5, label="Ocean Phase"))
-        lines_sen.append(Patch(facecolor="wheat", alpha=0.5, label="Land Phase"))
-        ax2.legend(
-            lines_sen,
-            ["Sensible Heat Flux", "Ocean Phase", "Land Phase"],
-            fontsize=10,
-            loc="upper left",
-            framealpha=0.95,
-            edgecolor="none",
-            fancybox=True,
-            shadow=True,
-        )
 
         # subplot 3: total heat flux
         ax3 = axes[2]
@@ -581,8 +548,7 @@ def hf_timeseries(flux_df, track_id, output_dir):
             linewidth=2.5,
             marker="D",
             markersize=6,
-            label="Total Heat Flux",
-            alpha=0.85,
+            alpha=0.8,
             zorder=3,
         )
         # ocean/land shading
@@ -592,20 +558,12 @@ def hf_timeseries(flux_df, track_id, output_dir):
         ax3.set_ylabel("Total Heat Flux (W/m²)", fontsize=11, fontweight="bold")
         ax3.set_xlabel("Time", fontsize=11, fontweight="bold")
         ax3.grid(True, alpha=0.4, linestyle="--", zorder=0)
-        # Legend for total plot
-        lines_tot = [ax3.get_lines()[0]]
-        lines_tot.append(Patch(facecolor="lightblue", alpha=0.5, label="Ocean Phase"))
-        lines_tot.append(Patch(facecolor="wheat", alpha=0.5, label="Land Phase"))
-        ax3.legend(
-            lines_tot,
-            ["Total Heat Flux", "Ocean Phase", "Land Phase"],
-            fontsize=10,
-            loc="upper left",
-            framealpha=0.9,
-            edgecolor="none",
-            fancybox=True,
-            shadow=True,
-        )
+
+        legend_handles = [
+            Patch(facecolor="lightblue", alpha=0.5, label="Ocean Phase"),
+            Patch(facecolor="wheat", alpha=0.5, label="Land Phase"),
+        ]
+        ax3.legend(handles=legend_handles, loc="lower left", **legend_style())
 
         # Format x-axis for all subplots
         for ax in axes:
@@ -614,6 +572,7 @@ def hf_timeseries(flux_df, track_id, output_dir):
                 plt.matplotlib.dates.DateFormatter("%d/%m/%Y %H:%M")
             )
         plt.tight_layout()
+
         # Save figure
         os.makedirs(output_dir, exist_ok=True)
         plot_path = os.path.join(

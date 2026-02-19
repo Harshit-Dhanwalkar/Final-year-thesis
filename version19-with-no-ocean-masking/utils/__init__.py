@@ -32,6 +32,7 @@ from .plot_utils import (
     add_land_ocean_shading,
     get_standardized_colors,
     common_bbox,
+    legend_style,
 )
 
 __all__ = [
@@ -58,4 +59,5 @@ __all__ = [
     "add_land_ocean_shading",
     "get_standardized_colors",
     "common_bbox",
+    "legend_style",
 ]
