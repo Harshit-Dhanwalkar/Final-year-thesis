@@ -1,21 +1,19 @@
-"""
-Method:
-1. Get MD center. For r = 0 (distance from MD center), linearly interpolating
-to get the grid point value at the exact center location, take that as it is
-with no averaging (since it is a single interpolated point), and plot it.
-2. Take an annulus (disk) of radius 25km with tolerance of +/-10km, so all grid
-points from 15-35km distance are included. Within this annulus, divided the area
-into 16 equal sectors of 22.5 degree each (N, NNE, NE, ENE, E, ESE, SE, SSE, S,
-SSW, SW, WSW, W, WNW, NW, NNW). For each directional sector, find all grid
-points that fall in that sector-annulus segment (the trapezium-like region)
-and average those points to get one value per sector. Then average these 16
-sector values together to get a single azimuthally-averaged value for the 25km
-radius, and then plot it.
-3. Now take an annulus of radius 50km with tolerance of +/-10km (all points from
-40-60km) and repeat the same sectoring and averaging process. Continuing this for
-all radii: [25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 325, 350,
-375, 400] km
-"""
+# INFO: Method:
+# 1. Get MD center. For r = 0 (distance from MD center), linearly interpolating
+# to get the grid point value at the exact center location, take that as it is
+# with no averaging (since it is a single interpolated point), and plot it.
+# 2. Take an annulus (disk) of radius 25km with tolerance of +/-10km, so all grid
+# points from 15-35km distance are included. Within this annulus, divided the area
+# into 16 equal sectors of 22.5 degree each (N, NNE, NE, ENE, E, ESE, SE, SSE, S,
+# SSW, SW, WSW, W, WNW, NW, NNW). For each directional sector, find all grid
+# points that fall in that sector-annulus segment (the trapezium-like region)
+# and average those points to get one value per sector. Then average these 16
+# sector values together to get a single azimuthally-averaged value for the 25km
+# radius, and then plot it.
+# 3. Now take an annulus of radius 50km with tolerance of +/-10km (all points
+# from 40-60km) and repeat the same sectoring and averaging process. Continuing
+# this for all radii: [25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300,
+# 325, 350, 375, 400] km
 
 import os
 import numpy as np
@@ -43,7 +41,7 @@ VARIABLE_UNITS = {
     "speed_ms": "m/s",
     "msl": "hPa",
     "sp": "hPa",
-    "tp": "m/hr",
+    "tp": "mm/hr",
     "t2m": "K",
     "stl1": "K",
     "swvl1": "m³/m³",
@@ -203,8 +201,11 @@ def compute_azimuthal_hovmoller_sectors(
             std_print("ERROR", "az", f"Failed to select time {t}", str(e))
             continue
 
-        std_print("DEBUG", "az", f"Processing time {t} at ({lat_c:.2f}°, {lon_c:.2f}°)")
-
+        std_print(
+            "DEBUG",
+            "az",
+            f"Processing time {pd.to_datetime(t).strftime('%d/%m %H:%M')} at ({lat_c:.2f}°, {lon_c:.2f}°)",
+        )
         for j, r in enumerate(radii_km):
             try:
                 # Special case: r = 0 km (center point only)
@@ -215,6 +216,13 @@ def compute_azimuthal_hovmoller_sectors(
                     for var in variables:
                         if var == "msl":
                             val = float(interp_center["msl"].values) / 100.0
+                        elif var == "tp":
+                            if "tp" in interp_center:
+                                val = (
+                                    float(interp_center["tp"].values) * 1000.0
+                                )  # m/hr to mm/hr
+                            else:
+                                val = np.nan
                         elif var == "wind10":
                             u = float(interp_center["u10"].values)
                             v = float(interp_center["v10"].values)
@@ -270,7 +278,7 @@ def compute_azimuthal_hovmoller_sectors(
                                 else np.nan
                             )
                         hov_results[var][i, j, :] = val
-                    std_print("DEBUG", "az", f"  {r:3d}km: Center point only")
+                    # std_print("DEBUG", "az", f"  {r:3d}km: Center point only")
                     continue
 
                 # For r > 0: Calculate radius tolerance based on percentage or minimum
@@ -320,6 +328,8 @@ def compute_azimuthal_hovmoller_sectors(
                                 avg_val = np.nanmean(sector_values_clean)
                                 if var == "msl":
                                     avg_val = avg_val / 100.0  # Pa to hPa
+                                elif var == "tp":
+                                    avg_val = avg_val * 1000.0  # m/hr to mm/hr
                                 hov_results[var][i, j, d_idx] = avg_val
                         elif var == "wind10":
                             if "u10" in ds_t and "v10" in ds_t:
@@ -406,11 +416,7 @@ def compute_azimuthal_hovmoller_sectors(
                 if len(valid_directions) > 0:
                     dir_summary = ", ".join(valid_directions)
                     dir_summary = dir_summary[:-1]
-                    std_print(
-                        "DEBUG",
-                        "az",
-                        f"  {r:3d}km: {dir_summary} ({len(valid_directions)}/{n_theta})",
-                    )
+                    # std_print("DEBUG", "az", f"  {r:3d}km: {dir_summary} ({len(valid_directions)}/{n_theta})",)
             except Exception as e:
                 std_print("ERROR", "az", f"Failed at time {t}, radius {r}km", str(e))
                 traceback.print_exc()
@@ -498,8 +504,16 @@ def plot_hovmoller_azimuthal_average(
         ax.set_yticklabels(ytick_labels, fontsize=8)
 
     # Format x-axis with radius labels
-    ax.set_xticks(radii_km[::2])
-    ax.set_xticklabels(radii_km[::2], fontsize=10)
+    ax.set_xticks(radii_km)
+    ax.set_xticklabels(
+        [f"{int(r)}" for r in radii_km], fontsize=9, rotation=45, ha="right"
+    )
+    # if len(radii_km) > 12:
+    #     ax.set_xticklabels(
+    #         [f"{int(r)}" for r in radii_km], fontsize=9, rotation=45, ha="right"
+    #     )
+    # else:
+    #   ax.set_xticklabels([f"{int(r)}" for r in radii_km], fontsize=10)
 
     # Landfall mark
     if landfall_index != -1 and landfall_index < N_steps:
@@ -532,7 +546,14 @@ def plot_hovmoller_azimuthal_average(
         )
     # Legend if landfall line is plotted
     if landfall_index != -1 and landfall_index < N_steps:
-        ax.legend(loc="upper right", fontsize=9)
+        ax.legend(
+            loc="upper right",
+            fontsize=9,
+            framealpha=0.9,
+            edgecolor="none",
+            fancybox=True,
+            shadow=True,
+        )
 
     # Save plot
     plot_path = os.path.join(plot_dir, f"hov_{var_name}_azimuthal_avg.png")

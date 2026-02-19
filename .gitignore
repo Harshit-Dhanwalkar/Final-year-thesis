@@ -1,6 +1,5 @@
 # Python
 /venv/
-./reports/temp/
 output*
 output*/
 __pychace__

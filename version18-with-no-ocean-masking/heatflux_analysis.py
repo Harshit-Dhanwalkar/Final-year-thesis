@@ -598,7 +598,8 @@ def plot_heat_flux_timeseries(flux_df, track_id, output_dir):
             return False
 
         is_land_array = flux_df["is_land"].values
-        # Create figure with 3 subplots
+
+        # Figure with 3 subplots
         fig, axes = plt.subplots(3, 1, figsize=(16, 12))
         # plot 1: latent heat flux
         ax1 = axes[0]
@@ -624,6 +625,7 @@ def plot_heat_flux_timeseries(flux_df, track_id, output_dir):
             fontweight="bold",
             pad=12,
         )
+
         ax1.grid(True, alpha=0.4, linestyle="--", zorder=0)
         # Legend for latent plot
         lines_lat = [ax1.get_lines()[0]]
@@ -634,8 +636,10 @@ def plot_heat_flux_timeseries(flux_df, track_id, output_dir):
             ["Latent Heat Flux", "Ocean Phase", "Land Phase"],
             fontsize=10,
             loc="upper left",
-            framealpha=0.95,
-            edgecolor="black",
+            framealpha=0.9,
+            edgecolor="none",
+            fancybox=True,
+            shadow=True,
         )
 
         # subplot 2: sensible heat flux
@@ -648,7 +652,7 @@ def plot_heat_flux_timeseries(flux_df, track_id, output_dir):
             marker="s",
             markersize=6,
             label="Sensible Heat Flux",
-            alpha=0.85,
+            alpha=0.9,
             zorder=3,
         )
         # ocean/land shading
@@ -667,7 +671,9 @@ def plot_heat_flux_timeseries(flux_df, track_id, output_dir):
             fontsize=10,
             loc="upper left",
             framealpha=0.95,
-            edgecolor="black",
+            edgecolor="none",
+            fancybox=True,
+            shadow=True,
         )
 
         # subplot 3: total heat flux
@@ -699,13 +705,18 @@ def plot_heat_flux_timeseries(flux_df, track_id, output_dir):
             ["Total Heat Flux", "Ocean Phase", "Land Phase"],
             fontsize=10,
             loc="upper left",
-            framealpha=0.95,
-            edgecolor="black",
+            framealpha=0.9,
+            edgecolor="none",
+            fancybox=True,
+            shadow=True,
         )
 
         # Format x-axis for all subplots
         for ax in axes:
-            plt.setp(ax.xaxis.get_majorticklabels(), rotation=45, ha="right")
+            plt.setp(ax.xaxis.get_majorticklabels(), rotation=30, ha="right")
+            ax.xaxis.set_major_formatter(
+                plt.matplotlib.dates.DateFormatter("%d/%m/%Y %H:%M")
+            )
         plt.tight_layout()
         # Save figure
         os.makedirs(output_dir, exist_ok=True)
@@ -714,7 +725,6 @@ def plot_heat_flux_timeseries(flux_df, track_id, output_dir):
         )
         plt.savefig(plot_path, dpi=300, bbox_inches="tight")
         plt.close(fig)
-
         std_print("SAVED", "hf", "Heat flux timeseries", plot_path)
         return True
     except Exception as e:
@@ -727,11 +737,7 @@ def plot_heat_flux_timeseries(flux_df, track_id, output_dir):
 
 def export_heat_flux_results(all_flux_results, output_dir="output"):
     if not all_flux_results:
-        std_print(
-            "WARN",
-            "hf",
-            "No flux results to export",
-        )
+        std_print("WARN", "hf", "No flux results to export")
         return
     results_df = pd.DataFrame(all_flux_results)
     export_results_to_csv(results_df, output_dir, "heat_flux_analysis_summary", "hf")

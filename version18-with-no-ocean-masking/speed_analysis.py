@@ -152,10 +152,12 @@ def plot_speed_analysis_kmh(track_df, track_id, output_dir):
         ax.legend(
             lines,
             ["Translation Speed", "Ocean Phase", "Land Phase"],
-            fontsize=11,
             loc="upper right",
-            framealpha=0.95,
-            edgecolor="black",
+            fontsize=9,
+            framealpha=0.9,
+            edgecolor="none",
+            fancybox=True,
+            shadow=True,
         )
 
         # Grid and formatting
@@ -253,10 +255,12 @@ def plot_speed_analysis_ms(track_df, track_id, output_dir):
         ax.legend(
             lines,
             ["Translation Speed", "Ocean Phase", "Land Phase"],
-            fontsize=11,
             loc="upper right",
-            framealpha=0.95,
-            edgecolor="black",
+            fontsize=9,
+            framealpha=0.9,
+            edgecolor="none",
+            fancybox=True,
+            shadow=True,
         )
 
         # Grid and formatting

@@ -471,7 +471,14 @@ class TerrainAnalyzer:
             )
             ax.set_ylabel("Frequency", fontsize=11)
             ax.set_title("(a) TSI Distribution", fontsize=12, fontweight="bold")
-            ax.legend(fontsize=10)
+            ax.legend(
+                loc="best",
+                fontsize=9,
+                framealpha=0.9,
+                edgecolor="none",
+                fancybox=True,
+                shadow=True,
+            )
             ax.grid(True, alpha=0.3)
         # 2. TSI vs Duration
         ax = axes[0, 1]
@@ -481,9 +488,11 @@ class TerrainAnalyzer:
                 scatter = ax.scatter(
                     valid["TSI"],
                     valid["duration_h"],
-                    c=valid["elevation_range"]
-                    if "elevation_range" in valid.columns
-                    else "steelblue",
+                    c=(
+                        valid["elevation_range"]
+                        if "elevation_range" in valid.columns
+                        else "steelblue"
+                    ),
                     cmap="viridis",
                     s=100,
                     alpha=0.6,
@@ -556,9 +565,11 @@ class TerrainAnalyzer:
                 scatter = ax.scatter(
                     valid["elevation_range"],
                     valid["TSI"],
-                    c=valid["duration_h"]
-                    if "duration_h" in valid.columns
-                    else "steelblue",
+                    c=(
+                        valid["duration_h"]
+                        if "duration_h" in valid.columns
+                        else "steelblue"
+                    ),
                     cmap="plasma",
                     s=100,
                     alpha=0.6,

@@ -479,7 +479,7 @@ def analyze_antecedent_trend(ds, track_df, track_id, output_dir="output"):
     if len(sm_values) >= 3:
         # Plot trend
         fig, ax = plt.subplots(figsize=(10, 6))
-        ax.plot(times, sm_values, "o-", linewidth=2.5, markersize=8, color="darkgreen")
+        ax.plot(times, sm_values, "o-", linewidth=2.5, markersize=6, color="darkgreen")
         ax.fill_between(times, sm_values, alpha=0.2, color="lightgreen")
         ax.set_xlabel("Hours Before System Formation", fontsize=12, fontweight="bold")
         ax.set_ylabel(

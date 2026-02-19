@@ -163,8 +163,10 @@ def plot_tracks_on_elevation(track_df, vrt_path, output_dir="output", year=2024)
                     by_label.keys(),
                     loc="lower left",
                     framealpha=0.9,
-                    fontsize=11,
-                    edgecolor="black",
+                    fontsize=9,
+                    edgecolor="none",
+                    fancybox=True,
+                    shadow=True,
                 )
             ax.grid(True, alpha=0.3, linestyle="--", zorder=1)
             plt.tight_layout()
@@ -265,7 +267,10 @@ def plot_tracks_elevation_mosaic(
                 by_label.keys(),
                 loc="lower left",
                 framealpha=0.9,
-                fontsize=11,
+                fontsize=9,
+                edgecolor="none",
+                fancybox=True,
+                shadow=True,
             )
             ax.grid(True, alpha=0.3, linestyle="--", zorder=1)
             plt.tight_layout()

@@ -134,6 +134,8 @@ def format_colorbar_time(cbar, t_numeric):
     tick_dates = pd.to_datetime(
         np.linspace(t_numeric.min(), t_numeric.max(), len(tick_locs))
     )
+    # Set ticks first, then set labels to avoid UserWarning
+    cbar.ax.set_yticks(tick_locs)
     cbar.ax.set_yticklabels([d.strftime("%d/%m/%Y %H:%M") for d in tick_dates])
     return cbar
 
@@ -332,7 +334,7 @@ def plot_tp_swvl1_time_series(
             markersize=5,
             label="Total Precipitation",
             alpha=0.8,
-            zorder=3,
+            zorder=4,
         )
         ax1.tick_params(axis="y", labelcolor=color_tp)
         ax1.grid(True, alpha=0.5, linestyle="--", zorder=0)
@@ -356,7 +358,7 @@ def plot_tp_swvl1_time_series(
                 linewidth=2.5,
                 alpha=0.8,
                 label=status_text,
-                zorder=4,
+                zorder=5,
             )
 
         # Plot SWVL1 on secondary axis
@@ -377,7 +379,7 @@ def plot_tp_swvl1_time_series(
             markersize=5,
             label="Soil Water Volumetric Level-1",
             alpha=0.8,
-            zorder=3,
+            zorder=4,
         )
         ax2.tick_params(axis="y", labelcolor=color_swvl1)
 
@@ -433,11 +435,10 @@ def plot_tp_swvl1_time_series(
             title += "\n(Ocean-Originated, No Landfall)"
         ax1.set_title(title, fontsize=13, fontweight="bold", pad=12)
 
-        plt.setp(ax1.xaxis.get_majorticklabels(), rotation=45, ha="right")
+        plt.setp(ax1.xaxis.get_majorticklabels(), rotation=30, ha="right")
         ax1.xaxis.set_major_formatter(
             plt.matplotlib.dates.DateFormatter("%d/%m/%Y %H:%M")
         )
-        plt.tight_layout()
 
         track_dir = os.path.join(output_dir, "time_series")
         os.makedirs(track_dir, exist_ok=True)
@@ -469,7 +470,7 @@ def plot_tp_swvl1_correlation(
         return
 
     fig = plt.figure(figsize=(18, 6))
-    gs = GridSpec(1, 3, width_ratios=[4, 0.15, 1], wspace=0.3)
+    gs = GridSpec(1, 4, width_ratios=[4, 0.01, 1], wspace=0.25)
     ax_main = plt.subplot(gs[0])
     ax_cbar = plt.subplot(gs[1])
     ax_stats = plt.subplot(gs[2])
@@ -534,7 +535,6 @@ def plot_tp_swvl1_correlation(
     )
     ax_main.grid(True, alpha=0.5, linestyle="--")
     plt.suptitle("", fontsize=12)
-    plt.tight_layout()
 
     track_dir = os.path.join(output_dir, "correlation")
     os.makedirs(track_dir, exist_ok=True)
@@ -575,7 +575,7 @@ def plot_swvl1_hf_correlation(
     t_plot = t_numeric[valid_mask]
 
     # Figure
-    fig = plt.figure(figsize=(18, 5))
+    fig = plt.figure(figsize=(18, 6))
     gs = GridSpec(1, 4, width_ratios=[4, 4, 4, 0.3], wspace=0.25)
     axes = [plt.subplot(gs[i]) for i in range(3)]
     ax_cbar = plt.subplot(gs[3])
@@ -628,7 +628,6 @@ def plot_swvl1_hf_correlation(
         fontweight="bold",
         y=1.02,
     )
-    plt.tight_layout()
 
     track_dir = os.path.join(output_dir, "correlation")
     os.makedirs(track_dir, exist_ok=True)
@@ -717,7 +716,6 @@ def plot_tp_hf_correlation(
         fontweight="bold",
         y=1.02,
     )
-    plt.tight_layout()
 
     track_dir = os.path.join(output_dir, "correlation")
     os.makedirs(track_dir, exist_ok=True)
@@ -797,7 +795,6 @@ def plot_tp_swvl1_lag_correlation(tp, sm, max_lag_hours, track_id, output_dir):
     ax.grid(True, alpha=0.5, linestyle="--")
     ax.axhline(y=0.2, color="red", linestyle=":", alpha=0.5)
     ax.axhline(y=-0.2, color="red", linestyle=":", alpha=0.5)
-    plt.tight_layout()
 
     track_dir = os.path.join(output_dir, "lag_correlation")
     os.makedirs(track_dir, exist_ok=True)
@@ -884,7 +881,6 @@ def plot_swvl1_hf_lag_correlation(sm, hf, max_lag_hours, track_id, hf_name, outp
     ax.grid(True, alpha=0.5, linestyle="--")
     ax.axhline(y=0.2, color="red", linestyle=":", alpha=0.5)
     ax.axhline(y=-0.2, color="red", linestyle=":", alpha=0.5)
-    plt.tight_layout()
 
     track_dir = os.path.join(output_dir, "lag_correlation")
     os.makedirs(track_dir, exist_ok=True)
@@ -979,7 +975,6 @@ def plot_tp_hf_lag_correlation(
     ax.grid(True, alpha=0.5, linestyle="--")
     ax.axhline(y=0.2, color="red", linestyle=":", alpha=0.5)
     ax.axhline(y=-0.2, color="red", linestyle=":", alpha=0.5)
-    plt.tight_layout()
 
     track_dir = os.path.join(output_dir, "lag_correlation")
     os.makedirs(track_dir, exist_ok=True)
@@ -1032,8 +1027,7 @@ def plot_lagged_correlation_single_variable(
     )
     ax.grid(True, alpha=0.5, linestyle="--")
     ax.set_ylim(-1.0, 1.05)
-    ax.legend(fontsize=10, loc="best")
-    plt.tight_layout()
+    ax.legend(loc="best", fontsize=9, framealpha=0.9, edgecolor="none", fancybox=True, shadow=True)
 
     plot_dir = os.path.join(output_dir, "autocorrelation")
     os.makedirs(plot_dir, exist_ok=True)
