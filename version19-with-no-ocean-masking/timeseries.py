@@ -576,7 +576,7 @@ def hf_timeseries(flux_df, track_id, output_dir):
         # Save figure
         os.makedirs(output_dir, exist_ok=True)
         plot_path = os.path.join(
-            output_dir, f"track_{int(track_id)}_heat_flux_timeseries.png"
+            output_dir, f"track_{int(track_id)}_heat_flux_time_series.png"
         )
         plt.savefig(plot_path, dpi=300, bbox_inches="tight")
         plt.close(fig)

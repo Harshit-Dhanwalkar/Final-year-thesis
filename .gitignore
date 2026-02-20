@@ -2,7 +2,7 @@
 /venv/
 output*
 output*/
-__pychace__
+__pychace__/
 
 # LaTex
 aux/

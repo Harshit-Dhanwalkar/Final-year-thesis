@@ -21,187 +21,9 @@ from utils import (
     legend_style,
 )
 
-
-# helper functions
-def lag_correlation(x, y, max_lag=48):
-    """Computes correlation between x and y with temporal offsets"""
-    lags = range(-max_lag, max_lag + 1)
-    correlations = []
-    for lag in lags:
-        if lag < 0:
-            x_slice, y_slice = x[:lag], y[-lag:]
-        elif lag > 0:
-            x_slice, y_slice = x[lag:], y[:-lag]
-        else:
-            x_slice, y_slice = x, y
-        if len(x_slice) < 5 or np.std(x_slice) == 0 or np.std(y_slice) == 0:
-            correlations.append(np.nan)
-        else:
-            r, _ = pearsonr(x_slice, y_slice)
-            correlations.append(r)
-    return list(lags), correlations
-
-
-def compute_autocorrelation(data, nlags=96, fft=True):
-    """Compute autocorrelation function"""
-    data_clean = np.array(data)
-    data_clean = data_clean[~np.isnan(data_clean)]
-    if len(data_clean) < nlags + 1:
-        nlags = max(len(data_clean) // 2, 10)
-    try:
-        acf_values = acf(data_clean, nlags=nlags, fft=fft)
-        lags = np.arange(len(acf_values))
-        return acf_values, lags
-    except Exception as e:
-        print(f"Error computing ACF: {e}")
-        return None, None
-
-
-def compute_lagged_correlation(data, max_lag=96):
-    """Compute correlation of a variable with itself at different time lags"""
-    data_clean = np.array(data)
-    data_clean = data_clean[~np.isnan(data_clean)]
-    if len(data_clean) < max_lag + 1:
-        max_lag = len(data_clean) // 2
-    lags = []
-    correlations = []
-    pvalues = []
-    for lag in range(0, max_lag + 1):
-        if lag == 0:
-            lags.append(0)
-            correlations.append(1.0)
-            pvalues.append(0.0)
-        else:
-            x = data_clean[:-lag]
-            y = data_clean[lag:]
-            if len(x) < 5 or np.std(x) == 0 or np.std(y) == 0:
-                lags.append(lag)
-                correlations.append(np.nan)
-                pvalues.append(np.nan)
-            else:
-                try:
-                    r, p = pearsonr(x, y)
-                    lags.append(lag)
-                    correlations.append(r)
-                    pvalues.append(p)
-                except:
-                    lags.append(lag)
-                    correlations.append(np.nan)
-                    pvalues.append(np.nan)
-    return np.array(lags), np.array(correlations), np.array(pvalues)
-
-
-def extract_spatial_mean(ds, var_name, t, lat, lon, buffer_km):
-    """Extract spatial mean of variable at point"""
-    ds, time_coord = get_time_coord(ds)
-    subset = extract_spatial_subset(
-        ds, lat, lon, t, buffer_km=buffer_km, time_coord=time_coord
-    )
-    if subset is None or subset.sizes.get("latitude", 0) == 0:
-        return np.nan
-    if var_name in subset:
-        try:
-            val = float(subset[var_name].mean().values)
-            return val if not np.isnan(val) else np.nan
-        except:
-            return np.nan
-    else:
-        return np.nan
-
-
-def effective_sample_size(x, y, max_lag=10):
-    """Calculate effective sample size accounting for autocorrelation"""
-    mask = ~np.isnan(x) & ~np.isnan(y)
-    x_clean = x[mask]
-    y_clean = y[mask]
-    if len(x_clean) < 20:
-        return len(x_clean)
-    try:
-        acf_x = acf(x_clean, nlags=max_lag, fft=True)
-        acf_y = acf(y_clean, nlags=max_lag, fft=True)
-        rho1 = acf_x[1] if len(acf_x) > 1 else 0
-        rho2 = acf_y[1] if len(acf_y) > 1 else 0
-        n = len(x_clean)
-        n_eff = n * (1 - rho1 * rho2) / (1 + rho1 * rho2)
-        n_eff = max(min(n_eff, n), n / 10)
-        return n_eff
-    except:
-        return len(x_clean)
-
-
-def format_colorbar_time(cbar, t_numeric):
-    """Format colorbar ticks with datetime strings - DD/MM/YYYY HH:MM format"""
-    tick_locs = cbar.ax.get_yticks()
-    tick_dates = pd.to_datetime(
-        np.linspace(t_numeric.min(), t_numeric.max(), len(tick_locs))
-    )
-    # Set ticks first, then set labels to avoid UserWarning
-    cbar.ax.set_yticks(tick_locs)
-    cbar.ax.set_yticklabels([d.strftime("%d/%m/%Y %H:%M") for d in tick_dates])
-    return cbar
-
-
-def compute_single_track_correlation(ds, track_df, track_id, buffer_km=100):
-    """Compute Pearson and Spearman correlation between TP and SWVL1"""
-    track_id = int(track_id)
-    std_print("INFO", "ca", f" --- Track {track_id} Computing correlation ---")
-    if "is_land" not in track_df.columns:
-        track_df["is_land"] = track_df.apply(
-            lambda row: is_point_land(row["latitude"], row["longitude"]), axis=1
-        )
-    landfall_time = find_landfall_time(track_df)
-
-    tp_times, tp_vals = extract_regional_data(ds, track_df, track_id, "tp", buffer_km)
-    sm_times, sm_vals = extract_regional_data(
-        ds, track_df, track_id, "swvl1", buffer_km
-    )
-    common_times = np.intersect1d(tp_times, sm_times)
-    if len(common_times) < 3:
-        return None
-
-    tp_idx = np.isin(tp_times, common_times)
-    sm_idx = np.isin(sm_times, common_times)
-
-    tp_aligned = tp_vals[tp_idx] * 1000
-    sm_aligned = sm_vals[sm_idx]
-    if len(tp_aligned) < 3:
-        return None
-    if np.std(tp_aligned) == 0 or np.std(sm_aligned) == 0:
-        std_print("WARN", "ca", f"Track {track_id}", "Zero variance in one or both variables")
-        return None
-
-    pearson_r, pearson_p = pearsonr(tp_aligned, sm_aligned)
-    spearman_r, spearman_p = spearmanr(tp_aligned, sm_aligned)
-    slope, intercept, r_value, p_value, std_err = linregress(tp_aligned, sm_aligned)
-    r_squared_val = float(r_value) ** 2
-
-    return {
-        "track_id": track_id,
-        "n_samples": len(tp_aligned),
-        "mean_tp": float(np.mean(tp_aligned)),
-        "mean_swvl1": float(np.mean(sm_aligned)),
-        "std_tp_mm": float(np.std(tp_aligned)),
-        "std_swvl1": float(np.std(sm_aligned)),
-        "pearson_r": float(pearson_r),
-        "pearson_p": float(pearson_p),
-        "spearman_r": float(spearman_r),
-        "spearman_p": float(spearman_p),
-        "regression_slope": float(slope),
-        "regression_intercept": float(intercept),
-        "r_squared": r_squared_val,
-        "p_value": p_value,
-        "std_err": std_err,
-        "times": common_times,
-        "tp_values": tp_aligned,
-        "swvl1_values": sm_aligned,
-    }
-
-
 def analyze_all_tracks(ds, full_track_df, buffer_km=100, output_dir="output"):
     """Compute correlations for all tracks"""
-    std_print(
-        "INFO", "ca", " --- Analyzing all tracks for soil water content patterns ---"
-    )
+    std_print("INFO", "ca", " --- Analyzing all tracks for soil water content patterns ---")
     unique_tracks = sorted(full_track_df["track_id"].unique())
     all_results = []
 
@@ -212,9 +34,7 @@ def analyze_all_tracks(ds, full_track_df, buffer_km=100, output_dir="output"):
             all_results.append(result)
 
     if not all_results:
-        std_print(
-            "WARN", "ca", "All Tracks", "No results from individual track analysis"
-        )
+        std_print("WARN", "ca", "All Tracks", "No results from individual track analysis")
         return None
 
     results_df = pd.DataFrame(all_results)
@@ -229,52 +49,26 @@ def analyze_all_tracks(ds, full_track_df, buffer_km=100, output_dir="output"):
         "mean_swvl1": results_df["mean_swvl1"].mean(),
     }
 
-    std_print(
-        "INFO",
-        "ca",
-        f"Soil Water Content Analysis across {summary['n_tracks']} Tracks :",
-    )
-    std_print(
-        None,
-        None,
-        "Mean Correlation (TP vs SM)",
-        f"{summary['mean_correlation']:.3f} ± {summary['std_correlation']:.3f}",
-    )
-    std_print(
-        None,
-        None,
-        "Positive Correlations",
-        f"{summary['tracks_with_positive_corr']}/{summary['n_tracks']}",
-    )
-    std_print(
-        None,
-        None,
-        "Significant Correlations (p < 0.05)",
-        f"{summary['tracks_with_significant_corr']}/{summary['n_tracks']}",
-    )
+    std_print("INFO", "ca", f"Soil Water Content Analysis across {summary['n_tracks']} Tracks :")
+    std_print(None, None, "Mean Correlation (TP vs SM)", f"{summary['mean_correlation']:.3f} ± {summary['std_correlation']:.3f}")
+    std_print(None, None, "Positive Correlations", f"{summary['tracks_with_positive_corr']}/{summary['n_tracks']}")
+    std_print(None, None, "Significant Correlations (p < 0.05)", f"{summary['tracks_with_significant_corr']}/{summary['n_tracks']}")
     std_print(None, None, "Mean TP", f"{summary['mean_tp']:.2f} mm/hr")
     std_print(None, None, "Mean SM", f"{summary['mean_swvl1']:.3f} m³/m³")
     export_results_to_csv(results_df, output_dir, "sm_analysis", "sm")
     return {"summary": summary, "detailed_results": results_df}
 
 
-
 # correlation scatter with time gradient
-def plot_tp_swvl1_correlation(
-    ds, track_df, track_id, buffer_km=100, output_dir="output"
-):
+def plot_tp_swvl1_correlation(ds, track_df, track_id, buffer_km=100, output_dir="output"):
     result = compute_single_track_correlation(ds, track_df, track_id, buffer_km)
-    std_print(
-        "INFO", "ca", f" --- Track {track_id} TP-SWVL1 Correlation scatter plot ---"
-    )
+    std_print("INFO", "ca", f" --- Track {track_id} TP-SWVL1 Correlation scatter plot ---")
     if result is None:
-        std_print(
-            "WARN", "ca", f"Track {track_id}", "Insufficient data for correlation plot"
-        )
+        std_print("WARN", "ca", f"Track {track_id}", "Insufficient data for correlation plot")
         return
 
     fig = plt.figure(figsize=(18, 6))
-    gs = GridSpec(1, 4, width_ratios=[4, 0.01, 1], wspace=0.25)
+    gs = GridSpec(1, 3, width_ratios=[4, 0.3, 1], wspace=0.3)
     ax_main = plt.subplot(gs[0])
     ax_cbar = plt.subplot(gs[1])
     ax_stats = plt.subplot(gs[2])
@@ -322,9 +116,7 @@ def plot_tp_swvl1_correlation(
     )
 
     ax_main.set_xlabel("Total Precipitation (mm/hr)", fontsize=11, fontweight="bold")
-    ax_main.set_ylabel(
-        "Soil Water Volumetric Level-1 (m³/m³)", fontsize=11, fontweight="bold"
-    )
+    ax_main.set_ylabel("Soil Water Volumetric Level-1 (m³/m³)", fontsize=11, fontweight="bold")
     ax_main.set_title(
         f"Track {track_id}: TP-SWVL1 Correlation",
         fontsize=13,
@@ -342,20 +134,9 @@ def plot_tp_swvl1_correlation(
     std_print("SAVED", "ca", "TP-SWVL1 Correlation scatter plot", plot_path)
 
 
-def plot_swvl1_hf_correlation(
-    swvl1,
-    latent_hf,
-    sensible_hf,
-    valid_times,
-    landfall_index,
-    track_id,
-    output_dir,
-    originates_over_land=True,
-):
+def plot_swvl1_hf_correlation(swvl1, latent_hf, sensible_hf, valid_times, landfall_index, track_id, output_dir, originates_over_land=True,):
     track_id = int(track_id)
-    std_print(
-        "INFO", "ca", f" --- Track {track_id} SWVL1-HF Correlation scatter plot ---"
-    )
+    std_print("INFO", "ca", f" --- Track {track_id} SWVL1-HF Correlation scatter plot ---")
     total_hf = latent_hf + sensible_hf
     valid_mask = ~(
         np.isnan(swvl1)
@@ -364,9 +145,7 @@ def plot_swvl1_hf_correlation(
         | np.isnan(total_hf)
     )
     if np.sum(valid_mask) < 5:
-        std_print(
-            "WARN", "ca", f"Track {track_id}", "Insufficient data for HF correlation"
-        )
+        std_print("WARN", "ca", f"Track {track_id}", "Insufficient data for HF correlation")
         return False
 
     t_numeric = pd.to_datetime(valid_times).astype(np.int64)
@@ -374,7 +153,7 @@ def plot_swvl1_hf_correlation(
 
     # Figure
     fig = plt.figure(figsize=(18, 6))
-    gs = GridSpec(1, 4, width_ratios=[4, 4, 4, 0.3], wspace=0.25)
+    gs = GridSpec(1, 4, width_ratios=[4, 4, 4, 0.3], wspace=0.3)
     axes = [plt.subplot(gs[i]) for i in range(3)]
     ax_cbar = plt.subplot(gs[3])
     y_vars = [latent_hf, sensible_hf, total_hf]
@@ -437,16 +216,7 @@ def plot_swvl1_hf_correlation(
     return True
 
 
-def plot_tp_hf_correlation(
-    tp,
-    latent_hf,
-    sensible_hf,
-    valid_times,
-    landfall_index,
-    track_id,
-    output_dir,
-    originates_over_land=True,
-):
+def plot_tp_hf_correlation(tp, latent_hf, sensible_hf, valid_times, landfall_index, track_id, output_dir, originates_over_land=True,):
     track_id = int(track_id)
     std_print("INFO", "ca", f" --- Track {track_id} TP-HF Correlation scatter plot ---")
     total_hf = latent_hf + sensible_hf
@@ -454,9 +224,7 @@ def plot_tp_hf_correlation(
         np.isnan(tp) | np.isnan(latent_hf) | np.isnan(sensible_hf) | np.isnan(total_hf)
     )
     if np.sum(valid_mask) < 5:
-        std_print(
-            "WARN", "ca", f"Track {track_id}", "Insufficient data for TP-HF correlation"
-        )
+        std_print("WARN", "ca", f"Track {track_id}", "Insufficient data for TP-HF correlation")
         return False
 
     t_numeric = pd.to_datetime(valid_times).astype(np.int64)
@@ -464,7 +232,7 @@ def plot_tp_hf_correlation(
 
     # Figure
     fig = plt.figure(figsize=(18, 6))
-    gs = GridSpec(1, 4, width_ratios=[4, 4, 4, 0.3], wspace=0.25)
+    gs = GridSpec(1, 4, width_ratios=[4, 4, 4, 0.3], wspace=0.3)
     axes = [plt.subplot(gs[i]) for i in range(3)]
     ax_cbar = plt.subplot(gs[3])
     y_vars = [latent_hf, sensible_hf, total_hf]
@@ -492,7 +260,7 @@ def plot_tp_hf_correlation(
             s=90,
             edgecolors="black",
             linewidth=0.6,
-            zorder=3,
+            zorder=3
         )
         ax.set_xlabel("Total Precipitation (mm/hr)", fontsize=11, fontweight="bold")
         ax.set_ylabel(y_labels[i], fontsize=11, fontweight="bold")
@@ -513,7 +281,7 @@ def plot_tp_hf_correlation(
         f"Track {track_id}: TP ↔ Surface Heat Flux Correlation ({status_text})",
         fontsize=14,
         fontweight="bold",
-        y=1.02,
+        y=1.02
     )
 
     track_dir = os.path.join(output_dir, "correlation")
@@ -542,12 +310,7 @@ def plot_tp_swvl1_lag_correlation(tp, sm, max_lag_hours, track_id, output_dir):
 
     valid_indices = [i for i, val in enumerate(correlations_lag) if not np.isnan(val)]
     if len(valid_indices) == 0:
-        std_print(
-            "WARN",
-            "ca",
-            f"Track {track_id}",
-            "No valid correlation values for lag plot",
-        )
+        std_print("WARN", "ca", f"Track {track_id}", "No valid correlation values for lag plot")
         return
 
     lags = [lags[i] for i in valid_indices]
@@ -556,9 +319,7 @@ def plot_tp_swvl1_lag_correlation(tp, sm, max_lag_hours, track_id, output_dir):
     max_corr_idx = np.argmax(np.abs(correlations_lag))
     max_corr_lag = lags[max_corr_idx]
     if max_corr_lag < 0:
-        lag_interpretation = (
-            f"TP leads SWVL1 by {abs(max_corr_lag)}h\n(Infiltration lag)"
-        )
+        lag_interpretation = (f"TP leads SWVL1 by {abs(max_corr_lag)}h\n(Infiltration lag)")
     elif max_corr_lag > 0:
         lag_interpretation = f"SWVL1 leads TP by {max_corr_lag}h\n(Antecedent moisture)"
     else:
@@ -587,7 +348,7 @@ def plot_tp_swvl1_lag_correlation(tp, sm, max_lag_hours, track_id, output_dir):
         f"Track {track_id}: Lagged TP-SWVL1 Correlation",
         fontsize=13,
         fontweight="bold",
-        pad=10,
+        pad=10
     )
     ax.grid(True, alpha=0.5, linestyle="--")
     ax.axhline(y=0.2, color="red", linestyle=":", alpha=0.5)
@@ -610,9 +371,7 @@ def plot_swvl1_hf_lag_correlation(sm, hf, max_lag_hours, track_id, hf_name, outp
      - Positive lag: HF leads SM (Surface Drying)
     """
     track_id = int(track_id)
-    std_print(
-        "INFO", "ca", f" --- Track {track_id} SWVL1-{hf_name} Lag-Correlation plot ---"
-    )
+    std_print("INFO", "ca", f" --- Track {track_id} SWVL1-{hf_name} Lag-Correlation plot ---")
     lags, correlations_lag = lag_correlation(sm, hf, max_lag=max_lag_hours)
     valid_indices = [i for i, val in enumerate(correlations_lag) if not np.isnan(val)]
     if not valid_indices:
@@ -664,7 +423,7 @@ def plot_swvl1_hf_lag_correlation(sm, hf, max_lag_hours, track_id, hf_name, outp
     ax.set_title(
         f"Track {track_id}: Lagged SWVL1-{hf_name} Correlation",
         fontsize=13,
-        fontweight="bold",
+        fontweight="bold"
     )
     ax.grid(True, alpha=0.5, linestyle="--")
     ax.axhline(y=0.2, color="red", linestyle=":", alpha=0.5)
@@ -679,18 +438,14 @@ def plot_swvl1_hf_lag_correlation(sm, hf, max_lag_hours, track_id, hf_name, outp
     return True
 
 
-def plot_tp_hf_lag_correlation(
-    flux, tp, max_lag_hours, track_id, flux_name, output_dir
-):
+def plot_tp_hf_lag_correlation(flux, tp, max_lag_hours, track_id, flux_name, output_dir):
     """
     Plot lag correlation between Heat Flux and TP
      - Negative lag: Flux leads TP (energy influences precipitation)
      - Positive lag: TP leads Flux (rainfall affects energy flux)
     """
     track_id = int(track_id)
-    std_print(
-        "INFO", "ca", f" --- Track {track_id} {flux_name}-TP Lag-Correlation plot ---"
-    )
+    std_print("INFO", "ca", f" --- Track {track_id} {flux_name}-TP Lag-Correlation plot ---")
     lags, correlations_lag = lag_correlation(flux, tp, max_lag=max_lag_hours)
     valid_indices = [i for i, val in enumerate(correlations_lag) if not np.isnan(val)]
     if not valid_indices:
@@ -728,9 +483,7 @@ def plot_tp_hf_lag_correlation(
     fig, ax = plt.subplots(figsize=(12, 6))
     bbox_style = common_bbox()
 
-    ax.plot(
-        lags, correlations_lag, "o-", lw=2.5, markersize=4, color=line_color, zorder=3
-    )
+    ax.plot(lags, correlations_lag, "o-", lw=2.5, markersize=4, color=line_color, zorder=3)
     ax.fill_between(lags, correlations_lag, alpha=0.2, color=fill_color)
     ax.axvline(0, color="black", linestyle="--", linewidth=1, alpha=0.6)
     ax.axhline(0, color="gray", linestyle=":", linewidth=1, alpha=0.6)
@@ -757,25 +510,19 @@ def plot_tp_hf_lag_correlation(
 
     track_dir = os.path.join(output_dir, "lag_correlation")
     os.makedirs(track_dir, exist_ok=True)
-    plot_path = os.path.join(
-        track_dir, f"track_{track_id}_TP-{flux_name}_lag_correlation.png"
-    )
+    plot_path = os.path.join(track_dir, f"track_{track_id}_TP-{flux_name}_lag_correlation.png")
     plt.savefig(plot_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
     std_print("SAVED", "ca", f"TP-{flux_name} Lag plot", plot_path)
     return True
 
 
-def plot_lagged_correlation_single_variable(
-    data, var_name, track_id, output_dir="output"
-):
+def plot_lagged_correlation_single_variable(data, var_name, track_id, output_dir="output"):
     """Plot autocorrelation (lagged self-correlation) for a single variable"""
     values = np.array(data)
     values = values[~np.isnan(values)]
     if len(values) < 10:
-        std_print(
-            "WARN", "ca", f"Insufficient data for {var_name}: {len(values)} points"
-        )
+        std_print("WARN", "ca", f"Insufficient data for {var_name}: {len(values)} points")
         return None
 
     max_lag = min(48, len(values) // 2)
@@ -824,13 +571,9 @@ def plot_lagged_correlation_single_variable(
 
 
 # main analysis function
-def analyze_single_track(
-    ds, track_df, track_id, buffer_km, max_lag_hours=50, output_dir="output"
-):
+def analyze_single_track(ds, track_df, track_id, buffer_km, max_lag_hours=50, output_dir="output"):
     """Main function to analyze a single track with all correlation analyses"""
-    std_print(
-        "DEBUG", "ca", f" --- Track {track_id} : Processing Correlation Analysis ---"
-    )
+    std_print("DEBUG", "ca", f" --- Track {track_id} : Processing Correlation Analysis ---")
     # Filter to single track
     if len(track_df["track_id"].unique()) == 1:
         current_track = track_df.sort_values("time").copy()
@@ -895,12 +638,7 @@ def analyze_single_track(
             total_hf_series.append(total_hf)
             valid_times.append(t)
     if len(valid_times) < 4:
-        std_print(
-            "WARN",
-            "ca",
-            f"Track {track_id} Insufficient data",
-            f"only {len(valid_times)} valid points",
-        )
+        std_print("WARN", "ca", f"Track {track_id} Insufficient data", f"only {len(valid_times)} valid points")
         return None
 
     # Unit conversions
@@ -914,16 +652,9 @@ def analyze_single_track(
     swvl1_series_modified = swvl1_series.copy()
     if landfall_index > 0:
         swvl1_series_modified[:landfall_index] = 0
-        std_print(
-            "INFO",
-            "ca",
-            f"Track {track_id}",
-            f"SWVL1 set to 0 for ocean phase (indices 0-{landfall_index})",
-        )
+        std_print("INFO", "ca", f"Track {track_id}", f"SWVL1 set to 0 for ocean phase (indices 0-{landfall_index})")
     else:
-        std_print(
-            "DEBUG", "ca", f"Track {track_id}", "No landfall - SWVL1 valid throughout"
-        )
+        std_print("ERROR", "ca", f"Track {track_id}", "No landfall - SWVL1 valid throughout")
 
     # Generate all plots
     os.makedirs(output_dir, exist_ok=True)
@@ -931,139 +662,48 @@ def analyze_single_track(
 
     # 1. TP-SWVL1 Feedback
     try:
-        plot_tp_swvl1_lag_correlation(
-            tp_series, swvl1_series_modified, max_lag_hours, track_id, output_dir
-        )
+        plot_tp_swvl1_correlation(ds, track_df, track_id, buffer_km=100, output_dir=output_dir)
+        plot_tp_swvl1_lag_correlation(tp_series, swvl1_series_modified, max_lag_hours, track_id, output_dir)
     except Exception as e:
-        std_print(
-            "ERROR", "ca", f"TP-SWVL1 analysis failed for Track {track_id}", str(e)
-        )
+        std_print("ERROR", "ca", f"TP-SWVL1 analysis failed for Track {track_id}", str(e))
+        traceback.print_exc()
 
     # 2. SWVL1-Heat Flux Feedback
     try:
         if not np.all(np.isnan(latent_hf_series)) or not np.all(
             np.isnan(sensible_hf_series)
         ):
-            plot_swvl1_hf_correlation(
-                swvl1_series_modified,
-                latent_hf_series,
-                sensible_hf_series,
-                valid_times,
-                landfall_index,
-                track_id,
-                output_dir,
-                originates_over_land,
-            )
-            plot_swvl1_hf_lag_correlation(
-                swvl1_series_modified,
-                latent_hf_series,
-                max_lag_hours,
-                track_id,
-                "LHF",
-                output_dir,
-            )
-            plot_swvl1_hf_lag_correlation(
-                swvl1_series_modified,
-                sensible_hf_series,
-                max_lag_hours,
-                track_id,
-                "SHF",
-                output_dir,
-            )
-            plot_swvl1_hf_lag_correlation(
-                swvl1_series_modified,
-                total_hf_series,
-                max_lag_hours,
-                track_id,
-                "THF",
-                output_dir,
-            )
+            plot_swvl1_hf_correlation(swvl1_series_modified, latent_hf_series, sensible_hf_series, valid_times, landfall_index, track_id, output_dir, originates_over_land)
+            plot_swvl1_hf_lag_correlation(swvl1_series_modified, latent_hf_series, max_lag_hours, track_id, "LHF", output_dir)
+            plot_swvl1_hf_lag_correlation(swvl1_series_modified, sensible_hf_series, max_lag_hours, track_id, "SHF", output_dir)
+            plot_swvl1_hf_lag_correlation(swvl1_series_modified, total_hf_series, max_lag_hours, track_id, "THF", output_dir)
     except Exception as e:
-        std_print(
-            "ERROR",
-            "ca",
-            f"SWVL1-Heat Flux lag analysis failed for Track {track_id}",
-            str(e),
-        )
+        std_print("ERROR", "ca", f"SWVL1-Heat Flux lag analysis failed for Track {track_id}", str(e))
 
     # 3. TP-Heat Flux Feedback
     try:
         if not np.all(np.isnan(latent_hf_series)) or not np.all(
             np.isnan(sensible_hf_series)
         ):
-            plot_tp_hf_correlation(
-                tp_series,
-                latent_hf_series,
-                sensible_hf_series,
-                valid_times,
-                landfall_index,
-                track_id,
-                output_dir,
-                originates_over_land,
-            )
-            plot_tp_hf_lag_correlation(
-                tp_series, latent_hf_series, max_lag_hours, track_id, "LHF", output_dir
-            )
-            plot_tp_hf_lag_correlation(
-                tp_series,
-                sensible_hf_series,
-                max_lag_hours,
-                track_id,
-                "SHF",
-                output_dir,
-            )
-            plot_tp_hf_lag_correlation(
-                tp_series, total_hf_series, max_lag_hours, track_id, "THF", output_dir
-            )
+            plot_tp_hf_correlation(tp_series, latent_hf_series, sensible_hf_series, valid_times, landfall_index, track_id, output_dir, originates_over_land)
+            plot_tp_hf_lag_correlation(tp_series, latent_hf_series, max_lag_hours, track_id, "LHF", output_dir)
+            plot_tp_hf_lag_correlation(tp_series, sensible_hf_series, max_lag_hours, track_id, "SHF", output_dir)
+            plot_tp_hf_lag_correlation(tp_series, total_hf_series, max_lag_hours, track_id, "THF", output_dir)
     except Exception as e:
-        std_print(
-            "ERROR",
-            "ca",
-            f"TP-Heat Flux lag analysis failed for Track {track_id}",
-            str(e),
-        )
+        std_print("ERROR", "ca", f"TP-Heat Flux lag analysis failed for Track {track_id}", str(e))
 
     # 4. Autocorrelation Analysis
     try:
-        std_print(
-            "DEBUG",
-            "ca",
-            f" --- Generating Autocorrelation plots for Track {track_id} ---",
-        )
+        std_print("DEBUG", "ca", f" --- Generating Autocorrelation plots for Track {track_id} ---")
         plot_lagged_correlation_single_variable(
             tp_series, var_name="tp", track_id=track_id, output_dir=output_dir
         )
-        plot_lagged_correlation_single_variable(
-            swvl1_series_modified,
-            var_name="swvl1",
-            track_id=track_id,
-            output_dir=output_dir,
-        )
-        plot_lagged_correlation_single_variable(
-            latent_hf_series,
-            var_name="latent_hf",
-            track_id=track_id,
-            output_dir=output_dir,
-        )
-        plot_lagged_correlation_single_variable(
-            sensible_hf_series,
-            var_name="sensible_hf",
-            track_id=track_id,
-            output_dir=output_dir,
-        )
-        plot_lagged_correlation_single_variable(
-            total_hf_series,
-            var_name="total_hf",
-            track_id=track_id,
-            output_dir=output_dir,
-        )
+        plot_lagged_correlation_single_variable(swvl1_series_modified, var_name="swvl1", track_id=track_id, output_dir=output_dir)
+        plot_lagged_correlation_single_variable(latent_hf_series, var_name="latent_hf", track_id=track_id, output_dir=output_dir)
+        plot_lagged_correlation_single_variable(sensible_hf_series, var_name="sensible_hf", track_id=track_id, output_dir=output_dir)
+        plot_lagged_correlation_single_variable(total_hf_series, var_name="total_hf", track_id=track_id, output_dir=output_dir)
     except Exception as e:
-        std_print(
-            "ERROR",
-            "ca",
-            f"Autocorrelation analysis failed for Track {track_id}",
-            str(e),
-        )
+        std_print("ERROR", "ca", f"Autocorrelation analysis failed for Track {track_id}", str(e))
         traceback.print_exc()
 
     # Compute correlation ONLY on land phase
@@ -1075,30 +715,15 @@ def analyze_single_track(
         if np.std(tp_land) > 0 and np.std(sm_land) > 0:
             corr, p_val = pearsonr(tp_land, sm_land)
             corr_post = corr
-            std_print(
-                "INFO",
-                "ca",
-                f"Track {track_id}",
-                f"TP-SWVL1 Correlation (LAND PHASE ONLY): r={corr:.3f}, p={p_val:.4f}",
-            )
+            std_print("INFO", "ca", f"Track {track_id}", f"TP-SWVL1 Correlation (LAND PHASE ONLY): r={corr:.3f}, p={p_val:.4f}")
         corr_pre = np.nan
     elif originates_over_land:
         if np.std(tp_series) > 0 and np.std(swvl1_series_modified) > 0:
             corr, p_val = pearsonr(tp_series, swvl1_series_modified)
             corr_post = corr
-            std_print(
-                "INFO",
-                "ca",
-                f"Track {track_id}",
-                f"TP-SWVL1 Correlation (Land-Originated, Full Track): r={corr:.3f}, p={p_val:.4f}",
-            )
+            std_print("INFO", "ca", f"Track {track_id}", f"TP-SWVL1 Correlation (Land-Originated, Full Track): r={corr:.3f}, p={p_val:.4f}")
     else:
-        std_print(
-            "ERROR",
-            "ca",
-            f"Track {track_id}",
-            "No landfall - TP-SWVL1 correlation NOT computed",
-        )
+        std_print("ERROR", "ca", f"Track {track_id}", "No landfall - TP-SWVL1 correlation NOT computed")
 
     # Store results
     correlation_results = {
@@ -1123,3 +748,169 @@ def analyze_single_track(
     std_print(None, None, f"p={correlation_results['p_value']:.4f}")
     std_print(None, None, f"n={len(valid_times)}")
     return correlation_results
+
+# helper functions
+def lag_correlation(x, y, max_lag=48):
+    """Computes correlation between x and y with temporal offsets"""
+    lags = range(-max_lag, max_lag + 1)
+    correlations = []
+    for lag in lags:
+        if lag < 0:
+            x_slice, y_slice = x[:lag], y[-lag:]
+        elif lag > 0:
+            x_slice, y_slice = x[lag:], y[:-lag]
+        else:
+            x_slice, y_slice = x, y
+        if len(x_slice) < 5 or np.std(x_slice) == 0 or np.std(y_slice) == 0:
+            correlations.append(np.nan)
+        else:
+            r, _ = pearsonr(x_slice, y_slice)
+            correlations.append(r)
+    return list(lags), correlations
+
+
+def compute_autocorrelation(data, nlags=96, fft=True):
+    """Compute autocorrelation function"""
+    data_clean = np.array(data)
+    data_clean = data_clean[~np.isnan(data_clean)]
+    if len(data_clean) < nlags + 1:
+        nlags = max(len(data_clean) // 2, 10)
+    try:
+        acf_values = acf(data_clean, nlags=nlags, fft=fft)
+        lags = np.arange(len(acf_values))
+        return acf_values, lags
+    except Exception as e:
+        std_print("ERROR", "ca", "Computing ACF", str(e))
+        return None, None
+
+
+def compute_lagged_correlation(data, max_lag=96):
+    """Compute correlation of a variable with itself at different time lags"""
+    data_clean = np.array(data)
+    data_clean = data_clean[~np.isnan(data_clean)]
+    if len(data_clean) < max_lag + 1:
+        max_lag = len(data_clean) // 2
+    lags = []
+    correlations = []
+    pvalues = []
+    for lag in range(0, max_lag + 1):
+        if lag == 0:
+            lags.append(0)
+            correlations.append(1.0)
+            pvalues.append(0.0)
+        else:
+            x = data_clean[:-lag]
+            y = data_clean[lag:]
+            if len(x) < 5 or np.std(x) == 0 or np.std(y) == 0:
+                lags.append(lag)
+                correlations.append(np.nan)
+                pvalues.append(np.nan)
+            else:
+                try:
+                    r, p = pearsonr(x, y)
+                    lags.append(lag)
+                    correlations.append(r)
+                    pvalues.append(p)
+                except:
+                    lags.append(lag)
+                    correlations.append(np.nan)
+                    pvalues.append(np.nan)
+    return np.array(lags), np.array(correlations), np.array(pvalues)
+
+
+def extract_spatial_mean(ds, var_name, t, lat, lon, buffer_km):
+    """Extract spatial mean of variable at point"""
+    ds, time_coord = get_time_coord(ds)
+    subset = extract_spatial_subset(ds, lat, lon, t, buffer_km=buffer_km, time_coord=time_coord)
+    if subset is None or subset.sizes.get("latitude", 0) == 0:
+        return np.nan
+    if var_name in subset:
+        try:
+            val = float(subset[var_name].mean().values)
+            return val if not np.isnan(val) else np.nan
+        except:
+            return np.nan
+    else:
+        return np.nan
+
+
+def effective_sample_size(x, y, max_lag=10):
+    """Calculate effective sample size accounting for autocorrelation"""
+    mask = ~np.isnan(x) & ~np.isnan(y)
+    x_clean = x[mask]
+    y_clean = y[mask]
+    if len(x_clean) < 20:
+        return len(x_clean)
+    try:
+        acf_x = acf(x_clean, nlags=max_lag, fft=True)
+        acf_y = acf(y_clean, nlags=max_lag, fft=True)
+        rho1 = acf_x[1] if len(acf_x) > 1 else 0
+        rho2 = acf_y[1] if len(acf_y) > 1 else 0
+        n = len(x_clean)
+        n_eff = n * (1 - rho1 * rho2) / (1 + rho1 * rho2)
+        n_eff = max(min(n_eff, n), n / 10)
+        return n_eff
+    except:
+        return len(x_clean)
+
+
+def format_colorbar_time(cbar, t_numeric):
+    """Format colorbar ticks with datetime strings - DD/MM/YYYY HH:MM format"""
+    tick_locs = cbar.ax.get_yticks()
+    tick_dates = pd.to_datetime(np.linspace(t_numeric.min(), t_numeric.max(), len(tick_locs)))
+    # Set ticks first, then set labels to avoid UserWarning
+    cbar.ax.set_yticks(tick_locs)
+    cbar.ax.set_yticklabels([d.strftime("%d/%m/%Y %H:%M") for d in tick_dates])
+    return cbar
+
+
+def compute_single_track_correlation(ds, track_df, track_id, buffer_km=100):
+    """Compute Pearson and Spearman correlation between TP and SWVL1"""
+    track_id = int(track_id)
+    std_print("INFO", "ca", f" --- Track {track_id} Computing correlation ---")
+    if "is_land" not in track_df.columns:
+        track_df["is_land"] = track_df.apply(lambda row: is_point_land(row["latitude"], row["longitude"]), axis=1)
+    landfall_time = find_landfall_time(track_df)
+
+    tp_times, tp_vals = extract_regional_data(ds, track_df, track_id, "tp", buffer_km)
+    sm_times, sm_vals = extract_regional_data(ds, track_df, track_id, "swvl1", buffer_km)
+    common_times = np.intersect1d(tp_times, sm_times)
+    if len(common_times) < 3:
+        return None
+
+    tp_idx = np.isin(tp_times, common_times)
+    sm_idx = np.isin(sm_times, common_times)
+
+    tp_aligned = tp_vals[tp_idx] * 1000
+    sm_aligned = sm_vals[sm_idx]
+    if len(tp_aligned) < 3:
+        return None
+    if np.std(tp_aligned) == 0 or np.std(sm_aligned) == 0:
+        std_print("WARN", "ca", f"Track {track_id}", "Zero variance in one or both variables")
+        return None
+
+    pearson_r, pearson_p = pearsonr(tp_aligned, sm_aligned)
+    spearman_r, spearman_p = spearmanr(tp_aligned, sm_aligned)
+    slope, intercept, r_value, p_value, std_err = linregress(tp_aligned, sm_aligned)
+    r_squared_val = float(r_value) ** 2
+
+    return {
+        "track_id": track_id,
+        "n_samples": len(tp_aligned),
+        "mean_tp": float(np.mean(tp_aligned)),
+        "mean_swvl1": float(np.mean(sm_aligned)),
+        "std_tp_mm": float(np.std(tp_aligned)),
+        "std_swvl1": float(np.std(sm_aligned)),
+        "pearson_r": float(pearson_r),
+        "pearson_p": float(pearson_p),
+        "spearman_r": float(spearman_r),
+        "spearman_p": float(spearman_p),
+        "regression_slope": float(slope),
+        "regression_intercept": float(intercept),
+        "r_squared": r_squared_val,
+        "p_value": p_value,
+        "std_err": std_err,
+        "times": common_times,
+        "tp_values": tp_aligned,
+        "swvl1_values": sm_aligned,
+    }
