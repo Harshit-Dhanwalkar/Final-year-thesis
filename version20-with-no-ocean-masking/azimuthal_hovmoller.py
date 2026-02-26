@@ -5,15 +5,14 @@
 # 2. Take an annulus (disk) of radius 25km with tolerance of +/-10km, so all grid
 # points from 15-35km distance are included. Within this annulus, divided the area
 # into 16 equal sectors of 22.5 degree each (N, NNE, NE, ENE, E, ESE, SE, SSE, S,
-# SSW, SW, WSW, W, WNW, NW, NNW). For each directional sector, find all grid
-# points that fall in that sector-annulus segment (the trapezium-like region)
-# and average those points to get one value per sector. Then average these 16
-# sector values together to get a single azimuthally-averaged value for the 25km
-# radius, and then plot it.
-# 3. Now take an annulus of radius 50km with tolerance of +/-10km (all points
-# from 40-60km) and repeat the same sectoring and averaging process. Continuing
-# this for all radii: [25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300,
-# 325, 350, 375, 400] km
+# SSW, SW, WSW, W, WNW, NW, NNW). For each directional sector, find all grid points
+# that fall in that sector-annulus segment (the trapezium-like region) and average
+# those points to get one value per sector. Then average these 16 sector values
+# together to get a single azimuthally-averaged value for the 25km radius, and then
+# plot it.
+# 3. An annulus of radius 50km with tolerance of +/-10km (all points from 40-60km)
+# and repeat the same sectoring and averaging process. Continuing this for all radii:
+# [0, 25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400] km
 
 import os
 import numpy as np
@@ -40,6 +39,8 @@ VARIABLE_UNITS = {
     "vt10": "m/s",
     "vor_rel": "x10⁻⁵ s⁻¹",
     "vor_abs": "x10⁻⁵ s⁻¹",
+    "vor_rel_polar": "x10⁻⁵ s⁻¹",
+    "vor_abs_polar": "x10⁻⁵ s⁻¹",
     "speed_kmh": "km/h",
     "speed_ms": "m/s",
     "msl": "hPa",
@@ -63,6 +64,8 @@ VARIABLE_NAMES = {
     "vt10": "Tangential Wind (Swirl)",
     "vor_rel": "Relative Vorticity",
     "vor_abs": "Absolute Vorticity",
+    "vor_rel_polar": "Relative Vorticity",
+    "vor_abs_polar": "Absolute Vorticity",
     "speed_kmh": "Translation Speed",
     "speed_ms": "Translation Speed",
     "msl": "Mean Sea Level Pressure",
@@ -80,71 +83,132 @@ VARIABLE_NAMES = {
 
 
 # Helper functions
-def interp_center_np(arr2d):
-    """Bilinear interp of 2D cached array to (lon_c, lat_c)."""
-    lat_vals = ds_t["latitude"].values
-    lon_vals = ds_t["longitude"].values
-    # nearest indices
-    i_lat = np.argmin(np.abs(lat_vals - lat_c))
-    i_lon = np.argmin(np.abs(lon_vals - lon_c))
-    # clamp to valid range
-    i_lat = np.clip(i_lat, 0, arr2d.shape[0] - 1)
-    i_lon = np.clip(i_lon, 0, arr2d.shape[1] - 1)
-    return float(arr2d[i_lat, i_lon])
-
-
 def compute_mixing_ratio(d2m_K, sp_Pa):
     """
     Compute water vapour mixing ratio (g/kg) from numpy arrays.
     Args:
-        d2m_K : dew point temperature in Kelvin  (numpy array, ERA5 d2m)
-        sp_Pa : surface pressure in Pascals       (numpy array, ERA5 sp)
-    Returns:
-        mixing ratio in g/kg (numpy array, same shape)
-
-    e_s = 6.112 * exp(17.67 * T_dp / (T_dp + 243.5))   [hPa], T_dp in degree C
-    w   = 0.622 * e_s / (P - e_s)                       [kg/kg] converted to g/kg
+        d2m_K : dew point temperature in Kelvin
+        sp_Pa : surface pressure in Pascals
+    e_s = 6.112 * exp(17.67 * T_dp / (d2m_C + 243.5))  [hPa], d2m in degree C
+    w   = 0.622 * e_s / (P - e_s)                      [kg/kg] converted to g/kg
     """
-    d2m_C = d2m_K - 273.15  # K -> deg C
-    e_s = 6.112 * np.exp(17.67 * d2m_C / (d2m_C + 243.5))  # hPa
-    atmos_press = sp_Pa / 100.0  # Pa -> hPa
+    d2m_C = d2m_K - 273.15
+    e_s = 6.112 * np.exp(17.67 * d2m_C / (d2m_C + 243.5))
+    atmos_press = sp_Pa / 100.0
     denom = atmos_press - e_s
     denom = np.where(denom <= 0, np.nan, denom)
-    w = 0.622 * (e_s / denom) * 1000  # g/kg
+    w = 0.622 * (e_s / denom) * 1000
     return w
 
 
-def compute_vorticity_2d(ds_t, lat_grid_2d, lon_grid_2d):
+def compute_vorticity_cartesian(u10, v10, lat_grid_2d, lat_vals, lon_vals):
     """
-    Compute relative vorticity (zeta = dv/dx - du/dy) on ERA5 2D grid [s^-1].
+    Compute cartesian vorticity (zeta = dv/dx - du/dy) on ERA5 2D grid [s^-1].
     Uses central finite differences with dx/dy properly in metres.
     """
-    u2d = ds_t["u10"].values  # (nlat, nlon)
-    v2d = ds_t["v10"].values
-
-    lat_vals = ds_t["latitude"].values  # 1D
-    lon_vals = ds_t["longitude"].values  # 1D
     dlon_deg = abs(lon_vals[1] - lon_vals[0])
     dlat_deg = abs(lat_vals[1] - lat_vals[0])
 
-    lat_dir = 1.0 if lat_vals[1] > lat_vals[0] else -1.0  # +1 ascending, -1 descending
-    dy_m = lat_dir * dlat_deg * 111000.0  # positive -> increasing lat going down rows
+    # ERA5 latitudes descending (90->-90)
+    lat_dir = 1.0 if lat_vals[1] > lat_vals[0] else -1.0
+    dy_m = lat_dir * dlat_deg * 111000.0  # metres
     dx_2d = dlon_deg * 111000.0 * np.cos(np.radians(lat_grid_2d))  # (nlat, nlon)
 
-    # \partial v/ \partial x  (central differences along lon axis=1)
-    dvdx = np.full_like(v2d, np.nan)
-    dvdx[:, 1:-1] = (v2d[:, 2:] - v2d[:, :-2]) / (2.0 * dx_2d[:, 1:-1])
-    dvdx[:, 0] = (v2d[:, 1] - v2d[:, 0]) / dx_2d[:, 0]
-    dvdx[:, -1] = (v2d[:, -1] - v2d[:, -2]) / dx_2d[:, -1]
+    # dv/dx - central differences along longitude axis (axis=1)
+    dvdx = np.full_like(v10, np.nan)
+    dvdx[:, 1:-1] = (v10[:, 2:] - v10[:, :-2]) / (2.0 * dx_2d[:, 1:-1])
+    dvdx[:, 0] = (v10[:, 1] - v10[:, 0]) / dx_2d[:, 0]
+    dvdx[:, -1] = (v10[:, -1] - v10[:, -2]) / dx_2d[:, -1]
 
-    # \partial u/ \partial y  (central differences along lat axis=0)
-    dudy = np.full_like(u2d, np.nan)
-    dudy[1:-1, :] = (u2d[2:, :] - u2d[:-2, :]) / (2.0 * dy_m)
-    dudy[0, :] = (u2d[1, :] - u2d[0, :]) / dy_m
-    dudy[-1, :] = (u2d[-1, :] - u2d[-2, :]) / dy_m
+    # du/dy - central differences along latitude axis (axis=0)
+    dudy = np.full_like(u10, np.nan)
+    dudy[1:-1, :] = (u10[2:, :] - u10[:-2, :]) / (2.0 * dy_m)
+    dudy[0, :] = (u10[1, :] - u10[0, :]) / dy_m
+    dudy[-1, :] = (u10[-1, :] - u10[-2, :]) / dy_m
+    return dvdx - dudy  # (nlat, nlon) [s^-1]
 
-    vor_rel = dvdx - dudy  # 2D
-    return vor_rel
+
+# def compute_vorticity_polar(vt_avg, radii_km):
+#     """
+#     Compute polar azimuthal-mean vorticity: zeta = V_t/r + dV_t/dr  [s^-1]
+#     np.gradient for central finite differences along the radial axis.
+#     At r=0 the V_t/r term is resolved via L'Hôpital's rule:
+#         lim_{r->0} V_t/r = dV_t/dr|_{r=0}   (assuming V_t(0)=0)
+#     So zeta(r=0) = 2 * dV_t/dr|_{r=0}, which is well-defined at r=0
+#
+#     For Northern Hemisphere cyclones, Vt is positive (counter-clockwise),
+#     The shear term dV_t/dr is positive inside, negative outside.
+#     """
+#     r_m = np.asarray(radii_km, dtype=float) * 1000.0  # km -> metres
+#
+#     # Check for duplicate radii or zero spacing
+#     r, indices, inverse_indices = np.unique(r_m, return_index=True, return_inverse=True)
+#     vt = vt_avg[:, indices]  # (N_steps, N_unique_radii)
+#     dvt_dr = np.gradient(vt, r, axis=1, edge_order=2)
+#
+#     # V_t / r, with L'Hopital at r=0
+#     vt_over_r_unique = np.where(
+#         r[np.newaxis, :] > 0,
+#         vt / np.where(r > 0, r, 1.0)[np.newaxis, :],
+#         dvt_dr,  # L'Hopital: lim Vt/r = dVt/dr as r->0
+#     )
+#     zeta = vt_over_r_unique + dvt_dr  # (N_steps, N_radii)
+#     # map back to original radii grid (handles duplicates)
+#     result = zeta[:, inverse_indices]
+#     return result
+def compute_vorticity_polar(vt_avg, radii_km):
+    """
+    Compute polar azimuthal-mean vorticity (zeta = V_t/r  +  dV_t/dr)  [s^-1]
+    np.gradient for central finite differences along the radial axis.
+
+    For Northern Hemisphere cyclones, Vt is positive (counter-clockwise),
+    The shear term dV_t/dr is positive inside, negative outside.
+    """
+    r_m = np.asarray(radii_km, dtype=float) * 1000.0  # km -> metres
+    # Check for duplicate radii or zero spacing
+    r, indices, inverse_indices = np.unique(r_m, return_index=True, return_inverse=True)
+    if len(r) < len(r_m):
+        # Remove duplicates and reinsert later
+        vt = vt_avg[:, indices]  # (N_steps, N_unique_radii)
+
+        # # Calculate gradient on unique radii
+        # with np.errstate(divide="ignore", invalid="ignore"):
+        #     # dvt_dr_unique = np.gradient(vt_unique, r, axis=1)
+        #     dvt_dr = np.gradient(vt, r, axis=1, edge_order=2)
+
+        # Calculate gradient on unique radii
+        dvt_dr = np.gradient(vt, r, axis=1, edge_order=2)
+
+        # Reconstruct full array with NaNs for duplicates
+        dvt_dr = np.full_like(vt_avg, np.nan)
+        for i, idx in enumerate(indices):
+            dvt_dr[:, idx] = dvt_dr[:, i]
+
+    # Add small epsilon to avoid division by zero at r=0
+    epsilon = 1.0  # meters
+    r_m = np.where(r_m == 0, epsilon, r_m)
+
+    # dV_t/dr along the radial axis (axis=1)
+    dvt_dr = np.gradient(vt_avg, r_m, axis=1)  # (N_steps, N_radii)
+
+    # V_t/r - spin term; at r=0 values=NaN
+    vt_over_r = np.full_like(vt_avg, np.nan)
+    for j, r in enumerate(r_m):
+        # if r > 0:
+        if r > 0.1:  # Only calculate for radii > 0.1 meter
+            vt_over_r[:, j] = vt_avg[:, j] / r
+        else:
+            # At r=0, vorticity is undefined/singular
+            vt_over_r[:, j] = np.nan
+
+    zeta = vt_over_r + dvt_dr  # [s^-1]
+
+    # r=0 values are NaN (since vorticity undefined at center)
+    # result = zeta[:, 0] = np.nan
+
+    # map back to original radii grid (handles duplicates)
+    result = zeta[:, inverse_indices]
+    return result
 
 
 def get_grid_points_in_sector(
@@ -276,36 +340,6 @@ def compute_azimuthal_hovmoller_sectors(
             std_print("ERROR", "az", f"Failed to select time {t}", str(e))
             continue
 
-        cached = {}
-        for _var in [
-            "u10",
-            "v10",
-            "msl",
-            "sp",
-            "tp",
-            "t2m",
-            "d2m",
-            "stl1",
-            "swvl1",
-            "avg_slhtf",
-            "avg_ishf",
-        ]:
-            if _var in ds_t:
-                cached[_var] = ds_t[_var].values  # one disk read per variable
-
-        if "u10" in cached and "v10" in cached:
-            cached["vor2d"] = compute_vorticity_2d(ds_t, lat_grid_2d, lon_grid_2d)
-            cached["wind10"] = np.sqrt(cached["u10"] ** 2 + cached["v10"] ** 2)  # m/s
-
-        if "d2m" in cached and "sp" in cached:
-            cached["w"] = compute_mixing_ratio(cached["d2m"], cached["sp"])  # g/kg
-
-        if "avg_slhtf" in cached and "avg_ishf" in cached:
-            cached["total_hf"] = cached["avg_slhtf"] + cached["avg_ishf"]
-
-        _ref_shape = cached.get("u10", cached.get("t2m", None))
-        cached_shape = _ref_shape.shape if _ref_shape is not None else None
-
         # std_print(
         #     "DEBUG",
         #     "az",
@@ -315,34 +349,132 @@ def compute_azimuthal_hovmoller_sectors(
             try:
                 # Case: r = 0 km (center point only)
                 if r == 0:
-
-                    f_cor = 2 * EARTH_OMEGA * np.sin(np.radians(lat_c))
-
+                    try:
+                        with np.errstate(divide="ignore", invalid="ignore"):
+                            interp_center = ds_t.interp(
+                                longitude=lon_c, latitude=lat_c, method="linear"
+                            )
+                    except Exception as e:
+                        std_print(
+                            "WARN", "hov", f"Interpolation failed at time {t}", str(e)
+                        )
+                        # Fallback to nearest neighbor
+                        interp_center = ds_t.sel(
+                            longitude=lon_c, latitude=lat_c, method="nearest"
+                        )
                     for var in variables:
-                        if var == "msl" and "msl" in cached:
-                            val = interp_center_np(cached["msl"]) / 100.0
-                        elif var == "tp" and "tp" in cached:
-                            val = interp_center_np(cached["tp"]) * 1000.0
-                        elif var == "total_hf" and "total_hf" in cached:
-                            val = interp_center_np(cached["total_hf"])
-                        elif var == "wind10" and "wind10" in cached:
-                            val = interp_center_np(cached["wind10"])
-                        elif var == "speed_ms" and "wind10" in cached:
-                            val = interp_center_np(cached["wind10"])
-                        elif var == "vor_rel" and "vor2d" in cached:
-                            val = interp_center_np(cached["vor2d"])
-                        elif var == "vor_abs" and "vor2d" in cached:
-                            val = interp_center_np(cached["vor2d"]) + f_cor
-                        elif var == "w" and "w" in cached:
-                            val = interp_center_np(cached["w"])
-                        elif var == "vr10":
-                            val = 0.0  # radial wind undefined at center
-                        elif var == "vt10":
-                            val = 0.0  # tangential wind undefined at center
-                        elif var in cached:
-                            val = interp_center_np(cached[var])
-                        else:
+                        if var == "msl":
+                            val = float(interp_center["msl"].values) / 100.0
+                        elif var == "tp":
+                            if "tp" in interp_center:
+                                val = (
+                                    float(interp_center["tp"].values) * 1000.0
+                                )  # m/hr to mm/hr
+                            else:
+                                val = np.nan
+                        elif var == "wind10":
+                            u = float(interp_center["u10"].values)
+                            v = float(interp_center["v10"].values)
+                            val = np.sqrt(u**2 + v**2)
+                        elif var == "speed_ms":
+                            # Wind speed in m/s from u10, v10
+                            if "u10" in interp_center and "v10" in interp_center:
+                                u = float(interp_center["u10"].values)
+                                v = float(interp_center["v10"].values)
+                                val = np.sqrt(u**2 + v**2)
+                            else:
+                                val = np.nan
+                        elif var == "vor_rel":
+                            # Cartesian vorticity — bilinear interp to center
+                            if "u10" in ds_t and "v10" in ds_t:
+                                vor2d_c = compute_vorticity_cartesian(
+                                    ds_t["u10"].values,
+                                    ds_t["v10"].values,
+                                    lat_grid_2d,
+                                    ds_t["latitude"].values,
+                                    ds_t["longitude"].values,
+                                )
+                                vor_da = xr.DataArray(
+                                    vor2d_c,
+                                    dims=["latitude", "longitude"],
+                                    coords={
+                                        "latitude": ds_t["latitude"],
+                                        "longitude": ds_t["longitude"],
+                                    },
+                                )
+                                val = float(
+                                    vor_da.interp(
+                                        longitude=lon_c, latitude=lat_c, method="linear"
+                                    ).values
+                                )
+                            else:
+                                val = np.nan
+                        elif var == "vor_abs":
+                            # Absolute vorticity = Cartesian relative + Coriolis f
+                            if "u10" in ds_t and "v10" in ds_t:
+                                vor2d_c = compute_vorticity_cartesian(
+                                    ds_t["u10"].values,
+                                    ds_t["v10"].values,
+                                    lat_grid_2d,
+                                    ds_t["latitude"].values,
+                                    ds_t["longitude"].values,
+                                )
+                                vor_da = xr.DataArray(
+                                    vor2d_c,
+                                    dims=["latitude", "longitude"],
+                                    coords={
+                                        "latitude": ds_t["latitude"],
+                                        "longitude": ds_t["longitude"],
+                                    },
+                                )
+                                vor_rel_val = float(
+                                    vor_da.interp(
+                                        longitude=lon_c, latitude=lat_c, method="linear"
+                                    ).values
+                                )
+                                f = 2 * EARTH_OMEGA * np.sin(np.radians(lat_c))
+                                val = vor_rel_val + f
+                            else:
+                                val = np.nan
+                        elif var in ("vor_rel_polar", "vor_abs_polar"):
+                            # Polar vorticity is computed AFTER azimuthal averaging and r=0 to NaN
                             val = np.nan
+                        elif var == "w":
+                            # Formula: w = 0.622 * e_s / (P - e_s)
+                            if "d2m" in interp_center and "sp" in interp_center:
+                                d2m_c = float(interp_center["d2m"].values)
+                                sp_c = float(interp_center["sp"].values)
+                                val = float(
+                                    compute_mixing_ratio(
+                                        np.array([d2m_c]), np.array([sp_c])
+                                    )[0]
+                                )
+                            else:
+                                val = np.nan
+                        elif var == "vr10":
+                            # Radial wind at center is mathematically zero (singular point)
+                            val = 0.0
+                        elif var == "vt10":
+                            # Tangential wind at center is mathematically zero (singular point)
+                            val = 0.0
+                        elif var == "total_hf":
+                            # Total heat flux = Latent + Sensible
+                            if (
+                                "avg_slhtf" in interp_center
+                                and "avg_ishf" in interp_center
+                            ):
+                                lhf = float(interp_center["avg_slhtf"].values)
+                                shf = float(interp_center["avg_ishf"].values)
+                                val = lhf + shf
+                            else:
+                                val = np.nan
+                        else:
+                            # Direct variables from dataset
+                            val = (
+                                float(interp_center[var].values)
+                                if var in interp_center
+                                else np.nan
+                            )
                         hov_results[var][i, j, :] = val
                     # std_print("DEBUG", "az", f"  {r:3d}km: Center point only")
                     continue
@@ -367,12 +499,13 @@ def compute_azimuthal_hovmoller_sectors(
                         direction_tolerance_deg=direction_tolerance_deg,
                     )
 
-                    # Verify mask shape using pre-cached shape (no .values call)
-                    if cached_shape is not None and sector_mask.shape != cached_shape:
+                    # Verify mask shape against pre-cached u10 shape
+                    u10_arr = ds_t["u10"].values if "u10" in ds_t else None
+                    if u10_arr is not None and sector_mask.shape != u10_arr.shape:
                         std_print(
                             "WARN",
                             "az",
-                            f"Shape mismatch: mask {sector_mask.shape} vs data {cached_shape}",
+                            f"Shape mismatch: mask {sector_mask.shape} vs data {u10_arr.shape}",
                         )
                         continue
 
@@ -382,73 +515,109 @@ def compute_azimuthal_hovmoller_sectors(
 
                     valid_directions.append(dir_name)
 
+                    if (
+                        not hasattr(compute_azimuthal_hovmoller_sectors, "_cache_t")
+                        or compute_azimuthal_hovmoller_sectors._cache_t != t
+                    ):
+                        _c = {}
+                        for _v in [
+                            "u10",
+                            "v10",
+                            "msl",
+                            "sp",
+                            "tp",
+                            "t2m",
+                            "d2m",
+                            "stl1",
+                            "swvl1",
+                            "avg_slhtf",
+                            "avg_ishf",
+                        ]:
+                            if _v in ds_t:
+                                _c[_v] = ds_t[_v].values
+                        if "u10" in _c and "v10" in _c:
+                            _c["vor2d_cart"] = compute_vorticity_cartesian(
+                                _c["u10"],
+                                _c["v10"],
+                                lat_grid_2d,
+                                ds_t["latitude"].values,
+                                ds_t["longitude"].values,
+                            )
+                            _c["wind10"] = np.sqrt(_c["u10"] ** 2 + _c["v10"] ** 2)
+                        if "d2m" in _c and "sp" in _c:
+                            _c["w"] = compute_mixing_ratio(_c["d2m"], _c["sp"])
+                        if "avg_slhtf" in _c and "avg_ishf" in _c:
+                            _c["total_hf"] = _c["avg_slhtf"] + _c["avg_ishf"]
+                        compute_azimuthal_hovmoller_sectors._cache_t = t
+                        compute_azimuthal_hovmoller_sectors._cache = _c
+                    _c = compute_azimuthal_hovmoller_sectors._cache
+
                     f_cor = 2 * EARTH_OMEGA * np.sin(np.radians(lat_c))
                     dir_rad = np.radians(dir_deg)
 
-                    # Process each variable using pre-cached numpy arrays (no .values calls)
+                    # Process each variable using pre-cached arrays
                     for var in variables:
-                        arr = cached.get(var)  # direct lookup in cached raw arrays
+                        arr = _c.get(var)
                         if arr is not None:
-                            # Raw ERA5 variable — apply unit conversions
-                            sector_vals = arr[sector_mask]
-                            clean = sector_vals[~np.isnan(sector_vals)]
-                            if len(clean) > 0:
-                                avg_val = np.nanmean(clean)
+                            # Raw ERA5 variable — unit conversions where needed
+                            sv = arr[sector_mask]
+                            sv = sv[~np.isnan(sv)]
+                            if len(sv) > 0:
+                                avg_val = float(np.nanmean(sv))
                                 if var == "msl":
-                                    avg_val = avg_val / 100.0  # Pa -> hPa
+                                    avg_val /= 100.0  # Pa -> hPa
                                 elif var == "tp":
-                                    avg_val = avg_val * 1000.0  # m/hr -> mm/hr
+                                    avg_val *= 1000.0  # m/hr -> mm/hr
                                 hov_results[var][i, j, d_idx] = avg_val
-                        elif var == "total_hf" and "total_hf" in cached:
-                            vals = cached["total_hf"][sector_mask]
-                            clean = vals[~np.isnan(vals)]
-                            if len(clean) > 0:
-                                hov_results[var][i, j, d_idx] = np.nanmean(clean)
-                        elif var == "wind10" and "wind10" in cached:
-                            vals = cached["wind10"][sector_mask]
-                            clean = vals[~np.isnan(vals)]
-                            if len(clean) > 0:
-                                hov_results[var][i, j, d_idx] = np.nanmean(clean)
-                        elif var == "speed_ms" and "wind10" in cached:
-                            vals = cached["wind10"][sector_mask]
-                            clean = vals[~np.isnan(vals)]
-                            if len(clean) > 0:
-                                hov_results[var][i, j, d_idx] = np.nanmean(clean)
-                        elif var == "vor_rel" and "vor2d" in cached:
-                            vals = cached["vor2d"][sector_mask]
-                            clean = vals[~np.isnan(vals)]
-                            if len(clean) > 0:
-                                hov_results[var][i, j, d_idx] = np.nanmean(clean)
-                        elif var == "vor_abs" and "vor2d" in cached:
-                            vals = cached["vor2d"][sector_mask]
-                            clean = vals[~np.isnan(vals)]
-                            if len(clean) > 0:
+                        elif var in ("wind10", "speed_ms") and "wind10" in _c:
+                            sv = _c["wind10"][sector_mask]
+                            sv = sv[~np.isnan(sv)]
+                            if len(sv) > 0:
+                                hov_results[var][i, j, d_idx] = float(np.nanmean(sv))
+                        elif var == "vor_rel" and "vor2d_cart" in _c:
+                            # Cartesian: sample pre-computed 2D field
+                            sv = _c["vor2d_cart"][sector_mask]
+                            sv = sv[~np.isnan(sv)]
+                            if len(sv) > 0:
+                                hov_results[var][i, j, d_idx] = float(np.nanmean(sv))
+                        elif var == "vor_abs" and "vor2d_cart" in _c:
+                            sv = _c["vor2d_cart"][sector_mask]
+                            sv = sv[~np.isnan(sv)]
+                            if len(sv) > 0:
                                 hov_results[var][i, j, d_idx] = (
-                                    np.nanmean(clean) + f_cor
+                                    float(np.nanmean(sv)) + f_cor
                                 )
-                        elif var == "w" and "w" in cached:
-                            vals = cached["w"][sector_mask]
-                            clean = vals[~np.isnan(vals)]
-                            if len(clean) > 0:
-                                hov_results[var][i, j, d_idx] = np.nanmean(clean)
-                        elif var == "vr10" and "u10" in cached and "v10" in cached:
-                            u_s = cached["u10"][sector_mask]
-                            v_s = cached["v10"][sector_mask]
+                        elif var in ("vor_rel_polar", "vor_abs_polar"):
+                            # Polar vorticity derived AFTER azimuthal averaging — skip here
+                            pass
+                        elif var == "w" and "w" in _c:
+                            sv = _c["w"][sector_mask]
+                            sv = sv[~np.isnan(sv)]
+                            if len(sv) > 0:
+                                hov_results[var][i, j, d_idx] = float(np.nanmean(sv))
+                        elif var == "vr10" and "u10" in _c and "v10" in _c:
+                            u_s = _c["u10"][sector_mask]
+                            v_s = _c["v10"][sector_mask]
                             ok = ~(np.isnan(u_s) | np.isnan(v_s))
                             if np.sum(ok) > 0:
                                 vr = u_s[ok] * np.sin(dir_rad) + v_s[ok] * np.cos(
                                     dir_rad
                                 )
-                                hov_results[var][i, j, d_idx] = np.nanmean(vr)
-                        elif var == "vt10" and "u10" in cached and "v10" in cached:
-                            u_s = cached["u10"][sector_mask]
-                            v_s = cached["v10"][sector_mask]
+                                hov_results[var][i, j, d_idx] = float(np.nanmean(vr))
+                        elif var == "vt10" and "u10" in _c and "v10" in _c:
+                            u_s = _c["u10"][sector_mask]
+                            v_s = _c["v10"][sector_mask]
                             ok = ~(np.isnan(u_s) | np.isnan(v_s))
                             if np.sum(ok) > 0:
                                 vt = -u_s[ok] * np.cos(dir_rad) + v_s[ok] * np.sin(
                                     dir_rad
                                 )
-                                hov_results[var][i, j, d_idx] = np.nanmean(vt)
+                                hov_results[var][i, j, d_idx] = float(np.nanmean(vt))
+                        elif var == "total_hf" and "total_hf" in _c:
+                            sv = _c["total_hf"][sector_mask]
+                            sv = sv[~np.isnan(sv)]
+                            if len(sv) > 0:
+                                hov_results[var][i, j, d_idx] = float(np.nanmean(sv))
                 if len(valid_directions) > 0:
                     dir_summary = ", ".join(valid_directions)
                     dir_summary = dir_summary[:-1]
@@ -460,12 +629,29 @@ def compute_azimuthal_hovmoller_sectors(
     return hov_results, track_times, landfall_index
 
 
-def average_azimuthally(hov_results, variables):
+def average_azimuthally(hov_results, variables, radii_km=None):
+    """
+    Azimuthally average the (N_steps, N_radii, N_theta) hov_results.
+    If "vt10" is available and radii_km is provided, also computes:
+      - "vor_rel_polar"  = <Vt>/r + d<Vt>/dr
+      - "vor_abs_polar"  = vor_rel_polar + f   (f averaged over all timesteps)
+    """
     averaged = {}
     for var in variables:
         if var in hov_results:
             with np.errstate(invalid="ignore"):
                 averaged[var] = np.nanmean(hov_results[var], axis=2)
+
+    # Polar vorticity - derived post-averaging from the V_t radial profile
+    need_polar = any(v in variables for v in ("vor_rel_polar", "vor_abs_polar"))
+    if need_polar and "vt10" in averaged and radii_km is not None:
+        vt_avg = averaged["vt10"]  # (N_steps, N_radii)
+        r_arr = np.asarray(radii_km, dtype=float)
+        vor_p = compute_vorticity_polar(vt_avg, r_arr)  # (N_steps, N_radii)
+        if "vor_rel_polar" in variables:
+            averaged["vor_rel_polar"] = vor_p
+        if "vor_abs_polar" in variables:
+            averaged["vor_abs_polar"] = vor_p  # f added at time of plotting
     return averaged
 
 
@@ -487,7 +673,8 @@ def plot_hovmoller_azimuthal_average(
     var_unit = VARIABLE_UNITS.get(var_name, "")
 
     # Scale vorticity to x10^-5
-    if var_name in ("vor_rel", "vor_abs"):
+    VOR_VARS = ("vor_rel", "vor_abs", "vor_rel_polar", "vor_abs_polar")
+    if var_name in VOR_VARS:
         hov_arr = hov_arr * 1e5
 
     # Colormap based on variable
@@ -499,10 +686,10 @@ def plot_hovmoller_azimuthal_average(
         cmap = "viridis_r"  # Reversed for pressure (lower pressure = darker)
     elif var_name in ["swvl1", "speed_ms"]:
         cmap = "YlGnBu"
-    elif var_name in ["vor_rel", "vor_abs"]:
-        cmap = "RdBu_r"
     elif var_name == "w":
-        cmap = "BuPu"
+        cmap = "Blues"
+    elif var_name in VOR_VARS:
+        cmap = "RdBu_r"  # diverging: cyclonic +ve, anticyclonic -ve
     else:
         cmap = "viridis"
 
