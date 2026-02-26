@@ -10,6 +10,7 @@
 8. Total Precipitation
 9. Soil Temperature Level 1
 10. Volumetric Soil Water Layer 1
+11. Dew Point Temperature
 
 # Elevation data
 
@@ -20,9 +21,5 @@
 [IMD](https://mausam.imd.gov.in/)
 [IMD annual reports](https://metnet.imd.gov.in/phps/imdweb_imdarep.php)
 [IMD press releases](https://internal.imd.gov.in/pages/press_release_mausam.php)
-
----
-
-- [ ] Mixing ratio
 
 ---

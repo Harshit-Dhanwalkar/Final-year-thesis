@@ -271,7 +271,38 @@ def tp_swvl1_timeseries(
         if not isinstance(valid_times, (list, np.ndarray, pd.DatetimeIndex)):
             raise ValueError("valid_times must be datetime-like")
 
-        valid_data_mask = ~(np.isnan(tp) | np.isnan(swvl1))
+        # Create a copy of swvl1 to modify
+        swvl1_modified = swvl1.copy()
+
+        # Get land array for shading and for zeroing ocean values
+        if track_df is not None and "is_land" in track_df.columns:
+            is_land_array = track_df["is_land"].values
+
+            # Set SWVL1 to 0 for ocean points (not land)
+            swvl1_modified[~is_land_array] = 0
+            std_print(
+                "DEBUG",
+                "ts",
+                f"Track {track_id}",
+                f"Set SWVL1=0 for {np.sum(~is_land_array)} ocean points",
+            )
+        else:
+            is_land_array = np.zeros(len(valid_times), dtype=bool)
+            if originates_over_land:
+                is_land_array[:] = True
+                # All points are land, no modification needed
+            elif landfall_index > 0:
+                is_land_array[landfall_index:] = True
+                # Set pre-landfall points (ocean) to 0
+                swvl1_modified[:landfall_index] = 0
+                std_print(
+                    "DEBUG",
+                    "ts",
+                    f"Track {track_id}",
+                    f"Set SWVL1=0 for {landfall_index} pre-landfall ocean points",
+                )
+
+        valid_data_mask = ~(np.isnan(tp) | np.isnan(swvl1_modified))
         valid_count = np.sum(valid_data_mask)
         if valid_count < 2:
             std_print(
@@ -281,7 +312,7 @@ def tp_swvl1_timeseries(
                 f"{valid_count} points",
             )
             return False
-        if len(tp) != len(swvl1) or len(tp) != len(valid_times):
+        if len(tp) != len(swvl1_modified) or len(tp) != len(valid_times):
             std_print("WARN", "ts", f"Track {track_id}", "Data length mismatch")
             return False
 
@@ -299,16 +330,6 @@ def tp_swvl1_timeseries(
         else:
             status_text = "Landfall"
             status_color = "red"
-
-        # Get land array for shading
-        if track_df is not None and "is_land" in track_df.columns:
-            is_land_array = track_df["is_land"].values
-        else:
-            is_land_array = np.zeros(len(valid_times), dtype=bool)
-            if originates_over_land:
-                is_land_array[:] = True
-            elif landfall_index > 0:
-                is_land_array[landfall_index:] = True
 
         # Plot TP on primary axis
         color_tp = "tab:blue"
@@ -355,7 +376,7 @@ def tp_swvl1_timeseries(
                 zorder=5,
             )
 
-        # Plot SWVL1 on secondary axis
+        # Plot SWVL1 on secondary axis (using modified version with ocean=0)
         ax2 = ax1.twinx()
         color_swvl1 = "tab:brown"
         ax2.set_ylabel(
@@ -366,12 +387,12 @@ def tp_swvl1_timeseries(
         )
         line2 = ax2.plot(
             valid_times,
-            swvl1,
+            swvl1_modified,
             "s-",
             color=color_swvl1,
             linewidth=2.5,
             markersize=5,
-            label="Soil Water Volumetric Level-1",
+            label="Soil Water Volumetric Level-1 (Ocean=0)",
             alpha=0.8,
             zorder=4,
         )
@@ -379,7 +400,7 @@ def tp_swvl1_timeseries(
 
         # Set y-limits to include zero on both axes
         tp_clean = tp[~np.isnan(tp)]
-        swvl1_clean = swvl1[~np.isnan(swvl1)]
+        swvl1_clean = swvl1_modified[~np.isnan(swvl1_modified)]
         tp_max = np.max(tp_clean) if len(tp_clean) > 0 else 1
         swvl1_max = np.max(swvl1_clean) if len(swvl1_clean) > 0 else 0.1
         tp_pad = (tp_max) * 0.1 if tp_max > 0 else 0.5
@@ -411,7 +432,7 @@ def tp_swvl1_timeseries(
             labels.append(status_text)
 
         handles.append(Patch(facecolor="lightblue", alpha=0.5))
-        labels.append("Ocean Phase")
+        labels.append("Ocean Phase (SWVL1=0)")
         handles.append(Patch(facecolor="wheat", alpha=0.5))
         labels.append("Land Phase")
 
@@ -439,7 +460,7 @@ def tp_swvl1_timeseries(
         )
         plt.savefig(plot_path, dpi=300, bbox_inches="tight")
         plt.close(fig)
-        std_print("SAVED", "ts", "TP-SWVL1 time series", plot_path)
+        std_print("SAVED", "ts", "TP-SWVL1 time series (ocean=0)", plot_path)
         return True
     except Exception as e:
         std_print("ERROR", "ts", f"Track {track_id} TP-SWVL1 plot failed", str(e))
