@@ -3,42 +3,42 @@
 % page 23 of imadannulareport2023
 % page 7 of imadannulareport2025
 
-%%%%%%%%% FIX: values are changed!!! update the whole ppt %%%%%%%%%%%
-
+% TODO: Add slide to explain computing mixing ratio from dew point temperature
 % TODO: Add mechanism behind why track 5 is anomaly and why didn't track 1 and 4 couldn't do the same
 % TODO: Add slide for this visuals representing flow :
-% Precipitation (TP)
-%     ↓
-% Soil Moisture (SWVL1) ←─ Available Capacity ← Soil Type (→TSI)
-%     ↓
-% Evapotranspiration (ET)
-%     ↓
-% Atmospheric Instability (CAPE)
-%     ↓
-% Enhanced Convection & Depression Intensity
-%     ↑
-%     |- FSI: Measures TP→SWVL1 coupling strength
-%     |- ACF: Measures SWVL1 persistence (memory)
-%     |- A_SHF: Measures land heating response
-%     |- CE: Integrates all into efficiency metric
-%     L- TSI: Estimates terrain's role in this feedback
-% FIX:
-% 1. H5 Soil: "Clay proxy ACF" -> Implicit. HWSD mandatory.
-% 2. Orography r=-0.8?: Assumed -> compute SRTM.
-% 3. CE Units: Inconsistent (0.5 -> 15)-normalize properly.
+%        Precipitation (TP)
+%            ↓
+%        Soil Moisture (SWVL1) <- Available Capacity <- Soil Type (->TSI)
+%            ↓
+%        Evapotranspiration (ET)
+%            ↓
+%        Atmospheric Instability (CAPE)
+%            ↓
+%        Enhanced Convection & Depression Intensity
+%            ↑
+%            |- FSI: Measures TP→SWVL1 coupling strength
+%            |- ACF: Measures SWVL1 persistence (memory)
+%            |- A_SHF: Measures land heating response
+%            |- CE: Integrates all into efficiency metric
+%            |- TSI: Estimates terrain's role in this feedback
+% FIX: Values are changed! Update the presentation
+% FIX: Hypotheses enhancement:
+%      1. H5 Soil: "Clay proxy ACF" -> Implicit. HWSD is mandatory.
+%      2. Orography r=-0.8?: Assumed -> compute SRTM.
+%      3. CE Units: Inconsistent (0.5 -> 15)-normalize properly.
 
-% TODO: SRTM (Shuttle Radar Topography Mission) 
+% TODO: SRTM (Shuttle Radar Topography Mission)
 %        https://www.viewfinderpanoramas.org/Coverage%20map%20viewfinderpanoramas_org3.htm
 %        for E44, F44, F45 (Odisha and AP for eastern ghat region)
 
 %%%%% Interpretation from results of statistics_anlysis.py %%%%%%%
 % 1. Add Statistics results and it's interpretation: (from statistics_anlysis/)
-%         Metric             Value          Meaning
-%         H3 Correlation   r = 0.921       Very strong (95% of variation explained)
-%         Wet Depressions  67% (4 of 6)    2024 was unusually wet year
-%         Land Heating      77.57 W/m$^2$  5.7x stronger than ocean
-%         Coupling Efficiency All > 0.5    All depressions showed coupling
-%         Topographic Effect  TSI = 0.39   Moderate, not dominant
+%        Metric             Value          Meaning
+%        H3 Correlation   r = 0.921       Very strong (95% of variation explained)
+%        Wet Depressions  67% (4 of 6)    2024 was unusually wet year
+%        Land Heating      77.57 W/m$^2$  5.7x stronger than ocean
+%        Coupling Efficiency All > 0.5    All depressions showed coupling
+%        Topographic Effect  TSI = 0.39   Moderate, not dominant
 %     => - Wet soil predicts strong coupling
 %     => - Track 5 is an anomaly worth investigating
 %   H3 -> Antecedent Soil Moisture (ASM) <-> Feedback Strength Index (FSI)     =>  r = 0.921 (VERY STRONG)
@@ -52,8 +52,7 @@
 %   H4 -> GAM Analysis (SKIPPED) -> less data for GAM analysis
 %   H5 -> Granger Causality (FAILED) -> Tested if rainfall comes BEFORE soil moisture changes -> BUT failed : Depression brings BOTH rain AND wind changes, Can't tell which caused which,  Track is too short (100-140 hours) for reliable causal analysis
 %   H7 -> Topographic Sensitivity : finding TSI = 0.39 (on 0-1 scale) -> Meaning: Topography explains about 40% of depression behavior variation -> Other factors (SST, wind, etc.) explain 60%
-%            - Mountains/terrain DO affect depressions (not negligible), but they're not the ONLY factor
-
+%         - Mountains/terrain DO affect depressions (not negligible), but they're not the ONLY factor
 %       OCEAN PHASE:
 %         Surface heat flux: -11.44 W/m$^2$  (cool, stable)
 %         Diurnal range: 13.54 W/m$^2$       (TINY daily change)
@@ -65,9 +64,7 @@
 %            - Feeds the depression more energy
 %            - Depression intensifies OVER LAND
 %         This explains why some depressions get stronger after landfall!
-%
 %      "Land phase has much stronger diurnal heating than ocean phase"
-%
 %       Anomaly Analysis: Track 5
 %         ASM = 0.319 m³/m³ (moderate-to-wet)
 %         Observed FSI = 0.210
@@ -106,23 +103,22 @@
 %        - Others relatively unaffected
 %        - May depend on track orientation relative to mountains
 %        - Different depression types have different terrain sensitivities
-
 %     -  Feedback Strength Index (FSI) Components
 %         -  Correlation Strength (TP-SM coupling):
-%             +  Mean: 0.502
-%             +  Definition: Strength of statistical correlation between TP and SWVL1
-%             +  Interpretation: Moderate-to-strong average TP-SM coupling across tracks
-%             +  Significant correlations (p<0.05): 4 of 6 tracks
+%            +  Mean: 0.502
+%            +  Definition: Strength of statistical correlation between TP and SWVL1
+%            +  Interpretation: Moderate-to-strong average TP-SM coupling across tracks
+%            +  Significant correlations (p<0.05): 4 of 6 tracks
 %         -  Capacity Index:
-%             +  Mean: 0.530
-%             +  Definition: Available soil moisture capacity relative to saturation
-%             +  Interpretation: System is NOT water-saturated; room for additional moisture feedback
-%             +  Physical meaning: Evapotranspiration not moisture-limited in most cases
+%            +  Mean: 0.530
+%            +  Definition: Available soil moisture capacity relative to saturation
+%            +  Interpretation: System is NOT water-saturated; room for additional moisture feedback
+%            +  Physical meaning: Evapotranspiration not moisture-limited in most cases
 %        - FSI Distribution:
-%             +  Weak coupling (FSI < 0.2):        33% (2 tracks)  - Tracks 1, 4
-%             +  Moderate coupling (0.2-0.4):      17% (1 track)   - Track 5
-%             +  Strong coupling (FSI > 0.4):      50% (3 tracks)  - Tracks 2, 3, 6
-%             Implication: Half of 2024 depressions showed strong land-atmosphere coupling. All showed at least some coupling (minimum FSI = 0.027)
+%            +  Weak coupling (FSI < 0.2):        33% (2 tracks)  - Tracks 1, 4
+%            +  Moderate coupling (0.2-0.4):      17% (1 track)   - Track 5
+%            +  Strong coupling (FSI > 0.4):      50% (3 tracks)  - Tracks 2, 3, 6
+%            Implication: Half of 2024 depressions showed strong land-atmosphere coupling. All showed at least some coupling (minimum FSI = 0.027)
 %        - Diurnal Heat Flux Amplitude
 %            + Ocean Phase:
 %             -  Mean sensible heat flux: -11.44 W/m$^2$
@@ -150,7 +146,6 @@
 %             + High variability (std = 8.80) suggests some depressions were "super-couplers"
 %             + Interpretations: High CE = Depression efficiently converts soil moisture -> precipitation feedback
 %                                Low CE = Depression inefficient; soil moisture not fully utilized
-%
 %          - Sample statistics (n=6):
 %            - Mean ASM:           0.3163 m³/m³
 %            - Median ASM:         0.3184 m³/m³
@@ -187,13 +182,13 @@
 %        Explained by: Steep Eastern Ghats terrain -> rapid runoff -> no infiltration -> broken feedback
 %      - Tracks 2, 3, 5, 6 long-lived (105-167h) + strong soil memory (0.350-0.584) + positive coupling
 %        Reinforced: Plains with low elevation -> water retention -> sustained feedback
-%          +  Download elevation data (GEBCO or SRTM) => Extract elevation profiles along tracks
-%             *  richdem DEM processing - https://richdem.readthedocs.io/
-%             *  https://www.gebco.net/  -> 14 arcsec for India region (450m resolution)
-%             *  https://lpdaac.usgs.gov/ -> 29m resolution
-%             *  NASADEM: 29m, newer version of SRTM
-%             *  SRTM (Shuttle Radar Topography Mission): 29m resolution (better for slopes)  -> pip install gstt2 # Google SRTM downloader (old data)
-%             *  pip install rioxarray rasterio
+%         + Download elevation data (GEBCO or SRTM) => Extract elevation profiles along tracks
+%           *  richdem DEM processing - https://richdem.readthedocs.io/
+%           *  https://www.gebco.net/ -> 14 arcsec for India region (450m resolution)
+%           *  https://lpdaac.usgs.gov/ -> 29m resolution
+%           *  NASADEM: 29m, newer version of SRTM
+%           *  SRTM (Shuttle Radar Topography Mission): 29m resolution (better for slopes) -> pip install gstt2 # Google SRTM downloader (old data)
+%           *  pip install rioxarray rasterio
 %         +  Create validation plots showing negative correlations (Duration vs. Elevation, Slope)
 %         +  Formulate mechanisms explaining why steep/elevated terrain disrupts soil moisture feedback
 %      - OROGRAPHY INTEGRATION
@@ -648,7 +643,7 @@
             \column{0.48\textwidth}
             \begin{figure}
                 \centering
-                \includegraphics[width=1.05\linewidth]{../version15-with-no-ocean-masking/output_2024/MD_track_2024.png}
+                \includegraphics[width=1.05\linewidth]{../version20-with-no-ocean-masking/output_2024/MD_track_2024.png}
             \end{figure}
             \label{fig:md_track_2024}
 
@@ -810,7 +805,7 @@
     \begin{center}
         \begin{columns}[T]
             \column{0.5\textwidth}
-            \includegraphics[width=0.9\textwidth]{../version15-with-no-ocean-masking/output_2024/track_1/MD_track_1_detailed.png}
+            \includegraphics[width=0.9\textwidth]{../version20-with-no-ocean-masking/output_2024/track_1/MD_track_1_detailed.png}
 
             \vspace{0.05cm}
             \footnotesize
@@ -833,7 +828,7 @@
 \subsubsection{Track 1 Translation Speed}
 \begin{frame}{Track 1 Translation speed of MD}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_1/translational-speed/track_1_speed_ms.png}
+        \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_1/translational-speed/track_1_speed_ms.png}
     \end{center}
 \end{frame}
 
@@ -843,7 +838,7 @@
         \begin{column}{0.6\textwidth}
             \begin{figure}
                 \centering
-                \includegraphics[width=\textwidth]{../version15-with-no-ocean-masking/output_2024/track_1/correlation_analysis/correlation/track_1_TP-SWVL1_correlation.png}
+                \includegraphics[width=\textwidth]{../version20-with-no-ocean-masking/output_2024/track_1/correlation_analysis/correlation/track_1_TP-SWVL1_correlation.png}
             \end{figure}
 
             % TODO: for all track plots
@@ -870,7 +865,7 @@
         \begin{column}{0.6\textwidth}
             \begin{figure}
                 \centering
-                \includegraphics[width=\textwidth]{../version15-with-no-ocean-masking/output_2024/track_1/correlation_analysis/lag_correlation/track_1_TP-SWVL1_lag_correlation.png}
+                \includegraphics[width=\textwidth]{../version20-with-no-ocean-masking/output_2024/track_1/correlation_analysis/lag_correlation/track_1_TP-SWVL1_lag_correlation.png}
             \end{figure}
             \label{fig:track_1_TP-SWVL1_lag_correlation}
 
@@ -895,7 +890,7 @@
 \begin{frame}{Track 1 TP and SWVL1 Time evolution}
        \begin{figure}
            \centering
-           \includegraphics[width=0.9\textwidth]{../version15-with-no-ocean-masking/output_2024/track_1/correlation_analysis/time_series/track_1_TP-SWVL1_time_series.png}
+           \includegraphics[width=0.9\textwidth]{../version20-with-no-ocean-masking/output_2024/track_1/correlation_analysis/time_series/track_1_TP-SWVL1_time_series.png}
            \label{fig:track_1_TP-SWVL1_time_series}
        \end{figure}
 
@@ -907,7 +902,7 @@
 \subsubsection{Track 1 HF Correlations}
 \begin{frame}{Track 1 SWVL1 and HF Correlation}
     \begin{center}
-        \includegraphics[width=0.9\textwidth]{../version15-with-no-ocean-masking/output_2024/track_1/correlation_analysis/correlation/track_1_SWVL1-HF_correlation.png}
+        \includegraphics[width=0.9\textwidth]{../version20-with-no-ocean-masking/output_2024/track_1/correlation_analysis/correlation/track_1_SWVL1-HF_correlation.png}
     \end{center}
 \end{frame}
 
@@ -915,14 +910,14 @@
     \begin{columns}[t]
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_1/correlation_analysis/lag_correlation/track_1_SWVL1-LHF_lag_correlation.png} \\
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_1/correlation_analysis/lag_correlation/track_1_SWVL1-SHF_lag_correlation.png}
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_1/correlation_analysis/lag_correlation/track_1_SWVL1-LHF_lag_correlation.png} \\
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_1/correlation_analysis/lag_correlation/track_1_SWVL1-SHF_lag_correlation.png}
             \end{center}
         \end{column}
 
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_1/correlation_analysis/lag_correlation/track_1_SWVL1-THF_lag_correlation.png}
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_1/correlation_analysis/lag_correlation/track_1_SWVL1-THF_lag_correlation.png}
             \end{center}
         \end{column}
     \end{columns}
@@ -932,14 +927,14 @@
     \begin{columns}[t]
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_1/correlation_analysis/lag_correlation/track_1_TP-LHF_lag_correlation.png} \\
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_1/correlation_analysis/lag_correlation/track_1_TP-SHF_lag_correlation.png}
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_1/correlation_analysis/lag_correlation/track_1_TP-LHF_lag_correlation.png} \\
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_1/correlation_analysis/lag_correlation/track_1_TP-SHF_lag_correlation.png}
             \end{center}
         \end{column}
 
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_1/correlation_analysis/lag_correlation/track_1_TP-THF_lag_correlation.png}
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_1/correlation_analysis/lag_correlation/track_1_TP-THF_lag_correlation.png}
             \end{center}
         \end{column}
     \end{columns}
@@ -947,7 +942,7 @@
 
 % \begin{frame}{Track 1 Heat fluxes transition}
 %     \begin{center}
-%         \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_1/flux_analysis/track_1_analysis/track_1_heat_fluxes_trasnsition.png}
+%         \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_1/flux_analysis/track_1_analysis/track_1_heat_fluxes_trasnsition.png}
 %     \end{center}
 % \end{frame}
 
@@ -955,7 +950,7 @@
 \begin{frame}{Track 1 Heat Flux evolution}
     \begin{center}
         \begin{figure}
-            \includegraphics[width=0.6\textwidth]{../version15-with-no-ocean-masking/output_2024/track_1/heat_flux_analysis/track_1_heat_flux_timeseries.png}
+            \includegraphics[width=0.6\textwidth]{../version20-with-no-ocean-masking/output_2024/track_1/heat_flux_analysis/track_1_heat_flux_timeseries.png}
         \end{figure}
         \label{fig:track_1_heat_flux_timeseries}
     \end{center}
@@ -996,7 +991,7 @@
     \begin{center}
         \begin{columns}[T]
             \column{0.5\textwidth}
-            \includegraphics[width=0.9\textwidth]{../version15-with-no-ocean-masking/output_2024/track_2/MD_track_2_detailed.png}
+            \includegraphics[width=0.9\textwidth]{../version20-with-no-ocean-masking/output_2024/track_2/MD_track_2_detailed.png}
 
             \vspace{0.05cm}
             \footnotesize
@@ -1020,7 +1015,7 @@
 \subsubsection{Track 2 Translation Speed}
 \begin{frame}{Track 2 Translation speed of MD}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_2/translational-speed/track_2_speed_ms.png}
+        \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_2/translational-speed/track_2_speed_ms.png}
     \end{center}
 \end{frame}
 
@@ -1029,7 +1024,7 @@
     \begin{columns}[T]
         \begin{column}{0.6\textwidth}
             \begin{center}
-                \includegraphics[width=\textwidth]{../version15-with-no-ocean-masking/output_2024/track_2/correlation_analysis/correlation/track_2_TP-SWVL1_correlation.png}
+                \includegraphics[width=\textwidth]{../version20-with-no-ocean-masking/output_2024/track_2/correlation_analysis/correlation/track_2_TP-SWVL1_correlation.png}
             \end{center}
         \end{column}
 
@@ -1051,7 +1046,7 @@
     \begin{columns}[T]
         \begin{column}{0.6\textwidth}
             \begin{center}
-                \includegraphics[width=\textwidth]{../version15-with-no-ocean-masking/output_2024/track_2/correlation_analysis/lag_correlation/track_2_TP-SWVL1_lag_correlation.png}
+                \includegraphics[width=\textwidth]{../version20-with-no-ocean-masking/output_2024/track_2/correlation_analysis/lag_correlation/track_2_TP-SWVL1_lag_correlation.png}
             \end{center}
         \end{column}
 
@@ -1069,14 +1064,14 @@
 \subsubsection{Track 2 TP and SWVL1 Time evolution}
 \begin{frame}{Track 2 TP and SWVL1 Time evolution}
     \begin{center}
-        \includegraphics[width=0.9\textwidth]{../version15-with-no-ocean-masking/output_2024/track_2/correlation_analysis/time_series/track_2_TP-SWVL1_time_series.png}
+        \includegraphics[width=0.9\textwidth]{../version20-with-no-ocean-masking/output_2024/track_2/correlation_analysis/time_series/track_2_TP-SWVL1_time_series.png}
     \end{center}
 \end{frame}
 
 \subsubsection{Track 2 HF Correlations}
 \begin{frame}{Track 2 SWVL1 and HF Correlation}
     \begin{center}
-        \includegraphics[width=0.9\textwidth]{../version15-with-no-ocean-masking/output_2024/track_2/correlation_analysis/correlation/track_2_SWVL1-HF_correlation.png}
+        \includegraphics[width=0.9\textwidth]{../version20-with-no-ocean-masking/output_2024/track_2/correlation_analysis/correlation/track_2_SWVL1-HF_correlation.png}
     \end{center}
 \end{frame}
 
@@ -1084,14 +1079,14 @@
     \begin{columns}[t]
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_2/correlation_analysis/lag_correlation/track_2_SWVL1-LHF_lag_correlation.png} \\
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_2/correlation_analysis/lag_correlation/track_2_SWVL1-SHF_lag_correlation.png}
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_2/correlation_analysis/lag_correlation/track_2_SWVL1-LHF_lag_correlation.png} \\
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_2/correlation_analysis/lag_correlation/track_2_SWVL1-SHF_lag_correlation.png}
             \end{center}
         \end{column}
 
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_2/correlation_analysis/lag_correlation/track_2_SWVL1-THF_lag_correlation.png}
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_2/correlation_analysis/lag_correlation/track_2_SWVL1-THF_lag_correlation.png}
             \end{center}
         \end{column}
     \end{columns}
@@ -1101,14 +1096,14 @@
     \begin{columns}[t]
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_2/correlation_analysis/lag_correlation/track_2_TP-LHF_lag_correlation.png} \\
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_2/correlation_analysis/lag_correlation/track_2_TP-SHF_lag_correlation.png}
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_2/correlation_analysis/lag_correlation/track_2_TP-LHF_lag_correlation.png} \\
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_2/correlation_analysis/lag_correlation/track_2_TP-SHF_lag_correlation.png}
             \end{center}
         \end{column}
 
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_2/correlation_analysis/lag_correlation/track_2_TP-THF_lag_correlation.png}
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_2/correlation_analysis/lag_correlation/track_2_TP-THF_lag_correlation.png}
             \end{center}
         \end{column}
     \end{columns}
@@ -1116,7 +1111,7 @@
 
 % \begin{frame}{Track 2 Heat fluxes transition}
 %     \begin{center}
-%         \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_2/flux_analysis/track_2_analysis/track_2_heat_fluxes_trasnsition.png}
+%         \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_2/flux_analysis/track_2_analysis/track_2_heat_fluxes_trasnsition.png}
 %     \end{center}
 % \end{frame}
 
@@ -1124,7 +1119,7 @@
 \begin{frame}{Track 2 HF Time evolution}
     \begin{center}
         \begin{figure}
-            \includegraphics[width=0.6\textwidth]{../version15-with-no-ocean-masking/output_2024/track_2/heat_flux_analysis/track_2_heat_flux_timeseries.png}
+            \includegraphics[width=0.6\textwidth]{../version20-with-no-ocean-masking/output_2024/track_2/heat_flux_analysis/track_2_heat_flux_timeseries.png}
         \end{figure}
         \label{fig:track_2_heat_flux_timeseries}
     \end{center}
@@ -1167,7 +1162,7 @@
     \begin{center}
         \begin{columns}[T]
             \column{0.5\textwidth}
-            \includegraphics[width=0.9\textwidth]{../version15-with-no-ocean-masking/output_2024/track_3/MD_track_3_detailed.png}
+            \includegraphics[width=0.9\textwidth]{../version20-with-no-ocean-masking/output_2024/track_3/MD_track_3_detailed.png}
 
             \vspace{0.05cm}
             \footnotesize
@@ -1188,7 +1183,7 @@
 \subsubsection{Track 3 Translation Speed}
 \begin{frame}{Track 3 Translation speed of MD}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_3/translational-speed/track_3_speed_ms.png}
+        \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_3/translational-speed/track_3_speed_ms.png}
     \end{center}
 \end{frame}
 
@@ -1197,7 +1192,7 @@
     \begin{columns}[T]
         \begin{column}{0.6\textwidth}
             \begin{center}
-                \includegraphics[width=\textwidth]{../version15-with-no-ocean-masking/output_2024/track_3/correlation_analysis/correlation/track_3_TP-SWVL1_correlation.png}
+                \includegraphics[width=\textwidth]{../version20-with-no-ocean-masking/output_2024/track_3/correlation_analysis/correlation/track_3_TP-SWVL1_correlation.png}
             \end{center}
         \end{column}
 
@@ -1219,7 +1214,7 @@
     \begin{columns}[T]
         \begin{column}{0.6\textwidth}
             \begin{center}
-                \includegraphics[width=\textwidth]{../version15-with-no-ocean-masking/output_2024/track_3/correlation_analysis/lag_correlation/track_3_TP-SWVL1_lag_correlation.png}
+                \includegraphics[width=\textwidth]{../version20-with-no-ocean-masking/output_2024/track_3/correlation_analysis/lag_correlation/track_3_TP-SWVL1_lag_correlation.png}
             \end{center}
         \end{column}
 
@@ -1236,14 +1231,14 @@
 \subsubsection{Track 3 TP and SWVL1 Time evolution}
 \begin{frame}{Track 3 TP and SWVL1 Time evolution}
     \begin{center}
-        \includegraphics[width=0.9\textwidth]{../version15-with-no-ocean-masking/output_2024/track_3/correlation_analysis/time_series/track_3_TP-SWVL1_time_series.png}
+        \includegraphics[width=0.9\textwidth]{../version20-with-no-ocean-masking/output_2024/track_3/correlation_analysis/time_series/track_3_TP-SWVL1_time_series.png}
     \end{center}
 \end{frame}
 
 \subsubsection{Track 3 HF Correlations}
 \begin{frame}{Track 3 SWVL1 and HF Correlation}
     \begin{center}
-        \includegraphics[width=0.9\textwidth]{../version15-with-no-ocean-masking/output_2024/track_3/correlation_analysis/correlation/track_3_SWVL1-HF_correlation.png}
+        \includegraphics[width=0.9\textwidth]{../version20-with-no-ocean-masking/output_2024/track_3/correlation_analysis/correlation/track_3_SWVL1-HF_correlation.png}
     \end{center}
 \end{frame}
 
@@ -1251,14 +1246,14 @@
     \begin{columns}[t]
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_3/correlation_analysis/lag_correlation/track_3_SWVL1-LHF_lag_correlation.png} \\
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_3/correlation_analysis/lag_correlation/track_3_SWVL1-SHF_lag_correlation.png}
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_3/correlation_analysis/lag_correlation/track_3_SWVL1-LHF_lag_correlation.png} \\
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_3/correlation_analysis/lag_correlation/track_3_SWVL1-SHF_lag_correlation.png}
             \end{center}
         \end{column}
 
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_3/correlation_analysis/lag_correlation/track_3_SWVL1-THF_lag_correlation.png}
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_3/correlation_analysis/lag_correlation/track_3_SWVL1-THF_lag_correlation.png}
             \end{center}
         \end{column}
     \end{columns}
@@ -1268,14 +1263,14 @@
     \begin{columns}[t]
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_3/correlation_analysis/lag_correlation/track_3_TP-LHF_lag_correlation.png} \\
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_3/correlation_analysis/lag_correlation/track_3_TP-SHF_lag_correlation.png}
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_3/correlation_analysis/lag_correlation/track_3_TP-LHF_lag_correlation.png} \\
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_3/correlation_analysis/lag_correlation/track_3_TP-SHF_lag_correlation.png}
             \end{center}
         \end{column}
 
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_3/correlation_analysis/lag_correlation/track_3_TP-THF_lag_correlation.png}
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_3/correlation_analysis/lag_correlation/track_3_TP-THF_lag_correlation.png}
             \end{center}
         \end{column}
     \end{columns}
@@ -1283,7 +1278,7 @@
 
 % \begin{frame}{Track 3 Heat fluxes transition}
 %     \begin{center}
-%         \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_3/flux_analysis/track_3_analysis/track_3_heat_fluxes_trasnsition.png}
+%         \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_3/flux_analysis/track_3_analysis/track_3_heat_fluxes_trasnsition.png}
 %     \end{center}
 % \end{frame}
 
@@ -1291,7 +1286,7 @@
 \begin{frame}{Track 3 HF Time evolution}
     \begin{center}
         \begin{figure}
-            \includegraphics[width=0.6\textwidth]{../version15-with-no-ocean-masking/output_2024/track_3/heat_flux_analysis/track_3_heat_flux_timeseries.png}
+            \includegraphics[width=0.6\textwidth]{../version20-with-no-ocean-masking/output_2024/track_3/heat_flux_analysis/track_3_heat_flux_timeseries.png}
         \end{figure}
         \label{fig:track_3_heat_flux_timeseries}
     \end{center}
@@ -1336,7 +1331,7 @@
     \begin{center}
         \begin{columns}[T]
             \column{0.5\textwidth}
-            \includegraphics[width=0.9\textwidth]{../version15-with-no-ocean-masking/output_2024/track_4/MD_track_4_detailed.png}
+            \includegraphics[width=0.9\textwidth]{../version20-with-no-ocean-masking/output_2024/track_4/MD_track_4_detailed.png}
 
             \vspace{0.05cm}
             \footnotesize
@@ -1359,7 +1354,7 @@
 \subsubsection{Track 4 Translation Speed}
 \begin{frame}{Track 4 Translation speed of MD}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_4/translational-speed/track_4_speed_ms.png}
+        \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_4/translational-speed/track_4_speed_ms.png}
     \end{center}
 \end{frame}
 
@@ -1368,7 +1363,7 @@
     \begin{columns}[T]
         \begin{column}{0.6\textwidth}
             \begin{center}
-                \includegraphics[width=\textwidth]{../version15-with-no-ocean-masking/output_2024/track_4/correlation_analysis/correlation/track_4_TP-SWVL1_correlation.png}
+                \includegraphics[width=\textwidth]{../version20-with-no-ocean-masking/output_2024/track_4/correlation_analysis/correlation/track_4_TP-SWVL1_correlation.png}
             \end{center}
         \end{column}
 
@@ -1390,7 +1385,7 @@
     \begin{columns}[T]
         \begin{column}{0.6\textwidth}
             \begin{center}
-                \includegraphics[width=\textwidth]{../version15-with-no-ocean-masking/output_2024/track_4/correlation_analysis/lag_correlation/track_4_TP-SWVL1_lag_correlation.png}
+                \includegraphics[width=\textwidth]{../version20-with-no-ocean-masking/output_2024/track_4/correlation_analysis/lag_correlation/track_4_TP-SWVL1_lag_correlation.png}
             \end{center}
         \end{column}
 
@@ -1407,14 +1402,14 @@
 \subsubsection{Track 4 TP and SWVL1 Time evolution}
 \begin{frame}{Track 4 TP and SWVL1 Time evolution}
     \begin{center}
-        \includegraphics[width=0.9\textwidth]{../version15-with-no-ocean-masking/output_2024/track_4/correlation_analysis/time_series/track_4_TP-SWVL1_time_series.png}
+        \includegraphics[width=0.9\textwidth]{../version20-with-no-ocean-masking/output_2024/track_4/correlation_analysis/time_series/track_4_TP-SWVL1_time_series.png}
     \end{center}
 \end{frame}
 
 \subsubsection{Track 4 HF Correlations}
 \begin{frame}{Track 4 SWVL1 and HF Correlation}
     \begin{center}
-        \includegraphics[width=0.9\textwidth]{../version15-with-no-ocean-masking/output_2024/track_4/correlation_analysis/correlation/track_4_SWVL1-HF_correlation.png}
+        \includegraphics[width=0.9\textwidth]{../version20-with-no-ocean-masking/output_2024/track_4/correlation_analysis/correlation/track_4_SWVL1-HF_correlation.png}
     \end{center}
 \end{frame}
 
@@ -1422,14 +1417,14 @@
     \begin{columns}[t]
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_4/correlation_analysis/lag_correlation/track_4_SWVL1-LHF_lag_correlation.png} \\
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_4/correlation_analysis/lag_correlation/track_4_SWVL1-SHF_lag_correlation.png}
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_4/correlation_analysis/lag_correlation/track_4_SWVL1-LHF_lag_correlation.png} \\
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_4/correlation_analysis/lag_correlation/track_4_SWVL1-SHF_lag_correlation.png}
             \end{center}
         \end{column}
 
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_4/correlation_analysis/lag_correlation/track_4_SWVL1-THF_lag_correlation.png}
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_4/correlation_analysis/lag_correlation/track_4_SWVL1-THF_lag_correlation.png}
             \end{center}
         \end{column}
     \end{columns}
@@ -1439,14 +1434,14 @@
     \begin{columns}[t]
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_4/correlation_analysis/lag_correlation/track_4_TP-LHF_lag_correlation.png} \\
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_4/correlation_analysis/lag_correlation/track_4_TP-SHF_lag_correlation.png}
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_4/correlation_analysis/lag_correlation/track_4_TP-LHF_lag_correlation.png} \\
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_4/correlation_analysis/lag_correlation/track_4_TP-SHF_lag_correlation.png}
             \end{center}
         \end{column}
 
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_4/correlation_analysis/lag_correlation/track_4_TP-THF_lag_correlation.png}
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_4/correlation_analysis/lag_correlation/track_4_TP-THF_lag_correlation.png}
             \end{center}
         \end{column}
     \end{columns}
@@ -1454,7 +1449,7 @@
 
 % \begin{frame}{Track 4 Heat fluxes transition}
 %     \begin{center}
-%         \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_4/flux_analysis/track_4_analysis/track_4_heat_fluxes_trasnsition.png}
+%         \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_4/flux_analysis/track_4_analysis/track_4_heat_fluxes_trasnsition.png}
 %     \end{center}
 % \end{frame}
 
@@ -1462,7 +1457,7 @@
 \begin{frame}{Track 4 HF Time evolution}
     \begin{center}
         \begin{figure}
-            \includegraphics[width=0.6\textwidth]{../version15-with-no-ocean-masking/output_2024/track_4/heat_flux_analysis/track_4_heat_flux_timeseries.png}
+            \includegraphics[width=0.6\textwidth]{../version20-with-no-ocean-masking/output_2024/track_4/heat_flux_analysis/track_4_heat_flux_timeseries.png}
         \end{figure}
         \label{fig:track_4_heat_flux_timeseries}
     \end{center}
@@ -1510,7 +1505,7 @@
     \begin{center}
         \begin{columns}[T]
             \column{0.53\textwidth}
-            \includegraphics[width=0.75\textwidth]{../version15-with-no-ocean-masking/output_2024/track_5/MD_track_5_detailed.png}
+            \includegraphics[width=0.75\textwidth]{../version20-with-no-ocean-masking/output_2024/track_5/MD_track_5_detailed.png}
 
             \vspace{0.01cm}
             \footnotesize
@@ -1542,7 +1537,7 @@
 \subsubsection{Track 5 Translation Speed}
 \begin{frame}{Track 5 Translation speed of MD}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_5/translational-speed/track_5_speed_ms.png}
+        \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_5/translational-speed/track_5_speed_ms.png}
     \end{center}
 \end{frame}
 
@@ -1551,7 +1546,7 @@
     \begin{columns}[T]
         \begin{column}{0.6\textwidth}
             \begin{center}
-                \includegraphics[width=\textwidth]{../version15-with-no-ocean-masking/output_2024/track_5/correlation_analysis/correlation/track_5_TP-SWVL1_correlation.png}
+                \includegraphics[width=\textwidth]{../version20-with-no-ocean-masking/output_2024/track_5/correlation_analysis/correlation/track_5_TP-SWVL1_correlation.png}
             \end{center}
         \end{column}
 
@@ -1573,7 +1568,7 @@
     \begin{columns}[T]
         \begin{column}{0.6\textwidth}
             \begin{center}
-                \includegraphics[width=\textwidth]{../version15-with-no-ocean-masking/output_2024/track_5/correlation_analysis/lag_correlation/track_5_TP-SWVL1_lag_correlation.png}
+                \includegraphics[width=\textwidth]{../version20-with-no-ocean-masking/output_2024/track_5/correlation_analysis/lag_correlation/track_5_TP-SWVL1_lag_correlation.png}
             \end{center}
         \end{column}
         \begin{column}{0.4\textwidth}
@@ -1589,14 +1584,14 @@
 \subsubsection{Track 5 TP and SWVL1 Time evolution}
 \begin{frame}{Track 5 TP and SWVL1 Time evolution}
     \begin{center}
-        \includegraphics[width=0.9\textwidth]{../version15-with-no-ocean-masking/output_2024/track_5/correlation_analysis/time_series/track_5_TP-SWVL1_time_series.png}
+        \includegraphics[width=0.9\textwidth]{../version20-with-no-ocean-masking/output_2024/track_5/correlation_analysis/time_series/track_5_TP-SWVL1_time_series.png}
     \end{center}
 \end{frame}
 
 \subsubsection{Track 5 HF Correlations}
 \begin{frame}{Track 5 SWVL1 and HF Correlation}
     \begin{center}
-        \includegraphics[width=0.9\textwidth]{../version15-with-no-ocean-masking/output_2024/track_5/correlation_analysis/correlation/track_5_SWVL1-HF_correlation.png}
+        \includegraphics[width=0.9\textwidth]{../version20-with-no-ocean-masking/output_2024/track_5/correlation_analysis/correlation/track_5_SWVL1-HF_correlation.png}
     \end{center}
 \end{frame}
 
@@ -1604,14 +1599,14 @@
     \begin{columns}[T]
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_5/correlation_analysis/lag_correlation/track_5_SWVL1-LHF_lag_correlation.png} \\
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_5/correlation_analysis/lag_correlation/track_5_SWVL1-SHF_lag_correlation.png}
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_5/correlation_analysis/lag_correlation/track_5_SWVL1-LHF_lag_correlation.png} \\
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_5/correlation_analysis/lag_correlation/track_5_SWVL1-SHF_lag_correlation.png}
             \end{center}
         \end{column}
 
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_5/correlation_analysis/lag_correlation/track_5_SWVL1-THF_lag_correlation.png}
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_5/correlation_analysis/lag_correlation/track_5_SWVL1-THF_lag_correlation.png}
             \end{center}
         \end{column}
     \end{columns}
@@ -1621,14 +1616,14 @@
     \begin{columns}[t]
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_5/correlation_analysis/lag_correlation/track_5_TP-LHF_lag_correlation.png} \\
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_5/correlation_analysis/lag_correlation/track_5_TP-SHF_lag_correlation.png}
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_5/correlation_analysis/lag_correlation/track_5_TP-LHF_lag_correlation.png} \\
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_5/correlation_analysis/lag_correlation/track_5_TP-SHF_lag_correlation.png}
             \end{center}
         \end{column}
 
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_5/correlation_analysis/lag_correlation/track_5_TP-THF_lag_correlation.png}
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_5/correlation_analysis/lag_correlation/track_5_TP-THF_lag_correlation.png}
             \end{center}
         \end{column}
     \end{columns}
@@ -1636,7 +1631,7 @@
 
 % \begin{frame}{Track 5 Heat fluxes transition}
 %     \begin{center}
-%         \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_5/flux_analysis/track_5_analysis/track_5_heat_fluxes_trasnsition.png}
+%         \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_5/flux_analysis/track_5_analysis/track_5_heat_fluxes_trasnsition.png}
 %     \end{center}
 % \end{frame}
 
@@ -1644,7 +1639,7 @@
 \begin{frame}{Track 5 HF Time evolution}
     \begin{center}
         \begin{figure}
-            \includegraphics[width=0.6\textwidth]{../version15-with-no-ocean-masking/output_2024/track_5/heat_flux_analysis/track_5_heat_flux_timeseries.png}
+            \includegraphics[width=0.6\textwidth]{../version20-with-no-ocean-masking/output_2024/track_5/heat_flux_analysis/track_5_heat_flux_timeseries.png}
         \end{figure}
         \label{fig:track_5_heat_flux_timeseries}
     \end{center}
@@ -1687,7 +1682,7 @@
     \begin{center}
         \begin{columns}[T]
             \column{0.5\textwidth}
-            \includegraphics[width=0.9\textwidth]{../version15-with-no-ocean-masking/output_2024/track_6/MD_track_6_detailed.png}
+            \includegraphics[width=0.9\textwidth]{../version20-with-no-ocean-masking/output_2024/track_6/MD_track_6_detailed.png}
 
             \vspace{0.05cm}
             \footnotesize
@@ -1710,7 +1705,7 @@
 \subsubsection{Track 6 Translation Speed}
 \begin{frame}{Track 6 Translation speed of MD}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_6/translational-speed/track_6_speed_ms.png}
+        \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_6/translational-speed/track_6_speed_ms.png}
     \end{center}
 \end{frame}
 
@@ -1719,7 +1714,7 @@
     \begin{columns}[T]
         \begin{column}{0.6\textwidth}
             \begin{center}
-                \includegraphics[width=\textwidth]{../version15-with-no-ocean-masking/output_2024/track_6/correlation_analysis/correlation/track_6_TP-SWVL1_correlation.png}
+                \includegraphics[width=\textwidth]{../version20-with-no-ocean-masking/output_2024/track_6/correlation_analysis/correlation/track_6_TP-SWVL1_correlation.png}
             \end{center}
         \end{column}
 
@@ -1741,7 +1736,7 @@
     \begin{columns}[T]
         \begin{column}{0.6\textwidth}
             \begin{center}
-                \includegraphics[width=\textwidth]{../version15-with-no-ocean-masking/output_2024/track_6/correlation_analysis/lag_correlation/track_6_TP-SWVL1_lag_correlation.png}
+                \includegraphics[width=\textwidth]{../version20-with-no-ocean-masking/output_2024/track_6/correlation_analysis/lag_correlation/track_6_TP-SWVL1_lag_correlation.png}
             \end{center}
         \end{column}
 
@@ -1759,14 +1754,14 @@
 \subsubsection{Track 6 TP and SWVL1 Time evolution}
 \begin{frame}{Track 6 TP and SWVL1 Time evolution}
     \begin{center}
-        \includegraphics[width=0.9\textwidth]{../version15-with-no-ocean-masking/output_2024/track_6/correlation_analysis/time_series/track_6_TP-SWVL1_time_series.png}
+        \includegraphics[width=0.9\textwidth]{../version20-with-no-ocean-masking/output_2024/track_6/correlation_analysis/time_series/track_6_TP-SWVL1_time_series.png}
     \end{center}
 \end{frame}
 
 \subsubsection{Track 6 HF Correlations}
 \begin{frame}{Track 6 SWVL1 and HF Correlation}
     \begin{center}
-        \includegraphics[width=0.9\textwidth]{../version15-with-no-ocean-masking/output_2024/track_6/correlation_analysis/correlation/track_6_SWVL1-HF_correlation.png}
+        \includegraphics[width=0.9\textwidth]{../version20-with-no-ocean-masking/output_2024/track_6/correlation_analysis/correlation/track_6_SWVL1-HF_correlation.png}
     \end{center}
 \end{frame}
 
@@ -1774,14 +1769,14 @@
     \begin{columns}[T]
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_6/correlation_analysis/lag_correlation/track_6_SWVL1-LHF_lag_correlation.png} \\
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_6/correlation_analysis/lag_correlation/track_6_SWVL1-SHF_lag_correlation.png}
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_6/correlation_analysis/lag_correlation/track_6_SWVL1-LHF_lag_correlation.png} \\
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_6/correlation_analysis/lag_correlation/track_6_SWVL1-SHF_lag_correlation.png}
             \end{center}
         \end{column}
 
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_6/correlation_analysis/lag_correlation/track_6_SWVL1-THF_lag_correlation.png}
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_6/correlation_analysis/lag_correlation/track_6_SWVL1-THF_lag_correlation.png}
             \end{center}
         \end{column}
     \end{columns}
@@ -1791,14 +1786,14 @@
     \begin{columns}[t]
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_6/correlation_analysis/lag_correlation/track_6_TP-LHF_lag_correlation.png} \\
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_6/correlation_analysis/lag_correlation/track_6_TP-SHF_lag_correlation.png}
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_6/correlation_analysis/lag_correlation/track_6_TP-LHF_lag_correlation.png} \\
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_6/correlation_analysis/lag_correlation/track_6_TP-SHF_lag_correlation.png}
             \end{center}
         \end{column}
 
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_6/correlation_analysis/lag_correlation/track_6_TP-THF_lag_correlation.png}
+                \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_6/correlation_analysis/lag_correlation/track_6_TP-THF_lag_correlation.png}
             \end{center}
         \end{column}
     \end{columns}
@@ -1806,7 +1801,7 @@
 
 % \begin{frame}{Track 6 Heat fluxes transition}
 %     \begin{center}
-%         \includegraphics[width=0.8\textwidth]{../version15-with-no-ocean-masking/output_2024/track_6/flux_analysis/track_6_analysis/track_6_heat_fluxes_trasnsition.png}
+%         \includegraphics[width=0.8\textwidth]{../version20-with-no-ocean-masking/output_2024/track_6/flux_analysis/track_6_analysis/track_6_heat_fluxes_trasnsition.png}
 %     \end{center}
 % \end{frame}
 
@@ -1814,7 +1809,7 @@
 \begin{frame}{Track 6 HF Time evolution}
     \begin{center}
         \begin{figure}
-            \includegraphics[width=0.6\textwidth]{../version15-with-no-ocean-masking/output_2024/track_6/heat_flux_analysis/track_6_heat_flux_timeseries.png}
+            \includegraphics[width=0.6\textwidth]{../version20-with-no-ocean-masking/output_2024/track_6/heat_flux_analysis/track_6_heat_flux_timeseries.png}
         \end{figure}
         \label{fig:track_6_heat_flux_timeseries}
     \end{center}
@@ -2599,7 +2594,7 @@
         \begin{block}{Monsoon Depressions}
             \begin{center}
                 \begin{figure}
-                   \includegraphics[width=1.15\linewidth]{../version15-with-no-ocean-masking/output_2024/MD_track_2024.png}
+                   \includegraphics[width=1.15\linewidth]{../version20-with-no-ocean-masking/output_2024/MD_track_2024.png}
                 \end{figure}
             \end{center}
         \end{block}
@@ -2702,7 +2697,7 @@
         \begin{block}{Monsoon Depressions}
             \begin{center}
                 \begin{figure}
-                    \includegraphics[width=1.14\linewidth]{../version15-with-no-ocean-masking/output_2024/MD_track_2024.png}
+                    \includegraphics[width=1.14\linewidth]{../version20-with-no-ocean-masking/output_2024/MD_track_2024.png}
                 \end{figure}
             \end{center}
         \end{block}

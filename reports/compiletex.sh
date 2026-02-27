@@ -198,6 +198,7 @@ cleanup_aux() {
 
 # Compilation
 compile_tex() {
+    local status=0
     local file=$1
     local dir=$(dirname "$file")
     local base=$(basename "$file" .tex)
@@ -215,32 +216,53 @@ compile_tex() {
 
     # Pass 1: Generate the .bcf file for Biber
     log_info "-> Pass 1     : pdflatex"
-    pdflatex -interaction=nonstopmode -output-directory="$output_dir" "$file" > /dev/null 2>&1
-    # Pass 2: Run Biber
-    log_info "-> Pass 2     : biber"
-    if [ "$VERBOSE" = true ]; then
-        biber --input-directory "$output_dir" --output-directory "$output_dir" "$base"
-    else
-        biber --input-directory "$output_dir" --output-directory "$output_dir" "$base" > /dev/null 2>&1
+    if ! pdflatex -interaction=nonstopmode -output-directory="$output_dir" "$file" > /dev/null 2>&1; then
+        log_error "pdflatex pass 1 failed for $file"
+        status=1
     fi
 
-    if [ $? -ne 0 ]; then
-        log_error "Biber failed for $file. Check .bib keys!"
-        # We don't exit here, so it tries to finish the PDF anyway
+    # Pass 2: Run Biber
+    log_info "-> Pass 2     : biber"
+    local biber_status=0
+    if [ "$VERBOSE" = true ]; then
+        biber --input-directory "$output_dir" --output-directory "$output_dir" "$base"
+        biber_status=$?
+    else
+        biber --input-directory "$output_dir" --output-directory "$output_dir" "$base" > /dev/null 2>&1
+        biber_status=$?
     fi
-    # generate structure
-    #log_info "  -> Pass 3 & 4: pdflatex finalization"
+    if [ $biber_status -ne 0 ]; then
+        log_error "Biber failed for $file. Check .bib keys!"
+        status=1
+    fi
+
     # Link citations and fix labels
     log_info "-> Pass 3 & 4 : pdflatex finalization"
-    pdflatex -interaction=nonstopmode -output-directory="$output_dir" "$file" > /dev/null 2>&1
-    pdflatex -interaction=nonstopmode -output-directory="$output_dir" "$file" > /dev/null 2>&1
+    if ! pdflatex -interaction=nonstopmode -output-directory="$output_dir" "$file" > /dev/null 2>&1; then
+        log_error "pdflatex pass 3 failed for $file"
+        status=1
+    fi
+    if ! pdflatex -interaction=nonstopmode -output-directory="$output_dir" "$file" > /dev/null 2>&1; then
+        log_error "pdflatex pass 4 failed for $file"
+        status=1
+    fi
+
     # Cleanup auxiliary files
     cleanup_aux "$output_dir" "$base"
 
+    # Check if PDF was generated
     if [ -f "${dir:-.}/$base.pdf" ]; then
-        log_success "Generated : ${dir:-.}/$base.pdf"
+        if [ $status -eq 0 ]; then
+            log_success "Generated : ${dir:-.}/$base.pdf"
+        else
+            log_warn "Generated PDF with errors : ${dir:-.}/$base.pdf"
+        fi
+    else
+        log_error "No PDF generated for $file"
+        status=1
     fi
-    return 0
+
+    return $status
 }
 
 # Main Execution
@@ -262,12 +284,19 @@ if [ "$ONLY_MAIN" = false ]; then
                     TOTAL_FILES=$((TOTAL_FILES + 1))
                     if compile_tex "$slide"; then
                         COMPILED_FILES=$((COMPILED_FILES + 1))
+                        log_success "Successfully compiled: $slide"
                     else
                         FAILED_FILES=$((FAILED_FILES + 1))
+                        log_error "Failed to compile: $slide"
                     fi
                 fi
             done
-            log_success "Completed slides compilation"
+
+            if [ $FAILED_FILES -eq 0 ]; then
+                log_success "Completed slides compilation - all successful!"
+            else
+                log_warn "Completed slides compilation with $FAILED_FILES failure(s)"
+            fi
         else
             log_error "No slides found in slides/ directory"
         fi
