@@ -1,0 +1,253 @@
+% TeX program = lualatex
+% !TeX encoding = UTF-8
+
+% NOTE: For refrence https://www.iist.ac.in/sites/default/files/2025-05/SC14D003%20%281%29.pdf and 
+% - https://www.iist.ac.in/posters-presented-students-conferences-symposia 
+
+
+\documentclass[20pt]{extarticle}
+
+\usepackage[T1]{fontenc}
+\usepackage{amssymb} % unicode-math handles this
+\usepackage{fontspec}
+\setmainfont{TeX Gyre Heros} % sans-serif
+\usepackage{unicode-math}
+\setmathfont{STIX Two Math}  % scalable math font
+
+% \usepackage[framemethod=TikZ]{mdframed}
+% \usepackage{pgfplots}
+% \usepackage{utopia}
+% \usepackage{changepage}
+% \usepackage{moresize}
+% \usepackage{mathpazo}
+% \usepackage{tikz-3dplot}
+% \usepackage{cancel}
+% \tdplotsetmaincoords{70}{165}
+% \pgfplotsset{compat=1.18}
+
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{fancyhdr}
+\usepackage{flushend}
+
+% Settings
+\usepackage[a0paper, portrait, margin=2cm]{geometry}
+\setlength{\columnsep}{0.2cm}  % Space between columns
+\setlength{\parskip}{0cm}
+\setlength{\parindent}{0cm}
+\setlength{\topskip}{0cm}
+\setlength{\partopsep}{0cm}
+\linespread{1.2}\selectfont
+\newlength{\footerheight}
+\setlength{\footerheight}{3cm}
+
+\usepackage{multicol}
+\setlength{\multicolsep}{0.2cm}  % Space above/below multicols
+\setlength{\premulticols}{0pt}
+\setlength{\postmulticols}{0.2pt}
+
+\usepackage{enumitem}
+% \setlist{nosep, leftmargin=*}
+\newcommand{\hollowsq}{\tikz[baseline=-0.5ex]\draw[TitleBlue, thick] (0,0) rectangle (0.3cm,0.3cm);}
+\newcommand{\shadowsq}{%
+    \begin{tikzpicture}[baseline=-0.5ex]
+        \fill[gray!90] (0.05,-0.05) rectangle (0.3,0.2);
+        \fill[black] (0,0) rectangle (0.25,0.25);
+        % \draw[white, very thin] (0,0.25) -- (0,0) -- (0.25,0);
+    \end{tikzpicture}%
+}
+\setlist{label=\shadowsq, itemsep=0.1pt, parsep=0pt, topsep=1.5pt, leftmargin=30pt}
+
+\usepackage{tikz}
+\usetikzlibrary{
+    shadings, calc, patterns, angles, quotes, arrows.meta, fadings, 3d, perspective, backgrounds, intersections, bending,
+    decorations.pathmorphing, decorations.pathreplacing, decorations.markings
+}
+
+\usepackage{xcolor}
+% \definecolor{TitleBlue}{HTML}{003366}
+\definecolor{TitleBlue}{HTML}{365794}
+\definecolor{White}{HTML}{FFFFFF}
+% \definecolor{BoxBg}{HTML}{E4DDC9}
+\definecolor{BoxBg}{HTML}{F8F9F9}
+\definecolor{Text}{HTML}{1A1A1A}
+\definecolor{LightBlue}{RGB}{191, 223, 255}
+
+\usepackage{caption}
+\DeclareCaptionFont{postercaption}{\fontsize{25}{27}\selectfont}
+\captionsetup{
+	font=postercaption,
+	labelfont={postercaption,bf,color=TitleBlue},
+	labelsep=period,
+	margin=20pt,
+	justification=centering,
+	hypcap=false
+}
+
+% \usepackage[many]{tcolorbox}
+\usepackage[most]{tcolorbox}
+\tcbset{
+	arc=5pt,
+	before skip=5pt, after skip=5pt,
+	left=20pt, right=20pt, top=25pt, bottom=20pt,
+	boxrule=3pt,
+}
+
+\newtcolorbox{conceptbox}[2][]{
+	breakable, enhanced,
+	% drop shadow,
+	% drop lifted shadow,
+	% drop shadow={2mm}{-2mm}{0mm}{TitleBlue!50!white}, % {x-offset}{y-offset}{spread}{color}
+	drop fuzzy shadow={black!50!white},
+	colback=BoxBg, colframe=TitleBlue, coltitle=White,
+	fonttitle=\bfseries\fontsize{35}{38}\selectfont,
+	% title=\MakeUppercase{#2},
+	title=#2,
+	before upper={\fontsize{27}{30}\selectfont\color{Text}}
+}
+
+\newcommand{\paraseperator}[2][TitleBlue]{%
+\begin{center}
+	\begin{tikzpicture}
+		\node (textnode) [text=#1, anchor=center, inner sep=15pt] at (0,0)
+		{\fontsize{25}{26}\selectfont\textbf{#2}};
+		\draw [draw=#1, ultra thick] (-0.48\linewidth,0) -- (textnode.west);
+		\draw [draw=#1, ultra thick] (textnode.east) -- (0.48\linewidth,0);
+	\end{tikzpicture}
+\end{center}
+\vspace{-0.8cm}
+}
+
+% footer
+\usepackage{eso-pic}  % For absolute positioning
+\newcommand{\posterfooter}[1]{%
+    % \begin{center}
+    %     \fontsize{20}{22}\selectfont\textcolor{gray}{#1}
+    % \end{center}
+	\begin{tikzpicture}[overlay,remember picture]
+	    \node[anchor=south, text=gray, font=\fontsize{20}{22}\selectfont] at ([yshift=2cm] current page.south){#1};
+	\end{tikzpicture}%
+}
+
+\usepackage[
+  pdfauthor={Harshit Prashant Dhanwalkar},
+  pdftitle={Poster},
+  pdfsubject={MTech Poster presentation},
+  pdfkeywords={Monsoon Depressions, Brown Ocean Effect, Soil Moisture, Total Precipitation, ERA5},
+  pdfcreator={LuaLaTeX},
+  pdfproducer={LuaTeX-1.14.0},
+  pdfpagelayout={SinglePage},
+  pdfdisplaydoctitle=true,
+]{hyperref}
+
+\pagestyle{empty}
+\makeatletter
+\renewcommand{\@oddfoot}{}
+\renewcommand{\@evenfoot}{}
+\makeatother
+
+\begin{document}
+% Poster header
+% \begin{tcolorbox}[colback=TitleBlue, colframe=TitleBlue, arc=0pt, sharp corners]
+\begin{tcolorbox}[colback=TitleBlue, colframe=TitleBlue, arc=10pt, boxrule=0pt]
+	\begin{minipage}[c]{0.09\textwidth}
+		\hfill
+	\end{minipage}
+	\begin{minipage}[c]{0.8\textwidth}
+		\centering
+		\color{white}
+		\vspace{0.2cm}
+		{\fontsize{70}{90}\selectfont \textbf{Monsoon Depressions}} \\[0.4cm]
+		{\fontsize{32}{38}\selectfont Harshit P. Dhanwalkar, A. Chandrasekar} \\[0.3cm]
+		{\fontsize{20}{21}\selectfont Email-id: harshit.sc21b164@iist.ac.in, chandra@iist.ac.in} \\[0.3cm]
+
+		{\fontsize{25}{30}\selectfont Department of Earth and Space Sciences (ESS)} \\[0.2cm]
+		{\fontsize{25}{30}\selectfont Indian Institute of Space Science and Technology, Thiruvananthapuram, India}
+	\end{minipage}
+	\begin{minipage}[c]{0.09\textwidth}
+		\centering
+		\includegraphics[width=0.95\linewidth]{images/iist-logo-square.png}
+	\end{minipage}
+\end{tcolorbox}
+
+% Poster footer
+\AddToShipoutPictureBG*{%
+	\posterfooter{Presented at: IIST Symposium, 26 March 2026}
+}
+
+\vspace{0.5cm}
+\begin{conceptbox}{\centering Abstract}
+	% FIX: not all though .... some desepates before.
+	This study investigates the post-landfall sustainability of 2024 Monsoon Depressions (MDs) over the Indian subcontinent. Using ERA5 reanalysis and high-resolution tracking, we analyze the feedback between soil moisture (\texttt{SWVL1}) and precipitation (\texttt{TP}). Preliminary results suggest a \textbf{Brown Ocean Effect}, where antecedent soil moisture acts as a latent heat reservoir, offsetting typical inland decay and extending MD longevity.
+\end{conceptbox}
+
+\begin{multicols*}{2}
+	\begin{conceptbox}{Introduction}
+		\#TODO \\
+		Monsoon Depressions are synoptic-scale weather systems that form during the Indian monsoon and contribute significantly to the total rainfall. While their formation and oceanic evolution are well-studied, their behavior after landfall remains poorly understood. This work examines the 2024 depressions to identify factors controlling their inland sustainability.
+	\end{conceptbox}
+
+	\begin{conceptbox}{Methodology}
+		\#TODO
+		\paraseperator{Tracking \& Detection}
+		MD centers were identified using \texttt{MSLP} minima and 850 hPa vorticity.% Translational speeds were computed using Great Circle distances.
+		% FIX:
+
+		\paraseperator{Azimuthal Averaging}
+		To analyze radial evolution, variables were averaged across 16 directional sectors in concentric annuli (0-400 km) around the MD center:
+		\begin{itemize}
+			\item \textbf{Disk 0:} Central point interpolation.
+			\item \textbf{Annuli:} 25km increments with $\pm$10km tolerance.
+		\end{itemize}
+	\end{conceptbox}
+
+	\begin{conceptbox}{Observations}
+		\#TODO
+		\paraseperator{Diurnal Variation}
+
+		\paraseperator{Surface Heat Flux Transitions}
+		% Latent and Sensible heat fluxes were de-accumulated from ERA5 ($J\,m^{-2}$ to $W\,m^{-2}$).
+		% \[ Q = -\frac{\Phi_{t} - \Phi_{t-1}}{\Delta t} \]
+
+		\paraseperator{Landfall Impact}
+		Analysis of 2024 tracks shows that for Long-lived MDs ($\geq 96h$), surface fluxes do not drop as sharply as expected upon landfall, indicating a sustained energy supply from saturated soils.
+
+		\paraseperator{Land-Surface Feedback}
+		Performed Pearson and Spearman correlation analysis between \texttt{TP} and \texttt{SWVL1} specifically for land-phase points (\texttt{SWVL1} $> 0.03$).
+		\begin{itemize}
+			\item \textbf{Feedback Loop:} High positive correlation between land-phase precipitation and Layer-1 soil moisture.
+			\item \textbf{Significance:} $p$-values indicate local surface forcing is a dominant driver for inland intensification in specific 2024 cases.
+		\end{itemize}
+
+		\paraseperator{Speed Analysis}
+		Typical translational velocities were found in the range of \textbf{2-10 m/s}% (7--22 km/h).
+	\end{conceptbox}
+
+	\columnbreak
+	\begin{conceptbox}{Results}
+		\#TODO
+		\begin{center}
+			\includegraphics[width=0.9\linewidth]{../../version21-with-no-ocean-masking/output_2024/MD_track_2024.png} \\
+			\captionof{figure}{Detected Monsoon Depressions for the year 2024}
+			\label{fig:md_tracks}
+		\end{center}
+
+		\paraseperator{Conclusion}
+		The 2024 MDs exhibited extended inland longevity primarily due to:
+		\begin{itemize}
+			\item High antecedent soil moisture.
+			\item Ongoing precipitation maintaining the latent heat reservoir.
+			\item Slower translation speeds allowing longer interaction with local moisture sources.
+		\end{itemize}
+	\end{conceptbox}
+
+	\begin{conceptbox}[colback=white, fonttitle=\bfseries]{Refrences}
+		\begin{itemize}
+			\item \#TODO
+			\item \#TODO
+			\item \#TODO
+			\item \#TODO
+		\end{itemize}
+	\end{conceptbox}
+\end{multicols*}
+\end{document}
