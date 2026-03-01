@@ -21,7 +21,7 @@ from utils import (
 
 def analyze_all_tracks(ds, full_track_df, buffer_km=100, output_dir="output"):
     """Compute correlations for all tracks"""
-    std_print("INFO", "ca", " --- Analyzing all tracks for soil water content patterns ---")
+    std_print("INFO", "ca", " --- Analyzing all tracks for Soil Water Content patterns ---")
     unique_tracks = sorted(full_track_df["track_id"].unique())
     all_results = []
 
@@ -47,7 +47,7 @@ def analyze_all_tracks(ds, full_track_df, buffer_km=100, output_dir="output"):
         "mean_swvl1": results_df["mean_swvl1"].mean(),
     }
 
-    std_print("INFO", "ca", f"Soil Water Content Analysis across {summary['n_tracks']} Tracks :")
+    std_print("INFO", "ca", f"Soil Water Content Analysis across {summary['n_tracks']} Tracks")
     std_print(None, None, "Mean Correlation (TP vs SM)", f"{summary['mean_correlation']:.3f} ± {summary['std_correlation']:.3f}")
     std_print(None, None, "Positive Correlations", f"{summary['tracks_with_positive_corr']}/{summary['n_tracks']}")
     std_print(None, None, "Significant Correlations (p < 0.05)", f"{summary['tracks_with_significant_corr']}/{summary['n_tracks']}")
@@ -60,7 +60,7 @@ def analyze_all_tracks(ds, full_track_df, buffer_km=100, output_dir="output"):
 # Correlation scatter plot with time gradient
 def plot_tp_swvl1_correlation(ds, track_df, track_id, buffer_km=100, output_dir="output"):
     result = compute_single_track_correlation(ds, track_df, track_id, buffer_km)
-    std_print("INFO", "ca", f" --- Track {track_id} TP-SWVL1 Correlation scatter plot ---")
+    # std_print("INFO", "ca", f" --- Track {track_id} TP-SWVL1 Correlation scatter plot ---")
     if result is None:
         std_print("WARN", "ca", f"Track {track_id}", "Insufficient data for correlation plot")
         return
@@ -177,12 +177,12 @@ def plot_tp_swvl1_correlation(ds, track_df, track_id, buffer_km=100, output_dir=
     plot_path = os.path.join(track_dir, f"track_{track_id}_TP-SWVL1_correlation.png")
     plt.savefig(plot_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
-    std_print("SAVED", "ca", "TP-SWVL1 Correlation scatter plot (land only)", plot_path)
+    std_print("SAVED", "ca", "Correlation scatter plot (land only) : TP-SWVL1", plot_path)
 
 
 def plot_swvl1_hf_correlation(swvl1, latent_hf, sensible_hf, valid_times, landfall_index, track_id, output_dir, originates_over_land=True,):
     track_id = int(track_id)
-    std_print("INFO", "ca", f" --- Track {track_id} SWVL1-HF Correlation scatter plot ---")
+    # std_print("INFO", "ca", f" --- Track {track_id} SWVL1-HF Correlation scatter plot ---")
     total_hf = latent_hf + sensible_hf
     valid_mask = ~(
         np.isnan(swvl1)
@@ -258,13 +258,13 @@ def plot_swvl1_hf_correlation(swvl1, latent_hf, sensible_hf, valid_times, landfa
     plot_path = os.path.join(track_dir, f"track_{track_id}_SWVL1-HF_correlation.png")
     plt.savefig(plot_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
-    std_print("SAVED", "ca", "SWVL1-HF Correlation scatter plot", plot_path)
+    std_print("SAVED", "ca", "Correlation scatter plot : SWVL1-HF", plot_path)
     return True
 
 
 def plot_tp_hf_correlation(tp, latent_hf, sensible_hf, valid_times, landfall_index, track_id, output_dir, originates_over_land=True,):
     track_id = int(track_id)
-    std_print("INFO", "ca", f" --- Track {track_id} TP-HF Correlation scatter plot ---")
+    # std_print("INFO", "ca", f" --- Track {track_id} TP-HF Correlation scatter plot ---")
     total_hf = latent_hf + sensible_hf
     valid_mask = ~(
         np.isnan(tp) | np.isnan(latent_hf) | np.isnan(sensible_hf) | np.isnan(total_hf)
@@ -335,7 +335,7 @@ def plot_tp_hf_correlation(tp, latent_hf, sensible_hf, valid_times, landfall_ind
     plot_path = os.path.join(track_dir, f"track_{track_id}_TP-HF_correlation.png")
     plt.savefig(plot_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
-    std_print("SAVED", "ca", "TP-HF Correlation scatter plot", plot_path)
+    std_print("SAVED", "ca", "Correlation scatter plot : TP-HF", plot_path)
     return True
 
 
@@ -347,7 +347,7 @@ def plot_tp_swvl1_lag_correlation(tp, sm, max_lag_hours, track_id, output_dir):
      - Positive lag: SWVL1 leads TP (antecedent moisture)
     """
     track_id = int(track_id)
-    std_print("INFO", "ca", f" --- Track {track_id} TP-SWVL1 Lag-Correlation plot ---")
+    # std_print("INFO", "ca", f" --- Track {track_id} TP-SWVL1 Lag-Correlation plot ---")
     lags, correlations_lag = lag_correlation(tp, sm, max_lag=max_lag_hours)
     if len(lags) != len(correlations_lag):
         min_len = min(len(lags), len(correlations_lag))
@@ -402,12 +402,10 @@ def plot_tp_swvl1_lag_correlation(tp, sm, max_lag_hours, track_id, output_dir):
 
     track_dir = os.path.join(output_dir, "lag_correlation")
     os.makedirs(track_dir, exist_ok=True)
-    plot_path = os.path.join(
-        track_dir, f"track_{track_id}_TP-SWVL1_lag_correlation.png"
-    )
+    plot_path = os.path.join(track_dir, f"track_{track_id}_TP-SWVL1_lag_correlation.png")
     plt.savefig(plot_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
-    std_print("SAVED", "ca", "TP-SWVL1 Lag correlation plot", plot_path)
+    std_print("SAVED", "ca", "Lag Correlation plot : TP-SWVL1", plot_path)
 
 
 def plot_swvl1_hf_lag_correlation(sm, hf, max_lag_hours, track_id, hf_name, output_dir):
@@ -417,7 +415,7 @@ def plot_swvl1_hf_lag_correlation(sm, hf, max_lag_hours, track_id, hf_name, outp
      - Positive lag: HF leads SM (Surface Drying)
     """
     track_id = int(track_id)
-    std_print("INFO", "ca", f" --- Track {track_id} SWVL1-{hf_name} Lag-Correlation plot ---")
+    # std_print("INFO", "ca", f" --- Track {track_id} SWVL1-{hf_name} Lag-Correlation plot ---")
     lags, correlations_lag = lag_correlation(sm, hf, max_lag=max_lag_hours)
     valid_indices = [i for i, val in enumerate(correlations_lag) if not np.isnan(val)]
     if not valid_indices:
@@ -480,7 +478,7 @@ def plot_swvl1_hf_lag_correlation(sm, hf, max_lag_hours, track_id, hf_name, outp
     plot_path = os.path.join(track_dir, f"track_{track_id}_SWVL1-{hf_name}_lag_correlation.png")
     plt.savefig(plot_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
-    std_print("SAVED", "ca", f"SWVL1-{hf_name} Lag plot", plot_path)
+    std_print("SAVED", "ca", f"Lag plot : SWVL1-{hf_name}", plot_path)
     return True
 
 
@@ -491,7 +489,7 @@ def plot_tp_hf_lag_correlation(flux, tp, max_lag_hours, track_id, flux_name, out
      - Positive lag: TP leads Flux (rainfall affects energy flux)
     """
     track_id = int(track_id)
-    std_print("INFO", "ca", f" --- Track {track_id} {flux_name}-TP Lag-Correlation plot ---")
+    # std_print("INFO", "ca", f" --- Track {track_id} {flux_name}-TP Lag-Correlation plot ---")
     lags, correlations_lag = lag_correlation(flux, tp, max_lag=max_lag_hours)
     valid_indices = [i for i, val in enumerate(correlations_lag) if not np.isnan(val)]
     if not valid_indices:
@@ -559,7 +557,7 @@ def plot_tp_hf_lag_correlation(flux, tp, max_lag_hours, track_id, flux_name, out
     plot_path = os.path.join(track_dir, f"track_{track_id}_TP-{flux_name}_lag_correlation.png")
     plt.savefig(plot_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
-    std_print("SAVED", "ca", f"TP-{flux_name} Lag plot", plot_path)
+    std_print("SAVED", "ca", f"Lag plot : TP-{flux_name}", plot_path)
     return True
 
 
@@ -612,7 +610,7 @@ def plot_lagged_correlation_single_variable(data, var_name, track_id, output_dir
     outpath = os.path.join(plot_dir, f"track_{track_id}_autocorr_{clean_name}.png")
     plt.savefig(outpath, dpi=300, bbox_inches="tight")
     plt.close(fig)
-    std_print("SAVED", "ca", f"Autocorrelation: {var_name}", outpath)
+    std_print("SAVED", "ca", f"Autocorrelation : {var_name}", outpath)
     return lags, correlations, pvalues
 
 
@@ -789,7 +787,7 @@ def analyze_single_track(ds, track_df, track_id, buffer_km, max_lag_hours=50, ou
         "valid_times": list(valid_times),  # Convert to list for any type (numpy array, list, DatetimeIndex)
     }
 
-    std_print("INFO", "ca", f"Correlation for Track {track_id}:")
+    std_print("INFO", "ca", f"Correlation for Track {track_id}")
     std_print(None, None, f"r={correlation_results['correlation']:.3f}")
     std_print(None, None, f"p={correlation_results['p_value']:.4f}")
     std_print(None, None, f"n={len(valid_times)}")

@@ -24,7 +24,7 @@ def extract_heat_flux_timeseries(ds, track_df, track_id, buffer_km=100):
     2. Instantaneous Average: avg_slhtf, avg_ishf (W m⁻²)
     """
     track_id = int(track_id)
-    std_print("INFO", "ts", "Dataset variables available", list(ds.data_vars.keys()))
+    # std_print("DEBUG", "ts", "Dataset variables available", list(ds.data_vars.keys()))
     ds, time_coord = get_time_coord(ds)
     ds_times = pd.to_datetime(ds.time.values)
 
