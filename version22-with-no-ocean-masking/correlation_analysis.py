@@ -702,8 +702,7 @@ def analyze_single_track(ds, track_df, track_id, buffer_km, max_lag_hours=50, ou
 
     # Generate all plots
     os.makedirs(output_dir, exist_ok=True)
-    std_print("INFO", "ca", f" --- Generating plots for Track {track_id} ---")
-
+    std_print("INFO", "ca", f" --- Generating Correlation plots for Track {track_id} ---")
     # 1. TP-SWVL1 Feedback
     try:
         plot_tp_swvl1_correlation(ds, track_df, track_id, buffer_km=100, output_dir=output_dir)
@@ -737,8 +736,8 @@ def analyze_single_track(ds, track_df, track_id, buffer_km, max_lag_hours=50, ou
         std_print("ERROR", "ca", f"TP-Heat Flux lag analysis failed for Track {track_id}", str(e))
 
     # 4. Autocorrelation Analysis
+    std_print("INFO", "ca", f" --- Generating Autocorrelation plots for Track {track_id} ---")
     try:
-        std_print("DEBUG", "ca", f" --- Generating Autocorrelation plots for Track {track_id} ---")
         plot_lagged_correlation_single_variable(
             tp_series, var_name="tp", track_id=track_id, output_dir=output_dir
         )
