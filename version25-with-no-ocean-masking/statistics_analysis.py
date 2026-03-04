@@ -436,7 +436,7 @@ def test_granger_causality(coupling_df, output_dir):
                 "reason": "Missing TP or SWVL1 columns",
                 "available_columns": list(coupling_df.columns),
             }
-        std_print("INFO", "sa", "Using columns", f"{tp_col} → {sm_col}")
+        std_print("INFO", "sa", "Using columns", f"{tp_col} -> {sm_col}")
         # Prepare data
         data = coupling_df[[tp_col, sm_col]].copy()
         data = data.apply(pd.to_numeric, errors="coerce").dropna()

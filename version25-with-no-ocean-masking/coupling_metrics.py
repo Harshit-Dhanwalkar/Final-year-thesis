@@ -1,10 +1,11 @@
-# FIX: compling matrix summary report csv end before it's completion, summary CSV is being truncated, statistical analysis and statistics_analysis.py functions are operating on incomplete data. Likely df.to_csv() call inside a loop that exits on exception. Add try/except with an explicit finally: df.to_csv(...) pattern.
-# TODO: added validate_coupling_data and validate_analysis_inputs, but not implemented. GAM analysis in statistics_analysis.py fails silently if coupling data has NaN-filled rows. The validation stub should at minimum check for null columns and minimum row count.
 """
 1. Feedback Strength Index (FSI): Integrates TP-SWVL1 correlation with soil capacity
 2. Diurnal Sensible Heat Flux Amplitude: Quantifies land surface diurnal heating
 3. Coupling Efficiency: Relates precipitation-to-moisture feedback during passage
 """
+
+# FIX: compling matrix summary report csv end before it's completion, summary CSV is being truncated, statistical analysis and statistics_analysis.py functions are operating on incomplete data. Likely df.to_csv() call inside a loop that exits on exception. Add try/except with an explicit finally: df.to_csv(...) pattern.
+# TODO: added validate_coupling_data and validate_analysis_inputs, but not implemented. GAM analysis in statistics_analysis.py fails silently if coupling data has NaN-filled rows. The validation stub should at minimum check for null columns and minimum row count.
 
 import os
 import numpy as np

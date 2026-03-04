@@ -8,6 +8,7 @@
 
 \subsection{Dataset Information}
 \begin{frame}{Dataset Information}
+	\vspace{-0.1cm}
 	\begin{block}{ERA5 Single Level Reanalysis Dataset (June-September 2024) \tiny \cite{hersbach2020era5} :}
 		%\pdflink{2020-Hersbach-The-ERA5-global-reanalysis.pdf}{The ERA5 global reanalysis}
 		\footnotesize
@@ -20,38 +21,53 @@
 		\end{itemize}
 	\end{block}
 
+	\vspace{-0.2cm}
 	\begin{columns}[T, totalwidth=0.9\textwidth]
-		\column{0.48\textwidth}
-		\footnotesize
+		\column{0.43\textwidth}
 		\begin{block}{ERA5 Dataset Variables :}
-			\begin{itemize}
-				\item Mean sea level pressure (\texttt{MSL})
-				\item 10-meter U wind component (\texttt{U10})
-				\item 10-meter V wind component (\texttt{V10})
-				\item Total precipitation (\texttt{TP})
-				\item Volumetric soil water layer 1 (\texttt{SWVL1})
-				\item Mean surface latent heat flux (\texttt{AVG\_SLHF})
-				\item Mean surface sensible heat flux (\texttt{AVG\_ISHF})
-				\item 2-meter temperature (\texttt{T2M})
-				\item Soil temperature level 1 (\texttt{STL1})
+			\begin{itemize}\footnotesize
+				\item Mean Sea Level Pressure (\texttt{MSL})
+				\item Surface Pressure (\texttt{SP})
+				\item 10-Meter U-Wind Component (\texttt{U10})
+				\item 10-Meter V-Wind Component (\texttt{V10})
+				\item Mean Surface Latent Heat Flux (\texttt{AVG\_SLHF})
+				\item Mean surface Sensible Heat Flux (\texttt{AVG\_ISHF})
+				\item Total Precipitation (\texttt{TP})
+				\item Volumetric Soil Water Layer-1 (\texttt{SWVL1})
+				\item Soil Temperature Level-1 (\texttt{STL1})
+				\item 2-Meter Temperature (\texttt{T2M})
+				\item 2-Meter Dew Point Temperature (\texttt{D2M})
 			\end{itemize}
 		\end{block}
 
-		\column{0.48\textwidth}
-		\footnotesize
+		\column{0.55\textwidth}
 		\begin{block}{Derived Variables :}
-			\begin{itemize}
+			\begin{itemize}\footnotesize
 				\item \textbf{10-meter Wind Speed (\texttt{W10}) :}
+				      \footnotesize
 				      \begin{equation}
 					      \texttt{W10} = \sqrt{(\texttt{U10})^2 + (\texttt{V10})^2}
 				      \end{equation}
-				\item \textbf{Relative Vorticity (\texttt{$\zeta$}):} Calculated using the 10-m horizontal wind components:
+				\item \textbf{Relative Vorticity (\texttt{$\zeta$}):} Calculated using the 10-m horizontal wind components
+				      \footnotesize
 				      \begin{equation}
 					      \zeta = \frac{\partial(\texttt{V10)}}{\partial x} - \frac{\partial(\texttt{U10)}}{\partial y}
 				      \end{equation}
-				\item \textbf{Total Heat Flux (\texttt{THF}) :} Sum of surface latent and sensible heat fluxes:
+				\item \textbf{Total Heat Flux (\texttt{THF}) :} Sum of surface latent and sensible heat fluxes
+				      \footnotesize
 				      \begin{equation}
 					      \texttt{THF} = \texttt{SLHF} + \texttt{SSHF}
+				      \end{equation}
+				\item \textbf{Saturation Vapor Pressure (\texttt{$e_s$}) :}
+				      \footnotesize
+				      \begin{equation}
+					      e_s = 6.112 \exp\left(\frac{17.67 * D2M}{D2M + 243.5}\right)
+				      \end{equation}
+				      where \texttt{D2M} = 2m Dew Point Temperature in $^\circ$C
+				\item \textbf{Water Vapor Mixing Ratio (\texttt{w}) :}
+				      \footnotesize
+				      \begin{equation}
+					      \texttt{w} = 0.622 \frac{e_s}{SP - e_s} \times 1000
 				      \end{equation}
 			\end{itemize}
 		\end{block}

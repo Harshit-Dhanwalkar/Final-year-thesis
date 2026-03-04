@@ -344,7 +344,7 @@ def compute_azimuthal_hovmoller_sectors(
         try:
             import xarray as xr
             if hasattr(lsm_2d, "sel"):
-                # ERA5 latitudes can be descending (90→-90); sel with method="nearest" handles both
+                # ERA5 latitudes can be descending (90 -> -90); sel with method="nearest" handles both
                 lsm_cropped = lsm_2d.sel(
                     latitude=lat_values,
                     longitude=lon_values,
@@ -707,16 +707,9 @@ def average_azimuthally(hov_results, variables, radii_km=None):
 
 
 def plot_hovmoller_azimuthal_average(
-    hov_arr,
-    track_times,
-    radii_km,
-    var_name,
-    track_df,
-    track_id,
-    output_dir="hov_plots",
-    landfall_index=-1,
-    per_radius_landfall_index=None,
-    levels=36
+    hov_arr, track_times, radii_km, var_name,
+    track_df, track_id, output_dir, landfall_index=-1,
+    per_radius_landfall_index=None, levels=36
 ):
     track_id = int(track_id)
     plot_dir = os.path.join(output_dir, f"track_{track_id}", "hovmoller")

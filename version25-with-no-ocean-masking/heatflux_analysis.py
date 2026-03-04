@@ -60,7 +60,7 @@ def analyze_flux_transition(ds, track_df, track_id, hours_before=24, hours_after
     - slhf, sshf: J/m² (accumulated, ERA5 convention: negative downward)
 
     Conversion: W/m² = -dJ/m² / dt_seconds
-    (Negative sign flips downward → upward convention)
+    (Negative sign flips downward -> upward convention)
     """
     track_id = int(track_id)
     ds, time_coord = get_time_coord(ds)

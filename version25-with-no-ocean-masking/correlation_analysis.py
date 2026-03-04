@@ -84,7 +84,7 @@ def plot_tp_swvl1_correlation(ds, track_df, track_id, buffer_km=100, output_dir=
     t_land = t_numeric[land_mask]
 
     if len(tp_land) and len(swvl1_land) < 3:
-        std_print("WARN", "ca", "Insufficient data", f"only {len(tp_land)} tp and {len(swvl1_land)} < 3 land points")
+        std_print("WARN", "ca", "Insufficient data for correlation plot", f"only {len(tp_land)} tp and {len(swvl1_land)} < 3 land points")
         sc = ax_main.scatter(
             tp_vals,
             sm_vals,
@@ -705,7 +705,7 @@ def analyze_single_track(ds, track_df, track_id, buffer_km, max_lag_hours=50, ou
     else:
         std_print("WARN", "ca", "No landfall detected", "No valid SWVL1 along track")
 
-    # Generate all plots
+    # Plots
     os.makedirs(output_dir, exist_ok=True)
     std_print("INFO", "ca", " --- Generating Correlation plots ---")
     # 1. TP-SWVL1 Feedback

@@ -30,7 +30,7 @@ def std_print(level=None, file_code=None, message="", value=None):
         "SAVED": "\033[94m",  # Blue
         "EXPORT": "\033[96m",  # Cyan
         "WARN": "\033[93m",  # Yellow
-        "DEBUG": "\033[91m",  # Red
+        "DEBUG": "\x1b[38;2;255;140;0m",  # Orange
         "ERROR": "\033[91m",  # Red
         "RESET": "\033[0m",  # Reset to default
     }

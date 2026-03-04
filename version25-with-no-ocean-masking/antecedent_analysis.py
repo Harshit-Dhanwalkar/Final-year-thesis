@@ -1,9 +1,8 @@
-# This script computes soil moisture conditions in the 24 hours BEFORE landfall.
-# Used to understand the moisture state of the land when the MD arrives.
+# This script computes soil moisture conditions in the 24 hours before landfall.
 # Is the antecedent soil moisture (wet vs dry) related to rainfall/flooding intensity during MD passage?
 
 # Dry antecedent conditions -> Soil can absorb a lot of the incoming rain -> lower immediate flood risk (more infiltration).
-# Wet antecedent conditions -> Soil is already near saturation → much more of the MD's heavy rainfall becomes surface runoff -> higher flood potential even if the total rainfall amount is not extreme.
+# Wet antecedent conditions -> Soil is already near saturation -> much more of the MD's heavy rainfall becomes surface runoff -> higher flood potential even if the total rainfall amount is not extreme.
 
 import os
 import numpy as np
@@ -51,7 +50,7 @@ def compute_antecedent_soil_moisture(ds, track_df, track_id, hours_before=24):
     lon_min_buf = max(70.0, lon_min - lon_buffer)
     lon_max_buf = min(95.0, lon_max + lon_buffer)
 
-    # Extract soil moisture data BEFORE system
+    # Extract soil moisture data before system
     ds, time_coord = get_time_coord(ds)
 
     try:
@@ -231,12 +230,8 @@ def plot_antecedent_spatial_map(
         cbar = plt.colorbar(im, ax=ax, pad=0.02, shrink=0.8)
         cbar.set_label("Soil Moisture (m³/m³)", fontsize=11, fontweight="bold")
         # Title
-        title = f"Track {track_id}: Antecedent Soil Moisture\n{hours_before}h BEFORE System Formation\n({antecedent_time.strftime('%d/%m/%Y %H:%M')})"
-        ax.set_title(
-            title,
-            fontsize=13,
-            fontweight="bold"
-        )
+        title = f"Track {track_id}: Antecedent Soil Moisture\n{hours_before}h before System Formation\n({antecedent_time.strftime('%d/%m/%Y %H:%M')})"
+        ax.set_title(title, fontsize=13, fontweight="bold")
 
         # Legend
         legend_handles, labels = ax.get_legend_handles_labels()
@@ -325,9 +320,9 @@ def analyze_antecedent_correlations(results_df, output_dir):
         std_print(None, None, "p-value", f"{p_duration:.4f}")
         if p_duration < 0.05:
             if r_duration > 0:
-                interpretation = "Wetter soils → Longer MD duration"
+                interpretation = "Wetter soils -> Longer MD duration"
             else:
-                interpretation = "Drier soils → Longer MD duration"
+                interpretation = "Drier soils -> Longer MD duration"
         else:
             interpretation = "No significant correlation"
         std_print(None, None, "Interpretation", interpretation)
@@ -449,7 +444,7 @@ def create_antecedent_scatter_plot(results_df, output_dir):
 
 
 def analyze_antecedent_trend(ds, track_df, track_id, output_dir="output"):
-    """Analyze how soil moisture changes in the 48 hours BEFORE system formation"""
+    """Analyze how soil moisture changes before system formation"""
     track_id = int(track_id)
     track = track_df[track_df["track_id"] == track_id].sort_values("time")
     if track.empty:
@@ -457,7 +452,7 @@ def analyze_antecedent_trend(ds, track_df, track_id, output_dir="output"):
 
     system_start = pd.to_datetime(track.iloc[0]["time"])
 
-    # Define time points: 48h, 36h, 24h, 12h, 0h before system
+    # time points: before system formation
     time_points = [48, 36, 24, 12, 0]
     sm_values = []
     times = []
@@ -493,7 +488,9 @@ def analyze_antecedent_trend(ds, track_df, track_id, output_dir="output"):
         ax.fill_between(times, sm_values, alpha=0.2, color="lightgreen")
         ax.set_xlabel("Hours Before System Formation", fontsize=11, fontweight="bold")
         ax.set_ylabel(
-            "Soil Water Volumetric Layer-1 (0-7cm) (m³/m³)", fontsize=11, fontweight="bold"
+            "Soil Water Volumetric Layer-1 (0-7cm) (m³/m³)",
+            fontsize=11,
+            fontweight="bold",
         )
         ax.set_title(
             f"Track {track_id}: Antecedent Soil Moisture Trend\n48h Before MD Formation",

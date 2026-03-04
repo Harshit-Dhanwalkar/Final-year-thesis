@@ -1,7 +1,7 @@
 """
 Elevation Analysis for MD Tracks using SRTM HGT Data
 TSI combines three terrain-dependent factors:
-  TSI = elevation_effect × slope_effect × roughness_effect
+  TSI = elevation_effect x slope_effect x roughness_effect
   - elevation_effect: normalized elevation contrast
   - slope_effect: mean slope magnitude
   - roughness_effect: terrain variability (std of elevation)
@@ -39,7 +39,7 @@ def load_elevation_metrics(output_dir):
                 std_print("INFO", "stats", "Loaded elevation metrics", path)
                 return df
             except Exception as e:
-                std_print("WARN", "stats", f"Failed to load {path}", str(e))
+                std_print("ERROR", "stats", f"Failed to load {path}", str(e))
     std_print(
         "WARN", "ea", "Elevation metrics not found", "TSI analysis will be skipped"
     )
@@ -56,7 +56,7 @@ class TerrainAnalyzer:
       yyy = longitude (000-179)
     """
 
-    def __init__(self, hgt_dir: str = "../Data/Elevation/HGT-files/"):
+    def __init__(self, hgt_dir="../Data/Elevation/HGT-files/"):
         self.hgt_dir = hgt_dir
         self.tiles_cache = {}  # Cache loaded tiles for performance
         if os.path.exists(hgt_dir):
@@ -272,15 +272,15 @@ class TerrainAnalyzer:
         if len(valid_elev) < 3:
             return tsi_result
 
-        # 1. ELEVATION EFFECT
+        # 1. Elevation effect
         elev_range = valid_elev.max() - valid_elev.min()
         elev_eff = min(1.0, elev_range / 3000.0)
 
-        # 2. SLOPE EFFECT
+        # 2. Slope effect
         mean_slope = np.abs(valid_elev.diff().dropna()).mean()
         slope_eff = min(1.0, mean_slope / 30.0)
 
-        # 3. ROUGHNESS EFFECT
+        # 3. Roughness effect
         roughness_eff = min(1.0, valid_elev.std() / 500.0)
 
         # Compute TSI
@@ -322,8 +322,10 @@ class TerrainAnalyzer:
                 # Ensure track_df is a DataFrame, not a Serie
                 if isinstance(track_df, pd.Series):
                     continue
+
                 # Get elevation profile
                 track_with_elev = self.get_elevation_profile(track_df)
+
                 # Get coupling metrics if available
                 track_coupling = None
                 if coupling_df is not None and not coupling_df.empty:
@@ -333,9 +335,11 @@ class TerrainAnalyzer:
                             track_coupling = coupling_df[mask].iloc[0].to_dict()
                     elif track_id in coupling_df.index:
                         track_coupling = coupling_df.loc[track_id].to_dict()
+
                 # Compute TSI
                 tsi_result = self.compute_tsi(track_with_elev, track_coupling)
                 tsi_result["track_id"] = track_id
+
                 # Calculate duration if available
                 if "time" in track_df.columns:
                     times = pd.to_datetime(track_df["time"])
@@ -385,6 +389,7 @@ class TerrainAnalyzer:
                 f.write(f"Std Dev:  {valid_tsi.std():.3f}\n")
                 f.write(f"Min TSI:  {valid_tsi.min():.3f}\n")
                 f.write(f"Max TSI:  {valid_tsi.max():.3f}\n\n")
+
                 f.write("TSI Classification Distribution:\n")
                 class_dist = tsi_df["TSI_class"].value_counts()
                 for cls, count in class_dist.items():
@@ -437,10 +442,10 @@ class TerrainAnalyzer:
                     f.write(f"Correlation (TSI vs duration): {corr:.3f}\n")
                     if corr < -0.5:
                         f.write(
-                            "Interpretation: Higher TSI → Shorter duration (terrain-sensitive tracks shorter)\n"
+                            "Interpretation: Higher TSI -> Shorter duration (terrain-sensitive tracks shorter)\n"
                         )
                     elif corr > 0.5:
-                        f.write("Interpretation: Higher TSI → Longer duration\n")
+                        f.write("Interpretation: Higher TSI -> Longer duration\n")
                     else:
                         f.write("Interpretation: Weak correlation\n")
                 f.write("\n")
@@ -464,15 +469,18 @@ class TerrainAnalyzer:
                 label=f"Mean: {valid_tsi.mean():.3f}",
             )
             ax.set_xlabel(
-                "TSI (Topographic Sensitivity Index)", fontsize=11, fontweight="bold"
+                "Topographic Sensitivity Index (TSI)", fontsize=11, fontweight="bold"
             )
             ax.set_ylabel("Frequency", fontsize=11)
             ax.grid(True, alpha=0.3)
+
             # Legend
             legend_handles, labels = ax.get_legend_handles_labels()
             if legend_handles:
                 ax.legend(handles=legend_handles, loc="best", **legend_style())
-            ax.set_title("(a) TSI Distribution", fontsize=13, fontweight="bold")
+
+            ax.set_title("TSI Distribution", fontsize=13, fontweight="bold")
+
         # 2. TSI vs Duration
         ax = axes[0, 1]
         if "duration_h" in tsi_df.columns:
@@ -494,13 +502,14 @@ class TerrainAnalyzer:
                 )
                 ax.set_xlabel("TSI", fontsize=11, fontweight="bold")
                 ax.set_ylabel("Duration (hours)", fontsize=11, fontweight="bold")
-                ax.set_title(
-                    "(b) TSI vs Track Duration", fontsize=13, fontweight="bold"
-                )
+                ax.grid(True, alpha=0.3)
+
+                ax.set_title("TSI vs Track Duration", fontsize=13, fontweight="bold")
+
                 if "elevation_range" in valid.columns:
                     cbar = plt.colorbar(scatter, ax=ax)
                     cbar.set_label("Elevation Range (m)", fontsize=10)
-                ax.grid(True, alpha=0.3)
+
                 # Correlation
                 corr = valid["TSI"].corr(valid["duration_h"])
                 ax.text(
@@ -512,6 +521,7 @@ class TerrainAnalyzer:
                     verticalalignment="top",
                     bbox=bbox_style,
                 )
+
         # 3. Component effects
         ax = axes[1, 0]
         components = []
@@ -536,9 +546,11 @@ class TerrainAnalyzer:
                 alpha=0.7,
             )
             ax.set_ylabel("Mean Effect Value", fontsize=11, fontweight="bold")
-            ax.set_title("(c) TSI Component Effects", fontsize=13, fontweight="bold")
             ax.set_ylim(0, 1.0)
             ax.grid(True, alpha=0.3, axis="y")
+
+            ax.set_title("TSI Component Effects", fontsize=13, fontweight="bold")
+
             # Value labels
             for bar in bars:
                 height = bar.get_height()
@@ -551,6 +563,7 @@ class TerrainAnalyzer:
                     fontsize=10,
                     bbox=bbox_style,
                 )
+
         # 4. Elevation range vs TSI
         ax = axes[1, 1]
         if "elevation_range" in tsi_df.columns:
@@ -572,13 +585,14 @@ class TerrainAnalyzer:
                 )
                 ax.set_xlabel("Elevation Range (m)", fontsize=11, fontweight="bold")
                 ax.set_ylabel("TSI", fontsize=11, fontweight="bold")
-                ax.set_title(
-                    "(d) Elevation Range vs TSI", fontsize=13, fontweight="bold"
-                )
+                ax.grid(True, alpha=0.3)
+
+                ax.set_title("Elevation Range vs TSI", fontsize=13, fontweight="bold")
+
                 if "duration_h" in valid.columns:
                     cbar = plt.colorbar(scatter, ax=ax)
                     cbar.set_label("Duration (h)", fontsize=10)
-                ax.grid(True, alpha=0.3)
+
         plt.tight_layout()
         plot_path = os.path.join(output_dir, "elevation_metrics_analysis.png")
         plt.savefig(plot_path, dpi=300, bbox_inches="tight")
@@ -602,11 +616,13 @@ def run_elevation_analysis(
 
     # Initialize terrain analyzer
     terrain = TerrainAnalyzer(hgt_dir=hgt_dir)
+
     # Compute TSI for all tracks
     tsi_df = terrain.compute_tsi_for_all_tracks(tracks_df, coupling_df)
     if tsi_df.empty:
-        std_print("WARN", "ea", "No TSI results computed", "Check elevation data")
+        std_print("ERROR", "ea", "No TSI results computed", "No elevation data")
         return pd.DataFrame()
+
     # Export results
     terrain_output_dir = os.path.join(output_dir, "elevation_analysis")
     terrain_output_path = os.path.join(terrain_output_dir, "elevation_metrics.csv")

@@ -74,13 +74,13 @@ import sys
 import threading
 import time
 
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import xarray as xr
+import matplotlib.pyplot as plt
 from scipy.optimize import linear_sum_assignment
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
 from cartopy.mpl.geoaxes import GeoAxes
 from cartopy.mpl.ticker import LatitudeFormatter, LongitudeFormatter
 
@@ -102,33 +102,34 @@ from utils import (
     haversine_distance,
     get_time_coord,
     common_bbox,
-    legend_style,
+    legend_style
 )
 from azimuthal_hovmoller import (
     compute_azimuthal_hovmoller_sectors,
     average_azimuthally,
     compute_swvl1_tendency,
-    plot_hovmoller_azimuthal_average,
+    plot_hovmoller_azimuthal_average
 )
 from speed_analysis import (
     compute_track_speeds,
     plot_speed_analysis_kmh,
-    plot_speed_analysis_ms,
+    plot_speed_analysis_ms
 )
 from antecedent_analysis import (
     plot_antecedent_spatial_map,
     analyze_antecedent_correlations,
     analyze_antecedent_trend,
-    analyze_antecedent_for_all_tracks,
+    analyze_antecedent_for_all_tracks
 )
 from correlation_analysis import (
     analyze_single_track,
     compute_single_track_correlation,
-    analyze_all_tracks,
+    analyze_all_tracks
 )
 from elevation_track_vis import (
     create_elevation_vrt,
-    plot_tracks_on_elevation,
+    plot_tracks_elevation,
+    plot_all_tracks_elevation
 )
 from elevation_analysis import run_elevation_analysis
 from statistics_analysis import (
@@ -137,12 +138,12 @@ from statistics_analysis import (
     test_granger_causality,
     analyze_tsi,
     load_elevation_metrics,
-    run_all_statistical_analyses,
+    run_all_statistical_analyses
 )
 from soilmoiture_analysis import (
     plot_spatial_tp_swvl1,
     compute_soil_moisture_memory,
-    analyze_soil_memory_by_track,
+    analyze_soil_memory_by_track
 )
 from heatflux_analysis import (
     classify_md_duration,
@@ -151,17 +152,21 @@ from heatflux_analysis import (
     compute_flux_tp_correlation,
     export_heat_flux_results,
     export_landfall_flux_results,
-    print_md_classification_summary,
+    print_md_classification_summary
 )
 from coupling_metrics import (
     compute_fsi_all_tracks,
     compute_diurnal_amplitude_all_tracks,
     compute_coupling_efficiency,
     export_coupling_metrics,
-    generate_coupling_metrics_report,
+    generate_coupling_metrics_report
 )
 
-from timeseries import tp_swvl1_timeseries, extract_heat_flux_timeseries, hf_timeseries
+from timeseries import (
+   tp_swvl1_timeseries,
+   extract_heat_flux_timeseries,
+   hf_timeseries
+)
 
 DATA_DIR = os.path.join("..", "Data", "single-levels", "ncfiles")
 HGT_DIR = os.path.join("..", "Data", "elevation", "hgtfiles")
@@ -225,6 +230,7 @@ MONSOON_SEASONS = {
     ],
 }
 
+# TODO: make MONSOON_YEAR global so every module can use it
 MONSOON_YEAR = 2024
 MONTH_DIRS = MONSOON_SEASONS.get(MONSOON_YEAR, [])
 output_dir = f"output_{MONSOON_YEAR}"
@@ -234,17 +240,19 @@ if not os.path.exists(output_dir):
 else:
     std_print("WARN", "md", f"Using existing output directory for year {MONSOON_YEAR}", output_dir)
 
+# TODO: make clipping global so every module can use `full_extent`
 # Use clipped domain instead of full dataset bounds
 clipped_min_lat = 7.0  # N
 clipped_max_lat = 30.0  # N
 clipped_min_lon = 70.0  # E
 clipped_max_lon = 95.0  # E
+full_extent = [clipped_min_lon, clipped_max_lon, clipped_min_lat, clipped_max_lat]
 
 month_colors = {
     "June": "#FF6B6B",
     "July": "#FF4500",
     "August": "#1E90FF",
-    "September": "#9932CC",
+    "September": "#FF00FF",
 }
 month_order = [
     "June",
@@ -328,10 +336,10 @@ variables = [
 def check_statistical_requirements(coupling_df, asm_df):
     """Check if data meets minimum requirements for statistical tests"""
     checks = {
-        "asm_fsi": len(asm_df) >= 5 and "FSI" in coupling_df.columns,  # for H3
-        "gam": len(coupling_df) >= 10 and "FSI" in coupling_df.columns,  # for H4
-        "granger": len(coupling_df) >= 20 and ("TP" in coupling_df.columns or "mean_tp" in coupling_df.columns),  # for H5
-        "tsi": len(coupling_df) >= 5,  # for H7
+        "asm_fsi": len(asm_df) >= 5 and "FSI" in coupling_df.columns,
+        "gam": len(coupling_df) >= 10 and "FSI" in coupling_df.columns,
+        "granger": len(coupling_df) >= 20 and ("TP" in coupling_df.columns or "mean_tp" in coupling_df.columns),
+        "tsi": len(coupling_df) >= 5,
     }
     for test, passed in checks.items():
         if not passed:
@@ -432,7 +440,10 @@ def check_wind_criteria(u_data, v_data, lat, lon):
 
 def calculate_vorticity(ds, latime_index, lon_idx):
     """
-    Compute relative vorticity using finite differences. This uses local grid points (not spatial averaging) because vorticity calculation requires spatial gradients (dv/dx - du/dy). The local wind field structure is essential for vorticity calculation.
+    Compute relative vorticity using finite differences.
+    This uses local grid points (not spatial averaging) because vorticity
+    calculation requires spatial gradients (dv/dx - du/dy).
+    The local wind field structure is essential for vorticity calculation.
     """
     # Get grid dimensions
     n_lat, n_lon = len(ds.latitude), len(ds.longitude)
@@ -685,12 +696,11 @@ def diagnose_temporal_issues(data_slice):
     std_print("INFO", "md", " --- Time step statistics ---")
     time_diffs = (np.diff(times).astype("timedelta64[m]").astype(int) / 60)  # Convert to hours
     mode_diff = np.argmax(np.bincount(time_diffs.astype(int)))
-    std_print(None, None, "Mean interval", f"{np.mean(time_diffs):.2f} hours")
-    std_print(None, None, "Median interval", f"{np.median(time_diffs):.2f} hours")
-    std_print(None, None, "Mode interval", f"{mode_diff} hours")
+    std_print(None, None, "Mean time interval", f"{np.mean(time_diffs):.2f} hours")
+    std_print(None, None, "Median time interval", f"{np.median(time_diffs):.2f} hours")
+    std_print(None, None, "Mode time interval", f"{mode_diff} hours")
     std_print(None, None, "Std Dev", f"{np.std(time_diffs):.2f} hours")
-    std_print(None, None, "Min interval", f"{np.min(time_diffs):.2f} hours")
-    std_print(None, None, "Max interval", f"{np.max(time_diffs):.2f} hours")
+    std_print(None, None, "Min / Max time interval", f"{np.min(time_diffs):.2f} / {np.max(time_diffs):.2f} hours")
 
     # Find irregular gaps
     unique_diffs, counts = np.unique(time_diffs.astype(int), return_counts=True)
@@ -1025,8 +1035,8 @@ def track_monsoon_depressions(detections, search_radius_km, max_speed_ms, max_ti
         time_diffs_min = np.min(time_diffs)
         time_diffs_max = np.max(time_diffs)
         std_print("INFO", "md", " --- Time gaps between detections ---")
-        std_print(None, None, "Mean", f"{time_diffs_mean}:.2f hour(s)")
-        std_print(None, None, "Min/Max", f"{time_diffs_min}:.2f/{time_diffs_max}:.2f hour(s)")
+        std_print(None, None, "Mean time time gaps", f"{time_diffs_mean:.2f} hour(s)")
+        std_print(None, None, "Min / Max time gaps", f"{time_diffs_min:.2f} / {time_diffs_max:.2f} hour(s)")
         std_print(None, None, "Std Dev", f"{np.std(time_diffs):.2f} hour(s)")
         # Show distribution of gaps
         unique_gaps, gap_counts = np.unique(np.round(time_diffs), return_counts=True)
@@ -1440,19 +1450,15 @@ def process_files(ds):
         ds, time_coord = get_time_coord(ds)
         times = pd.to_datetime(ds[time_coord].values)
         time_diffs = np.diff(times).astype("timedelta64[s]").astype(float) / 3600
-        std_print("INFO", "md", " --- Temporal check ---")
-        std_print(None, None, "Dataset time steps", len(times))
-        std_print(None, None, "Mean interval", f"{np.mean(time_diffs):.2f} hours")
-        std_print(None, None, "Min interval", f"{np.min(time_diffs):.2f} hours")
-        std_print(None, None, "Max interval", f"{np.max(time_diffs):.2f} hours")
 
+        std_print("INFO", "md", " --- Temporal check ---")
         # Verify dataset has regular spacing
         if np.std(time_diffs) > 0.1:
             std_print("WARN", "md", "Irregular intervals detected")
             ds = fix_temporal_resolution(ds, target_resolution_hours=1)
             times = pd.to_datetime(ds[time_coord].values)
             time_diffs = np.diff(times).astype("timedelta64[s]").astype(float) / 3600
-            std_print("INFO", "md", "After fix Mean interval (hours)", f"{np.mean(time_diffs):.2f}")
+            std_print(None, None, "After fix Mean interval (hours)", f"{np.mean(time_diffs):.2f}")
 
         required_vars = ["msl", "u10", "v10", "tp"]
         if not all(var in ds.data_vars for var in required_vars):
@@ -1462,7 +1468,7 @@ def process_files(ds):
         times = ds[time_coord].values
         start_time = pd.to_datetime(times[0]).strftime("%d/%m/%Y %H:%M")
         end_time = pd.to_datetime(times[-1]).strftime("%d/%m/%Y %H:%M")
-        std_print("INFO", "md", "Time range", f"{start_time} to {end_time}")
+        std_print(None, None, "Time range", f"{start_time} to {end_time}")
         # std_print("DEBUG", "md", "Number of time steps after verification", len(times))
 
         std_print("INFO", "md", " --- Detection progress ---")
@@ -1511,7 +1517,7 @@ def process_files(ds):
 
         std_print("INFO", "md", "Low-pressure systems detected centers", f"{detection_count} / {total_steps}")
         if not md_detections:
-            std_print("INFO", "md", "No MD centers detected", "Insufficient low-pressure signatures in dataset")
+            std_print("WARN", "md", "No MD centers detected", "Insufficient low-pressure signatures in dataset")
             sys.exit(1)
 
         detections_df = pd.DataFrame(md_detections)
@@ -1545,30 +1551,29 @@ def process_files(ds):
         std_print("INFO", "md", "Tracks after consolidating centers", len(consolidated_tracks))
 
         # # Split mixed tracks (ocean MD + inland disturbance)
-        # split_tracks = split_mixed_tracks(consolidated_tracks)
+        # split_mixed_tracks = split_mixed_tracks(consolidated_tracks)
         # std_print('INFO', 'md', 'Tracks after splitting mixed systems', len(split_tracks))
 
         # Filter by environment
-        # ocean_tracks = filter_tracks_by_environment(consolidated_tracks, require_ocean_start=True)
+        # ocean_tracks = filter_tracks_by_environment(split_mixed_tracks, require_ocean_start=True)
         # std_print('INFO', 'md', 'Tracks over ocean', len(ocean_tracks)")
 
         # Quality Filter tracks (Noise Removal)
         filtered_valid_tracks = filter_valid_tracks(
-            consolidated_tracks, min_duration=MIN_TRACK_DURATION_HOURS,
-            min_distance=MIN_NET_DISPLACEMENT_KM
+            # ocean_tracks,
+            consolidated_tracks,
+            min_duration=MIN_TRACK_DURATION_HOURS, min_distance=MIN_NET_DISPLACEMENT_KM
         )
         std_print("INFO", "md", "Valid tracks after QC", len(filtered_valid_tracks))
         if not filtered_valid_tracks:
-            std_print(None, None, "No tracks survived filtering criteria")
+            std_print(None, None, "No tracks survived filtering criteria", f"0 / {len(filtered_valid_tracks)}")
             return pd.DataFrame()  # Return empty dataframe
 
         # Smooth each track
         smoothed_tracks = []
         for track in filtered_valid_tracks:
             if len(track) > 5:
-                smoothed_track = smooth_track_coordinates(
-                    track, window_size=5, iterations=4
-                )
+                smoothed_track = smooth_track_coordinates(track, window_size=5, iterations=4)
                 smoothed_tracks.append(smoothed_track)
             else:
                 smoothed_tracks.append(track)
@@ -1600,10 +1605,8 @@ def plot_and_export_tracks(track_df, output_dir):
 
     fig = plt.figure(figsize=(14, 11))
     ax: GeoAxes = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())  # type: ignore[assignment]
-    # ax.set_extent([70, 100, 5, 30], crs=ccrs.PlateCarree())
-
-    full_extent = [clipped_min_lon, clipped_max_lon, clipped_min_lat, clipped_max_lat]
     ax.set_extent(full_extent, crs=ccrs.PlateCarree())
+
     ax.add_feature(cfeature.LAND, facecolor="lightgray", edgecolor="black", linewidth=0.5)
     ax.add_feature(cfeature.OCEAN, facecolor="lightblue")
     ax.add_feature(cfeature.LAKES, facecolor="lightblue")
@@ -1612,39 +1615,37 @@ def plot_and_export_tracks(track_df, output_dir):
     ax.add_feature(cfeature.STATES, linewidth=0.5, linestyle="--", alpha=0.7)
     ax.add_feature(cfeature.RIVERS, linewidth=0.5, alpha=0.5)
 
-    gl = ax.gridlines(
-        crs=ccrs.PlateCarree(),
-        draw_labels=True,
-        linewidth=0.4,
-        color="gray",
-        alpha=0.6,
-        linestyle="--"
-    )
+    gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True, linewidth=0.5, color="gray", alpha=0.6, linestyle="--")
     gl.top_labels = False
     gl.right_labels = False
     gl.xformatter = LongitudeFormatter()
     gl.yformatter = LatitudeFormatter()
 
-    legend_handles = []
-    # months_in_plot = set()
-    for track_plot_index, (track_id, track_data) in enumerate(track_df.groupby("track_id")):
-        track_data = track_data.sort_values("time")
-        start_point, end_point = track_data.iloc[0], track_data.iloc[-1]
-        start_time = pd.to_datetime(start_point["time"]).strftime("%d/%m %H:%M")
-        end_time = pd.to_datetime(end_point["time"]).strftime("%d/%m %H:%M")
-        start_lon, start_lat = start_point["longitude"], start_point["latitude"]
-        end_lon, end_lat = end_point["longitude"], end_point["latitude"]
 
+    legend_handles = []
+    for _, (track_id, track_data) in enumerate(track_df.groupby("track_id")):
+        track_times = pd.to_datetime(track_df["time"])
+        track_data = track_data.sort_values("time")
         month = track_data["month"].iloc[0]
-        color = month_colors.get(month, "black")
+        track_color = month_colors.get(month, "black")
         bbox_style = common_bbox()
+
+        # Start/End (for annotatation)
+        start_point = track_data.iloc[0]
+        end_point = track_data.iloc[-1]
+        start_time_str = pd.to_datetime(start_point["time"]).strftime("%d/%m %H:%M")
+        end_time_str = pd.to_datetime(end_point["time"]).strftime("%d/%m %H:%M")
+        start_lon = start_point["longitude"]
+        start_lat = start_point["latitude"]
+        end_lon= end_point["longitude"]
+        end_lat = end_point["latitude"]
 
         # Plot all detection points
         ax.plot(
             track_data["longitude"],
             track_data["latitude"],
             "o",
-            color=color,
+            color=track_color,
             markersize=1.2,
             transform=ccrs.PlateCarree(),
             zorder=3
@@ -1655,9 +1656,10 @@ def plot_and_export_tracks(track_df, output_dir):
             track_data["longitude"],
             track_data["latitude"],
             "-",
-            color=color,
+            color=track_color,
             alpha=0.8,
-            linewidth=1.2,
+            linewidth=1.5,
+            solid_capstyle="round",
             label=f"Low-press. sys. Track ({month})",
             transform=ccrs.PlateCarree(),
             zorder=2
@@ -1699,7 +1701,7 @@ def plot_and_export_tracks(track_df, output_dir):
         ax.text(
             start_lon + 0.3,
             start_lat,
-            start_time,
+            start_time_str,
             transform=ccrs.PlateCarree(),
             fontsize=8,
             fontweight="normal",
@@ -1736,7 +1738,7 @@ def plot_and_export_tracks(track_df, output_dir):
         ax.text(
             end_lon + 0.3,
             end_lat,
-            end_time,
+            end_time_str,
             transform=ccrs.PlateCarree(),
             fontsize=8,
             fontweight="normal",
@@ -1752,12 +1754,8 @@ def plot_and_export_tracks(track_df, output_dir):
     if legend_handles:
         ax.legend(handles=legend_handles, loc="lower left", **legend_style())
 
-    ax.set_title(
-        f"Detected MD Tracks ({month_order[0]}-{month_order[-1]}, {MONSOON_YEAR})",
-        fontsize=13,
-        fontweight="bold",
-        pad=10
-    )
+    title =  f"Detected MD Tracks ({month_order[0]}-{month_order[-1]}, {MONSOON_YEAR})"
+    ax.set_title(title, fontsize=13, fontweight="bold", pad=10)
     ax.set_xlabel("Longitude (°E)", fontsize=11, fontweight="bold")
     ax.set_ylabel("Latitude (°N)", fontsize=11, fontweight="bold")
     ax.grid(True, linestyle="--", alpha=0.5)
@@ -1768,6 +1766,7 @@ def plot_and_export_tracks(track_df, output_dir):
     std_print("SAVED", "md", "Combined track plot", output_filename)
     plt.close(fig)
 
+    # Export
     if track_df.empty:
         std_print("ERROR", "md", "No track coordinates to export")
         return
@@ -1781,11 +1780,10 @@ def plot_and_export_tracks(track_df, output_dir):
 
 
 def plot_track_full_map(track_df_single, track_id, output_dir):
-    fig = plt.figure(figsize=(13, 10))
+    fig = plt.figure(figsize=(13, 10), dpi=100)
     ax: GeoAxes = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())  # type: ignore[assignment]
-
-    full_extent = [clipped_min_lon, clipped_max_lon, clipped_min_lat, clipped_max_lat]
     ax.set_extent(full_extent, crs=ccrs.PlateCarree())
+
     ax.add_feature(cfeature.LAND, facecolor="lightgray")
     ax.add_feature(cfeature.OCEAN, facecolor="lightblue")
     ax.add_feature(cfeature.LAKES, facecolor="lightblue")
@@ -1794,14 +1792,7 @@ def plot_track_full_map(track_df_single, track_id, output_dir):
     ax.add_feature(cfeature.STATES, linewidth=0.5, linestyle="--")
     ax.add_feature(cfeature.RIVERS)
 
-    gl = ax.gridlines(
-        crs=ccrs.PlateCarree(),
-        draw_labels=True,
-        linewidth=0.5,
-        color="gray",
-        alpha=0.5,
-        linestyle="--",
-    )
+    gl = ax.gridlines(crs=ccrs.PlateCarree(), draw_labels=True, linewidth=0.5, color="gray", alpha=0.5, linestyle="--")
     gl.top_labels = False
     gl.right_labels = False
     gl.xformatter = LongitudeFormatter()
@@ -1814,23 +1805,26 @@ def plot_track_full_map(track_df_single, track_id, output_dir):
     bbox_style = common_bbox()
 
     # Start/End (for annotatation)
-    start_datetime =  pd.to_datetime(track_data.iloc[0]["time"])
-    end_datetime = pd.to_datetime(track_data.iloc[-1]["time"])
+    start_point = track_data.iloc[0]
+    end_point = track_data.iloc[-1]
+    start_datetime =  pd.to_datetime(start_point["time"])
+    end_datetime = pd.to_datetime(end_point["time"])
     start_time_str = start_datetime.strftime("%d/%m %H:%M")
     end_time_str = end_datetime.strftime("%d/%m %H:%M")
-    start_lon = track_df["longitude"].iloc[0]
-    end_lon = track_df["longitude"].iloc[-1]
-    start_lat = track_df["latitude"].iloc[0]
-    end_lat = track_df["latitude"].iloc[-1]
+    start_lon = start_point["longitude"]
+    end_lon = end_point["longitude"]
+    start_lat = start_point["latitude"]
+    end_lat = end_point["latitude"]
 
     # Connecting lines
     ax.plot(
-        track_data["longitude"],
-        track_data["latitude"],
+        track_data["longitude"].values,
+        track_data["latitude"].values,
         "-o",
         color=track_color,
         transform=ccrs.PlateCarree(),
-        linewidth=1,
+        linewidth=1.0,
+        solid_capstyle="round",
         markersize=2,
         zorder=5
     )
@@ -1851,7 +1845,8 @@ def plot_track_full_map(track_df_single, track_id, output_dir):
                 transform=ccrs.PlateCarree(),
                 zorder=5,
             )
-            time_label = f"{int(elapsed_hours)}h {point_time.strftime('%d/%m %H:%M')}"
+            # time_label = f"{int(elapsed_hours)}h {point_time.strftime('%d/%m %H:%M')}"
+            time_label = f"{point_time.strftime('%d/%m %H:%M')}"
             ax.text(
                 point["longitude"] - 0.1,
                 point["latitude"] + 0.1,
@@ -1930,13 +1925,11 @@ def plot_track_full_map(track_df_single, track_id, output_dir):
     if legend_handles:
         ax.legend(handles=legend_handles, loc="lower left", **legend_style())
 
-    ax.set_title(
-        f"Monsoon Depression Track {track_id}\n{start_time_str} to {end_time_str}, {MONSOON_YEAR}",
-        fontsize=13,
-        fontweight="bold",
-        pad=10
-    )
+    title = f"Monsoon Depression Track {track_id}\n{start_time_str} to {end_time_str}, {MONSOON_YEAR}"
+    ax.set_title(title, fontsize=13, fontweight="bold", pad=10)
     plt.tight_layout()
+
+    # Save
     file_name = f"MD_track_{track_id}_full_map.png"
     outpath = os.path.join(output_dir, file_name)
     os.makedirs(output_dir, exist_ok=True)
@@ -1992,28 +1985,21 @@ def plot_single_track(track_df, track_id, output_dir):
     start_lat = track_df["latitude"].iloc[0]
     end_lat = track_df["latitude"].iloc[-1]
 
-    # Connecting lines
+    # # Connecting lines
     ax.plot(
         track_df["longitude"],
         track_df["latitude"],
-        "-",
+        "-o",
         color=track_color,
-        alpha=0.8,
-        linewidth=1.5,
         transform=ccrs.PlateCarree(),
+        linewidth=1.5,
+        solid_capstyle="round",
+        markersize=2,
+        # alpha=0.8,
         zorder=2,
     )
-    # Markers for all points (hourly detections)
-    ax.plot(
-        track_df["longitude"],
-        track_df["latitude"],
-        "o",
-        color=track_color,
-        markersize=2,
-        alpha=0.5,
-        transform=ccrs.PlateCarree(),
-        zorder=3,
-    )
+
+    # FIX: `time_coord` is not declared yet it works...how?...maybe because this function is called after `get_time_coord`
 
     # 12-hour interval markers
     hours_elapsed = (track_times - start_datetime).dt.total_seconds() / 3600
@@ -2082,9 +2068,7 @@ def plot_single_track(track_df, track_id, output_dir):
                 landfall_point = track_df.iloc[landfall_idx]
                 lf_lon = landfall_point["longitude"]
                 lf_lat = landfall_point["latitude"]
-                lf_time = pd.to_datetime(landfall_point["time"]).strftime(
-                    "%d/%m %H:%M"
-                )
+                lf_time = pd.to_datetime(landfall_point["time"]).strftime("%d/%m %H:%M")
                 ax.plot(
                     lf_lon,
                     lf_lat,
@@ -2114,13 +2098,11 @@ def plot_single_track(track_df, track_id, output_dir):
     if legend_handles:
         ax.legend(handles=legend_handles, loc="upper left", **legend_style())
 
-    ax.set_title(
-        f"Monsoon Depression Track {track_id}\n{start_time_str} to {end_time_str}, {MONSOON_YEAR}",
-        fontsize=13,
-        fontweight="bold",
-        pad=10
-    )
+    title = f"Monsoon Depression Track {track_id}\n{start_time_str} to {end_time_str}, {MONSOON_YEAR}"
+    ax.set_title(title, fontsize=13, fontweight="bold", pad=10)
     plt.tight_layout()
+
+    # Save
     file_name = f"MD_track_{track_id}_detailed.png"
     outpath = os.path.join(output_dir, file_name)
     os.makedirs(output_dir, exist_ok=True)
@@ -2186,7 +2168,7 @@ def diagnose_detection_issues(track_df):
     large_gaps = time_diffs[time_diffs > 6]
     if len(large_gaps) > 0:
         std_print("INFO", "md", "Tracks with time gaps >6 hours", len(large_gaps))
-        std_print("INFO", "md", "[Max, Min] gap", f"[{time_diffs.max():.1f}, {time_diffs.min():.1f}] hours")
+        std_print("INFO", "md", "Min / Max gap", f"[{time_diffs.min():.1f} / {time_diffs.max():.1f}] hours")
     else:
         std_print("INFO", "md", "No large time gaps detected")
 
@@ -2196,7 +2178,7 @@ def diagnose_detection_issues(track_df):
         large_jumps = track_df[track_df["distance_km"] > jump_dist_threshold]
         if len(large_jumps) > 0:
             std_print("INFO", "md", f"Tracks position jumps (>{jump_dist_threshold} km)", len(large_jumps))
-            std_print("INFO", "md", "Max jump", f"{track_df['distance_km'].max():.1f} km")
+            std_print("INFO", "md", "Min / Max jump", f"{track_df['distance_km'].max():.1f} / {track_df['distance_km'].max():.1f} km")
         else:
             std_print("INFO", "md", "No suspicious position jumps")
 
@@ -2236,7 +2218,7 @@ def diagnose_detection_issues(track_df):
         if len(wnd_bearings) / len(bearings) < 0.7:
             std_print("INFO", "md", "Movement in WNW (expected >70%)", f"{100 * len(wnd_bearings) / len(bearings):.1f}%")
         else:
-            std_print("INFO", "md", f"Track {track_id} direction consistency", f"{100 * len(wnd_bearings) / len(bearings):.1f}% WNW")
+            std_print("INFO", "md", "Direction consistency", f"{100 * len(wnd_bearings) / len(bearings):.1f}% WNW")
 
 
 def generate_summary_report(
@@ -2489,7 +2471,6 @@ if __name__ == "__main__":
 
         # FIX: even after clipping it is using full extend (Detected)
         pad = 0.5
-        full_extent = [clipped_min_lon, clipped_max_lon, clipped_min_lat, clipped_max_lat]
         std_print("DEBUG", "md", "Full extent", full_extent)
         # try:
         #     full_extent = [
@@ -2803,7 +2784,7 @@ if __name__ == "__main__":
             # std_print("DEBUG", "md", f"Skipping Elevation Analysis for Track {track_id}")
             try:
                 if vrt_path is not None and os.path.exists(vrt_path):
-                    plot_path = plot_tracks_on_elevation(track_id, track_df, vrt_path, output_dir)
+                    plot_path = plot_tracks_elevation(track_df, track_id, vrt_path, output_dir)
                     if plot_path:
                         std_print("SAVED", "md", "Elevation plot", plot_path)
                     else:
@@ -2815,6 +2796,7 @@ if __name__ == "__main__":
                 traceback.print_exc()
         print("----------------------------------------------------------------------------------------------------------------------------\n")
 
+        print("\n------------------------------------------------ Global Analysis for all Track ---------------------------------------------")
         # 1. Global Coupling metrics
         std_print("INFO", "md", " --- Coupling Metrics Analysis ---")
         # std_print("DEBUG", "md", "Skipping Coupling Metrics Analysis")
@@ -2929,10 +2911,9 @@ if __name__ == "__main__":
                 std_print("EXPORT", "md", "Global soil memory results", memory_csv_path)
                 if not memory_df.empty:
                     std_print("INFO", "md", "Soil Moisture Memory Summary")
-                    std_print(None, None, "Mean memory index (24h)", f"{memory_df['memory_index_24h'].mean():.3f}")
-                    std_print(None, None, "Std dev memory index", f"{memory_df['memory_index_24h'].std():.3f}")
-                    std_print(None, None, "Min memory index", f"{memory_df['memory_index_24h'].min():.3f}")
-                    std_print(None, None, "Max memory index", f"{memory_df['memory_index_24h'].max():.3f}")
+                    std_print(None, None, "Mean memory index (24h)", f"{memory_df['memory_index_24h'].mean():.2f}")
+                    std_print(None, None, "Std dev memory index", f"{memory_df['memory_index_24h'].std():.2f}")
+                    std_print(None, None, "Min / Max memory index", f"{memory_df['memory_index_24h'].min():.2f} / {memory_df['memory_index_24h'].max():.2f}")
             else:
                 std_print("WARN", "md", "No soil memory results available for global analysis")
         except Exception as e:
@@ -2956,6 +2937,18 @@ if __name__ == "__main__":
                 std_print("ERROR", "md", "Elevation analysis failed", "Check HGT data availability and paths")
         except Exception as e:
             std_print("ERROR", "md", "Elevation analysis failed", str(e))
+            traceback.print_exc()
+        try:
+            if vrt_path is not None and os.path.exists(vrt_path) and full_track_df is not None and not full_track_df.empty:
+                combined_plot_path = plot_all_tracks_elevation(full_track_df, vrt_path, output_dir, year=MONSOON_YEAR)
+                if combined_plot_path:
+                    std_print("INFO", "md", "Combined elevation plot saved", combined_plot_path)
+                else:
+                    std_print("ERROR", "md", "Failed to create combined elevation plot")
+            else:
+                std_print("WARN", "md", "Cannot create combined elevation plot", "Missing data or VRT")
+        except Exception as e:
+            std_print('ERROR', 'md', 'Combined elevation plot failed', str(e))
             traceback.print_exc()
 
         # 5. Global Statistical Analysis
@@ -3020,8 +3013,8 @@ if __name__ == "__main__":
                 if col not in fsi_df.columns:
                     missing_for_stats.append(col)
             if missing_for_stats:
-                std_print("WARN", "Missing columns for stats", str(missing_for_stats))
-                std_print("DEBUG", f"Available columns : {list(fsi_df.columns)}")
+                std_print("WARN", "md", "Missing columns for stats", str(missing_for_stats))
+                std_print("DEBUG", "md", f"Available columns : {list(fsi_df.columns)}")
         # TODO: Implement: analyze_asm_fsi_relationship, analyze_gam_nonlinearity, test_granger_causality
 
         # 6. Global Flux Analysis

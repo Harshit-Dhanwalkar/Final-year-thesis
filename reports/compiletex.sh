@@ -71,7 +71,7 @@ while getopts "mfvndh" opt; do
         n) CLEANUP=false ;;
         d) DRY_RUN=true ;;
         h) usage ;;
-        *) 
+        *)
             log_error "Invalid option: -$OPTARG"
             usage
             ;;
@@ -125,12 +125,10 @@ cleanup_aux() {
         mkdir -p "$AUX_DIR"
     fi
 
-    # First, move all files matching the pattern $base.$ext
     for ext in "${EXTS[@]}"; do
         local aux_file="$dir/$base.$ext"
         local clean_dir="${dir#./}"
-        
-        # Determine destination filename
+
         if [ "$clean_dir" = "." ] || [ -z "$clean_dir" ]; then
             # Files in current directory
             local dest_file="$AUX_DIR/$base.$ext"
@@ -151,33 +149,12 @@ cleanup_aux() {
         fi
     done
 
-    # move additional .aux files in the current directory
+    # Move additional auxiliary files (including from included PDFs)
     if [ "$dir" = "." ]; then
-        for aux_file in *.aux; do
-            # Check if file exists and is not the main file's aux (already moved)
-            if [ -f "$aux_file" ] && [ "$aux_file" != "$base.aux" ]; then
-                # Also check if it hasn't been moved already (defensive)
-                if [ ! -f "$AUX_DIR/$aux_file" ]; then
-                    if [ "$DRY_RUN" = false ]; then
-                        mv "$aux_file" "$AUX_DIR/"
-                        moved_count=$((moved_count + 1))
-                        log_debug "  Moved extra: $aux_file"
-                    else
-                        log_debug "  [DRY RUN] Would move extra: $aux_file"
-                    fi
-                fi
-            fi
-        done
-
-        # Also check for any other common auxiliary files that might not have .aux extension
         for ext in "${EXTS[@]}"; do
-            if [ "$ext" = "aux" ]; then
-                continue
-            fi
-            # Look for any files with extension in current directory
             for file in *.$ext; do
-                if [ -f "$file" ] && [ "$file" != "$base.$ext" ]; then
-                    if [ ! -f "$AUX_DIR/$file" ]; then
+                if [ -f "$file" ]; then
+                    if [ "$file" != "$base.$ext" ] && [ ! -f "$AUX_DIR/$file" ]; then
                         if [ "$DRY_RUN" = false ]; then
                             mv "$file" "$AUX_DIR/"
                             moved_count=$((moved_count + 1))
@@ -188,6 +165,26 @@ cleanup_aux() {
                     fi
                 fi
             done
+        done
+
+        # Look for files without extensions that might be auxiliary
+        for file in *; do
+            if [ -f "$file" ] && [[ "$file" == *.* ]]; then
+                # Already handled by extension loop
+                continue
+            elif [ -f "$file" ] && [ ! -x "$file" ]; then
+                if [[ "$file" == *.aux ]] || [[ "$file" == *.log ]] || [[ "$file" == *.bcf ]]; then
+                    if [ ! -f "$AUX_DIR/$file" ]; then
+                        if [ "$DRY_RUN" = false ]; then
+                            mv "$file" "$AUX_DIR/"
+                            moved_count=$((moved_count + 1))
+                            log_debug "  Moved extra: $file"
+                        else
+                            log_debug "  [DRY RUN] Would move extra: $file"
+                        fi
+                    fi
+                fi
+            fi
         done
     fi
 
@@ -253,7 +250,8 @@ compile_tex() {
     # Check if PDF was generated
     if [ -f "${dir:-.}/$base.pdf" ]; then
         if [ $status -eq 0 ]; then
-            log_success "Generated : ${dir:-.}/$base.pdf"
+            # log_success "Generated : ${dir:-.}/$base.pdf"
+            : # success, null command
         else
             log_warn "Generated PDF with errors : ${dir:-.}/$base.pdf"
         fi
@@ -284,7 +282,7 @@ if [ "$ONLY_MAIN" = false ]; then
                     TOTAL_FILES=$((TOTAL_FILES + 1))
                     if compile_tex "$slide"; then
                         COMPILED_FILES=$((COMPILED_FILES + 1))
-                        log_success "Successfully compiled: $slide"
+                        log_success "Compiled      : $slide"
                     else
                         FAILED_FILES=$((FAILED_FILES + 1))
                         log_error "Failed to compile: $slide"
