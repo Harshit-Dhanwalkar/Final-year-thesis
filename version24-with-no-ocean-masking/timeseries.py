@@ -288,7 +288,7 @@ def tp_swvl1_timeseries(
             # Set SWVL1 to 0 for ocean points (not land)
             swvl1_land[~is_land_array] = 0
             std_print(
-                "DEBUG", "ts", "Setting SWVL1=0  ocean points", np.sum(~is_land_array)
+                "DEBUG", "ts", "Setting SWVL1=0 ocean points", np.sum(~is_land_array)
             )
         else:
             is_land_array = np.zeros(len(valid_times), dtype=bool)

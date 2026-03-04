@@ -59,12 +59,12 @@ def create_elevation_vrt(
         return None
 
 
-def plot_tracks_on_elevation(track_df, vrt_path, output_dir="output", year=2024):
+def plot_tracks_on_elevation(track_df, vrt_path, output_dir="output"):
     """Create elevation mosaic with MD tracks overlaid"""
     if track_df is None or track_df.empty:
-        std_print("WARN", "ev", "No tracks to evualize")
+        std_print("WARN", "ev", "No tracks to visvualize")
         return None
-    std_print("INFO", "ev", "--- Elevation Track evualization ---")
+    std_print("INFO", "ev", "--- Elevation Track visvualization ---")
     std_print(
         "INFO",
         "ev",
@@ -150,7 +150,7 @@ def plot_tracks_on_elevation(track_df, vrt_path, output_dir="output", year=2024)
 
             cbar = plt.colorbar(im, fraction=0.03, pad=0.04)
             cbar.set_label("Elevation (m)", fontweight="bold", fontsize=11)
-            title = f"Monsoon Depression Tracks Over SRTM Elevation ({year})"
+            title = "Monsoon Depression Tracks Over SRTM Elevation"
             ax.set_xlabel("Longitude (°E)", fontsize=12, fontweight="bold")
             ax.set_ylabel("Latitude (°N)", fontsize=12, fontweight="bold")
             ax.grid(True, alpha=0.3, linestyle="--", zorder=1)
@@ -171,7 +171,7 @@ def plot_tracks_on_elevation(track_df, vrt_path, output_dir="output", year=2024)
             plt.tight_layout()
 
             # Save
-            output_filename = f"MD_tracks_elevation_mosaic_{year}.png"
+            output_filename = "MD_tracks_elevation_mosaic.png"
             output_path = os.path.join(elev_dir, output_filename)
             plt.savefig(output_path, dpi=300, bbox_inches="tight")
             plt.close(fig)

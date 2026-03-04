@@ -310,17 +310,6 @@ variables = [
     "total_hf",       # Total Surface Heat Flux, total_hf = avg_ishf + avg_slhtf
     "w",              # Mixing Ratio, 0.622 x e_s/(sp - e_s), where e_s = 6.112 x exp(17.67 d2m/(d2m + 243.5))
 ]
-VARIABLE_BUFFERS = {
-    "u10": 150,  # Zonal Wind Component
-    "v10": 150,  # Meridional Wind Component
-    "msl": 100,  # Mean sea level pressure (pressure gradient)
-    "tp": 150,  # Total precipitation (MD extent)
-    "t2m": 100,  # 2m Temperature
-    "d2m": 100,  # 2m  Dew Point Temperature
-    "swvl1": 100,  # Soil water volume layer 1
-    "avg_slhtf": 150,  # Surface latent heat flux
-    "avg_ishf": 150,  # Integrated sensible heat flux
-}
 
 
 # Helper function
@@ -1876,6 +1865,8 @@ def plot_track_full_map(track_df_single, track_id, full_extent, output_dir):
         if idx < len(track_df):
             point = track_df.iloc[idx]
             point_time = pd.to_datetime(point[time_coord])
+
+            # Connecting lines
             ax.plot(
                 point["longitude"],
                 point["latitude"],
@@ -2019,6 +2010,7 @@ def plot_single_track(track_df, track_id, output_dir):
     gl.right_labels = False
     gl.xformatter = LongitudeFormatter()
     gl.yformatter = LatitudeFormatter()
+
     # Connecting lines
     ax.plot(
         track_df["longitude"],
@@ -2584,7 +2576,7 @@ if __name__ == "__main__":
             # 5) Export detections csv
             track_csv = os.path.join(track_dir, f"track_{int(track_id)}_detections.csv")
             track_df.to_csv(track_csv, index=False)
-            std_print("EXPORT", "md", f"Track {track_id} Detections to CSV", track_csv)
+            std_print("EXPORT", "md", "Detections to CSV", track_csv)
 
             # 6) Plot speed analysis
             print(f"\n-------------------------------------- Translational Speed Plots for Track {track_id} --------------------------------------")
@@ -2593,7 +2585,7 @@ if __name__ == "__main__":
             track_df = compute_track_speeds(track_df)
             track_csv = os.path.join(speed_dir, f"track_{int(track_id)}_detections_augmented.csv")
             track_df.to_csv(track_csv, index=False)
-            std_print("EXPORT", "md", f"Augmented track data for Track {track_id}", track_csv)
+            std_print("EXPORT", "md", "Augmented track data", track_csv)
             plot_speed_analysis_kmh(track_df, track_id, speed_dir)
             plot_speed_analysis_ms(track_df, track_id, speed_dir)
             # track_df_augmented = analyze_translational_speed(track_df, output_dir=speed_dir)
@@ -2795,7 +2787,7 @@ if __name__ == "__main__":
                                 std_print("ERROR", "md", "Continuing...", str(e))
                                 continue
                         if len(swvl1_vals) > 48:  # Need enough data for 24h lag
-                            std_print("DEBUG", "md", f"Computing Soil moisture Memory for Track {track_id}")
+                            std_print("INFO", "md", "Computing Soil moisture Memory")
                             memory_24h = compute_soil_moisture_memory(swvl1_vals, lag_hours=24)
                             memory_result = {
                                 "track_id": track_id,
@@ -2805,21 +2797,21 @@ if __name__ == "__main__":
                                 "std_swvl1": np.std(swvl1_vals),
                             }
                             all_memory_results.append(memory_result)
-                            std_print("INFO", "md", f"Soil moisture memory for track {track_id}")
+                            std_print("INFO", "md", "Soil moisture memory :")
                             std_print(None, None, "Memory index (24h lag)", f"{memory_24h:.3f}")
                             std_print(None, None, "Mean SWVL1", f"{np.mean(swvl1_vals):.3f} m³/m³")
                             std_print(None, None, "Samples", len(swvl1_vals))
                             # Save individual track memory results
                             memory_csv = os.path.join(sm_dir, f"track_{track_id}_soil_memory.csv")
                             pd.DataFrame([memory_result]).to_csv(memory_csv, index=False)
-                            std_print("EXPORT", "md", f"Track {track_id} soil memory analysis", memory_csv)
+                            std_print("EXPORT", "md", "Soil memory analysis", memory_csv)
                         else:
-                            std_print("WARN", "md", f"Track {track_id}", "Insufficient data for soil memory analysis")
+                            std_print("WARN", "md", "Insufficient data for soil memory analysis")
                     except Exception as e:
-                        std_print("ERROR", "md", f"Soil moisture memory analysis failed for Track {track_id}", str(e))
+                        std_print("ERROR", "md", "Soil moisture memory analysis failed", str(e))
                         traceback.print_exc()
             except Exception as e:
-                std_print("ERROR", "md", f"Track {track_id} Soil moisture analysis failed", str(e))
+                std_print("ERROR", "md", "Soil moisture analysis failed", str(e))
 
             # 13) Elevation analysis
             # FIX:
