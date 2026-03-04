@@ -34,17 +34,18 @@
 #    dem = rioxarray.open_rasterio('SRTM_India.tif')
 #    tracks['MEAN_ELEV'] = dem.interp(...)  # r(dur,elev)<0.7
 # 6. Add duirnal HF (LHF, SHF and THF) amplitude time series plot -> \Delta(HF) = (HF_max -HF_min)_24h -> see veriation in this \Delta(HF)
-# 7. from utils.debug_utils.py
+# 7. Implement: analyze_asm_fsi_relationship, analyze_gam_nonlinearity, test_granger_causality
+# 8. from utils.debug_utils.py
 #      # At the start of your main section
 #      debug_logger = DebugLogger(output_dir)
-# 8. Before each major analysis section
+# 9. Before each major analysis section
 #    debug_logger.log_function_call("process_files", args=(ds))
 #    debug_logger.log_data_shape("combined_dataset", ds)
 #    # After processing tracks
 #    if full_track_df is not None:
 #       debug_logger.log_data_shape("full_track_df", full_track_df)
 #       debug_logger.log_warning(f"Number of tracks: {len(full_track_df['track_id'].unique())}")
-# 9. In each track loop
+# 10. In each track loop
 #    for track_id in unique_track_ids:
 #       debug_logger.log_function_call(f"process_track_{track_id}")
 #       # ... code ...
@@ -98,11 +99,8 @@ from utils import (
     get_default_buffer_km,
     calculate_buffer_deg,
     extract_and_average_variable,
-    clamp_to_domain,
     haversine_distance,
     get_time_coord,
-    setup_map_extent,
-    add_land_ocean_shading,
     common_bbox,
     legend_style,
 )
@@ -306,8 +304,8 @@ variables = [
     "tp",             # Total Precipitation
     "t2m",            # 2m Temperature
     "d2m",            # Dew Point Temperature
-    "stl1",           # Soil Temperature Level 1
-    "swvl1",          # Soil Water Volume Level 1
+    "stl1",           # Soil Temperature Level-1
+    "swvl1",          # Volumatric Soil Water Layer-1 (0-7 cm)
     "avg_slhtf",      # Surface Latent Heat Flux
     "avg_ishf",       # Surface Sensible Heat Flux
     "total_hf",       # Total Surface Heat Flux, total_hf = avg_ishf + avg_slhtf
@@ -2755,7 +2753,7 @@ if __name__ == "__main__":
                     all_sm_results.append(sm_result)
                     sm_dir = os.path.join(track_dir, "soilmoiture_analysis")
                     os.makedirs(sm_dir, exist_ok=True)
-                    plot_spatial_tp_swvl1(ds, track_df, track_id, buffer_km=150, output_dir=sm_dir)
+                    plot_spatial_tp_swvl1(ds, track_df, track_id, output_dir=sm_dir)
                     std_print("SAVED", "md", "Soil moisture analysis plots", sm_dir)
                     try:
                         swvl1_vals = []
@@ -2798,6 +2796,7 @@ if __name__ == "__main__":
             except Exception as e:
                 std_print("ERROR", "md", "Soil moisture analysis failed", str(e))
                 traceback.print_exc()
+                # TODO:     analyze_soil_memory_by_track
 
             # 13) Elevation analysis
             print(f"\n------------------------------------------ Elevation Analysis for Track {track_id} -----------------------------------------")
@@ -3023,12 +3022,11 @@ if __name__ == "__main__":
             if missing_for_stats:
                 std_print("WARN", "Missing columns for stats", str(missing_for_stats))
                 std_print("DEBUG", f"Available columns : {list(fsi_df.columns)}")
-        print("\n")
+        # TODO: Implement: analyze_asm_fsi_relationship, analyze_gam_nonlinearity, test_granger_causality
 
         # 6. Global Flux Analysis
         std_print("INFO", "md", " --- Global Flux Analysis ---")
         # std_print("DEBUG", "md", "Skipping Heat FLux Analysis")
-        std_print("INFO", "md", " --- Global Heat Flux Analysis ---")
         if all_flux_results:
             all_flux_results = ensure_flux_results_complete(all_flux_results, all_classifications)
             export_heat_flux_results(all_flux_results, output_dir)

@@ -28,13 +28,9 @@ def deaccumulate(ds, var, t_now, t_prev):
     if dt <= 0:
         return np.nan
     # ERA5 sign convention: negative downward -> positive upward
-    return (
-        -(
-            float(ds[var].sel(time=t_now).values)
-            - float(ds[var].sel(time=t_prev).values)
-        )
-        / dt
-    )
+    subset_now = float(ds[var].sel(time=t_now).values)
+    subset_prev = float(ds[var].sel(time=t_prev).values)
+    return -(subset_now - subset_prev) / dt
 
 
 def mean(lst):

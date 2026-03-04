@@ -75,7 +75,7 @@ VARIABLE_NAMES = {
     "t2m": "2m Air Temperature",
     "d2m": "2m Dew Point Temperature",
     "stl1": "Soil Temperature (0-7cm)",
-    "swvl1": "Soil Water Volumatric Layer-1 (0-7cm)",
+    "swvl1": "Volumatric Soil Water Layer-1 (0-7cm)",
     "avg_slhtf": "Surface Latent Heat Flux",
     "avg_ishf": "Surface Sensible Heat Flux",
     "total_hf": "Total Surface Heat Flux",
@@ -780,7 +780,7 @@ def plot_hovmoller_azimuthal_average(
     auto_levels = np.linspace(vmin, vmax, int(levels / 3))
     auto_levels = auto_levels[np.abs(auto_levels) > 1e-9] # Remove zero
     contours = ax.contour(X, Y, hov_arr, levels=auto_levels, colors="black", linewidths=0.5, alpha=0.45)
-    ax.clabel(contours, inline=True, fontsize=7, fmt="%1.2f")
+    ax.clabel(contours, inline=True, fontsize=8, fmt="%1.2f")
 
     cbar = plt.colorbar(im, pad=0.02, ax=ax)
     cbar.set_label(f"{var_label} ({var_unit})", fontsize=12)
@@ -814,7 +814,7 @@ def plot_hovmoller_azimuthal_average(
 
     # Format x-axis with radius labels
     ax.set_xticks(radii_km)
-    ax.set_xticklabels([f"{int(r)}" for r in radii_km], fontsize=9, rotation=45, ha="right")
+    ax.set_xticklabels([f"{int(r)}" for r in radii_km], fontsize=8, rotation=45, ha="right")
 
     # # Landfall boundary line
     # has_diagonal = (per_radius_landfall_index is not None and np.any(per_radius_landfall_index >= 0))

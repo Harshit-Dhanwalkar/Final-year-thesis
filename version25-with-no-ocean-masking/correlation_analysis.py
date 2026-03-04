@@ -162,7 +162,7 @@ def plot_tp_swvl1_correlation(ds, track_df, track_id, buffer_km=100, output_dir=
     )
 
     ax_main.set_xlabel("Total Precipitation (mm/hr)", fontsize=11, fontweight="bold")
-    ax_main.set_ylabel("Soil Water Volumetric Level-1 (m³/m³)", fontsize=11, fontweight="bold")
+    ax_main.set_ylabel("Volumetric Soil Water Layer-1 (0-7cm) (m³/m³)", fontsize=11, fontweight="bold")
     ax_main.set_title(
         f"Track {track_id}: TP-SWVL1 Correlation (Land Only: SWVL1 > 0.03)",
         fontsize=13,

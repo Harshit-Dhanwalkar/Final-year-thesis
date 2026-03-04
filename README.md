@@ -15,7 +15,6 @@ Documentation : https://confluence.ecmwf.int/display/CKB/ERA5%3A+data+documentat
 9. Volumetric Soil Water Layer 1 (`swvl1`)
 10. 2m Temperature (`t2m`)
 11. 2m Dew Point Temperature (`d2m`)
-12. Surface Pressure (`sp`)
 
 ## Elevation data
 

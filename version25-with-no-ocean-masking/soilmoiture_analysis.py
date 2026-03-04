@@ -31,8 +31,8 @@ from utils import (
 )
 
 
-def plot_spatial_tp_swvl1(ds, track_df, track_id, buffer_km=150, output_dir="output"):
-    """2-panel spatial maps of TP and SWVL1 during track passage."""
+def plot_spatial_tp_swvl1(ds, track_df, track_id, output_dir="output"):
+    """2-panel spatial maps of TP and SWVL1 during track passage"""
     track_id = int(track_id)
     track = track_df.sort_values("time")
 
@@ -42,35 +42,28 @@ def plot_spatial_tp_swvl1(ds, track_df, track_id, buffer_km=150, output_dir="out
     )
     ds, time_coord = get_time_coord(ds)
 
+    # FIX: use extract_track_variable
+    time_slice = slice(track["time"].min(), track["time"].max())
+    lat_slice = slice(max_lat, min_lat)
+    lon_slice = slice(min_lon, max_lon)
+
     # Get averaged fields
     tp_data = (
         ds["tp"]
-        .sel(
-            {
-                time_coord: slice(track["time"].min(), track["time"].max()),
-                "latitude": slice(max_lat, min_lat),
-                "longitude": slice(min_lon, max_lon),
-            }
-        )
+        .sel({time_coord: time_slice, "latitude": lat_slice, "longitude": lon_slice})
         .sum(dim=time_coord)
         * 1000
     )  # Total, converted to mm
 
     sm_data = (
         ds["swvl1"]
-        .sel(
-            {
-                time_coord: slice(track["time"].min(), track["time"].max()),
-                "latitude": slice(max_lat, min_lat),
-                "longitude": slice(min_lon, max_lon),
-            }
-        )
+        .sel({time_coord: time_slice, "latitude": lat_slice, "longitude": lon_slice})
         .mean(dim=time_coord)
     )
 
-    # Create figure
+    # Figure
     fig, axes = plt.subplots(
-        1, 2, figsize=(16, 7), subplot_kw={"projection": ccrs.PlateCarree()}
+        1, 2, figsize=(13, 7), subplot_kw={"projection": ccrs.PlateCarree()}
     )
 
     # Panel 1: Total Precipitation
@@ -106,7 +99,7 @@ def plot_spatial_tp_swvl1(ds, track_df, track_id, buffer_km=150, output_dir="out
     axes[0].add_feature(cfeature.LAND, facecolor="lightgray", alpha=0.3)
     axes[0].set_extent([min_lon, max_lon, min_lat, max_lat], crs=ccrs.PlateCarree())
     cbar1 = plt.colorbar(im1, ax=axes[0], pad=0.02)
-    cbar1.set_label("Total Precip (mm)", fontsize=10)
+    cbar1.set_label("TP (mm)", fontsize=10)
 
     # Legend
     legend_handles, labels = axes[0].get_legend_handles_labels()
@@ -116,7 +109,6 @@ def plot_spatial_tp_swvl1(ds, track_df, track_id, buffer_km=150, output_dir="out
             loc="upper left",
             **legend_style(),
         )
-
     axes[0].set_title("Total Precipitation (mm)", fontsize=12, fontweight="bold")
 
     # Panel 2: Mean Soil Moisture
@@ -152,7 +144,7 @@ def plot_spatial_tp_swvl1(ds, track_df, track_id, buffer_km=150, output_dir="out
     axes[1].add_feature(cfeature.LAND, facecolor="lightgray", alpha=0.3)
     axes[1].set_extent([min_lon, max_lon, min_lat, max_lat], crs=ccrs.PlateCarree())
     cbar2 = plt.colorbar(im2, ax=axes[1], pad=0.02)
-    cbar2.set_label("Soil Moisture", fontsize=10)
+    cbar2.set_label("SWVL1 (m³/m³)", fontsize=10)
 
     # Legend
     legend_handles, labels = axes[1].get_legend_handles_labels()
@@ -162,7 +154,9 @@ def plot_spatial_tp_swvl1(ds, track_df, track_id, buffer_km=150, output_dir="out
             loc="upper left",
             **legend_style(),
         )
-    axes[1].set_title("Mean Soil Moisture (m³/m³)", fontsize=12, fontweight="bold")
+    axes[1].set_title(
+        "Volumatric Soil Water Layer-1 (0-7 cm) (m³/m³)", fontsize=12, fontweight="bold"
+    )
     fig.suptitle(
         f"Track {track_id}: Spatial Distribution of TP and SWVL1",
         fontsize=13,
@@ -203,7 +197,7 @@ def compute_soil_moisture_memory(swvl1_series, lag_hours=24):
         return np.nan
 
 
-def analyze_soil_memory_by_track(track_df_dict, ds, output_dir):
+def analyze_soil_memory_by_track(ds, track_df_dict, output_dir):
     """Analyze soil moisture memory effect for each track"""
     memory_results = []
     buffer_km = get_default_buffer_km("swvl1")

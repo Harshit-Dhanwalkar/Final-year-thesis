@@ -229,10 +229,14 @@ def plot_antecedent_spatial_map(
 
         # Colorbar
         cbar = plt.colorbar(im, ax=ax, pad=0.02, shrink=0.8)
-        cbar.set_label("Soil Moisture (m³/m³)", fontsize=12, fontweight="bold")
+        cbar.set_label("Soil Moisture (m³/m³)", fontsize=11, fontweight="bold")
         # Title
         title = f"Track {track_id}: Antecedent Soil Moisture\n{hours_before}h BEFORE System Formation\n({antecedent_time.strftime('%d/%m/%Y %H:%M')})"
-        ax.set_title(title, fontsize=14, fontweight="bold", pad=15)
+        ax.set_title(
+            title,
+            fontsize=13,
+            fontweight="bold"
+        )
 
         # Legend
         legend_handles, labels = ax.get_legend_handles_labels()
@@ -403,8 +407,8 @@ def create_antecedent_scatter_plot(results_df, output_dir):
         except:
             pass
 
-    ax.set_xlabel("Antecedent Soil Moisture (m³/m³)", fontsize=12, fontweight="bold")
-    ax.set_ylabel("Track Duration (hours)", fontsize=12, fontweight="bold")
+    ax.set_xlabel("Antecedent Soil Moisture (m³/m³)", fontsize=11, fontweight="bold")
+    ax.set_ylabel("Track Duration (hours)", fontsize=11, fontweight="bold")
     ax.grid(True, alpha=0.3, linestyle="--")
 
     # Legend
@@ -414,7 +418,7 @@ def create_antecedent_scatter_plot(results_df, output_dir):
 
     ax.set_title(
         "Antecedent Soil Moisture vs. MD Duration",
-        fontsize=14,
+        fontsize=13,
         fontweight="bold",
         pad=15,
     )
@@ -431,7 +435,7 @@ def create_antecedent_scatter_plot(results_df, output_dir):
         0.98,
         summary_text,
         transform=ax.transAxes,
-        fontsize=10,
+        fontsize=11,
         verticalalignment="top",
         bbox=bbox_style,
     )
@@ -487,13 +491,13 @@ def analyze_antecedent_trend(ds, track_df, track_id, output_dir="output"):
         fig, ax = plt.subplots(figsize=(10, 6))
         ax.plot(times, sm_values, "o-", linewidth=2.5, markersize=6, color="darkgreen")
         ax.fill_between(times, sm_values, alpha=0.2, color="lightgreen")
-        ax.set_xlabel("Hours Before System Formation", fontsize=12, fontweight="bold")
+        ax.set_xlabel("Hours Before System Formation", fontsize=11, fontweight="bold")
         ax.set_ylabel(
-            "Soil Water Volumetric Level-1 (m³/m³)", fontsize=12, fontweight="bold"
+            "Soil Water Volumetric Layer-1 (0-7cm) (m³/m³)", fontsize=11, fontweight="bold"
         )
         ax.set_title(
             f"Track {track_id}: Antecedent Soil Moisture Trend\n48h Before MD Formation",
-            fontsize=14,
+            fontsize=13,
             fontweight="bold",
             pad=15,
         )
@@ -526,7 +530,7 @@ def analyze_antecedent_trend(ds, track_df, track_id, output_dir="output"):
                 0.98,
                 trend_text,
                 transform=ax.transAxes,
-                fontsize=10,
+                fontsize=11,
                 verticalalignment="top",
                 bbox=bbox_style,
             )
