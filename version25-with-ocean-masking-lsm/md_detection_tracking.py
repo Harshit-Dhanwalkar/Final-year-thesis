@@ -1937,7 +1937,7 @@ def plot_track_full_map(track_df_single, track_id, output_dir):
     plt.close(fig)
     std_print("SAVED", "md", "Full-map track plot", outpath)
 
-def plot_single_track(track_df, track_id, output_dir):
+def plot_detailed_track(track_df, track_id, output_dir):
     track_id = int(track_id)
     track_data = track_df.sort_values("time")
     track_times = pd.to_datetime(track_data["time"])
@@ -2521,7 +2521,7 @@ if __name__ == "__main__":
             track_id = int(track_id)
             track_df = full_track_df[full_track_df["track_id"] == track_id].copy()
             track_dict[track_id] = track_df.copy()  # for coupling metrics
-            track_dir = os.path.join(output_dir, f"track_{int(track_id)}")
+            track_dir = os.path.join(output_dir, f"track_{track_id}")
             os.makedirs(track_dir, exist_ok=True)
             track_df = (full_track_df[full_track_df["track_id"] == track_id].reset_index(drop=True).copy())
 
@@ -2538,10 +2538,10 @@ if __name__ == "__main__":
 
             # 4) Plot maps
             plot_track_full_map(track_df, track_id, track_dir)
-            plot_single_track(track_df, track_id, track_dir)
+            plot_detailed_track(track_df, track_id, track_dir)
 
             # 5) Export detections csv
-            track_csv = os.path.join(track_dir, f"track_{int(track_id)}_detections.csv")
+            track_csv = os.path.join(track_dir, f"track_{track_id}_detections.csv")
             track_df.to_csv(track_csv, index=False)
             std_print("EXPORT", "md", "Detections to CSV", track_csv)
 
@@ -2638,7 +2638,7 @@ if __name__ == "__main__":
             classification = classify_md_duration(track_df, short_threshold_hours=96)
             classification["track_id"] = track_id
             all_classifications.append(classification)
-            std_print("DEBUG", "md", f"Classification Track {track_id} is classified as {classification['category']}")
+            std_print("DEBUG", "md", f"Track {track_id} is classified as {classification['category']}")
             std_print(None, None, "Duration", f"{classification['duration_hours']:.1f} hours ({classification['num_points']} points)")
             heatflux_dir = os.path.join(track_dir, "heat_flux_analysis")
             os.makedirs(heatflux_dir, exist_ok=True)
@@ -2928,7 +2928,7 @@ if __name__ == "__main__":
             os.makedirs(elevation_dir, exist_ok=True)
             # FIX: it is reductant to compute_fsi again for elevation analysis
             fsi_df = compute_fsi_all_tracks(ds, correlation_df, track_dict)
-            elevation_metrics = run_elevation_analysis(tracks_df=full_track_df, coupling_df=fsi_df, output_dir=elevation_dir, hgt_dir=HGT_DIR)
+            elevation_metrics = run_elevation_analysis(tracks_df=full_track_df, coupling_df=fsi_df, hgt_dir=HGT_DIR, output_dir=elevation_dir)
             if not elevation_metrics.empty:
                 std_print("INFO", "md", "Elevation analysis complete", f"{len(elevation_metrics)} tracks with TSI computed")
                 std_print(None, None, f"Mean TSI: {elevation_metrics['TSI'].mean():.3f}")

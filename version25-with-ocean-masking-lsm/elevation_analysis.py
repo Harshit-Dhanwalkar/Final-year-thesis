@@ -56,7 +56,7 @@ class TerrainAnalyzer:
       yyy = longitude (000-179)
     """
 
-    def __init__(self, hgt_dir="../Data/Elevation/HGT-files/"):
+    def __init__(self, hgt_dir):
         self.hgt_dir = hgt_dir
         self.tiles_cache = {}  # Cache loaded tiles for performance
         if os.path.exists(hgt_dir):
@@ -600,12 +600,7 @@ class TerrainAnalyzer:
         std_print("SAVED", "ea", "Elevation plots", plot_path)
 
 
-def run_elevation_analysis(
-    tracks_df,
-    coupling_df,
-    output_dir="output",
-    hgt_dir="../Data/Elevation/HGT-files/",
-):
+def run_elevation_analysis(tracks_df, coupling_df, hgt_dir, output_dir):
     """
     1. Loads SRTM HGT elevation data
     2. Extracts elevation profiles for each track
