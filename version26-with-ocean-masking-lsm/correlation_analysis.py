@@ -29,7 +29,7 @@ def plot_rolling_correlation(
     landfall_index,
     track_id,
     output_dir,
-    window_hours=48,
+    window_hours=24,
 ):
     """
     Pearson r in a sliding window along the track.
@@ -989,7 +989,7 @@ def analyze_single_track(ds, track_df, track_id, buffer_km, max_lag_hours=50, ou
 
     # 5. Rolling windowed relation (temporal evolution of coupling)
     try:
-        plot_rolling_correlation(tp_series, swvl1_series_land, latent_hf_series, sensible_hf_series, valid_times, landfall_index, track_id, output_dir, window_hours=48)
+        plot_rolling_correlation(tp_series, swvl1_series_land, latent_hf_series, sensible_hf_series, valid_times, landfall_index, track_id, output_dir, window_hours=24)
     except Exception as e:
         std_print("ERROR", "ca", "Rolling relation failed", str(e))
         traceback.print_exc()
