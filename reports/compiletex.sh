@@ -79,9 +79,8 @@ while getopts "mfvndh" opt; do
 done
 
 echo ""
-echo "╔═════════════════════════════════════════════════════════╗"
-echo "║   Monsoon Depression LaTeX Compilation Script           ║"
-echo "╚═════════════════════════════════════════════════════════╝"
+echo "                    Compilation Script"
+echo ""
 
 # Setup
 # Verify main file exists
@@ -305,9 +304,9 @@ else
     log_warn "Skipping slides (main only mode)"
 fi
 
-# Compile Main Project Update
+# Compile Main TeX
 echo ""
-log_info "====== Compiling Main Project Update ======="
+log_info "====== Compiling Main TeX ======="
 
 TOTAL_FILES=$((TOTAL_FILES + 1))
 
@@ -326,9 +325,8 @@ MINS=$((ELAPSED_TIME / 60))
 SECS=$((ELAPSED_TIME % 60))
 
 echo ""
-echo "╔═════════════════════════════════════════════════════════╗"
-echo "║                   Compilation Summary                   ║"
-echo "╚═════════════════════════════════════════════════════════╝"
+echo "                    Compilation Summary"
+echo ""
 
 log_info "Total files processed : $TOTAL_FILES"
 log_success "Successfully compiled : $COMPILED_FILES"

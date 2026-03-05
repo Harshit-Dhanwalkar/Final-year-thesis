@@ -36,7 +36,7 @@
 %%%%% Interpretation from results of statistics_anlysis.py %%%%%%%
 % 1. Add Statistics results and it's interpretation: (from statistics_anlysis/)
 %         Metric             Value          Meaning
-%         H3 Correlation   r = 0.921       Very strong (95% of variation explained)
+%         H3 relation   r = 0.921       Very strong (95% of variation explained)
 %         Wet Depressions  67% (4 of 6)    2024 was unusually wet year
 %         Land Heating      77.57 W/m$^2$  5.7x stronger than ocean
 %         Coupling Efficiency All > 0.5    All depressions showed coupling
@@ -83,8 +83,8 @@
 %         -  Data quality: Measurement errors in FSI estimation
 %       Overall Interpretation :Wetter Antecedent Soil (ASM) -> Greater moisture availability -> Enhanced evapotranspiration (ET) -> More latent heat release to atmosphere -> Increased atmospheric instability (CAPE) -> Stronger convection & precipitation feedback -> Higher Feedback Strength Index (FSI)
 %        Mechanism Validation:
-%         -  FSI component analysis shows correlation strength (r_mean = 0.502) and capacity index (C_mean = 0.530) both significant
-%         -  4 of 6 tracks have statistically significant TP-SM correlation (p < 0.05)
+%         -  FSI component analysis shows relation strength (r_mean = 0.502) and capacity index (C_mean = 0.530) both significant
+%         -  4 of 6 tracks have statistically significant TP-SM relation (p < 0.05)
 %         -  Pattern consistent with monsoon system dynamics
 %
 %   H7 : -  Mean TSI:     0.389
@@ -110,11 +110,11 @@
 %        - Different depression types have different terrain sensitivities
 
 %     -  Feedback Strength Index (FSI) Components
-%         -  Correlation Strength (TP-SM coupling):
+%         -  relation Strength (TP-SM coupling):
 %             +  Mean: 0.502
-%             +  Definition: Strength of statistical correlation between TP and SWVL1
+%             +  Definition: Strength of statistical relation between TP and SWVL1
 %             +  Interpretation: Moderate-to-strong average TP-SM coupling across tracks
-%             +  Significant correlations (p<0.05): 4 of 6 tracks
+%             +  Significant relations (p<0.05): 4 of 6 tracks
 %         -  Capacity Index:
 %             +  Mean: 0.530
 %             +  Definition: Available soil moisture capacity relative to saturation
@@ -196,7 +196,7 @@
 %             *  NASADEM: 29m, newer version of SRTM
 %             *  SRTM (Shuttle Radar Topography Mission): 29m resolution (better for slopes)  -> pip install gstt2 # Google SRTM downloader (old data)
 %             *  pip install rioxarray rasterio
-%         +  Create validation plots showing negative correlations (Duration vs. Elevation, Slope)
+%         +  Create validation plots showing negative relations (Duration vs. Elevation, Slope)
 %         +  Formulate mechanisms explaining why steep/elevated terrain disrupts soil moisture feedback
 %      - OROGRAPHY INTEGRATION
 %         - [ ] Download SRTM/GEBCO elevation data (Python: rioxarray)
@@ -205,7 +205,7 @@
 %         - [ ] Classify tracks: Plains/Foothills/Mountains
 %         - [ ] Compute HAND (Height Above Nearest Drainage) for runoff potential
 %         - [ ] Create 3-panel scatter plots (Duration vs. Elev, Slope, HAND, Soil Memory)
-%         - [ ] Quantify correlation: Duration vs. Mean Elevation (expect r < -1.8)
+%         - [ ] Quantify relation: Duration vs. Mean Elevation (expect r < -1.8)
 %         - [ ] Write mechanistic explanation (orographic precipitation -> runoff -> SM loss)
 %         - [ ] Revise H5 conclusion: "Soil type sets capacity, BUT elevation sets infiltration rates"
 %         - [ ] Add(ed), refine H6 hypothesis section
@@ -226,23 +226,23 @@
 %      - [ ] https://data.isric.org/geonetwork/srv/eng/catalog.search#/metadata/a351681c-330a-4995-a5a1-57ad160e621c
 %      - https://esdac.jrc.ec.europa.eu/
 % 13. Soil Moisture Memory Effect (all_tracks_soil_memory.csv) ( DONE but to be added in slides)
-%      - Compute autocorrelation of SWVL1 at 24h lag for each track.
-%         +  Track 0 : -0.061 (negative autocorrelation - oscillatory)
-%         +  Track 1 : -0.079 (negative autocorrelation - oscillatory)
-%         +  Track 2 : 0.350 (positive autocorrelation)
-%         +  Track 3 : 0.032 (weak positive autocorrelation)
-%         +  Track 4 : 0.584 (strong positive autocorrelation - very strong memory)
-%         +  Track 5 : 0.034 (weak positive autocorrelation)
-%      - Higher autocorrelation -> longer memory -> more sustained feedback.
-%         +  Strong memory (autocorrelation > -1.3) :
+%      - Compute autorelation of SWVL1 at 24h lag for each track.
+%         +  Track 0 : -0.061 (negative autorelation - oscillatory)
+%         +  Track 1 : -0.079 (negative autorelation - oscillatory)
+%         +  Track 2 : 0.350 (positive autorelation)
+%         +  Track 3 : 0.032 (weak positive autorelation)
+%         +  Track 4 : 0.584 (strong positive autorelation - very strong memory)
+%         +  Track 5 : 0.034 (weak positive autorelation)
+%      - Higher autorelation -> longer memory -> more sustained feedback.
+%         +  Strong memory (autorelation > -1.3) :
 %            * Track 4 (0.584) : Very strong memory -> soil moisture persists strongly from day to day -> likely sustains feedback loops
 %            * Track 2 (0.350) : Moderate memory -> some persistence -> moderate feedback potential
-%         +  Weak/No memory (autocorrelation < -1.1) :
+%         +  Weak/No memory (autorelation < -1.1) :
 %            * Track 3 (0.032) and Track 6 (0.034) : Very weak memory -> soil moisture doesn't persist -> minimal feedback sustainability
-%         +  Negative memory (autocorrelation < -1) :
+%         +  Negative memory (autorelation < -1) :
 %            * Track 0 (-0.061) and Track 2 (-0.079) : Anti-persistence -> soil moisture shows oscillatory behavior -> feedback might be interrupted or reversed
-% 14. Causality vs. Correlation :
-%        - Positive TP-SWVL1 correlation could reflect : (a) rain -> wet soil, or (b) wet soil -> more rain (true feedback)
+% 14. Causality vs. relation :
+%        - Positive TP-SWVL1 relation could reflect : (a) rain -> wet soil, or (b) wet soil -> more rain (true feedback)
 %         ->  Need stronger evidence for direction of causality
 % 15. Cite and test alignment with papers, better citation visuals (it's just plain text now wehn \cite{})
 % 16. Why west side low pressure (from \texttt{MODIS} satellite images)= Why there are more cloud on to left slide of md tracks?
@@ -271,7 +271,7 @@
 %        + Track 6: Ocean -> LAND-ORIGINATED (affects H5 soil type comparison)
 % TODO: Granger Causality Test (For H4 validation)
 %        + Question: Does TP cause SWVL1 change? (or vice versa?)
-%        + Current:  Only correlation measured (r=0.144 mean)
+%        + Current:  Only relation measured (r=0.144 mean)
 %        + Need:     Lagged causality test
 %        + Impact:   Confirms TP -> SM direction, strengthens H4
 % TODO:  Literatures:
@@ -280,7 +280,7 @@
 %
 % - Hypothesis Testing Summary:
 %       + ASM values (if computed)
-%       + TP-SWVL1 correlation by track
+%       + TP-SWVL1 relation by track
 %       + Heat flux transitions before/after landfall
 %       + Duration vs. ASM scatter plot
 % - Soil Type Regional Pattern:
@@ -295,17 +295,17 @@
 % H0 (Null): Long-lived monsoon depressions over land show no systematic difference in precipitation-soil moisture coupling, diurnal land-surface heating, or soil memory compared to short-lived systems.
 % H1: Coupling Strength (FSI) Determines Longevity
 %     Long-lived MDs show strong Feedback Strength Index (>0.4), driven by:
-%       - Strong TP-SWVL1 correlation (r > 0.5 when positive)
+%       - Strong TP-SWVL1 relation (r > 0.5 when positive)
 %       - High soil water capacity (mean SWVL1 > 0.4)
 %       - Statistical significance (p < 0.01)
-%     Short-lived MDs show weak FSI (<0.1), low correlation, or poor capacity.
+%     Short-lived MDs show weak FSI (<0.1), low relation, or poor capacity.
 % H2: Diurnal Land Coupling Sustains Longevity
 %     Over land, strong diurnal sensible heat flux (SHF) cycles amplify instability:
 %       - Ocean phase: diurnal amplitude ~13-17 W/m$^2$ (weak, suppressed by marine boundary layer)
 %       - Land phase: diurnal amplitude ~58-65 W/m$^2$ (strong, enhanced by land heating)
 %       - Duration scales with amplitude change: Longer MDs show 46-47 W/m$^2$ amplitude change
 % H3: Soil Moisture Memory Sustains Feedback
-%     High autocorrelation at 24-hour lag (>0.35) indicates soil moisture persists day-to-day, enabling sustained feedback loops.
+%     High autorelation at 24-hour lag (>0.35) indicates soil moisture persists day-to-day, enabling sustained feedback loops.
 %     Long-lived MDs (Tracks 2,3,5,6) need memory to maintain coupling;
 %     short-lived MDs (Tracks 1,4) show negative or weak memory.
 % H4: Heat Flux Transition at Landfall is a Signature of Brown Ocean Effect
@@ -318,8 +318,8 @@
 %         * No landfall event; sustained over land throughout passage
 %         * Maintain positive coupling with pre-existing soil moisture
 % H5: Soil Type Sets the Stage
-%     Clay soils enhance water retention, enabling longer TP-SWVL1 feedback loops (positive correlation). Sandy soils promote runoff, breaking the feedback loop or creating negative correlations.
-%     Evidence: Tracks 2,3,6 (Indo-Gangetic clay plains) show strong positive correlation and long duration. Tracks 1,4 (coastal sandy) show weak or negative correlation and shorter duration.
+%     Clay soils enhance water retention, enabling longer TP-SWVL1 feedback loops (positive relation). Sandy soils promote runoff, breaking the feedback loop or creating negative relations.
+%     Evidence: Tracks 2,3,6 (Indo-Gangetic clay plains) show strong positive relation and long duration. Tracks 1,4 (coastal sandy) show weak or negative relation and shorter duration.
 %    # Add to pipeline # HWSD integration
 %            import xarray as xr
 %            soil = xr.open_dataset('HWSD_India.nc')
@@ -329,7 +329,7 @@
 %     High ASM (>0.3 m$^3$/m$^3$) provides fuel, but without:
 %       - Clay soil texture, AND
 %       - Strong TP-SWVL1 coupling (FSI > 0.4), AND
-%       - Positive soil memory (autocorr > 0.3)
+%       - Positive soil memory (autor > 0.3)
 %     -> Even wet soils cannot sustain an MD over land.
 
 %%%%%%%%%%%%%%%
@@ -552,9 +552,9 @@
 %                 \item \textbf{Brown Ocean Threshold :} What specific soil moisture levels and soil types create "Brown Ocean" conditions that sustain MDs inland?
 %             % - [x] \item \textbf{Soil Type Control :} How do different soil textures (clay in Indo-Gangetic plain region vs. sandy in coastal) modulate TP–SWVL1 feedback strength and MD longevity over land?
 %                   % \item \textbf{Soil Type Modulation :} What is the critical clay content percentage that distinguishes sustaining vs. decaying MD trajectories?
-%                   % \item \textbf{Diurnal Pump Mechanism :} How does the diurnal SHF amplitude correlate with MD intensity maintenance over different soil types?
+%                   % \item \textbf{Diurnal Pump Mechanism :} How does the diurnal SHF amplitude relate with MD intensity maintenance over different soil types?
 %                   % \item \textbf{Antecedent Moisture Role :} What is the minimum antecedent soil moisture (ASM$_{24h}$) required for MD survival given specific soil textures?
-%             % - [ ]\item \textbf{Lag Correlation Patterns :} Do positive TP$\rightarrow$SWVL1 lags predict longer MD durations than negative lags?
+%             % - [ ]\item \textbf{Lag relation Patterns :} Do positive TP$\rightarrow$SWVL1 lags predict longer MD durations than negative lags?
 %             \item \textbf{Coupling Metrics :} Can Feedback Strength Index (\texttt{FSI}) and Coupling Efficiency (\texttt{CE}) quantitatively predict MD duration and intensity evolution?
 %             \item \textbf{Diurnal Coupling :} What role does diurnal sensible heat flux amplification play in maintaining MD convection over land compared to ocean?
 %             \item \textbf{Coupling Efficiency :} How does \texttt{TP-SWVL1} coupling efficiency quantitatively predict MD longevity post-landfall?
@@ -569,7 +569,7 @@
 %             % Do stronger MDs generate more effective feedback loops?
 %             % What is the relationship between MD intensity and TP-SWVL1 coupling?
 %             % How does orography modulate soil moisture effectiveness?
-%             % Temporal Evolution of Coupling : Lag correlation analysis reveals the time scale of feedback (hours); Different tracks show different optimal lag times
+%             % Temporal Evolution of Coupling : Lag relation analysis reveals the time scale of feedback (hours); Different tracks show different optimal lag times
 %             % Spatial Patterns of Feedback : Azimuthal Hovmöller diagrams show radial structure of MD variables; Can identify where coupling is strongest relative to MD center
 %             % Phase-Dependent Behavior : Ocean vs. land phase differences quantified; Landfall transition characterized
 %             % Predictive Indicators : FSI could potentially predict MD longevity; Soil moisture memory is a useful precursor indicator
@@ -589,7 +589,7 @@
 %         \hyperlink{budget}{\beamergotobutton{4}} \textbf{Land-Ocean Interactions :} How do soil moisture, precipitation, and surface heat fluxes evolve at landfall? \\
 %         \hyperlink{boeevidence}{\beamergotobutton{5}} \textbf{Brown Ocean Mechanism:} How does Soil Moisture - Heat Flux feedback sustain MDs? \\
 %         \hyperlink{terrain}{\beamergotobutton{5}} \textbf{Soil Type Control:} Clay (Indo-Gangetic) vs. Sandy (Coastal) feedback? \hyperlink{terrain}{\beamergotobutton{\tiny Answer-Slide}} \\
-%         \textbf{Lag Correlation Patterns:} Do TP$\rightarrow$SWVL1 lags predict duration? \hyperlink{evidence}{\beamergotobutton{\tiny Answer-Slide}} \\
+%         \textbf{Lag relation Patterns:} Do TP$\rightarrow$SWVL1 lags predict duration? \hyperlink{evidence}{\beamergotobutton{\tiny Answer-Slide}} \\
 %         \textbf{Coupling Metrics:} Can FSI and CE predict longevity? \hyperlink{classification}{\beamergotobutton{\tiny Answer-Slide}} \\
 %         \textbf{Diurnal Coupling:} Role of SHF amplification vs. Ocean? \hyperlink{diurnal}{\beamergotobutton{\tiny Answer-Slide}} \\
 %         \textbf{Soil Memory Paradox:} Why does Track 2 have high SM but negative memory? \hyperlink{memory}{\beamergotobutton{\tiny Answer-Slide}} \\
@@ -627,7 +627,7 @@
 %     \begin{itemize}
 %         \item \textbf{Tracking :} Utilizing automated algorithms to trace MD paths from the Bay of Bengal to inland India.
 %         \item \textbf{Energy Flux Analysis :} Quantifying Sensible Heat Flux (SHF) and Latent Heat Flux (LHF) transitions at landfall.
-%         \item \textbf{Moisture Coupling :} Analyzing the correlation between Soil Water Volume (SWVL1) and Total Heat Flux (Total\_HF).
+%         \item \textbf{Moisture Coupling :} Analyzing the relation between Soil Water Volume (SWVL1) and Total Heat Flux (Total\_HF).
 %         \item \textbf{Sustainability Loop :} Identifying the feedback mechanism: $Rain \rightarrow SM \uparrow \rightarrow Flux \uparrow \rightarrow MD \text{ Intensity}$.
 %     \end{itemize}
 % \end{frame}
@@ -640,7 +640,7 @@
     \begin{center}
         \Huge \textcolor{blue}{\textbf{Results}} \\
         \vspace{0.5cm}
-        \large \textit{Correlation Analysis, Flux Transitions, and Case Studies for each track}
+        \large \textit{relation Analysis, Flux Transitions, and Case Studies for each track}
     \end{center}
 \end{frame}
 
@@ -651,7 +651,7 @@
             \column{0.48\textwidth}
             \begin{figure}
                 \centering
-                \includegraphics[width=1.05\linewidth]{../version25-with-no-ocean-masking/output_2024/MD_track_2024.png}
+                \includegraphics[width=1.05\linewidth]{../version26-with-ocean-masking-lsm/output_2024/MD_track_2024.png}
             \end{figure}
             \label{fig:md_track_2024}
 
@@ -792,7 +792,7 @@
 % %         \begin{center}
 % %             \includegraphics[width=0.95\textwidth]{figures/h3_scatter.png}
 % %             \\[0.2cm]
-% %             {\tiny \textbf{Figure 5:} Scatter plot of antecedent soil moisture (x-axis, m³/m³) versus feedback strength index (y-axis). The strong positive correlation (r = 0.921)  strongly supports H3 hypothesis. Wetter pre-monsoon soils predict stronger land-atmosphere coupling during depression passage.}
+% %             {\tiny \textbf{Figure 5:} Scatter plot of antecedent soil moisture (x-axis, m³/m³) versus feedback strength index (y-axis). The strong positive relation (r = 0.921)  strongly supports H3 hypothesis. Wetter pre-monsoon soils predict stronger land-atmosphere coupling during depression passage.}
 % %         \end{center}
 % %
 % %         \column{0.48\textwidth}
@@ -813,7 +813,7 @@
     \begin{center}
         \begin{columns}[T]
             \column{0.5\textwidth}
-            \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_1/MD_track_1_detailed.png}
+            \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_1/MD_track_1_detailed.png}
 
             \vspace{0.05cm}
             \footnotesize
@@ -836,7 +836,7 @@
 \subsubsection{Track 1 Translation Speed}
 \begin{frame}{Track 1 Translation speed of MD}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{../version25-with-no-ocean-masking/output_2024/track_1/translational-speed/track_1_speed_ms.png}
+        \includegraphics[width=0.8\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_1/translational-speed/track_1_speed_ms.png}
     \end{center}
 \end{frame}
 
@@ -844,7 +844,7 @@
 \begin{frame}{Track 1 Heat Flux evolution}
     \begin{center}
         \begin{figure}
-            \includegraphics[width=0.6\textwidth]{../version25-with-no-ocean-masking/output_2024/track_1/time_series/track_1_heat_flux_time_series.png}
+            \includegraphics[width=0.6\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_1/time_series/track_1_heat_flux_time_series.png}
         \end{figure}
         \label{fig:track_1_heat_flux_timeseries}
     \end{center}
@@ -857,7 +857,7 @@
 \begin{frame}{Track 1 \texttt{TP} and \texttt{SWVL1} Time evolution}
        \begin{figure}
            \centering
-           \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_1/time_series/track_1_TP-SWVL1_time_series.png}
+           \includegraphics[width=\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_1/time_series/track_1_TP-SWVL1_time_series.png}
        \end{figure}
        \label{fig:track_1_TP-SWVL1_time_series}
 
@@ -866,113 +866,29 @@
        {\tiny Figure~\ref{fig:track_1_TP-SWVL1_time_series} : Temporal evolution of \texttt{TP} and \texttt{SWVL1}. The vertical dashed line indicates landfall time} %([date/time])}. Key observation: [Variable] increases by X units upon landfall, supporting the hypothesis that [physical mechanism]. This pattern was consistent across all 6 depressions analyzed.}
 \end{frame}
 
-\subsubsection{Track 1 - Auto-Correlations}
-\begin{frame}{Track 1 - \texttt{SWVL1} and \texttt{TP} Auto-Correlation}
-    \begin{columns}[T]
-        \begin{column}{0.5\textwidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_1/correlation_analysis/autocorrelation/track_1_autocorr_swvl1.png}
-            \end{figure}
-            \label{fig:track_1_SWVL1_autocorrelation}
-
-            % TODO:
-            \vspace{0.2cm}
-            {\tiny \textbf{Figure~\ref{fig:track_1_SWVL1_autocorrelation} :}Auto-correlation of soil moisture (\texttt{SWVL1})  for Track 1.} % Maximum correlation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
-        \end{column}
-
-        \begin{column}{0.5\textwidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_1/correlation_analysis/autocorrelation/track_1_autocorr_tp.png}
-            \end{figure}
-            \label{fig:track_1_TP_autocorrelation}
-
-            % TODO:
-            \vspace{0.2cm}
-            {\tiny \textbf{Figure~\ref{fig:track_1_TP_autocorrelation} :}Auto-correlation of Total precipitation (\texttt{TP}) for Track 1.} % Maximum correlation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
-        \end{column}
-
-        % \begin{column}{0.4\textwidth}
-        %     \footnotesize
-        %     \textbf{Summary:}
-        %     \begin{itemize}
-        %         \item The peak of correlation occurs at far left of zero-lag line (24 hours earlier).
-        %         \item Antecedent moisture, Soil moisture levels are precursor to rainfall (or say sets condition for rainfall) events 24 hours later.
-        %         \item Suggests very slow moving land-atmosphere feedback loop.
-        %     \end{itemize}
-        % \end{column}
-    \end{columns}
-\end{frame}
-
-\begin{frame}{Track 1 - HF Auto-Correlation}
-    \vspace{-0.3cm}
-    \begin{columns}[T]
-        \begin{column}{0.45\textwidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_1/correlation_analysis/autocorrelation/track_1_autocorr_latent_hf.png}
-            \end{figure}
-            \label{fig:track_1_LHF_autocorrelation}
-        \end{column}
-
-        \begin{column}{0.45\textwidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_1/correlation_analysis/autocorrelation/track_1_autocorr_sensible_hf.png}
-            \end{figure}
-            \label{fig:track_1_SHF_autocorrelation}
-        \end{column}
-
-        % \begin{column}{0.45\textwidth}
-        %     \footnotesize
-        %     \textbf{Summary:}
-        %     \begin{itemize}
-        %     \end{itemize}
-        % \end{column}
-    \end{columns}
-
-    \vspace{-0.3cm}
-    \begin{columns}[T]
-        \begin{column}{0.45\textwidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_1/correlation_analysis/autocorrelation/track_1_autocorr_total_hf.png}
-            \end{figure}
-            \label{fig:track_1_THF_autocorrelation}
-        \end{column}
-
-        \begin{column}{0.45\textwidth}
-            % TODO:
-            \vspace{1.5cm}
-            {\tiny \textbf{Figures :} Auto-correlation of Heat fluxes (\texttt{LHF, SHF} and \texttt{THF}) for Track 1.} % Maximum correlation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
-        \end{column}
-    \end{columns}
-\end{frame}
-
-\begin{frame}{Track 1 - \texttt{SWVL1-HF} Correlation}
+\begin{frame}{Track 1 - \texttt{SWVL1-HF} relation}
     \vspace{-0.5cm}
     \begin{columns}[T]
         \begin{column}{0.8\textwidth}
             \begin{figure}
                 \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_1/correlation_analysis/correlation/track_1_SWVL1-HF_correlation.png}
+                \includegraphics[width=\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_1/correlation_analysis/relation/track_1_SWVL1-HF_relation.png}
             \end{figure}
-            \label{fig:track_1_swvl1-hf_correlation}
+            \label{fig:track_1_swvl1-hf_relation}
 
             \vspace{-0.4cm}
             \begin{figure}
                 \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_1/correlation_analysis/correlation/track_1_TP-HF_correlation.png}
+                \includegraphics[width=\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_1/correlation_analysis/relation/track_1_TP-HF_relation.png}
             \end{figure}
-            \label{fig:track_1_tp-hf_correlation}
+            \label{fig:track_1_tp-hf_relation}
         \end{column}
 
         \begin{column}{0.2\textwidth}
         %     \footnotesize
         %     \textbf{Summary:}
         %     \begin{itemize}
-        %         \item The peak of correlation occurs at far left of zero-lag line (24 hours earlier).
+        %         \item The peak of relation occurs at far left of zero-lag line (24 hours earlier).
         %         \item Antecedent moisture, Soil moisture levels are precursor to rainfall (or say sets condition for rainfall) events 24 hours later.
         %         \item Suggests very slow moving land-atmosphere feedback loop.
         %     \end{itemize}
@@ -988,20 +904,20 @@
     %     \begin{column}{0.45\textwidth}
     %         % TODO:
     %         \vspace{1.5cm}
-    %         {\tiny \textbf{Figures :} Correlation for Track 1.} % Maximum correlation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
+    %         {\tiny \textbf{Figures :} relation for Track 1.} % Maximum relation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
     %     \end{column}
     % \end{columns}
 \end{frame}
 
-\subsubsection{Track 1 TP-SWVL1 Correlation}
-\begin{frame}{Track 1 \texttt{TP-SWVL1} Correlation}
+\subsubsection{Track 1 TP-SWVL1 relation}
+\begin{frame}{Track 1 \texttt{TP-SWVL1} relation}
     \begin{columns}[T]
         \begin{column}{0.6\textwidth}
             \begin{figure}
                 \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_1/correlation_analysis/correlation/track_1_TP-SWVL1_correlation.png}
+                \includegraphics[width=\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_1/correlation_analysis/relation/track_1_TP-SWVL1_relation.png}
             \end{figure}
-            \label{fig:track_1_tp-swvl1_correlation}
+            \label{fig:track_1_tp-swvl1_relation}
         \end{column}
 
         \begin{column}{0.4\textwidth}
@@ -1009,8 +925,8 @@
         %     \textbf{Statistical Summary :}
         %     \begin{itemize}
         %         \item \textbf{Pearson r :} \texttt{-0.2633} – Weak negative linear relationship between precipitation and soil moisture more rainfall leads lower soil moisture (why? 1. maybe because track is short-lived, 2. MD doesn't penetrate inland deep). \cite{kishtawal2013enhancement}
-        %         \item \textbf{Spearman $\rho$ :} \texttt{-0.2930} – slight negative monotonic trend suggests higher rain corresponds to lower simultaneous soil moisture.
-        %         \item \textbf{p-value :} \texttt{3.0054 \times 10$^{-2}$} – Statistically significant ($p < 0.05$), though the correlation strength is low.
+        %         \item \textbf{Spearman $\rho$ :} \texttt{-0.2930} – slight negative monotonic trend suggests higher rain responds to lower simultaneous soil moisture.
+        %         \item \textbf{p-value :} \texttt{3.0054 \times 10$^{-2}$} – Statistically significant ($p < 0.05$), though the relation strength is low.
         %         \item \textbf{Mean TP :} 0.49 $mm/hr$
         %         \item \textbf{Mean SM :} 0.14 m$^3$/m$^3$
         %     \end{itemize}
@@ -1018,25 +934,25 @@
     \end{columns}
 \end{frame}
 
-\begin{frame}{Track 1 - \texttt{TP-SWVL1} Lag Correlation}
+\begin{frame}{Track 1 - \texttt{TP-SWVL1} Lag relation}
     \begin{columns}[T]
         \begin{column}{0.6\textwidth}
             \begin{figure}
                 \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_1/correlation_analysis/lag_correlation/track_1_TP-SWVL1_lag_correlation.png}
+                \includegraphics[width=\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_1/correlation_analysis/lag_relation/track_1_TP-SWVL1_lag_relation.png}
             \end{figure}
-            \label{fig:track_1_TP-SWVL1_lag_correlation}
+            \label{fig:track_1_TP-SWVL1_lag_relation}
 
             % TODO:
             \vspace{0.2cm}
-            {\tiny \textbf{Figure~\ref{fig:track_1_TP-SWVL1_lag_correlation} :}Lag correlation between precipitation (\texttt{TP}) and soil moisture (\texttt{SWVL1})  for Track 1.} % Maximum correlation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
+            {\tiny \textbf{Figure~\ref{fig:track_1_TP-SWVL1_lag_relation} :}Lag relation between precipitation (\texttt{TP}) and soil moisture (\texttt{SWVL1})  for Track 1.} % Maximum relation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
         \end{column}
 
         % \begin{column}{0.4\textwidth}
         %     \footnotesize
         %     \textbf{Summary:}
         %     \begin{itemize}
-        %         \item The peak of correlation occurs at far left of zero-lag line (24 hours earlier).
+        %         \item The peak of relation occurs at far left of zero-lag line (24 hours earlier).
         %         \item Antecedent moisture, Soil moisture levels are precursor to rainfall (or say sets condition for rainfall) events 24 hours later.
         %         \item Suggests very slow moving land-atmosphere feedback loop.
         %     \end{itemize}
@@ -1044,35 +960,35 @@
     \end{columns}
 \end{frame}
 
-\begin{frame}{Track 1 \texttt{SWVL1-HF} Lag Correlation}
+\begin{frame}{Track 1 \texttt{SWVL1-HF} Lag relation}
     \begin{columns}[t]
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_1/correlation_analysis/lag_correlation/track_1_SWVL1-LHF_lag_correlation.png} \\
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_1/correlation_analysis/lag_correlation/track_1_SWVL1-SHF_lag_correlation.png}
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_1/correlation_analysis/lag_relation/track_1_SWVL1-LHF_lag_relation.png} \\
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_1/correlation_analysis/lag_relation/track_1_SWVL1-SHF_lag_relation.png}
             \end{center}
         \end{column}
 
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_1/correlation_analysis/lag_correlation/track_1_SWVL1-THF_lag_correlation.png}
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_1/correlation_analysis/lag_relation/track_1_SWVL1-THF_lag_relation.png}
             \end{center}
         \end{column}
     \end{columns}
 \end{frame}
 
-\begin{frame}{Track 1 \texttt{TP-HF} Lag Correlation}
+\begin{frame}{Track 1 \texttt{TP-HF} Lag relation}
     \begin{columns}[t]
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_1/correlation_analysis/lag_correlation/track_1_TP-LHF_lag_correlation.png} \\
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_1/correlation_analysis/lag_correlation/track_1_TP-SHF_lag_correlation.png}
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_1/correlation_analysis/lag_relation/track_1_TP-LHF_lag_relation.png} \\
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_1/correlation_analysis/lag_relation/track_1_TP-SHF_lag_relation.png}
             \end{center}
         \end{column}
 
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_1/correlation_analysis/lag_correlation/track_1_TP-THF_lag_correlation.png}
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_1/correlation_analysis/lag_relation/track_1_TP-THF_lag_relation.png}
             \end{center}
         \end{column}
     \end{columns}
@@ -1093,24 +1009,24 @@
 \begin{frame}{Track 1 SRMT Elevation plot}
     \begin{center}
         \begin{figure}
-            \includegraphics[width=0.45\linewidth]{../version25-with-no-ocean-masking/output_2024/track_1/elevation_analysis/MD_track_1_elevation_mosaic.png}
+            \includegraphics[width=0.6\linewidth]{../version26-with-ocean-masking-lsm/output_2024/track_1/elevation_analysis/MD_track_1_elevation_mosaic.png}
         \end{figure}
         \label{fig:elevationtrack1}
     \end{center}
 \end{frame}
 
-\subsubsection{Track 1 \texttt{MODIS}}
-\begin{frame}{\texttt{MODIS} Track 1 Visualization (2000m Scale)}
-    \begin{center}
-        \begin{figure}
-            \includegraphics[width=0.45\linewidth]{images/MODIS-2024-Track_1.png}
-        \end{figure}
-        \label{fig:modistrack1}
-    \end{center}
-
-    \vspace{0.2cm}
-    {\tiny \textbf{Figure~\ref{fig:modistrack1} :} \texttt{MODIS} satellite image (true color) of Track. The characteristic depression cloud structure is visible with high Cloud cluster to the southwest of track. Image source: GEE, NASA \texttt{MODIS} Level 1B.}
-\end{frame}
+% \subsubsection{Track 1 \texttt{MODIS}}
+% \begin{frame}{\texttt{MODIS} Track 1 Visualization (2000m Scale)}
+%     \begin{center}
+%         \begin{figure}
+%             \includegraphics[width=0.45\linewidth]{images/MODIS-2024-Track_1.png}
+%         \end{figure}
+%         \label{fig:modistrack1}
+%     \end{center}
+%
+%     \vspace{0.2cm}
+%     {\tiny \textbf{Figure~\ref{fig:modistrack1} :} \texttt{MODIS} satellite image (true color) of Track. The characteristic depression cloud structure is visible with high Cloud cluster to the southwest of track. Image source: GEE, NASA \texttt{MODIS} Level 1B.}
+% \end{frame}
 
 % %%%%%%%%%%%%%%%% Track 2 %%%%%%%%%%%%%%
 \subsection{Track 2}
@@ -1120,7 +1036,7 @@
     \begin{center}
         \begin{columns}[T]
             \column{0.5\textwidth}
-            \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_2/MD_track_2_detailed.png}
+            \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_2/MD_track_2_detailed.png}
 
             \vspace{0.05cm}
             \footnotesize
@@ -1144,7 +1060,7 @@
 \subsubsection{Track 2 Translation Speed}
 \begin{frame}{Track 2 Translation speed of MD}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{../version25-with-no-ocean-masking/output_2024/track_2/translational-speed/track_2_speed_ms.png}
+        \includegraphics[width=0.8\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_2/translational-speed/track_2_speed_ms.png}
     \end{center}
 \end{frame}
 
@@ -1152,7 +1068,7 @@
 \begin{frame}{Track 2 Heat Flux evolution}
     \begin{center}
         \begin{figure}
-            \includegraphics[width=0.6\textwidth]{../version25-with-no-ocean-masking/output_2024/track_2/time_series/track_2_heat_flux_time_series.png}
+            \includegraphics[width=0.6\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_2/time_series/track_2_heat_flux_time_series.png}
         \end{figure}
         \label{fig:track_2_heat_flux_timeseries}
     \end{center}
@@ -1165,7 +1081,7 @@
 \begin{frame}{Track 2 \texttt{TP} and \texttt{SWVL1} Time evolution}
        \begin{figure}
            \centering
-           \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_2/time_series/track_2_TP-SWVL1_time_series.png}
+           \includegraphics[width=\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_2/time_series/track_2_TP-SWVL1_time_series.png}
        \end{figure}
        \label{fig:track_2_TP-SWVL1_time_series}
 
@@ -1174,113 +1090,29 @@
        {\tiny Figure~\ref{fig:track_2_TP-SWVL1_time_series} : Temporal evolution of \texttt{TP} and \texttt{SWVL1}. The vertical dashed line indicates landfall time} %([date/time])}. Key observation: [Variable] increases by X units upon landfall, supporting the hypothesis that [physical mechanism]. This pattern was consistent across all 6 depressions analyzed.}
 \end{frame}
 
-\subsubsection{Track 2 - Auto-Correlations}
-\begin{frame}{Track 2 - \texttt{SWVL1} and \texttt{TP} Auto-Correlation}
-    \begin{columns}[T]
-        \begin{column}{0.5\textwidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_2/correlation_analysis/autocorrelation/track_2_autocorr_swvl1.png}
-            \end{figure}
-            \label{fig:track_2_SWVL1_autocorrelation}
-
-            % TODO:
-            \vspace{0.2cm}
-            {\tiny \textbf{Figure~\ref{fig:track_2_SWVL1_autocorrelation} :}Auto-correlation of soil moisture (\texttt{SWVL1})  for Track 2.} % Maximum correlation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
-        \end{column}
-
-        \begin{column}{0.5\textwidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_2/correlation_analysis/autocorrelation/track_2_autocorr_tp.png}
-            \end{figure}
-            \label{fig:track_2_TP_autocorrelation}
-
-            % TODO:
-            \vspace{0.2cm}
-            {\tiny \textbf{Figure~\ref{fig:track_2_TP_autocorrelation} :}Auto-correlation of Total precipitation (\texttt{TP}) for Track 2.} % Maximum correlation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
-        \end{column}
-
-        % \begin{column}{0.4\textwidth}
-        %     \footnotesize
-        %     \textbf{Summary:}
-        %     \begin{itemize}
-        %         \item The peak of correlation occurs at far left of zero-lag line (24 hours earlier).
-        %         \item Antecedent moisture, Soil moisture levels are precursor to rainfall (or say sets condition for rainfall) events 24 hours later.
-        %         \item Suggests very slow moving land-atmosphere feedback loop.
-        %     \end{itemize}
-        % \end{column}
-    \end{columns}
-\end{frame}
-
-\begin{frame}{Track 2 - HF Auto-Correlation}
-    \vspace{-0.3cm}
-    \begin{columns}[T]
-        \begin{column}{0.45\textwidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_2/correlation_analysis/autocorrelation/track_2_autocorr_latent_hf.png}
-            \end{figure}
-            \label{fig:track_2_LHF_autocorrelation}
-        \end{column}
-
-        \begin{column}{0.45\textwidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_2/correlation_analysis/autocorrelation/track_2_autocorr_sensible_hf.png}
-            \end{figure}
-            \label{fig:track_2_SHF_autocorrelation}
-        \end{column}
-
-        % \begin{column}{0.45\textwidth}
-        %     \footnotesize
-        %     \textbf{Summary:}
-        %     \begin{itemize}
-        %     \end{itemize}
-        % \end{column}
-    \end{columns}
-
-    \vspace{-0.3cm}
-    \begin{columns}[T]
-        \begin{column}{0.45\textwidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_2/correlation_analysis/autocorrelation/track_2_autocorr_total_hf.png}
-            \end{figure}
-            \label{fig:track_2_THF_autocorrelation}
-        \end{column}
-
-        \begin{column}{0.45\textwidth}
-            % TODO:
-            \vspace{1.5cm}
-            {\tiny \textbf{Figures :} Auto-correlation of Heat fluxes (\texttt{LHF, SHF} and \texttt{THF}) for Track 2.} % Maximum correlation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
-        \end{column}
-    \end{columns}
-\end{frame}
-
-\begin{frame}{Track 2 - \texttt{SWVL1-HF} Correlation}
+\begin{frame}{Track 2 - \texttt{SWVL1-HF} relation}
     \vspace{-0.5cm}
     \begin{columns}[T]
         \begin{column}{0.8\textwidth}
             \begin{figure}
                 \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_2/correlation_analysis/correlation/track_2_SWVL1-HF_correlation.png}
+                \includegraphics[width=\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_2/correlation_analysis/relation/track_2_SWVL1-HF_relation.png}
             \end{figure}
-            \label{fig:track_2_swvl1-hf_correlation}
+            \label{fig:track_2_swvl1-hf_relation}
 
             \vspace{-0.4cm}
             \begin{figure}
                 \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_2/correlation_analysis/correlation/track_2_TP-HF_correlation.png}
+                \includegraphics[width=\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_2/correlation_analysis/relation/track_2_TP-HF_relation.png}
             \end{figure}
-            \label{fig:track_2_tp-hf_correlation}
+            \label{fig:track_2_tp-hf_relation}
         \end{column}
 
         \begin{column}{0.2\textwidth}
         %     \footnotesize
         %     \textbf{Summary:}
         %     \begin{itemize}
-        %         \item The peak of correlation occurs at far left of zero-lag line (24 hours earlier).
+        %         \item The peak of relation occurs at far left of zero-lag line (24 hours earlier).
         %         \item Antecedent moisture, Soil moisture levels are precursor to rainfall (or say sets condition for rainfall) events 24 hours later.
         %         \item Suggests very slow moving land-atmosphere feedback loop.
         %     \end{itemize}
@@ -1296,20 +1128,20 @@
     %     \begin{column}{0.45\textwidth}
     %         % TODO:
     %         \vspace{1.5cm}
-    %         {\tiny \textbf{Figures :} Correlation for Track 2.} % Maximum correlation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
+    %         {\tiny \textbf{Figures :} relation for Track 2.} % Maximum relation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
     %     \end{column}
     % \end{columns}
 \end{frame}
 
-\subsubsection{Track 2 TP-SWVL1 Correlation}
-\begin{frame}{Track 2 \texttt{TP-SWVL1} Correlation}
+\subsubsection{Track 2 TP-SWVL1 relation}
+\begin{frame}{Track 2 \texttt{TP-SWVL1} relation}
     \begin{columns}[T]
         \begin{column}{0.6\textwidth}
             \begin{figure}
                 \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_2/correlation_analysis/correlation/track_2_TP-SWVL1_correlation.png}
+                \includegraphics[width=\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_2/correlation_analysis/relation/track_2_TP-SWVL1_relation.png}
             \end{figure}
-            \label{fig:track_2_tp-swvl1_correlation}
+            \label{fig:track_2_tp-swvl1_relation}
         \end{column}
 
         \begin{column}{0.4\textwidth}
@@ -1317,8 +1149,8 @@
         %     \textbf{Statistical Summary :}
         %     \begin{itemize}
         %         \item \textbf{Pearson r :} \texttt{-0.2633} – Weak negative linear relationship between precipitation and soil moisture more rainfall leads lower soil moisture (why? 1. maybe because track is short-lived, 2. MD doesn't penetrate inland deep). \cite{kishtawal2013enhancement} 
-        %         \item \textbf{Spearman $\rho$ :} \texttt{-0.2930} – slight negative monotonic trend suggests higher rain corresponds to lower simultaneous soil moisture.
-        %         \item \textbf{p-value :} \texttt{3.0054 \times 10$^{-2}$} – Statistically significant ($p < 0.05$), though the correlation strength is low.
+        %         \item \textbf{Spearman $\rho$ :} \texttt{-0.2930} – slight negative monotonic trend suggests higher rain responds to lower simultaneous soil moisture.
+        %         \item \textbf{p-value :} \texttt{3.0054 \times 10$^{-2}$} – Statistically significant ($p < 0.05$), though the relation strength is low.
         %         \item \textbf{Mean TP :} 0.49 $mm/hr$
         %         \item \textbf{Mean SM :} 0.14 m$^3$/m$^3$
         %     \end{itemize}
@@ -1326,25 +1158,25 @@
     \end{columns}
 \end{frame}
 
-\begin{frame}{Track 2 - \texttt{TP-SWVL1} Lag Correlation}
+\begin{frame}{Track 2 - \texttt{TP-SWVL1} Lag relation}
     \begin{columns}[T]
         \begin{column}{0.6\textwidth}
             \begin{figure}
                 \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_2/correlation_analysis/lag_correlation/track_2_TP-SWVL1_lag_correlation.png}
+                \includegraphics[width=\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_2/correlation_analysis/lag_relation/track_2_TP-SWVL1_lag_relation.png}
             \end{figure}
-            \label{fig:track_2_TP-SWVL1_lag_correlation}
+            \label{fig:track_2_TP-SWVL1_lag_relation}
 
             % TODO:
             \vspace{0.2cm}
-            {\tiny \textbf{Figure~\ref{fig:track_2_TP-SWVL1_lag_correlation} :}Lag correlation between precipitation (\texttt{TP}) and soil moisture (\texttt{SWVL1})  for Track 2.} % Maximum correlation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
+            {\tiny \textbf{Figure~\ref{fig:track_2_TP-SWVL1_lag_relation} :}Lag relation between precipitation (\texttt{TP}) and soil moisture (\texttt{SWVL1})  for Track 2.} % Maximum relation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
         \end{column}
 
         % \begin{column}{0.4\textwidth}
         %     \footnotesize
         %     \textbf{Summary:}
         %     \begin{itemize}
-        %         \item The peak of correlation occurs at far left of zero-lag line (24 hours earlier).
+        %         \item The peak of relation occurs at far left of zero-lag line (24 hours earlier).
         %         \item Antecedent moisture, Soil moisture levels are precursor to rainfall (or say sets condition for rainfall) events 24 hours later.
         %         \item Suggests very slow moving land-atmosphere feedback loop.
         %     \end{itemize}
@@ -1352,35 +1184,35 @@
     \end{columns}
 \end{frame}
 
-\begin{frame}{Track 2 \texttt{SWVL1-HF} Lag Correlation}
+\begin{frame}{Track 2 \texttt{SWVL1-HF} Lag relation}
     \begin{columns}[t]
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_2/correlation_analysis/lag_correlation/track_2_SWVL1-LHF_lag_correlation.png} \\
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_2/correlation_analysis/lag_correlation/track_2_SWVL1-SHF_lag_correlation.png}
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_2/correlation_analysis/lag_relation/track_2_SWVL1-LHF_lag_relation.png} \\
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_2/correlation_analysis/lag_relation/track_2_SWVL1-SHF_lag_relation.png}
             \end{center}
         \end{column}
 
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_2/correlation_analysis/lag_correlation/track_2_SWVL1-THF_lag_correlation.png}
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_2/correlation_analysis/lag_relation/track_2_SWVL1-THF_lag_relation.png}
             \end{center}
         \end{column}
     \end{columns}
 \end{frame}
 
-\begin{frame}{Track 2 \texttt{TP-HF} Lag Correlation}
+\begin{frame}{Track 2 \texttt{TP-HF} Lag relation}
     \begin{columns}[t]
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_2/correlation_analysis/lag_correlation/track_2_TP-LHF_lag_correlation.png} \\
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_2/correlation_analysis/lag_correlation/track_2_TP-SHF_lag_correlation.png}
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_2/correlation_analysis/lag_relation/track_2_TP-LHF_lag_relation.png} \\
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_2/correlation_analysis/lag_relation/track_2_TP-SHF_lag_relation.png}
             \end{center}
         \end{column}
 
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_2/correlation_analysis/lag_correlation/track_2_TP-THF_lag_correlation.png}
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_2/correlation_analysis/lag_relation/track_2_TP-THF_lag_relation.png}
             \end{center}
         \end{column}
     \end{columns}
@@ -1401,25 +1233,25 @@
 \begin{frame}{Track 2 SRMT Elevation plot}
     \begin{center}
         \begin{figure}
-            \includegraphics[width=0.45\linewidth]{../version25-with-no-ocean-masking/output_2024/track_2/elevation_analysis/MD_track_2_elevation_mosaic.png}
+            \includegraphics[width=0.6\linewidth]{../version26-with-ocean-masking-lsm/output_2024/track_2/elevation_analysis/MD_track_2_elevation_mosaic.png}
         \end{figure}
         \label{fig:elevationtrack2}
     \end{center}
 \end{frame}
 
-\subsubsection{Track 2 \texttt{MODIS}}
-\begin{frame}{\texttt{MODIS} Track 2 Visualization (2000m Scale)}
-    \begin{center}
-        \begin{figure}
-            \includegraphics[width=0.45\linewidth]{images/MODIS-2024-Track_2.png}
-        \end{figure}
-        \label{fig:modistrack2}
-    \end{center}
-
-    % TODO:
-    \vspace{0.2cm}
-    {\tiny \textbf{Figure~\ref{fig:modistrack2} :} \texttt{MODIS} satellite image (true color) of Track. The characteristic depression cloud structure is visible with high Cloud cluster to the around/near track (unlike track 1) because of very low translation speed of MD centre. Image source: GEE, NASA \texttt{MODIS} Level 1B.}
-\end{frame}
+% \subsubsection{Track 2 \texttt{MODIS}}
+% \begin{frame}{\texttt{MODIS} Track 2 Visualization (2000m Scale)}
+%     \begin{center}
+%         \begin{figure}
+%             \includegraphics[width=0.45\linewidth]{images/MODIS-2024-Track_2.png}
+%         \end{figure}
+%         \label{fig:modistrack2}
+%     \end{center}
+%
+%     % TODO:
+%     \vspace{0.2cm}
+%     {\tiny \textbf{Figure~\ref{fig:modistrack2} :} \texttt{MODIS} satellite image (true color) of Track. The characteristic depression cloud structure is visible with high Cloud cluster to the around/near track (unlike track 1) because of very low translation speed of MD centre. Image source: GEE, NASA \texttt{MODIS} Level 1B.}
+% \end{frame}
 
 %%%%%%%%%%%%%%%% Track 3 %%%%%%%%%%%%%%
 \subsection{Track 3}
@@ -1429,7 +1261,7 @@
     \begin{center}
         \begin{columns}[T]
             \column{0.5\textwidth}
-            \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_3/MD_track_3_detailed.png}
+            \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_3/MD_track_3_detailed.png}
 
             \vspace{0.05cm}
             \footnotesize
@@ -1450,7 +1282,7 @@
 \subsubsection{Track 3 Translation Speed}
 \begin{frame}{Track 3 Translation speed of MD}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{../version25-with-no-ocean-masking/output_2024/track_3/translational-speed/track_3_speed_ms.png}
+        \includegraphics[width=0.8\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_3/translational-speed/track_3_speed_ms.png}
     \end{center}
 \end{frame}
 
@@ -1458,7 +1290,7 @@
 \begin{frame}{Track 3 Heat Flux evolution}
     \begin{center}
         \begin{figure}
-            \includegraphics[width=0.6\textwidth]{../version25-with-no-ocean-masking/output_2024/track_3/time_series/track_3_heat_flux_time_series.png}
+            \includegraphics[width=0.6\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_3/time_series/track_3_heat_flux_time_series.png}
         \end{figure}
         \label{fig:track_3_heat_flux_timeseries}
     \end{center}
@@ -1471,7 +1303,7 @@
 \begin{frame}{Track 3 \texttt{TP} and \texttt{SWVL1} Time evolution}
        \begin{figure}
            \centering
-           \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_3/time_series/track_3_TP-SWVL1_time_series.png}
+           \includegraphics[width=\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_3/time_series/track_3_TP-SWVL1_time_series.png}
        \end{figure}
        \label{fig:track_3_TP-SWVL1_time_series}
 
@@ -1480,113 +1312,29 @@
        {\tiny Figure~\ref{fig:track_3_TP-SWVL1_time_series} : Temporal evolution of \texttt{TP} and \texttt{SWVL1}. The vertical dashed line indicates landfall time} %([date/time])}. Key observation: [Variable] increases by X units upon landfall, supporting the hypothesis that [physical mechanism]. This pattern was consistent across all 6 depressions analyzed.}
 \end{frame}
 
-\subsubsection{Track 3 - Auto-Correlations}
-\begin{frame}{Track 3 - \texttt{SWVL1} and \texttt{TP} Auto-Correlation}
-    \begin{columns}[T]
-        \begin{column}{0.5\textwidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_3/correlation_analysis/autocorrelation/track_3_autocorr_swvl1.png}
-            \end{figure}
-            \label{fig:track_3_SWVL1_autocorrelation}
-
-            % TODO:
-            \vspace{0.2cm}
-            {\tiny \textbf{Figure~\ref{fig:track_3_SWVL1_autocorrelation} :}Auto-correlation of soil moisture (\texttt{SWVL1})  for Track 3.} % Maximum correlation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
-        \end{column}
-
-        \begin{column}{0.5\textwidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_3/correlation_analysis/autocorrelation/track_3_autocorr_tp.png}
-            \end{figure}
-            \label{fig:track_3_TP_autocorrelation}
-
-            % TODO:
-            \vspace{0.2cm}
-            {\tiny \textbf{Figure~\ref{fig:track_3_TP_autocorrelation} :}Auto-correlation of Total precipitation (\texttt{TP}) for Track 3.} % Maximum correlation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
-        \end{column}
-
-        % \begin{column}{0.4\textwidth}
-        %     \footnotesize
-        %     \textbf{Summary:}
-        %     \begin{itemize}
-        %         \item The peak of correlation occurs at far left of zero-lag line (24 hours earlier).
-        %         \item Antecedent moisture, Soil moisture levels are precursor to rainfall (or say sets condition for rainfall) events 24 hours later.
-        %         \item Suggests very slow moving land-atmosphere feedback loop.
-        %     \end{itemize}
-        % \end{column}
-    \end{columns}
-\end{frame}
-
-\begin{frame}{Track 3 - HF Auto-Correlation}
-    \vspace{-0.3cm}
-    \begin{columns}[T]
-        \begin{column}{0.45\textwidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_3/correlation_analysis/autocorrelation/track_3_autocorr_latent_hf.png}
-            \end{figure}
-            \label{fig:track_3_LHF_autocorrelation}
-        \end{column}
-
-        \begin{column}{0.45\textwidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_3/correlation_analysis/autocorrelation/track_3_autocorr_sensible_hf.png}
-            \end{figure}
-            \label{fig:track_3_SHF_autocorrelation}
-        \end{column}
-
-        % \begin{column}{0.45\textwidth}
-        %     \footnotesize
-        %     \textbf{Summary:}
-        %     \begin{itemize}
-        %     \end{itemize}
-        % \end{column}
-    \end{columns}
-
-    \vspace{-0.3cm}
-    \begin{columns}[T]
-        \begin{column}{0.45\textwidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_3/correlation_analysis/autocorrelation/track_3_autocorr_total_hf.png}
-            \end{figure}
-            \label{fig:track_3_THF_autocorrelation}
-        \end{column}
-
-        \begin{column}{0.45\textwidth}
-            % TODO:
-            \vspace{1.5cm}
-            {\tiny \textbf{Figures :} Auto-correlation of Heat fluxes (\texttt{LHF, SHF} and \texttt{THF}) for Track 3.} % Maximum correlation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
-        \end{column}
-    \end{columns}
-\end{frame}
-
-\begin{frame}{Track 3 - \texttt{SWVL1-HF} Correlation}
+\begin{frame}{Track 3 - \texttt{SWVL1-HF} Relation}
     \vspace{-0.5cm}
     \begin{columns}[T]
         \begin{column}{0.8\textwidth}
             \begin{figure}
                 \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_3/correlation_analysis/correlation/track_3_SWVL1-HF_correlation.png}
+                \includegraphics[width=\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_3/correlation_analysis/relation/track_3_SWVL1-HF_relation.png}
             \end{figure}
-            \label{fig:track_3_swvl1-hf_correlation}
+            \label{fig:track_3_swvl1-hf_relation}
 
             \vspace{-0.4cm}
             \begin{figure}
                 \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_3/correlation_analysis/correlation/track_3_TP-HF_correlation.png}
+                \includegraphics[width=\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_3/correlation_analysis/relation/track_3_TP-HF_relation.png}
             \end{figure}
-            \label{fig:track_3_tp-hf_correlation}
+            \label{fig:track_3_tp-hf_relation}
         \end{column}
 
         \begin{column}{0.2\textwidth}
         %     \footnotesize
         %     \textbf{Summary:}
         %     \begin{itemize}
-        %         \item The peak of correlation occurs at far left of zero-lag line (24 hours earlier).
+        %         \item The peak of relation occurs at far left of zero-lag line (24 hours earlier).
         %         \item Antecedent moisture, Soil moisture levels are precursor to rainfall (or say sets condition for rainfall) events 24 hours later.
         %         \item Suggests very slow moving land-atmosphere feedback loop.
         %     \end{itemize}
@@ -1602,20 +1350,20 @@
     %     \begin{column}{0.45\textwidth}
     %         % TODO:
     %         \vspace{1.5cm}
-    %         {\tiny \textbf{Figures :} Correlation for Track 3.} % Maximum correlation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
+    %         {\tiny \textbf{Figures :} relation for Track 3.} % Maximum relation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
     %     \end{column}
     % \end{columns}
 \end{frame}
 
-\subsubsection{Track 3 TP-SWVL1 Correlation}
-\begin{frame}{Track 3 \texttt{TP-SWVL1} Correlation}
+\subsubsection{Track 3 TP-SWVL1 Relation}
+\begin{frame}{Track 3 \texttt{TP-SWVL1} Relation}
     \begin{columns}[T]
         \begin{column}{0.6\textwidth}
             \begin{figure}
                 \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_3/correlation_analysis/correlation/track_3_TP-SWVL1_correlation.png}
+                \includegraphics[width=\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_3/correlation_analysis/relation/track_3_TP-SWVL1_relation.png}
             \end{figure}
-            \label{fig:track_3_tp-swvl1_correlation}
+            \label{fig:track_3_tp-swvl1_relation}
         \end{column}
 
         \begin{column}{0.4\textwidth}
@@ -1623,8 +1371,8 @@
         %     \textbf{Statistical Summary :}
         %     \begin{itemize}
         %         \item \textbf{Pearson r :} \texttt{-0.2633} – Weak negative linear relationship between precipitation and soil moisture more rainfall leads lower soil moisture (why? 1. maybe because track is short-lived, 2. MD doesn't penetrate inland deep). \cite{kishtawal2013enhancement} 
-        %         \item \textbf{Spearman $\rho$ :} \texttt{-0.2930} – slight negative monotonic trend suggests higher rain corresponds to lower simultaneous soil moisture.
-        %         \item \textbf{p-value :} \texttt{3.0054 \times 10$^{-2}$} – Statistically significant ($p < 0.05$), though the correlation strength is low.
+        %         \item \textbf{Spearman $\rho$ :} \texttt{-0.2930} – slight negative monotonic trend suggests higher rain responds to lower simultaneous soil moisture.
+        %         \item \textbf{p-value :} \texttt{3.0054 \times 10$^{-2}$} – Statistically significant ($p < 0.05$), though the relation strength is low.
         %         \item \textbf{Mean TP :} 0.49 $mm/hr$
         %         \item \textbf{Mean SM :} 0.14 m$^3$/m$^3$
         %     \end{itemize}
@@ -1632,25 +1380,25 @@
     \end{columns}
 \end{frame}
 
-\begin{frame}{Track 3 - \texttt{TP-SWVL1} Lag Correlation}
+\begin{frame}{Track 3 - \texttt{TP-SWVL1} Lag Relation}
     \begin{columns}[T]
         \begin{column}{0.6\textwidth}
             \begin{figure}
                 \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_3/correlation_analysis/lag_correlation/track_3_TP-SWVL1_lag_correlation.png}
+                \includegraphics[width=\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_3/correlation_analysis/lag_relation/track_3_TP-SWVL1_lag_relation.png}
             \end{figure}
-            \label{fig:track_3_TP-SWVL1_lag_correlation}
+            \label{fig:track_3_TP-SWVL1_lag_relation}
 
             % TODO:
             \vspace{0.2cm}
-            {\tiny \textbf{Figure~\ref{fig:track_3_TP-SWVL1_lag_correlation} :}Lag correlation between precipitation (\texttt{TP}) and soil moisture (\texttt{SWVL1}) for Track 3.} % Maximum correlation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
+            {\tiny \textbf{Figure~\ref{fig:track_3_TP-SWVL1_lag_relation} :}Lag relation between precipitation (\texttt{TP}) and soil moisture (\texttt{SWVL1}) for Track 3.} % Maximum relation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
         \end{column}
 
         % \begin{column}{0.4\textwidth}
         %     \footnotesize
         %     \textbf{Summary:}
         %     \begin{itemize}
-        %         \item The peak of correlation occurs at far left of zero-lag line (24 hours earlier).
+        %         \item The peak of relation occurs at far left of zero-lag line (24 hours earlier).
         %         \item Antecedent moisture, Soil moisture levels are precursor to rainfall (or say sets condition for rainfall) events 24 hours later.
         %         \item Suggests very slow moving land-atmosphere feedback loop.
         %     \end{itemize}
@@ -1658,35 +1406,35 @@
     \end{columns}
 \end{frame}
 
-\begin{frame}{Track 3 \texttt{SWVL1-HF} Lag Correlation}
+\begin{frame}{Track 3 \texttt{SWVL1-HF} Lag Relation}
     \begin{columns}[t]
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_3/correlation_analysis/lag_correlation/track_3_SWVL1-LHF_lag_correlation.png} \\
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_3/correlation_analysis/lag_correlation/track_3_SWVL1-SHF_lag_correlation.png}
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_3/correlation_analysis/lag_relation/track_3_SWVL1-LHF_lag_relation.png} \\
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_3/correlation_analysis/lag_relation/track_3_SWVL1-SHF_lag_relation.png}
             \end{center}
         \end{column}
 
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_3/correlation_analysis/lag_correlation/track_3_SWVL1-THF_lag_correlation.png}
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_3/correlation_analysis/lag_relation/track_3_SWVL1-THF_lag_relation.png}
             \end{center}
         \end{column}
     \end{columns}
 \end{frame}
 
-\begin{frame}{Track 3 \texttt{TP-HF} Lag Correlation}
+\begin{frame}{Track 3 \texttt{TP-HF} Lag relation}
     \begin{columns}[t]
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_3/correlation_analysis/lag_correlation/track_3_TP-LHF_lag_correlation.png} \\
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_3/correlation_analysis/lag_correlation/track_3_TP-SHF_lag_correlation.png}
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_3/correlation_analysis/lag_relation/track_3_TP-LHF_lag_relation.png} \\
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_3/correlation_analysis/lag_relation/track_3_TP-SHF_lag_relation.png}
             \end{center}
         \end{column}
 
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_3/correlation_analysis/lag_correlation/track_3_TP-THF_lag_correlation.png}
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_3/correlation_analysis/lag_relation/track_3_TP-THF_lag_relation.png}
             \end{center}
         \end{column}
     \end{columns}
@@ -1707,27 +1455,27 @@
 \begin{frame}{Track 3 SRMT Elevation plot}
     \begin{center}
         \begin{figure}
-            \includegraphics[width=0.45\linewidth]{../version25-with-no-ocean-masking/output_2024/track_3/elevation_analysis/MD_track_3_elevation_mosaic.png}
+            \includegraphics[width=0.6\linewidth]{../version26-with-ocean-masking-lsm/output_2024/track_3/elevation_analysis/MD_track_3_elevation_mosaic.png}
         \end{figure}
         \label{fig:elevationtrack3}
     \end{center}
 \end{frame}
 
-\subsubsection{Track 3 \texttt{MODIS}}
-\begin{frame}{\texttt{MODIS} Track 3 Visualization (2000m Scale)}
-    \begin{center}
-        \begin{figure}
-            \includegraphics[width=0.45\linewidth]{images/MODIS-2024-Track_3.png}
-        \end{figure}
-        \label{fig:modistrack3}
-    \end{center}
-
-    % TODO:
-    \vspace{0.2cm}
-    {\tiny \textbf{Figure~\ref{fig:modistrack3} :} \texttt{MODIS} satellite image (true color) of Track. The characteristic depression cloud structure is visible with high Cloud cluster to the southwest of track. Image source: GEE, NASA \texttt{MODIS} Level 1B.}
-    \vspace{0.1cm}
-    {\tiny The 2nd cloud cluster region over BOB is genesis of Track 4}
-\end{frame}
+% \subsubsection{Track 3 \texttt{MODIS}}
+% \begin{frame}{\texttt{MODIS} Track 3 Visualization (2000m Scale)}
+%     \begin{center}
+%         \begin{figure}
+%             \includegraphics[width=0.45\linewidth]{images/MODIS-2024-Track_3.png}
+%         \end{figure}
+%         \label{fig:modistrack3}
+%     \end{center}
+%
+%     % TODO:
+%     \vspace{0.2cm}
+%     {\tiny \textbf{Figure~\ref{fig:modistrack3} :} \texttt{MODIS} satellite image (true color) of Track. The characteristic depression cloud structure is visible with high Cloud cluster to the southwest of track. Image source: GEE, NASA \texttt{MODIS} Level 1B.}
+%     \vspace{0.1cm}
+%     {\tiny The 2nd cloud cluster region over BOB is genesis of Track 4}
+% \end{frame}
 
 %%%%%%%%%%%%%%%% Track 4 %%%%%%%%%%%%%%
 \subsection{Track 4}
@@ -1737,7 +1485,7 @@
     \begin{center}
         \begin{columns}[T]
             \column{0.5\textwidth}
-            \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_4/MD_track_4_detailed.png}
+            \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_4/MD_track_4_detailed.png}
 
             % \vspace{0.05cm}
             % \footnotesize
@@ -1760,7 +1508,7 @@
 \subsubsection{Track 4 Translation Speed}
 \begin{frame}{Track 4 Translation speed of MD}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{../version25-with-no-ocean-masking/output_2024/track_4/translational-speed/track_4_speed_ms.png}
+        \includegraphics[width=0.8\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_4/translational-speed/track_4_speed_ms.png}
     \end{center}
 \end{frame}
 
@@ -1768,7 +1516,7 @@
 \begin{frame}{Track 4 Heat Flux evolution}
     \begin{center}
         \begin{figure}
-            \includegraphics[width=0.6\textwidth]{../version25-with-no-ocean-masking/output_2024/track_4/time_series/track_4_heat_flux_time_series.png}
+            \includegraphics[width=0.6\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_4/time_series/track_4_heat_flux_time_series.png}
         \end{figure}
         \label{fig:track_4_heat_flux_timeseries}
     \end{center}
@@ -1781,7 +1529,7 @@
 \begin{frame}{Track 4 \texttt{TP} and \texttt{SWVL1} Time evolution}
        \begin{figure}
            \centering
-           \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_4/time_series/track_4_TP-SWVL1_time_series.png}
+           \includegraphics[width=\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_4/time_series/track_4_TP-SWVL1_time_series.png}
        \end{figure}
        \label{fig:track_4_TP-SWVL1_time_series}
 
@@ -1790,113 +1538,29 @@
        {\tiny Figure~\ref{fig:track_4_TP-SWVL1_time_series} : Temporal evolution of \texttt{TP} and \texttt{SWVL1}. The vertical dashed line indicates landfall time} %([date/time])}. Key observation: [Variable] increases by X units upon landfall, supporting the hypothesis that [physical mechanism]. This pattern was consistent across all 6 depressions analyzed.}
 \end{frame}
 
-\subsubsection{Track 4 - Auto-Correlations}
-\begin{frame}{Track 4 - \texttt{SWVL1} and \texttt{TP} Auto-Correlation}
-    \begin{columns}[T]
-        \begin{column}{0.5\textwidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_4/correlation_analysis/autocorrelation/track_4_autocorr_swvl1.png}
-            \end{figure}
-            \label{fig:track_4_SWVL1_autocorrelation}
-
-            % TODO:
-            \vspace{0.2cm}
-            {\tiny \textbf{Figure~\ref{fig:track_4_SWVL1_autocorrelation} :}Auto-correlation of soil moisture (\texttt{SWVL1})  for Track 4.} % Maximum correlation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
-        \end{column}
-
-        \begin{column}{0.5\textwidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_4/correlation_analysis/autocorrelation/track_4_autocorr_tp.png}
-            \end{figure}
-            \label{fig:track_4_TP_autocorrelation}
-
-            % TODO:
-            \vspace{0.2cm}
-            {\tiny \textbf{Figure~\ref{fig:track_4_TP_autocorrelation} :}Auto-correlation of Total precipitation (\texttt{TP}) for Track 4.} % Maximum correlation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
-        \end{column}
-
-        % \begin{column}{0.4\textwidth}
-        %     \footnotesize
-        %     \textbf{Summary:}
-        %     \begin{itemize}
-        %         \item The peak of correlation occurs at far left of zero-lag line (24 hours earlier).
-        %         \item Antecedent moisture, Soil moisture levels are precursor to rainfall (or say sets condition for rainfall) events 24 hours later.
-        %         \item Suggests very slow moving land-atmosphere feedback loop.
-        %     \end{itemize}
-        % \end{column}
-    \end{columns}
-\end{frame}
-
-\begin{frame}{Track 3 - HF Auto-Correlation}
-    \vspace{-0.3cm}
-    \begin{columns}[T]
-        \begin{column}{0.45\textwidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_4/correlation_analysis/autocorrelation/track_4_autocorr_latent_hf.png}
-            \end{figure}
-            \label{fig:track_4_LHF_autocorrelation}
-        \end{column}
-
-        \begin{column}{0.45\textwidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_4/correlation_analysis/autocorrelation/track_4_autocorr_sensible_hf.png}
-            \end{figure}
-            \label{fig:track_4_SHF_autocorrelation}
-        \end{column}
-
-        % \begin{column}{0.45\textwidth}
-        %     \footnotesize
-        %     \textbf{Summary:}
-        %     \begin{itemize}
-        %     \end{itemize}
-        % \end{column}
-    \end{columns}
-
-    \vspace{-0.3cm}
-    \begin{columns}[T]
-        \begin{column}{0.45\textwidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_4/correlation_analysis/autocorrelation/track_4_autocorr_total_hf.png}
-            \end{figure}
-            \label{fig:track_4_THF_autocorrelation}
-        \end{column}
-
-        \begin{column}{0.45\textwidth}
-            % TODO:
-            \vspace{1.5cm}
-            {\tiny \textbf{Figures :} Auto-correlation of Heat fluxes (\texttt{LHF, SHF} and \texttt{THF}) for Track 4.} % Maximum correlation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
-        \end{column}
-    \end{columns}
-\end{frame}
-
-\begin{frame}{Track 4 - \texttt{SWVL1-HF} Correlation}
+\begin{frame}{Track 4 - \texttt{SWVL1-HF} Relation}
     \vspace{-0.5cm}
     \begin{columns}[T]
         \begin{column}{0.8\textwidth}
             \begin{figure}
                 \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_4/correlation_analysis/correlation/track_4_SWVL1-HF_correlation.png}
+                \includegraphics[width=\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_4/correlation_analysis/relation/track_4_SWVL1-HF_relation.png}
             \end{figure}
-            \label{fig:track_4_swvl1-hf_correlation}
+            \label{fig:track_4_swvl1-hf_relation}
 
             \vspace{-0.4cm}
             \begin{figure}
                 \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_4/correlation_analysis/correlation/track_4_TP-HF_correlation.png}
+                \includegraphics[width=\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_4/correlation_analysis/relation/track_4_TP-HF_relation.png}
             \end{figure}
-            \label{fig:track_4_tp-hf_correlation}
+            \label{fig:track_4_tp-hf_relation}
         \end{column}
 
         \begin{column}{0.2\textwidth}
         %     \footnotesize
         %     \textbf{Summary:}
         %     \begin{itemize}
-        %         \item The peak of correlation occurs at far left of zero-lag line (24 hours earlier).
+        %         \item The peak of relation occurs at far left of zero-lag line (24 hours earlier).
         %         \item Antecedent moisture, Soil moisture levels are precursor to rainfall (or say sets condition for rainfall) events 24 hours later.
         %         \item Suggests very slow moving land-atmosphere feedback loop.
         %     \end{itemize}
@@ -1912,20 +1576,20 @@
     %     \begin{column}{0.45\textwidth}
     %         % TODO:
     %         \vspace{1.5cm}
-    %         {\tiny \textbf{Figures :} Correlation for Track 4.} % Maximum correlation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
+    %         {\tiny \textbf{Figures :} relation for Track 4.} % Maximum relation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
     %     \end{column}
     % \end{columns}
 \end{frame}
 
-\subsubsection{Track 4 TP-SWVL1 Correlation}
-\begin{frame}{Track 4 \texttt{TP-SWVL1} Correlation}
+\subsubsection{Track 4 TP-SWVL1 Relation}
+\begin{frame}{Track 4 \texttt{TP-SWVL1} Relation}
     \begin{columns}[T]
         \begin{column}{0.6\textwidth}
             \begin{figure}
                 \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_4/correlation_analysis/correlation/track_4_TP-SWVL1_correlation.png}
+                \includegraphics[width=\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_4/correlation_analysis/relation/track_4_TP-SWVL1_relation.png}
             \end{figure}
-            \label{fig:track_4_tp-swvl1_correlation}
+            \label{fig:track_4_tp-swvl1_relation}
         \end{column}
 
         \begin{column}{0.4\textwidth}
@@ -1933,8 +1597,8 @@
         %     \textbf{Statistical Summary :}
         %     \begin{itemize}
         %         \item \textbf{Pearson r :} \texttt{-0.2633} – Weak negative linear relationship between precipitation and soil moisture more rainfall leads lower soil moisture (why? 1. maybe because track is short-lived, 2. MD doesn't penetrate inland deep). \cite{kishtawal2013enhancement} 
-        %         \item \textbf{Spearman $\rho$ :} \texttt{-0.2930} – slight negative monotonic trend suggests higher rain corresponds to lower simultaneous soil moisture.
-        %         \item \textbf{p-value :} \texttt{3.0054 \times 10$^{-2}$} – Statistically significant ($p < 0.05$), though the correlation strength is low.
+        %         \item \textbf{Spearman $\rho$ :} \texttt{-0.2930} – slight negative monotonic trend suggests higher rain responds to lower simultaneous soil moisture.
+        %         \item \textbf{p-value :} \texttt{3.0054 \times 10$^{-2}$} – Statistically significant ($p < 0.05$), though the relation strength is low.
         %         \item \textbf{Mean TP :} 0.49 $mm/hr$
         %         \item \textbf{Mean SM :} 0.14 m$^3$/m$^3$
         %     \end{itemize}
@@ -1942,25 +1606,25 @@
     \end{columns}
 \end{frame}
 
-\begin{frame}{Track 4 - \texttt{TP-SWVL1} Lag Correlation}
+\begin{frame}{Track 4 - \texttt{TP-SWVL1} Lag Relation}
     \begin{columns}[T]
         \begin{column}{0.6\textwidth}
             \begin{figure}
                 \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_4/correlation_analysis/lag_correlation/track_4_TP-SWVL1_lag_correlation.png}
+                \includegraphics[width=\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_4/correlation_analysis/lag_relation/track_4_TP-SWVL1_lag_relation.png}
             \end{figure}
-            \label{fig:track_4_TP-SWVL1_lag_correlation}
+            \label{fig:track_4_TP-SWVL1_lag_relation}
 
             % TODO:
             \vspace{0.2cm}
-            {\tiny \textbf{Figure~\ref{fig:track_4_TP-SWVL1_lag_correlation} :}Lag correlation between precipitation (\texttt{TP}) and soil moisture (\texttt{SWVL1}) for Track 4.} % Maximum correlation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
+            {\tiny \textbf{Figure~\ref{fig:track_4_TP-SWVL1_lag_relation} :}Lag relation between precipitation (\texttt{TP}) and soil moisture (\texttt{SWVL1}) for Track 4.} % Maximum relation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
         \end{column}
 
         % \begin{column}{0.4\textwidth}
         %     \footnotesize
         %     \textbf{Summary:}
         %     \begin{itemize}
-        %         \item The peak of correlation occurs at far left of zero-lag line (24 hours earlier).
+        %         \item The peak of relation occurs at far left of zero-lag line (24 hours earlier).
         %         \item Antecedent moisture, Soil moisture levels are precursor to rainfall (or say sets condition for rainfall) events 24 hours later.
         %         \item Suggests very slow moving land-atmosphere feedback loop.
         %     \end{itemize}
@@ -1968,35 +1632,35 @@
     \end{columns}
 \end{frame}
 
-\begin{frame}{Track 4 \texttt{SWVL1-HF} Lag Correlation}
+\begin{frame}{Track 4 \texttt{SWVL1-HF} Lag Relation}
     \begin{columns}[t]
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_4/correlation_analysis/lag_correlation/track_4_SWVL1-LHF_lag_correlation.png} \\
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_4/correlation_analysis/lag_correlation/track_4_SWVL1-SHF_lag_correlation.png}
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_4/correlation_analysis/lag_relation/track_4_SWVL1-LHF_lag_relation.png} \\
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_4/correlation_analysis/lag_relation/track_4_SWVL1-SHF_lag_relation.png}
             \end{center}
         \end{column}
 
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_4/correlation_analysis/lag_correlation/track_4_SWVL1-THF_lag_correlation.png}
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_4/correlation_analysis/lag_relation/track_4_SWVL1-THF_lag_relation.png}
             \end{center}
         \end{column}
     \end{columns}
 \end{frame}
 
-\begin{frame}{Track 4 \texttt{TP-HF} Lag Correlation}
+\begin{frame}{Track 4 \texttt{TP-HF} Lag relation}
     \begin{columns}[t]
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_4/correlation_analysis/lag_correlation/track_4_TP-LHF_lag_correlation.png} \\
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_4/correlation_analysis/lag_correlation/track_4_TP-SHF_lag_correlation.png}
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_4/correlation_analysis/lag_relation/track_4_TP-LHF_lag_relation.png} \\
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_4/correlation_analysis/lag_relation/track_4_TP-SHF_lag_relation.png}
             \end{center}
         \end{column}
 
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_4/correlation_analysis/lag_correlation/track_4_TP-THF_lag_correlation.png}
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_4/correlation_analysis/lag_relation/track_4_TP-THF_lag_relation.png}
             \end{center}
         \end{column}
     \end{columns}
@@ -2017,30 +1681,30 @@
 \begin{frame}{Track 4 SRMT Elevation plot}
     \begin{center}
         \begin{figure}
-            \includegraphics[width=0.45\linewidth]{../version25-with-no-ocean-masking/output_2024/track_4/elevation_analysis/MD_track_4_elevation_mosaic.png}
+            \includegraphics[width=0.6\linewidth]{../version26-with-ocean-masking-lsm/output_2024/track_4/elevation_analysis/MD_track_4_elevation_mosaic.png}
         \end{figure}
         \label{fig:elevationtrack4}
     \end{center}
 \end{frame}
 
-% TODO: Physical reality
-%    Track 4 has a very short duration (59 hours) and a low mean soil moisture (0.178). The negative value likely indicates:
-%     - Fast Dry-down: The system experienced a burst of precipitation that spiked soil moisture, but because the soil was dry or had low retention capacity, that moisture evaporated or drained so rapidly that by the 24-hour mark, the soil was "drier than average."
-%     - Diurnal Dominance over Trend: In short-lived tracks, if the diurnal cycle (daytime evaporation vs. nighttime stability) is stronger than the overall moisture trend, the ACF can dip into negative territory at specific lags as the "day" state is the opposite of the "night" state.
-
-\subsubsection{Track 4 \texttt{MODIS}}
-\begin{frame}{\texttt{MODIS} Track 4 Visualization (2000m Scale)}
-    \begin{center}
-        \begin{figure}
-            \includegraphics[width=0.45\linewidth]{images/MODIS-2024-Track_4.png}
-        \end{figure}
-        \label{fig:modistrack4}
-    \end{center}
-
-    % TODO:
-    \vspace{0.2cm}
-    {\tiny \textbf{Figure~\ref{fig:modistrack4} :} \texttt{MODIS} satellite image of Track 4. The characteristic depression cloud structure is visible with high Cloud cluster to the southwest of track. Image source: GEE, NASA \texttt{MODIS} Level 1B.}
-\end{frame}
+% % TODO: Physical reality
+% %    Track 4 has a very short duration (59 hours) and a low mean soil moisture (0.178). The negative value likely indicates:
+% %     - Fast Dry-down: The system experienced a burst of precipitation that spiked soil moisture, but because the soil was dry or had low retention capacity, that moisture evaporated or drained so rapidly that by the 24-hour mark, the soil was "drier than average."
+% %     - Diurnal Dominance over Trend: In short-lived tracks, if the diurnal cycle (daytime evaporation vs. nighttime stability) is stronger than the overall moisture trend, the ACF can dip into negative territory at specific lags as the "day" state is the opposite of the "night" state.
+%
+% \subsubsection{Track 4 \texttt{MODIS}}
+% \begin{frame}{\texttt{MODIS} Track 4 Visualization (2000m Scale)}
+%     \begin{center}
+%         \begin{figure}
+%             \includegraphics[width=0.45\linewidth]{images/MODIS-2024-Track_4.png}
+%         \end{figure}
+%         \label{fig:modistrack4}
+%     \end{center}
+%
+%     % TODO:
+%     \vspace{0.2cm}
+%     {\tiny \textbf{Figure~\ref{fig:modistrack4} :} \texttt{MODIS} satellite image of Track 4. The characteristic depression cloud structure is visible with high Cloud cluster to the southwest of track. Image source: GEE, NASA \texttt{MODIS} Level 1B.}
+% \end{frame}
 
 %%%%%%%%%%%%%%%% Track 5 %%%%%%%%%%%%%%
 \subsection{Track 5}
@@ -2050,7 +1714,7 @@
     \begin{center}
         \begin{columns}[T]
             \column{0.53\textwidth}
-            \includegraphics[width=0.75\textwidth]{../version25-with-no-ocean-masking/output_2024/track_5/MD_track_5_detailed.png}
+            \includegraphics[width=0.75\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_5/MD_track_5_detailed.png}
 
             % \vspace{0.01cm}
             % \footnotesize
@@ -2082,7 +1746,7 @@
 \subsubsection{Track 5 Translation Speed}
 \begin{frame}{Track 5 Translation speed of MD}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{../version25-with-no-ocean-masking/output_2024/track_5/translational-speed/track_5_speed_ms.png}
+        \includegraphics[width=0.8\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_5/translational-speed/track_5_speed_ms.png}
     \end{center}
 \end{frame}
 
@@ -2090,7 +1754,7 @@
 \begin{frame}{Track 5 Heat Flux evolution}
     \begin{center}
         \begin{figure}
-            \includegraphics[width=0.6\textwidth]{../version25-with-no-ocean-masking/output_2024/track_5/time_series/track_5_heat_flux_time_series.png}
+            \includegraphics[width=0.6\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_5/time_series/track_5_heat_flux_time_series.png}
         \end{figure}
         \label{fig:track_5_heat_flux_timeseries}
     \end{center}
@@ -2103,7 +1767,7 @@
 \begin{frame}{Track 5 \texttt{TP} and \texttt{SWVL1} Time evolution}
        \begin{figure}
            \centering
-           \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_5/time_series/track_5_TP-SWVL1_time_series.png}
+           \includegraphics[width=\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_5/time_series/track_5_TP-SWVL1_time_series.png}
        \end{figure}
        \label{fig:track_5_TP-SWVL1_time_series}
 
@@ -2112,113 +1776,29 @@
        {\tiny Figure~\ref{fig:track_5_TP-SWVL1_time_series} : Temporal evolution of \texttt{TP} and \texttt{SWVL1}. The vertical dashed line indicates landfall time} %([date/time])}. Key observation: [Variable] increases by X units upon landfall, supporting the hypothesis that [physical mechanism]. This pattern was consistent across all 6 depressions analyzed.}
 \end{frame}
 
-\subsubsection{Track 5 - Auto-Correlations}
-\begin{frame}{Track 5 - \texttt{SWVL1} and \texttt{TP} Auto-Correlation}
-    \begin{columns}[T]
-        \begin{column}{0.5\textwidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_5/correlation_analysis/autocorrelation/track_5_autocorr_swvl1.png}
-            \end{figure}
-            \label{fig:track_5_SWVL1_autocorrelation}
-
-            % TODO:
-            \vspace{0.2cm}
-            {\tiny \textbf{Figure~\ref{fig:track_5_SWVL1_autocorrelation} :}Auto-correlation of soil moisture (\texttt{SWVL1}) for Track 5.} % Maximum correlation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
-        \end{column}
-
-        \begin{column}{0.5\textwidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_5/correlation_analysis/autocorrelation/track_5_autocorr_tp.png}
-            \end{figure}
-            \label{fig:track_5_TP_autocorrelation}
-
-            % TODO:
-            \vspace{0.2cm}
-            {\tiny \textbf{Figure~\ref{fig:track_5_TP_autocorrelation} :}Auto-correlation of Total precipitation (\texttt{TP}) for Track 5.} % Maximum correlation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
-        \end{column}
-
-        % \begin{column}{0.4\textwidth}
-        %     \footnotesize
-        %     \textbf{Summary:}
-        %     \begin{itemize}
-        %         \item The peak of correlation occurs at far left of zero-lag line (24 hours earlier).
-        %         \item Antecedent moisture, Soil moisture levels are precursor to rainfall (or say sets condition for rainfall) events 24 hours later.
-        %         \item Suggests very slow moving land-atmosphere feedback loop.
-        %     \end{itemize}
-        % \end{column}
-    \end{columns}
-\end{frame}
-
-\begin{frame}{Track 5 - HF Auto-Correlation}
-    \vspace{-0.3cm}
-    \begin{columns}[T]
-        \begin{column}{0.45\textwidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_5/correlation_analysis/autocorrelation/track_5_autocorr_latent_hf.png}
-            \end{figure}
-            \label{fig:track_5_LHF_autocorrelation}
-        \end{column}
-
-        \begin{column}{0.45\textwidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_5/correlation_analysis/autocorrelation/track_5_autocorr_sensible_hf.png}
-            \end{figure}
-            \label{fig:track_5_SHF_autocorrelation}
-        \end{column}
-
-        % \begin{column}{0.45\textwidth}
-        %     \footnotesize
-        %     \textbf{Summary:}
-        %     \begin{itemize}
-        %     \end{itemize}
-        % \end{column}
-    \end{columns}
-
-    \vspace{-0.3cm}
-    \begin{columns}[T]
-        \begin{column}{0.45\textwidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_5/correlation_analysis/autocorrelation/track_5_autocorr_total_hf.png}
-            \end{figure}
-            \label{fig:track_5_THF_autocorrelation}
-        \end{column}
-
-        \begin{column}{0.45\textwidth}
-            % TODO:
-            \vspace{1.5cm}
-            {\tiny \textbf{Figures :} Auto-correlation of Heat fluxes (\texttt{LHF, SHF} and \texttt{THF}) for Track 5.} % Maximum correlation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
-        \end{column}
-    \end{columns}
-\end{frame}
-
-\begin{frame}{Track 5 - \texttt{SWVL1-HF} Correlation}
+\begin{frame}{Track 5 - \texttt{SWVL1-HF} Relation}
     \vspace{-0.5cm}
     \begin{columns}[T]
         \begin{column}{0.8\textwidth}
             \begin{figure}
                 \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_5/correlation_analysis/correlation/track_5_SWVL1-HF_correlation.png}
+                \includegraphics[width=\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_5/correlation_analysis/relation/track_5_SWVL1-HF_relation.png}
             \end{figure}
-            \label{fig:track_5_swvl1-hf_correlation}
+            \label{fig:track_5_swvl1-hf_relation}
 
             \vspace{-0.4cm}
             \begin{figure}
                 \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_5/correlation_analysis/correlation/track_5_TP-HF_correlation.png}
+                \includegraphics[width=\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_5/correlation_analysis/relation/track_5_TP-HF_relation.png}
             \end{figure}
-            \label{fig:track_5_tp-hf_correlation}
+            \label{fig:track_5_tp-hf_relation}
         \end{column}
 
         \begin{column}{0.2\textwidth}
         %     \footnotesize
         %     \textbf{Summary:}
         %     \begin{itemize}
-        %         \item The peak of correlation occurs at far left of zero-lag line (24 hours earlier).
+        %         \item The peak of relation occurs at far left of zero-lag line (24 hours earlier).
         %         \item Antecedent moisture, Soil moisture levels are precursor to rainfall (or say sets condition for rainfall) events 24 hours later.
         %         \item Suggests very slow moving land-atmosphere feedback loop.
         %     \end{itemize}
@@ -2234,20 +1814,20 @@
     %     \begin{column}{0.45\textwidth}
     %         % TODO:
     %         \vspace{1.5cm}
-    %         {\tiny \textbf{Figures :} Correlation for Track 2.} % Maximum correlation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
+    %         {\tiny \textbf{Figures :} relation for Track 2.} % Maximum relation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
     %     \end{column}
     % \end{columns}
 \end{frame}
 
-\subsubsection{Track 5 TP-SWVL1 Correlation}
-\begin{frame}{Track 5 \texttt{TP-SWVL1} Correlation}
+\subsubsection{Track 5 TP-SWVL1 Relation}
+\begin{frame}{Track 5 \texttt{TP-SWVL1} Relation}
     \begin{columns}[T]
         \begin{column}{0.6\textwidth}
             \begin{figure}
                 \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_5/correlation_analysis/correlation/track_5_TP-SWVL1_correlation.png}
+                \includegraphics[width=\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_5/correlation_analysis/relation/track_5_TP-SWVL1_relation.png}
             \end{figure}
-            \label{fig:track_5_tp-swvl1_correlation}
+            \label{fig:track_5_tp-swvl1_relation}
         \end{column}
 
         \begin{column}{0.4\textwidth}
@@ -2255,8 +1835,8 @@
         %     \textbf{Statistical Summary :}
         %     \begin{itemize}
         %         \item \textbf{Pearson r :} \texttt{-0.2633} – Weak negative linear relationship between precipitation and soil moisture more rainfall leads lower soil moisture (why? 1. maybe because track is short-lived, 2. MD doesn't penetrate inland deep). \cite{kishtawal2013enhancement} 
-        %         \item \textbf{Spearman $\rho$ :} \texttt{-0.2930} – slight negative monotonic trend suggests higher rain corresponds to lower simultaneous soil moisture.
-        %         \item \textbf{p-value :} \texttt{3.0054 \times 10$^{-2}$} – Statistically significant ($p < 0.05$), though the correlation strength is low.
+        %         \item \textbf{Spearman $\rho$ :} \texttt{-0.2930} – slight negative monotonic trend suggests higher rain responds to lower simultaneous soil moisture.
+        %         \item \textbf{p-value :} \texttt{3.0054 \times 10$^{-2}$} – Statistically significant ($p < 0.05$), though the relation strength is low.
         %         \item \textbf{Mean TP :} 0.49 $mm/hr$
         %         \item \textbf{Mean SM :} 0.14 m$^3$/m$^3$
         %     \end{itemize}
@@ -2264,25 +1844,25 @@
     \end{columns}
 \end{frame}
 
-\begin{frame}{Track 5 - \texttt{TP-SWVL1} Lag Correlation}
+\begin{frame}{Track 5 - \texttt{TP-SWVL1} Lag Relation}
     \begin{columns}[T]
         \begin{column}{0.6\textwidth}
             \begin{figure}
                 \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_5/correlation_analysis/lag_correlation/track_5_TP-SWVL1_lag_correlation.png}
+                \includegraphics[width=\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_5/correlation_analysis/lag_relation/track_5_TP-SWVL1_lag_relation.png}
             \end{figure}
-            \label{fig:track_5_TP-SWVL1_lag_correlation}
+            \label{fig:track_5_TP-SWVL1_lag_relation}
 
             % TODO:
             \vspace{0.2cm}
-            {\tiny \textbf{Figure~\ref{fig:track_5_TP-SWVL1_lag_correlation} :}Lag correlation between precipitation (\texttt{TP}) and soil moisture (\texttt{SWVL1}) for Track 5.} % Maximum correlation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
+            {\tiny \textbf{Figure~\ref{fig:track_5_TP-SWVL1_lag_relation} :}Lag relation between precipitation (\texttt{TP}) and soil moisture (\texttt{SWVL1}) for Track 5.} % Maximum relation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
         \end{column}
 
         % \begin{column}{0.4\textwidth}
         %     \footnotesize
         %     \textbf{Summary:}
         %     \begin{itemize}
-        %         \item The peak of correlation occurs at far left of zero-lag line (24 hours earlier).
+        %         \item The peak of relation occurs at far left of zero-lag line (24 hours earlier).
         %         \item Antecedent moisture, Soil moisture levels are precursor to rainfall (or say sets condition for rainfall) events 24 hours later.
         %         \item Suggests very slow moving land-atmosphere feedback loop.
         %     \end{itemize}
@@ -2290,35 +1870,35 @@
     \end{columns}
 \end{frame}
 
-\begin{frame}{Track 5 \texttt{SWVL1-HF} Lag Correlation}
+\begin{frame}{Track 5 \texttt{SWVL1-HF} Lag Relation}
     \begin{columns}[t]
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_5/correlation_analysis/lag_correlation/track_5_SWVL1-LHF_lag_correlation.png} \\
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_5/correlation_analysis/lag_correlation/track_5_SWVL1-SHF_lag_correlation.png}
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_5/correlation_analysis/lag_relation/track_5_SWVL1-LHF_lag_relation.png} \\
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_5/correlation_analysis/lag_relation/track_5_SWVL1-SHF_lag_relation.png}
             \end{center}
         \end{column}
 
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_5/correlation_analysis/lag_correlation/track_5_SWVL1-THF_lag_correlation.png}
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_5/correlation_analysis/lag_relation/track_5_SWVL1-THF_lag_relation.png}
             \end{center}
         \end{column}
     \end{columns}
 \end{frame}
 
-\begin{frame}{Track 5 \texttt{TP-HF} Lag Correlation}
+\begin{frame}{Track 5 \texttt{TP-HF} Lag relation}
     \begin{columns}[t]
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_5/correlation_analysis/lag_correlation/track_5_TP-LHF_lag_correlation.png} \\
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_5/correlation_analysis/lag_correlation/track_5_TP-SHF_lag_correlation.png}
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_5/correlation_analysis/lag_relation/track_5_TP-LHF_lag_relation.png} \\
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_5/correlation_analysis/lag_relation/track_5_TP-SHF_lag_relation.png}
             \end{center}
         \end{column}
 
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_5/correlation_analysis/lag_correlation/track_5_TP-THF_lag_correlation.png}
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_5/correlation_analysis/lag_relation/track_5_TP-THF_lag_relation.png}
             \end{center}
         \end{column}
     \end{columns}
@@ -2339,25 +1919,25 @@
 \begin{frame}{Track 5 SRMT Elevation plot}
     \begin{center}
         \begin{figure}
-            \includegraphics[width=0.45\linewidth]{../version25-with-no-ocean-masking/output_2024/track_5/elevation_analysis/MD_track_5_elevation_mosaic.png}
+            \includegraphics[width=0.6\linewidth]{../version26-with-ocean-masking-lsm/output_2024/track_5/elevation_analysis/MD_track_5_elevation_mosaic.png}
         \end{figure}
         \label{fig:elevationtrack5}
     \end{center}
 \end{frame}
 
-\subsubsection{Track 5 \texttt{MODIS}}
-\begin{frame}{\texttt{MODIS} Track 5 Visualization (2000m Scale)}
-    \begin{center}
-        \begin{figure}
-            \includegraphics[width=0.45\linewidth]{images/MODIS-2024-Track_5.png}
-        \end{figure}
-        \label{fig:modistrack5}
-    \end{center}
-
-    % TODO:
-    \vspace{0.2cm}
-    {\tiny \textbf{Figure~\ref{fig:modistrack5} :} \texttt{MODIS} satellite image (true color) of Track. The characteristic depression cloud structure is visible with high Cloud cluster to the southwest of track. Image source: GEE, NASA \texttt{MODIS} Level 1B.}
-\end{frame}
+% \subsubsection{Track 5 \texttt{MODIS}}
+% \begin{frame}{\texttt{MODIS} Track 5 Visualization (2000m Scale)}
+%     \begin{center}
+%         \begin{figure}
+%             \includegraphics[width=0.45\linewidth]{images/MODIS-2024-Track_5.png}
+%         \end{figure}
+%         \label{fig:modistrack5}
+%     \end{center}
+%
+%     % TODO:
+%     \vspace{0.2cm}
+%     {\tiny \textbf{Figure~\ref{fig:modistrack5} :} \texttt{MODIS} satellite image (true color) of Track. The characteristic depression cloud structure is visible with high Cloud cluster to the southwest of track. Image source: GEE, NASA \texttt{MODIS} Level 1B.}
+% \end{frame}
 
 %%%%%%%%%%%%%%%% Track 6 %%%%%%%%%%%%%%
 \subsection{Track 6}
@@ -2367,7 +1947,7 @@
     \begin{center}
         \begin{columns}[T]
             \column{0.5\textwidth}
-            \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_6/MD_track_6_detailed.png}
+            \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_6/MD_track_6_detailed.png}
 
             \vspace{0.05cm}
             \footnotesize
@@ -2390,7 +1970,7 @@
 \subsubsection{Track 6 Translation Speed}
 \begin{frame}{Track 6 Translation speed of MD}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{../version25-with-no-ocean-masking/output_2024/track_6/translational-speed/track_6_speed_ms.png}
+        \includegraphics[width=0.8\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_6/translational-speed/track_6_speed_ms.png}
     \end{center}
 \end{frame}
 
@@ -2398,7 +1978,7 @@
 \begin{frame}{Track 6 Heat Flux evolution}
     \begin{center}
         \begin{figure}
-            \includegraphics[width=0.6\textwidth]{../version25-with-no-ocean-masking/output_2024/track_6/time_series/track_6_heat_flux_time_series.png}
+            \includegraphics[width=0.6\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_6/time_series/track_6_heat_flux_time_series.png}
         \end{figure}
         \label{fig:track_6_heat_flux_timeseries}
     \end{center}
@@ -2411,7 +1991,7 @@
 \begin{frame}{Track 6 \texttt{TP} and \texttt{SWVL1} Time evolution}
        \begin{figure}
            \centering
-           \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_6/time_series/track_6_TP-SWVL1_time_series.png}
+           \includegraphics[width=\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_6/time_series/track_6_TP-SWVL1_time_series.png}
        \end{figure}
        \label{fig:track_6_TP-SWVL1_time_series}
 
@@ -2420,113 +2000,29 @@
        {\tiny Figure~\ref{fig:track_6_TP-SWVL1_time_series} : Temporal evolution of \texttt{TP} and \texttt{SWVL1}. The vertical dashed line indicates landfall time} %([date/time])}. Key observation: [Variable] increases by X units upon landfall, supporting the hypothesis that [physical mechanism]. This pattern was consistent across all 6 depressions analyzed.}
 \end{frame}
 
-\subsubsection{Track 6 - Auto-Correlations}
-\begin{frame}{Track 6 - \texttt{SWVL1} and \texttt{TP} Auto-Correlation}
-    \begin{columns}[T]
-        \begin{column}{0.5\textwidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_6/correlation_analysis/autocorrelation/track_6_autocorr_swvl1.png}
-            \end{figure}
-            \label{fig:track_6_SWVL1_autocorrelation}
-
-            % TODO:
-            \vspace{0.2cm}
-            {\tiny \textbf{Figure~\ref{fig:track_6_SWVL1_autocorrelation} :}Auto-correlation of soil moisture (\texttt{SWVL1}) for Track 6.} % Maximum correlation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
-        \end{column}
-
-        \begin{column}{0.5\textwidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_6/correlation_analysis/autocorrelation/track_6_autocorr_tp.png}
-            \end{figure}
-            \label{fig:track_6_TP_autocorrelation}
-
-            % TODO:
-            \vspace{0.2cm}
-            {\tiny \textbf{Figure~\ref{fig:track_6_TP_autocorrelation} :}Auto-correlation of Total precipitation (\texttt{TP}) for Track 6.} % Maximum correlation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
-        \end{column}
-
-        % \begin{column}{0.4\textwidth}
-        %     \footnotesize
-        %     \textbf{Summary:}
-        %     \begin{itemize}
-        %         \item The peak of correlation occurs at far left of zero-lag line (24 hours earlier).
-        %         \item Antecedent moisture, Soil moisture levels are precursor to rainfall (or say sets condition for rainfall) events 24 hours later.
-        %         \item Suggests very slow moving land-atmosphere feedback loop.
-        %     \end{itemize}
-        % \end{column}
-    \end{columns}
-\end{frame}
-
-\begin{frame}{Track 6 - HF Auto-Correlation}
-    \vspace{-0.3cm}
-    \begin{columns}[T]
-        \begin{column}{0.45\textwidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_6/correlation_analysis/autocorrelation/track_6_autocorr_latent_hf.png}
-            \end{figure}
-            \label{fig:track_6_LHF_autocorrelation}
-        \end{column}
-
-        \begin{column}{0.45\textwidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_6/correlation_analysis/autocorrelation/track_6_autocorr_sensible_hf.png}
-            \end{figure}
-            \label{fig:track_6_SHF_autocorrelation}
-        \end{column}
-
-        % \begin{column}{0.45\textwidth}
-        %     \footnotesize
-        %     \textbf{Summary:}
-        %     \begin{itemize}
-        %     \end{itemize}
-        % \end{column}
-    \end{columns}
-
-    \vspace{-0.3cm}
-    \begin{columns}[T]
-        \begin{column}{0.45\textwidth}
-            \begin{figure}
-                \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_6/correlation_analysis/autocorrelation/track_6_autocorr_total_hf.png}
-            \end{figure}
-            \label{fig:track_6_THF_autocorrelation}
-        \end{column}
-
-        \begin{column}{0.45\textwidth}
-            % TODO:
-            \vspace{1.5cm}
-            {\tiny \textbf{Figures :} Auto-correlation of Heat fluxes (\texttt{LHF, SHF} and \texttt{THF}) for Track 6.} % Maximum correlation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
-        \end{column}
-    \end{columns}
-\end{frame}
-
-\begin{frame}{Track 6 - \texttt{SWVL1-HF} Correlation}
+\begin{frame}{Track 6 - \texttt{SWVL1-HF} Relation}
     \vspace{-0.5cm}
     \begin{columns}[T]
         \begin{column}{0.8\textwidth}
             \begin{figure}
                 \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_5/correlation_analysis/correlation/track_5_SWVL1-HF_correlation.png}
+                \includegraphics[width=\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_5/correlation_analysis/relation/track_5_SWVL1-HF_relation.png}
             \end{figure}
-            \label{fig:track_5_swvl1-hf_correlation}
+            \label{fig:track_6_swvl1-hf_relation}
 
             \vspace{-0.4cm}
             \begin{figure}
                 \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_5/correlation_analysis/correlation/track_5_TP-HF_correlation.png}
+                \includegraphics[width=\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_5/correlation_analysis/relation/track_5_TP-HF_relation.png}
             \end{figure}
-            \label{fig:track_5_tp-hf_correlation}
+            \label{fig:track_6_tp-hf_relation}
         \end{column}
 
         \begin{column}{0.2\textwidth}
         %     \footnotesize
         %     \textbf{Summary:}
         %     \begin{itemize}
-        %         \item The peak of correlation occurs at far left of zero-lag line (24 hours earlier).
+        %         \item The peak of relation occurs at far left of zero-lag line (24 hours earlier).
         %         \item Antecedent moisture, Soil moisture levels are precursor to rainfall (or say sets condition for rainfall) events 24 hours later.
         %         \item Suggests very slow moving land-atmosphere feedback loop.
         %     \end{itemize}
@@ -2542,20 +2038,20 @@
     %     \begin{column}{0.45\textwidth}
     %         % TODO:
     %         \vspace{1.5cm}
-    %         {\tiny \textbf{Figures :} Correlation for Track 2.} % Maximum correlation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
+    %         {\tiny \textbf{Figures :} relation for Track 2.} % Maximum relation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
     %     \end{column}
     % \end{columns}
 \end{frame}
 
-\subsubsection{Track 5 TP-SWVL1 Correlation}
-\begin{frame}{Track 5 \texttt{TP-SWVL1} Correlation}
+\subsubsection{Track 5 TP-SWVL1 Relation}
+\begin{frame}{Track 5 \texttt{TP-SWVL1} Relation}
     \begin{columns}[T]
         \begin{column}{0.6\textwidth}
             \begin{figure}
                 \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_6/correlation_analysis/correlation/track_6_TP-SWVL1_correlation.png}
+                \includegraphics[width=\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_6/correlation_analysis/relation/track_6_TP-SWVL1_relation.png}
             \end{figure}
-            \label{fig:track_6_tp-swvl1_correlation}
+            \label{fig:track_6_tp-swvl1_relation}
         \end{column}
 
         \begin{column}{0.4\textwidth}
@@ -2563,8 +2059,8 @@
         %     \textbf{Statistical Summary :}
         %     \begin{itemize}
         %         \item \textbf{Pearson r :} \texttt{-0.2633} – Weak negative linear relationship between precipitation and soil moisture more rainfall leads lower soil moisture (why? 1. maybe because track is short-lived, 2. MD doesn't penetrate inland deep). \cite{kishtawal2013enhancement} 
-        %         \item \textbf{Spearman $\rho$ :} \texttt{-0.2930} – slight negative monotonic trend suggests higher rain corresponds to lower simultaneous soil moisture.
-        %         \item \textbf{p-value :} \texttt{3.0054 \times 10$^{-2}$} – Statistically significant ($p < 0.05$), though the correlation strength is low.
+        %         \item \textbf{Spearman $\rho$ :} \texttt{-0.2930} – slight negative monotonic trend suggests higher rain responds to lower simultaneous soil moisture.
+        %         \item \textbf{p-value :} \texttt{3.0054 \times 10$^{-2}$} – Statistically significant ($p < 0.05$), though the relation strength is low.
         %         \item \textbf{Mean TP :} 0.49 $mm/hr$
         %         \item \textbf{Mean SM :} 0.14 m$^3$/m$^3$
         %     \end{itemize}
@@ -2572,25 +2068,25 @@
     \end{columns}
 \end{frame}
 
-\begin{frame}{Track 6 - \texttt{TP-SWVL1} Lag Correlation}
+\begin{frame}{Track 6 - \texttt{TP-SWVL1} Lag Relation}
     \begin{columns}[T]
         \begin{column}{0.6\textwidth}
             \begin{figure}
                 \centering
-                \includegraphics[width=\textwidth]{../version25-with-no-ocean-masking/output_2024/track_6/correlation_analysis/lag_correlation/track_6_TP-SWVL1_lag_correlation.png}
+                \includegraphics[width=\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_6/correlation_analysis/lag_relation/track_6_TP-SWVL1_lag_relation.png}
             \end{figure}
-            \label{fig:track_6_TP-SWVL1_lag_correlation}
+            \label{fig:track_6_TP-SWVL1_lag_relation}
 
             % TODO:
             \vspace{0.2cm}
-            {\tiny \textbf{Figure~\ref{fig:track_6_TP-SWVL1_lag_correlation} :}Lag correlation between precipitation (\texttt{TP}) and soil moisture (\texttt{SWVL1}) for Track 6.} % Maximum correlation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
+            {\tiny \textbf{Figure~\ref{fig:track_6_TP-SWVL1_lag_relation} :}Lag relation between precipitation (\texttt{TP}) and soil moisture (\texttt{SWVL1}) for Track 6.} % Maximum relation of r = [X] occurs at lag [Y hours], suggesting that soil moisture response lags precipitation by approximately [Y hours]. This lag is consistent with water infiltration timescales in the region.}
         \end{column}
 
         % \begin{column}{0.4\textwidth}
         %     \footnotesize
         %     \textbf{Summary:}
         %     \begin{itemize}
-        %         \item The peak of correlation occurs at far left of zero-lag line (24 hours earlier).
+        %         \item The peak of relation occurs at far left of zero-lag line (24 hours earlier).
         %         \item Antecedent moisture, Soil moisture levels are precursor to rainfall (or say sets condition for rainfall) events 24 hours later.
         %         \item Suggests very slow moving land-atmosphere feedback loop.
         %     \end{itemize}
@@ -2598,35 +2094,35 @@
     \end{columns}
 \end{frame}
 
-\begin{frame}{Track 6 \texttt{SWVL1-HF} Lag Correlation}
+\begin{frame}{Track 6 \texttt{SWVL1-HF} Lag Relation}
     \begin{columns}[t]
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_6/correlation_analysis/lag_correlation/track_6_SWVL1-LHF_lag_correlation.png} \\
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_6/correlation_analysis/lag_correlation/track_6_SWVL1-SHF_lag_correlation.png}
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_6/correlation_analysis/lag_relation/track_6_SWVL1-LHF_lag_relation.png} \\
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_6/correlation_analysis/lag_relation/track_6_SWVL1-SHF_lag_relation.png}
             \end{center}
         \end{column}
 
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_6/correlation_analysis/lag_correlation/track_6_SWVL1-THF_lag_correlation.png}
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_6/correlation_analysis/lag_relation/track_6_SWVL1-THF_lag_relation.png}
             \end{center}
         \end{column}
     \end{columns}
 \end{frame}
 
-\begin{frame}{Track 6 \texttt{TP-HF} Lag Correlation}
+\begin{frame}{Track 6 \texttt{TP-HF} Lag Relation}
     \begin{columns}[t]
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_6/correlation_analysis/lag_correlation/track_6_TP-LHF_lag_correlation.png} \\
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_6/correlation_analysis/lag_correlation/track_6_TP-SHF_lag_correlation.png}
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_6/correlation_analysis/lag_relation/track_6_TP-LHF_lag_relation.png} \\
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_6/correlation_analysis/lag_relation/track_6_TP-SHF_lag_relation.png}
             \end{center}
         \end{column}
 
         \begin{column}{0.5\textwidth}
             \begin{center}
-                \includegraphics[width=0.9\textwidth]{../version25-with-no-ocean-masking/output_2024/track_6/correlation_analysis/lag_correlation/track_6_TP-THF_lag_correlation.png}
+                \includegraphics[width=0.9\textwidth]{../version26-with-ocean-masking-lsm/output_2024/track_6/correlation_analysis/lag_relation/track_6_TP-THF_lag_relation.png}
             \end{center}
         \end{column}
     \end{columns}
@@ -2647,25 +2143,25 @@
 \begin{frame}{Track 6 SRMT Elevation plot}
     \begin{center}
         \begin{figure}
-            \includegraphics[width=0.45\linewidth]{../version25-with-no-ocean-masking/output_2024/track_6/elevation_analysis/MD_track_6_elevation_mosaic.png}
+            \includegraphics[width=0.6\linewidth]{../version26-with-ocean-masking-lsm/output_2024/track_6/elevation_analysis/MD_track_6_elevation_mosaic.png}
         \end{figure}
         \label{fig:elevationtrack6}
     \end{center}
 \end{frame}
 
-\subsubsection{Track 6 \texttt{MODIS}}
-\begin{frame}{\texttt{MODIS} Track 6 Visualization (2000m Scale)}
-    \begin{center}
-        \begin{figure}
-            \includegraphics[width=0.45\linewidth]{images/MODIS-2024-Track_6.png}
-        \end{figure}
-        \label{fig:modistrack6}
-    \end{center}
-
-    % TODO:
-    \vspace{0.2cm}
-    {\tiny \textbf{Figure~\ref{fig:modistrack6} :} \texttt{MODIS} satellite image (true color) of Track. The characteristic depression cloud structure is visible with high Cloud cluster to the around/near track (like track 2 but unlike track 1, 4, 5) because of very low translation speed of MD centre. Image source: GEE, NASA \texttt{MODIS} Level 1B.}
-\end{frame}
+% \subsubsection{Track 6 \texttt{MODIS}}
+% \begin{frame}{\texttt{MODIS} Track 6 Visualization (2000m Scale)}
+%     \begin{center}
+%         \begin{figure}
+%             \includegraphics[width=0.45\linewidth]{images/MODIS-2024-Track_6.png}
+%         \end{figure}
+%         \label{fig:modistrack6}
+%     \end{center}
+%
+%     % TODO:
+%     \vspace{0.2cm}
+%     {\tiny \textbf{Figure~\ref{fig:modistrack6} :} \texttt{MODIS} satellite image (true color) of Track. The characteristic depression cloud structure is visible with high Cloud cluster to the around/near track (like track 2 but unlike track 1, 4, 5) because of very low translation speed of MD centre. Image source: GEE, NASA \texttt{MODIS} Level 1B.}
+% \end{frame}
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%
 %                Statistical Results
@@ -2855,7 +2351,7 @@
 %     \begin{center}
 %         \begin{table}
 %             \centering
-%             \caption{\footnotesize Autocorrelation Function (\texttt{ACF}) analysis of (\texttt{SWVL1}) at a 24-hour lag. The Memory Index quantifies the persistence of land surface moisture, where higher positive values indicate potential for sustained land-atmosphere feedback (Brown Ocean Effect).}
+%             \caption{\footnotesize Autorelation Function (\texttt{ACF}) analysis of (\texttt{SWVL1}) at a 24-hour lag. The Memory Index quantifies the persistence of land surface moisture, where higher positive values indicate potential for sustained land-atmosphere feedback (Brown Ocean Effect).}
 %             \begin{tabular}{lccccc}
 %                 \toprule
 %                 \textbf{Track} & \textbf{Memory Index (\texttt{ACF-24h})} & \textbf{Mean \texttt{SWVL1}} & \textbf{Category}    & \textbf{Duration} & \textbf{Inference}       \\
@@ -3010,8 +2506,8 @@
 %     \end{itemize}
 % \end{frame}
 %
-% \subsection{Lag Correlation Analysis (\texttt{TP}-\texttt{SWVL1})}
-% \begin{frame}{Lag Correlation Analysis : \texttt{TP}-\texttt{SWVL1}}
+% \subsection{Lag relation Analysis (\texttt{TP}-\texttt{SWVL1})}
+% \begin{frame}{Lag relation Analysis : \texttt{TP}-\texttt{SWVL1}}
 %     \footnotesize
 %     \textbf{Interpretation : Lag Logic for \texttt{r(Lag)}}
 %     \begin{itemize}
@@ -3022,7 +2518,7 @@
 %
 %     \vspace{0.2cm}
 %     \footnotesize
-%     \textbf{Observed Peak Correlations (\texttt{Max |r|}) by Track :}
+%     \textbf{Observed Peak relations (\texttt{Max |r|}) by Track :}
 %     \begin{center}
 %         \footnotesize
 %         \begin{tabular}{c c c l p{5cm}}
@@ -3043,7 +2539,7 @@
 %     \begin{block}{Insights :}
 %         \begin{itemize}
 %             \item \textbf{Track 3 :} Validated as the strongest coupling strength (\texttt{r=0.8418}) and highest Coupling Efficiency.
-%             \item \textbf{Track 6 Anomaly :} Moderate negative correlation (\texttt{r=-0.5620}) despite being a long-lived MD.
+%             \item \textbf{Track 6 Anomaly :} Moderate negative relation (\texttt{r=-0.5620}) despite being a long-lived MD.
 %             \item \textbf{Soil Moisture Leads (Tracks 1, 2, 6) :} Indicates land-driven feedback where antecedent soil moisture may trigger later precipitation events.
 %             \item \textbf{Lag Anomaly (Track 4) :} Very long infiltration delay, the \texttt{-23h} lag indicates the storm is moisture-limited; rainfall occurs but soil response is too slow to provide immediate feedback. (maybe due dense soils or deep sensor placements)
 %             %\textbf{Anomalous Lag (Track 4):} The \texttt{-23h} lag suggests "Precipitation dominance"—the storm is dumping water, but the surface isn't providing a prompt feedback.
@@ -3103,7 +2599,7 @@
 %                 \caption{FSI, Coupling Efficiency (CE), and Track Characteristics.}
 %                 \begin{tabular}{lccccc}
 %                     \toprule
-%                     \textbf{Track} & \textbf{FSI} & \textbf{CE} & \textbf{Corr. ($|r|$)} & \textbf{Capacity} & \textbf{Dur. (h)} \\
+%                     \textbf{Track} & \textbf{FSI} & \textbf{CE} & \textbf{r. ($|r|$)} & \textbf{Capacity} & \textbf{Dur. (h)} \\
 %                     \midrule
 %                     1              & \texttt{0.060} & \texttt{3.41}  & \texttt{0.26} & \texttt{0.23} & \texttt{75}  \\
 %                     2              & \texttt{0.406} & \texttt{10.37} & \texttt{0.57} & \texttt{0.72} & \texttt{105} \\
@@ -3136,7 +2632,7 @@
 %                \item \textbf{Positive Feedback (2, 3, 5):} Active soil moisture recharge cycles back to rainfall (\texttt{SM} $\rightarrow$ \texttt{Rainfall}).
 %                \item \textbf{Anomalous Persistence (Track 5):} Achieves \texttt{163h} duration despite "Moderate" FSI (\texttt{0.208}), suggesting atmospheric factors (e.g., strong mid-level vorticity) compensate for lower coupling.
 %
-%                \item \textbf{Negative Correlation tracks (1, 4, 6) :} Shows complex lag effects or instantaneous soil moisture drying/runoff during peak rain events. Rainfall $\rightarrow$ Soil moisture infiltration. \cite{clapp1978empirical}
+%                \item \textbf{Negative relation tracks (1, 4, 6) :} Shows complex lag effects or instantaneous soil moisture drying/runoff during peak rain events. Rainfall $\rightarrow$ Soil moisture infiltration. \cite{clapp1978empirical}
 %             \end{itemize}
 %         \end{block}
 %     \end{center}
@@ -3256,7 +2752,7 @@
 %     \begin{block}{Key Patterns observed}
 %         \begin{itemize}
 %             \item \textbf{Direct Coupling :} For 5 out of 6 tracks (with exception of track 5), longevity is a linear function of coupling efficiency (higher \texttt{CE} = more hours over land).
-%             \item \textbf{The Buffer Effect :} Track 5 proves that \textbf{Soil Moisture Memory} acts as a secondary survival mechanism. Even with moderate dynamic coupling, high autocorrelation (\texttt{0.525}) prevents rapid collapse.
+%             \item \textbf{The Buffer Effect :} Track 5 proves that \textbf{Soil Moisture Memory} acts as a secondary survival mechanism. Even with moderate dynamic coupling, high autorelation (\texttt{0.525}) prevents rapid collapse.
 %             % \item \textbf{Origin Impact :} Tracks originating/spending time over land establish more efficient feedback loops than those making sudden coastal transitions.
 %         \end{itemize}
 %     \end{block}
@@ -3362,7 +2858,7 @@
         \column{0.49\textwidth}
         \vspace{-0.02cm}
         \begin{figure}
-           \includegraphics[width=1.1\linewidth]{../version25-with-no-ocean-masking/output_2024/MD_track_2024.png}
+           \includegraphics[width=1.1\linewidth]{../version26-with-ocean-masking-lsm/output_2024/MD_track_2024.png}
         \end{figure}
 
         \column{0.49\textwidth}
@@ -3382,7 +2878,7 @@
 %     \begin{table}[H]
 %         \footnotesize
 %         \centering
-%         \caption{Soil Moisture Autocorrelation at 24-hour Lag (\texttt{ACF-24h})}
+%         \caption{Soil Moisture Autorelation at 24-hour Lag (\texttt{ACF-24h})}
 %         \begin{tabular}{lcccccc}
 %             \toprule
 %             \textbf{Track} & \textbf{ACF-24h} & \textbf{Category} & \textbf{Mean SWVL1} & \textbf{Std SWVL1} & \textbf{Duration} & \textbf{Interpretation} \\
@@ -3401,7 +2897,7 @@
 %     \begin{block}{Key Findings :}
 %         \begin{itemize}
 %             \item \textbf{The Survival Buffer :} Track 5 survives \texttt{163h} (the longest) despite moderate \texttt{CE}. Its \texttt{ACF} of \texttt{0.525} acts as an energy "battery" that sustains the vortex during dynamic forcing (like elevated terrain, lower soil moisture(\texttt{SWVL1}). Thus Memory Index \texttt{ACF} compensates for its lower immediate coupling efficiency by providing a steady energy source.
-%             \item \textbf{Memory Threshold :} Long-lived tracks (2, 3, 5, 6) all maintain non-negative or positive memory, whereas short-lived tracks (1, 4) show negative autocorrelation (\texttt{ACF < 0}), indicating "oscillatory" behavior $\Rightarrow$ moisture is lost faster than it can be recycled,  rapid moisture depletion.
+%             \item \textbf{Memory Threshold :} Long-lived tracks (2, 3, 5, 6) all maintain non-negative or positive memory, whereas short-lived tracks (1, 4) show negative autorelation (\texttt{ACF < 0}), indicating "oscillatory" behavior $\Rightarrow$ moisture is lost faster than it can be recycled,  rapid moisture depletion.
 %             \item \textbf{Inland Stability :} Track 3 shows the best combination of high baseline moisture (\texttt{0.42 m$^3$/m$^3$}) and moderate memory (\texttt{0.321}), fueling the highest coupling efficiency observed among all tracks.
 %         \end{itemize}
 %     \end{block}
@@ -3436,7 +2932,7 @@
 %     \begin{itemize}
 %         \item \textbf{Indo-Gangetic Plain :} Soil dominated by  high clay content.
 %         \item \textbf{Eastern Coastal Belt :} Soil is mix of sandy-loam and lateritic soils with lower water-holding capacity.
-%         \item \textbf{Impact on MDs :} High-clay regions (Tracks 2, 3, 5) correlate with \texttt{FSI > 0.4}, providing the "Brown Ocean" surface.
+%         \item \textbf{Impact on MDs :} High-clay regions (Tracks 2, 3, 5) relate with \texttt{FSI > 0.4}, providing the "Brown Ocean" surface.
 %     \end{itemize}
 %
 %     \vspace{0.3cm}
@@ -3458,7 +2954,7 @@
         \column{0.49\textwidth}
         \vspace{-0.02cm}
         \begin{figure}
-            \includegraphics[width=1.1\linewidth]{../version25-with-no-ocean-masking/output_2024/MD_track_2024.png}
+            \includegraphics[width=1.1\linewidth]{../version26-with-ocean-masking-lsm/output_2024/MD_track_2024.png}
         \end{figure}
 
         \column{0.49\textwidth}
@@ -3501,8 +2997,8 @@
 %     \end{enumerate}
 %
 %        \begin{itemize}{Prediction :}
-%         \item Tracks 1, 4 (Eastern Ghats, elev range 900-1600 m) show shorter duration ($\sim$ $70h$) and weak autocorrelation (< 0.1) despite possible pre-landfall moisture.
-%         \item Tracks 2, 3, 5, 6 (Plains, avg. elev $\approx$200 m) show long duration (~130h) and strong autocorrelation (>0.3).
+%         \item Tracks 1, 4 (Eastern Ghats, elev range 900-1600 m) show shorter duration ($\sim$ $70h$) and weak autorelation (< 0.1) despite possible pre-landfall moisture.
+%         \item Tracks 2, 3, 5, 6 (Plains, avg. elev $\approx$200 m) show long duration (~130h) and strong autorelation (>0.3).
 %         \item Plains (tracks 2,3,[5],6) : rainfall $\rightarrow$ infiltration $\rightarrow$ soil moisture $\uparrow$ $\rightarrow$ heat flux $\uparrow$ $\rightarrow$ sustains MD $\rightarrow$ long duration.
 %         \item High elevated region/western Ghats (tracks 1,4) : rainfall $\rightarrow$ rapid runoff $\rightarrow$ soil moisture $\downarrow$ $\rightarrow$ heat flux $\downarrow$ $\rightarrow$ md weakens $\rightarrow$ short duration (due to steep slopes \& rapid drainage)
 %     \end{itemize}
@@ -3636,7 +3132,7 @@
 %     \begin{block}{The "Brown Ocean" Threshold}
 %         \textbf{Criteria for MD Survival after Landfall :}
 %         \begin{enumerate}
-%             \item \textbf{Inland Corridor :} Must reach Indo-Gangetic (IG) Clay soils to sustain \texttt{LHF}.
+%             \item \textbf{Inland ridor :} Must reach Indo-Gangetic (IG) Clay soils to sustain \texttt{LHF}.
 %             \item \textbf{Memory Threshold :} Soil Moisture \texttt{ACF-24h} must remain non-negative.
 %             \item \textbf{Coupling Efficiency :} SM must lead Precipitation (\texttt{Lag $>0$}) or be synchronous.
 %         \end{enumerate}
@@ -3748,7 +3244,7 @@
 % 			\vspace{-0.2cm}
 % 			\begin{center}
 % 				\begin{figure}
-% 					\includegraphics[width=1.1\linewidth]{../version25-with-no-ocean-masking/output_2019/MD_track_2019.png}
+% 					\includegraphics[width=1.1\linewidth]{../version26-with-ocean-masking-lsm/output_2019/MD_track_2019.png}
 % 				\end{figure}
 % 				\footnotesize Detected MD tracks using ERA5 single level Dataset (2020)
 % 			\end{center}
@@ -3778,7 +3274,7 @@
 % 			\vspace{-0.2cm}
 % 			\begin{center}
 % 				\begin{figure}
-% 					\includegraphics[width=1.1\linewidth]{../version25-with-no-ocean-masking/output_2020/MD_track_2020.png}
+% 					\includegraphics[width=1.1\linewidth]{../version26-with-ocean-masking-lsm/output_2020/MD_track_2020.png}
 % 				\end{figure}
 % 				\footnotesize Detected MD tracks using ERA5 single level Dataset (2020)
 % 			\end{center}
@@ -3811,7 +3307,7 @@
 % 			\vspace{-0.2cm}
 % 			\begin{center}
 % 				\begin{figure}
-% 					\includegraphics[width=1.1\linewidth]{../version25-with-no-ocean-masking/output_2021/MD_track_2021.png}
+% 					\includegraphics[width=1.1\linewidth]{../version26-with-ocean-masking-lsm/output_2021/MD_track_2021.png}
 % 				\end{figure}
 % 				\footnotesize Detected MD tracks using ERA5 single level Dataset (2021)
 % 			\end{center}
@@ -3841,7 +3337,7 @@
 % 			\begin{center}
 % 				\vspace{-0.2cm}
 % 				\begin{figure}
-% 					\includegraphics[width=1.1\linewidth]{../version25-with-no-ocean-masking/output_2022/MD_track_2022.png}
+% 					\includegraphics[width=1.1\linewidth]{../version26-with-ocean-masking-lsm/output_2022/MD_track_2022.png}
 % 				\end{figure}
 % 				\footnotesize Detected MD tracks using ERA5 single level Dataset (2022)
 % 			\end{center}
@@ -3871,7 +3367,7 @@
 % 			\vspace{-0.2cm}
 % 			\begin{center}
 % 				\begin{figure}
-% 					\includegraphics[width=1.1\linewidth]{../version25-with-no-ocean-masking/output_2023/MD_track_2023.png}
+% 					\includegraphics[width=1.1\linewidth]{../version26-with-ocean-masking-lsm/output_2023/MD_track_2023.png}
 % 				\end{figure}
 % 				\footnotesize Detected MD tracks using ERA5 single level Dataset (2023)
 % 			\end{center}
@@ -3901,7 +3397,7 @@
 % 			\vspace{-0.2cm}
 % 			\begin{center}
 % 				\begin{figure}
-% 					\includegraphics[width=1.1\linewidth]{../version25-with-no-ocean-masking/output_2025/MD_track_2025.png}
+% 					\includegraphics[width=1.1\linewidth]{../version26-with-ocean-masking-lsm/output_2025/MD_track_2025.png}
 % 				\end{figure}
 % 				\footnotesize Detected MD tracks using ERA5 single level Dataset (2025)
 % 			\end{center}

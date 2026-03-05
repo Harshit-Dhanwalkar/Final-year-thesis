@@ -173,10 +173,10 @@ def plot_speed_analysis_kmh(track_df, track_id, output_dir):
         outpath = os.path.join(output_dir, f"track_{int(track_id)}_speed_kmh.png")
         plt.savefig(outpath, dpi=300, bbox_inches="tight")
         plt.close(fig)
-        std_print("SAVED", "sp", f"Track {track_id}: Speed plot (km/h)", outpath)
+        std_print("SAVED", "sp", "Translation Speed plot (km/h)", outpath)
         return True
     except Exception as e:
-        std_print("ERROR", "sp", f"Track {track_id}: Speed plot (km/h) failed", str(e))
+        std_print("ERROR", "sp", "Translation Speed plot (km/h) failed", str(e))
         traceback.print_exc()
         return False
 

@@ -94,9 +94,9 @@ class TerrainAnalyzer:
         # Check cache first
         if tile_name in self.tiles_cache:
             return self.tiles_cache[tile_name]
+
         # Try standard path: hgt_dir/tile_name
         tile_path = os.path.join(self.hgt_dir, tile_name)
-        # path = self.find_hgt_file(f"{tile_name}.hgt")
         if not tile_path:
             std_print("ERROR", "ea", f"Tile not found in {self.hgt_dir}", tile_name)
             return None
@@ -152,11 +152,14 @@ class TerrainAnalyzer:
         """Extract elevation profile along MD track"""
         track_df = track_df.copy()
         elevations = []
-        for idx, row in track_df.iterrows():
-            lat, lon = row["latitude"], row["longitude"]
+
+        for track_id, row in track_df.iterrows():
+            lat = row["latitude"]
+            lon = row["longitude"]
             elev = self.get_elevation_at_point(lat, lon)
             elevations.append(elev if elev is not None else np.nan)
         track_df["elevation"] = elevations
+
         # Log statistics
         valid_count = track_df["elevation"].notna().sum()
         valid_pct = 100 * valid_count / len(track_df)
@@ -180,20 +183,25 @@ class TerrainAnalyzer:
         if tile_data is None:
             return None
         elevation = tile_data["data"].copy()
+
         # Interpolate NaN values for gradient calculation
         nan_mask = np.isnan(elevation)
         if np.all(nan_mask):
             return None
+
         # Simple interpolation: replace NaN with local mean
         if nan_mask.any():
             valid = elevation[~nan_mask]
             elevation[nan_mask] = np.nanmean(valid)
+
         # Sobel operator for gradients
         dz_dx = sobel(elevation, axis=1) / (8 * cell_size)  # East-West
         dz_dy = sobel(elevation, axis=0) / (8 * cell_size)  # North-South
+
         # Slope magnitude in degrees
         slope_rad = np.arctan(np.sqrt(dz_dx**2 + dz_dy**2))
         slope = np.degrees(slope_rad)
+
         # Cap unrealistic values
         slope = np.clip(slope, 0, 90)
         return slope
