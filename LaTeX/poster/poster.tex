@@ -46,6 +46,12 @@
 \setlength{\premulticols}{0pt}
 \setlength{\postmulticols}{0.2pt}
 
+\usepackage{tikz}
+\usetikzlibrary{
+    shadings, calc, patterns, angles, quotes, arrows.meta, fadings, 3d, perspective, backgrounds, intersections, bending,
+    decorations.pathmorphing, decorations.pathreplacing, decorations.markings
+}
+
 \usepackage{enumitem}
 % \setlist{nosep, leftmargin=*}
 \newcommand{\hollowsq}{\tikz[baseline=-0.5ex]\draw[TitleBlue, thick] (0,0) rectangle (0.3cm,0.3cm);}
@@ -57,12 +63,6 @@
     \end{tikzpicture}%
 }
 \setlist{label=\shadowsq, itemsep=0.1pt, parsep=0pt, topsep=1.5pt, leftmargin=30pt}
-
-\usepackage{tikz}
-\usetikzlibrary{
-    shadings, calc, patterns, angles, quotes, arrows.meta, fadings, 3d, perspective, backgrounds, intersections, bending,
-    decorations.pathmorphing, decorations.pathreplacing, decorations.markings
-}
 
 \usepackage{xcolor}
 % \definecolor{TitleBlue}{HTML}{003366}
