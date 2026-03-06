@@ -98,17 +98,13 @@
 \hypersetup{
 	colorlinks,
 	linkcolor = black,
-	urlcolor = blue!90,
-	citecolor = blue!90,
-	pdfauthor = Harshit Prashant Dhanwalkar,
-	pdftitle = Writing a Book with LATEX,
-	pdfsubject = v1.0.0,
-	pdfkeywords = {Mathematics, Physics, Engineering, LATEX}
+	urlcolor  = blue!90,
+	citecolor = blue!90
 }
 
 \setDefaultConfig
 
-%----------------------------------------Formatting beamer elements
+%-Formatting beamer elements
 \setbeamerfont{alerted text}{series=\bfseries}
 \setbeamerfont{block title}{series=\bfseries}
 % \setbeamerfont{caption}{size=\small, series=\mdseries}
@@ -124,9 +120,15 @@
 
 % \setbeamertemplate{section in toc}[square]
 
+\setbeamertemplate{frametitle}{
+	\vbox{}\hskip -0.5ex \vskip -3ex   \strut\insertframetitle\strut
+}
+\setbeamerfont{frametitle}{size=\large, series=\bfseries}
+
 \setbeamertemplate{section in toc}{%
 	{\inserttocsectionnumber.}~\inserttocsection
 }
+
 \setbeamertemplate{subsection in toc}[square]
 % \setbeamertemplate{subsection in toc}{%
 %   \hspace{1.2em}{\rule[0.3ex]{3pt}{3pt}}~\inserttocsubsection\par
@@ -135,11 +137,6 @@
 \setbeamertemplate{itemize item}{\scriptsize\raise1.25pt\hbox{\large\donotcoloroutermaths$\bullet$}}
 \setbeamertemplate{itemize subitem}{\tiny\raise1.5pt\hbox{\donotcoloroutermaths$\circ$}}
 \setbeamertemplate{itemize subsubitem}{\tiny\raise1.5pt\hbox{\donotcoloroutermaths$\blacksquare$}}
-
-\setbeamertemplate{frametitle}{
-	\vbox{}\hskip -0.5ex \vskip -3ex   \strut\insertframetitle\strut
-}
-\setbeamerfont{frametitle}{size=\Large, series=\bfseries}
 
 \defbeamertemplate{footline}{original}{
 	\ifnum \insertpagenumber > 1
@@ -184,14 +181,14 @@
 \setbeamercolor{bgcolor}{bg=PrimaryColor}
 
 
-% ----------------------------------Define layouts backgrounds
+% Define layouts backgrounds
 \pgfdeclareimage[width=\paperwidth]{vertical}{lib/layouts/vertical_bg.pdf}
 \pgfdeclareimage[width=\paperwidth]{horizontal}{lib/layouts/horizontal_bg.pdf}
 \pgfdeclareimage[width=\paperwidth]{titlepage}{lib/layouts/intro_bg.pdf}
 \pgfdeclareimage[width=\paperwidth]{transparent}{lib/layouts/title_bg.pdf}
 
 
-% ----------------------------------Defining the layouts
+% Defining the layouts
 \newcommand{\titleLayout}{
 	\usebackgroundtemplate{
 		\begin{picture}(100,256)(0,0)
@@ -287,9 +284,7 @@
 
 \titleLayout
 
-% --------------------------------------------%
 % Defining command to control slide's changes
-% --------------------------------------------%
 \newcommand{\setBGColor}[1]{
 	\setbeamercolor{bgcolor}{bg=#1}
 }
