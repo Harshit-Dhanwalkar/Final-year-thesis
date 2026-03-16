@@ -20,9 +20,7 @@ Documentation : https://confluence.ecmwf.int/display/CKB/ERA5%3A+data+documentat
 
 [viewfinder](https://www.viewfinderpanoramas.org/Coverage%20map%20viewfinderpanoramas_org3.htm) for whole Indian Subcontinent
 
-HGT Tiles used = [`A46`,`B43`,`B44`,`B46`,`C43`,`C44`,`C46`,`D43`,`D44`,`D46`,`E43`,`E44`,`E45`,`E46`,`F42`,`F43`,`F44`,`F45`,`F46`,`G42`,`G43`,`G44`,`G45`,`G46`,`H42`,`H43`,`H44`,`H45`,`H46`]
-
----
+## HGT Tiles used = [`A43`,`B43`,`B46`,`C44`,`D43`,`D46`,`E44`,`E46`,`F43`,`F45`,`G41`,`G43`,`G45`,`H41`,`H43`,`H45`,`I41`,`I43`,`I45 A46`,`B44`,`C43`,`C46`,`D44`,`E43`,`E45`,`F42`,`F44`,`F46`,`G42`,`G44`,`G46`,`H42`,`H44`,`H46`,`I42`,`I44`,`I46`]
 
 - [IMD](https://mausam.imd.gov.in/)
 - [IMD annual reports](https://metnet.imd.gov.in/phps/imdweb_imdarep.php)
