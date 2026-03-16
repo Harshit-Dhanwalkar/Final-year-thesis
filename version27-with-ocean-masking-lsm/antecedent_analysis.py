@@ -16,7 +16,10 @@ Kishtawal et al. (2013a): Water Resour. Res. 49, 3573-3589.
 Andersen & Shepherd   (2013): J. Climate 26, 6629-6642.
 """
 
-# FIX: Currently computes a single spatial mean of SWVL1 in the 24h before system formation. This is not antecedent soil moisture analysis -> it's a snapshot
+# FIX:
+# 1. Currently computes a single spatial mean of SWVL1 in the 24h before system formation. This is not antecedent soil moisture analysis -> it's a snapshot
+# 2. The future_track_bbox function extracts the bounding box of the inland portion (after landfall). This is correct for measuring pre-storm soil state along the future track. However, compute_asmi_multi_lag is called with ref_time = landfall_time if available else times.min(). For ocean-originated tracks with a clear landfall, this is correct. But for land-originated tracks (no landfall), it uses times.min() - the very start of the track - which means the 24h window extends before the track even exists, potentially reading data from an ocean region. Add a guard: if origin is land_originated and no landfall, use times.min() + timedelta(hours=6) as ref_time so at least the early inland points are covered.
+
 
 # TODO:
 # # Wet/Dry classification and comparison.
@@ -301,9 +304,8 @@ def analyze_antecedent_trend(ds, track_df, track_id, output_dir):
         label=f"Trend: {z[0]:.5f} m³/m³ per hour",
     )
 
-    trend_label = (
-        "Increasing" if z[0] > 0.001 else "Decreasing" if z[0] < -0.001 else "Stable"
-    )
+    trend_label = "Decreasing toward landfall" if z[0] > 0.001 else \
+                  "Increasing toward landfall" if z[0] < -0.001 else "Stable"
     ax.text(
         1.02,
         0.98,
@@ -577,7 +579,7 @@ def compare_wet_dry_tracks(results_df, output_dir):
         "penetration_km": "Inland penetration (km)",
         "duration_land_hours": "Duration after landfall (h)",
         "speed_change_kmh": "Speed change at landfall (km/h)",
-        "mean_lhf_land": "Mean LHF — land phase (W/m²)",
+        "mean_lhf_land": "Mean LHF - land phase (W/m²)",
     }
 
     comparison = {}
@@ -735,26 +737,6 @@ def compute_antecedent_for_track(ds, track_df, track_id, output_dir):
     return result
 
 
-# Helper function
-def sm_at_time(ds, time_step, lat_min, lat_max, lon_min, lon_max):
-    """Return spatial-mean SWVL1 over a bounding box at a given time."""
-    ds, time_coord = get_time_coord(ds)
-    try:
-        ds_t = ds.sel({time_coord: time_step}, method="nearest")
-        sm_sub = ds_t["swvl1"].sel(
-            latitude=slice(lat_max, lat_min),  # ERA5 lat is descending
-            longitude=slice(lon_min, lon_max),
-        )
-        if sm_sub.size == 0:
-            return np.nan
-        val = float(sm_sub.mean().values)
-        return val if not np.isnan(val) else np.nan
-    except Exception as e:
-        std_print("ERROR", "as", "function sm_at_time failed", str(e))
-        return np.nan
-
-
-# Multi-track
 def analyze_all_tracks_antecedent(ds, full_track_df, output_dir):
     unique_tracks = (
         sorted(full_track_df["track_id"].unique())
@@ -793,45 +775,11 @@ def analyze_all_tracks_antecedent(ds, full_track_df, output_dir):
     if len(results_df) >= 3:
         plot_asmi_multi_lag_summary(results_df, output_dir)
         plot_antecedent_vs_duration(results_df, output_dir)
+
+    if len(results_df) >= 4:   # need ≥4 for wet/dry split
+        compare_wet_dry_tracks(results_df, output_dir)
+        create_antecedent_summary_report(results_df, output_dir)
     return results_df
-
-
-def future_track_bbox(track_df, buffer_km=100):
-    """
-    Bounding box of the inland portion of a track with buffer.
-    Falls back to the full track if no is_land column is available.
-    """
-    if "is_land" in track_df.columns:
-        inland = track_df[track_df["is_land"] == True]
-        if inland.empty:
-            inland = track_df  # fallback: land-originated
-    else:
-        inland = track_df
-
-    lat_center = inland["latitude"].mean()
-    lat_buf, lon_buf = calculate_buffer_deg(lat_center, buffer_km)
-
-    lat_min = max(inland["latitude"].min() - lat_buf, CLIPPED_MIN_LAT)
-    lat_max = min(inland["latitude"].max() + lat_buf, CLIPPED_MAX_LAT)
-    lon_min = max(inland["longitude"].min() - lon_buf, CLIPPED_MIN_LON)
-    lon_max = min(inland["longitude"].max() + lon_buf, CLIPPED_MAX_LON)
-    return lat_min, lat_max, lon_min, lon_max
-
-
-def classify_soil_moisture(sm_value):
-    """Classify soil moisture level"""
-    if np.isnan(sm_value):
-        return "No Data"
-    elif sm_value < 0.1:
-        return "Very Dry"
-    elif sm_value < 0.2:
-        return "Dry"
-    elif sm_value < 0.3:
-        return "Moderate"
-    elif sm_value < 0.4:
-        return "Wet"
-    else:
-        return "Very Wet"
 
 
 def create_antecedent_summary_report(results_df, output_dir):
@@ -840,7 +788,7 @@ def create_antecedent_summary_report(results_df, output_dir):
     report_path = os.path.join(output_dir, "antecedent_analysis_report.txt")
 
     with open(report_path, "w") as f:
-        f.write("Antecedent Soil Moisture Analysis — Summary Report\n")
+        f.write("Antecedent Soil Moisture Analysis - Summary Report\n")
         f.write(f"Total tracks analyzed: {len(results_df)}\n\n")
 
         for lag in ["asmi_24h", "asmi_48h", "asmi_72h", "asmi_7d", "asmi_14d"]:
@@ -868,11 +816,66 @@ def create_antecedent_summary_report(results_df, output_dir):
                     else "not significant"
                 )
                 f.write("ASMI_7d vs Duration\n")
-                f.write(f"  Pearson r         : {r:.4f}\n")
-                f.write(
-                    f"  p (raw)           : {p_raw:.4e}  [inflated by autocorrelation]\n"
-                )
-                f.write(f"  p (corrected)     : {p_corr:.4e}  [{sig}]\n")
-                f.write(f"  n_eff             : {n_eff}\n\n")
-
+                f.write(f"  Pearson r              : {r:.4f}\n")
+                f.write(f"  Pearson p (raw)        : {p_raw:.4e}  [inflated by autocorrelation]\n")
+                f.write(f"  Pearson p (corrected)  : {p_corr:.4e}  [{sig}]\n")
+                f.write(f"  n_eff                  : {n_eff}\n\n")
     std_print("SAVED", "as", "Antecedent summary report", report_path)
+
+
+# Helper function
+def sm_at_time(ds, time_step, lat_min, lat_max, lon_min, lon_max):
+    """Return spatial-mean SWVL1 over a bounding box at a given time."""
+    ds, time_coord = get_time_coord(ds)
+    try:
+        ds_t = ds.sel({time_coord: time_step}, method="nearest")
+        sm_sub = ds_t["swvl1"].sel(
+            latitude=slice(lat_max, lat_min),  # ERA5 lat is descending
+            longitude=slice(lon_min, lon_max),
+        )
+        if sm_sub.size == 0:
+            return np.nan
+        val = float(sm_sub.mean().values)
+        return val if not np.isnan(val) else np.nan
+    except Exception as e:
+        std_print("ERROR", "as", "function sm_at_time failed", str(e))
+        return np.nan
+
+
+def classify_soil_moisture(sm_value):
+    """Classify soil moisture level"""
+    if np.isnan(sm_value):
+        return "No Data"
+    elif sm_value < 0.1:
+        return "Very Dry"
+    elif sm_value < 0.2:
+        return "Dry"
+    elif sm_value < 0.3:
+        return "Moderate"
+    elif sm_value < 0.4:
+        return "Wet"
+    else:
+        return "Very Wet"
+
+
+def future_track_bbox(track_df, buffer_km=100):
+    """
+    Bounding box of the inland portion of a track with buffer.
+    Falls back to the full track if no is_land column is available.
+    """
+    if "is_land" in track_df.columns:
+        inland = track_df[track_df["is_land"] == True]
+        if inland.empty:
+            inland = track_df  # fallback: land-originated
+    else:
+        inland = track_df
+
+    lat_center = inland["latitude"].mean()
+    lat_buf, lon_buf = calculate_buffer_deg(lat_center, buffer_km)
+
+    lat_min = max(inland["latitude"].min() - lat_buf, CLIPPED_MIN_LAT)
+    lat_max = min(inland["latitude"].max() + lat_buf, CLIPPED_MAX_LAT)
+    lon_min = max(inland["longitude"].min() - lon_buf, CLIPPED_MIN_LON)
+    lon_max = min(inland["longitude"].max() + lon_buf, CLIPPED_MAX_LON)
+    return lat_min, lat_max, lon_min, lon_max
+

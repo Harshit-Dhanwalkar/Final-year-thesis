@@ -19,10 +19,11 @@
 #    plot_sm_tp_map() uses buffer_deg=5.0
 # 5. Rephase CE 0.5/0.3 vs 8.0/3.0" -> Standardize (use 8-15)
 
-
-# TODO:
+# INFO: now implementing in timeseries.py
 # 1. Atmospheric stability: The equivalent potential temperature is defined as:
 #    {\theta }_{e}=T{\left(\frac{{P}_{0}}{P}\right)}^{\frac{{R}_{d}}{{c}_{p}}}\exp \left(\frac{{L}_{v}q}{{R}_{d}T}\right)
+
+# TODO:
 # 2. Add land-surface-mask (Data/nc-files/lsm.nc) for rest (used in azimuthal_hovmoller plot)
 # 3. H4 GAM: pip install pygam; SM ~ s(TP) -> Plateau fig
 # 4. H5 HWSD:
@@ -35,20 +36,20 @@
 #    tracks['MEAN_ELEV'] = dem.interp(...)  # r(dur,elev)<0.7
 # 6. Add duirnal HF (LHF, SHF and THF) amplitude time series plot -> \Delta(HF) = (HF_max -HF_min)_24h -> see veriation in this \Delta(HF)
 # 7. Implement: analyze_asm_fsi_relationship, analyze_gam_nonlinearity, test_granger_causality
-# 8. from utils.debug_utils.py
+# 8. ding1994monsoon and rashid2005track: land-phase vorticity tendency from the Azimuthal Hovmöller data would tell whether the MD is spinning down due to surface friction or being maintained by convective stretching. This directly tests whether the terrain-braking is frictional or thermodynamic.
+# 9. from utils.debug_utils.py
 #      # At the start of your main section
 #      debug_logger = DebugLogger(output_dir)
-# 9. Before each major analysis section
+# 10. Before each major analysis section
 #    debug_logger.log_function_call("process_files", args=(ds))
 #    debug_logger.log_data_shape("combined_dataset", ds)
 #    # After processing tracks
 #    if full_track_df is not None:
 #       debug_logger.log_data_shape("full_track_df", full_track_df)
 #       debug_logger.log_warning(f"Number of tracks: {len(full_track_df['track_id'].unique())}")
-# 10. In each track loop
+# 11. In each track loop
 #    for track_id in unique_track_ids:
 #       debug_logger.log_function_call(f"process_track_{track_id}")
-#       # ... code ...
 #       # After each analysis
 #       debug_logger.log_data_shape(f"track_{track_id}_correlation", pd.DataFrame([correlation_result]) if correlation_result else None)
 #    # At the end, generate diagnostic report
@@ -130,7 +131,12 @@ from elevation_track_vis import (
     plot_tracks_elevation,
     plot_all_tracks_elevation
 )
-from elevation_analysis import run_elevation_analysis
+from elevation_analysis import (
+    run_elevation_analysis,
+    run_single_track_elevation_analysis,
+    plot_all_tracks_elevation_comparison,
+    TerrainAnalyzer,
+)
 from statistics_analysis import (
     analyze_asm_fsi_relationship,
     analyze_gam_nonlinearity,
@@ -215,10 +221,10 @@ MONSOON_SEASONS = {
         "September-2023",
     ],
     2024: [
-        "June-2024",
+        # "June-2024",
         "July-2024",
         "August-2024",
-        "September-2024",
+        # "September-2024",
     ],
     2025: [
         "June-2025",
@@ -301,8 +307,8 @@ variables = [
     "vt10",           # Tangential Wind
     "vor_rel",        # Cartesian relative vorticity, zeta = \partial x/\partial x - \partial u/\partial y
     "vor_abs",        # Cartesian absolute vorticity,
-    "vor_rel_polar",  # Polar relative vorticity, zeta = \partial V_t/\partial r + V_t/r (not defined at r=0)
-    "vor_abs_polar",  # Polar absolute vorticity,
+    # "vor_rel_polar",  # Polar relative vorticity, zeta = \partial V_t/\partial r + V_t/r (not defined at r=0)
+    # "vor_abs_polar",  # Polar absolute vorticity,
     "speed_ms",       # MD center transitional speed in m/s
     # 'speed_kmh',    # MD center transitional speed in km/h
     "msl",            # Mean Sea Level Pressure
@@ -742,9 +748,7 @@ def diagnose_temporal_issues(data_slice):
     if len(negative_gaps) > 0:
         std_print(None, None, "Found Time reversals/backward jumps", len(negative_gaps))
         for idx in negative_gaps[:5]:
-            std_print(None, None, f"Jump backward at index {idx}",
-                      f"{times[idx]} -> {times[idx + 1]} (difference: {time_diffs[idx]:.1f} hours)"
-                      )
+            std_print(None, None, f"Jump backward at index {idx}", f"{times[idx]} -> {times[idx + 1]} (difference: {time_diffs[idx]:.1f} hours)")
     else:
         std_print("INFO", "md", "Time is monotonically increasing")
 
@@ -1303,10 +1307,8 @@ def split_mixed_tracks(tracks):
                 if bearing and (240 <= bearing <= 360 or 0 <= bearing <= 30):
                     split_tracks.append(longest_segment)
                     std_print(
-                        "INFO",
-                        "md",
-                        "Split mixed track",
-                        f"Kept ocean segment of {len(longest_segment)} points",
+                        "INFO", "md", "Split mixed track",
+                        f"Kept ocean segment of {len(longest_segment)} points"
                     )
                 else:
                     split_tracks.append(track)  # Keep original
@@ -2513,6 +2515,8 @@ if __name__ == "__main__":
         else:
             std_print("INFO", "md", "Using existing elevation VRT", vrt_path)
 
+        terrain_analyzer = TerrainAnalyzer(hgt_dir=HGT_DIR)
+
         # Process each track
         for track_id in unique_track_ids:
             track_id = int(track_id)
@@ -2556,7 +2560,7 @@ if __name__ == "__main__":
             speed_kmh = track_df["speed_kmh"].dropna()
             speed_ms = track_df["speed_ms"].dropna()
             distance_km = track_df["distance_km"].dropna()
-            std_print("INFO", "md", f"Speed Statistics for Track {track_id}")
+            std_print("INFO", "md", "Speed Statistics")
             std_print(None, None, "mean", f"{speed_kmh.mean():.2f} km/h ({speed_ms.mean():.2f} m/s)")
             std_print(None, None, "median", f"{speed_kmh.median():.2f} km/h ({speed_ms.median():.2f} m/s)")
             std_print(None, None, "std deviation", f"{speed_kmh.std():.2f} km/h ({speed_ms.std():.2f} m/s)")
@@ -2566,27 +2570,27 @@ if __name__ == "__main__":
 
             # 7) Generate Hovmöller Plots
             print(f"\n-------------------------------------- Azimuthal Hovmoller Plots for Track {track_id} --------------------------------------")
-            # std_print('DEBUG', 'md', f'Skipping Hovmöller for Track {track_id}')
-            hov_dir = os.path.join(track_dir, "hovmoller")
-            os.makedirs(hov_dir, exist_ok=True)
-            try:
-                radii_km = [0] + radii
-                hov_dir, track_times_arr, landfall_index, per_radius_lf = compute_azimuthal_hovmoller_sectors(
-                    ds, track_df, radii_km, variables, n_theta=16, lsm_2d=LSM_DA
-                )
-                hov_avg = average_azimuthally(hov_dir, variables, radii_km=radii_km)
-                if "swvl1" in hov_avg and hov_avg["swvl1"] is not None:
-                    hov_avg["dswvl1_dt"] = compute_swvl1_tendency(hov_avg["swvl1"], track_times_arr)
-                plot_vars = list(variables) + (["dswvl1_dt"] if "dswvl1_dt" in hov_avg else [])
-                for var in plot_vars:
-                    if var in hov_avg:
-                        plot_hovmoller_azimuthal_average(
-                            hov_avg[var], track_times_arr, radii_km, var,
-                            track_df, track_id, output_dir, landfall_index, per_radius_lf
-                        )
-            except Exception as e:
-                std_print("ERROR", "md", "Hovmöller computation failed", str(e))
-                traceback.print_exc()
+            std_print('DEBUG', 'md', f'Skipping Hovmöller for Track {track_id}')
+            # hov_dir = os.path.join(track_dir, "hovmoller")
+            # os.makedirs(hov_dir, exist_ok=True)
+            # try:
+            #     radii_km = [0] + radii
+            #     hov_dir, track_times_arr, landfall_index, per_radius_lf = compute_azimuthal_hovmoller_sectors(
+            #         ds, track_df, radii_km, variables, n_theta=16, lsm_2d=LSM_DA
+            #     )
+            #     hov_avg = average_azimuthally(hov_dir, variables, radii_km=radii_km)
+            #     if "swvl1" in hov_avg and hov_avg["swvl1"] is not None:
+            #         hov_avg["dswvl1_dt"] = compute_swvl1_tendency(hov_avg["swvl1"], track_times_arr)
+            #     plot_vars = list(variables) + (["dswvl1_dt"] if "dswvl1_dt" in hov_avg else [])
+            #     for var in plot_vars:
+            #         if var in hov_avg:
+            #             plot_hovmoller_azimuthal_average(
+            #                 hov_avg[var], track_times_arr, radii_km, var,
+            #                 track_df, track_id, output_dir, landfall_index, per_radius_lf
+            #             )
+            # except Exception as e:
+            #     std_print("ERROR", "md", "Hovmöller computation failed", str(e))
+            #     traceback.print_exc()
 
             # 8) Antecedent Soil Moisture Analysis
             print(f"\n----------------------------------Antecedent Soil Moisture Analysis for Track {track_id} ----------------------------------")
@@ -2656,7 +2660,7 @@ if __name__ == "__main__":
                                 **flux_analysis,
                             }
                         )
-                        std_print("INFO", "md", f"Heat flux analysis for track {track_id}")
+                        std_print("INFO", "md", "Heat flux analysis")
                         std_print(None, None, "Mean Total HF", f"{flux_analysis['mean_total_hf']:.1f} W/m²")
                         std_print(None, None, "Mean Latent HF", f"{flux_analysis['mean_latent_hf']:.1f} W/m²")
                         std_print(None, None, "Mean Sensible HF", f"{flux_analysis['mean_sensible_hf']:.1f} W/m²")
@@ -2670,7 +2674,7 @@ if __name__ == "__main__":
                 std_print("ERROR", "md", "Heat Flux analysis failed", str(e))
                 traceback.print_exc()
             try:
-                std_print("INFO", "md", f" --- Track {track_id}: Landfall transition ---")
+                std_print("INFO", "md", " --- Landfall transition ---")
                 landfall_result = analyze_flux_transition(ds, track_df, track_id, hours_before=24, hours_after=24)
                 if landfall_result:
                     std_print("INFO", "md", "Before landfall")
@@ -2753,7 +2757,7 @@ if __name__ == "__main__":
                                 "std_swvl1": np.std(swvl1_vals),
                             }
                             all_memory_results.append(memory_result)
-                            std_print("INFO", "md", f"Soil moisture memory for track {track_id}")
+                            std_print("INFO", "md", "Soil moisture memory")
                             std_print(None, None, "Memory index (24h lag)", f"{memory_24h:.3f}")
                             std_print(None, None, "Mean SWVL1", f"{np.mean(swvl1_vals):.3f} m³/m³")
                             std_print(None, None, "Samples", len(swvl1_vals))
@@ -2786,6 +2790,12 @@ if __name__ == "__main__":
                     std_print("WARN", "md", "Elevation plot failed", "VRT unavailable")
             except Exception as e:
                 std_print('ERROR', 'md', 'Elevation plot failed', str(e))
+                traceback.print_exc()
+            try:
+                elev_track_dir = os.path.join(track_dir, "elevation_analysis")
+                track_df = run_single_track_elevation_analysis(track_df, track_id, elev_track_dir, terrain_analyzer)
+            except Exception as e:
+                std_print("ERROR", "md", "Per-track elevation analysis failed", str(e))
                 traceback.print_exc()
         print("----------------------------------------------------------------------------------------------------------------------------\n")
 
@@ -2867,7 +2877,7 @@ if __name__ == "__main__":
             traceback.print_exc()
 
         # 2. Global Antecedent soil moisture Analysis
-        std_print("info", "md", " --- Antecedent soil moisture analysis ---")
+        std_print("INFO", "md", " --- Antecedent soil moisture analysis ---")
         # std_print("DEBUG", "md", "Skipping Global Antecedent soil moisture Analysis")
         try:
             asm_dir = os.path.join(output_dir, "global_antecedent_analysis")
@@ -2917,16 +2927,32 @@ if __name__ == "__main__":
         std_print("INFO", "md", " --- Global Elevation Analysis ---")
         #std_print("DEBUG", "md", "Skipping Global Elevation Analysis")
         try:
-            elevation_dir = os.path.join(output_dir, "elevation_analysis")
+            elevation_dir = os.path.join(output_dir, "global_elevation_analysis")
             os.makedirs(elevation_dir, exist_ok=True)
             # FIX: it is reductant to compute_fsi again for elevation analysis
-            elevation_metrics = run_elevation_analysis(tracks_df=full_track_df, coupling_df=fsi_df, hgt_dir=HGT_DIR, output_dir=elevation_dir)
+            elevation_metrics = run_elevation_analysis(
+                tracks_df=full_track_df,
+                coupling_df=fsi_df,
+                hgt_dir=HGT_DIR,
+                output_dir=elevation_dir,
+                terrain_analyzer=terrain_analyzer,
+            )
             if not elevation_metrics.empty:
                 std_print("INFO", "md", "Elevation analysis complete", f"{len(elevation_metrics)} tracks with TSI computed")
                 std_print(None, None, f"Mean TSI: {elevation_metrics['TSI'].mean():.3f}")
                 std_print(None, None, f"TSI range: [{elevation_metrics['TSI'].min():.3f}, {elevation_metrics['TSI'].max():.3f}]")
             else:
                 std_print("ERROR", "md", "Elevation analysis failed", "Check HGT data availability and paths")
+            if not elevation_metrics.empty and terrain_analyzer is not None:
+                try:
+                    plot_all_tracks_elevation_comparison(
+                        tracks_dict=track_dict,
+                        terrain_analyzer=terrain_analyzer,
+                        output_dir=elevation_dir,
+                    )
+                except Exception as e:
+                    std_print("ERROR", "md", "All-tracks elevation comparison failed", str(e))
+                    traceback.print_exc()
         except Exception as e:
             std_print("ERROR", "md", "Elevation analysis failed", str(e))
             traceback.print_exc()
@@ -2934,7 +2960,7 @@ if __name__ == "__main__":
             if vrt_path is not None and os.path.exists(vrt_path) and full_track_df is not None and not full_track_df.empty:
                 combined_plot_path = plot_all_tracks_elevation(full_track_df, vrt_path, output_dir, year=MONSOON_YEAR)
                 if combined_plot_path:
-                    std_print("INFO", "md", "Combined elevation plot saved", combined_plot_path)
+                    std_print("INFO", "md", "Combined elevation", combined_plot_path)
                 else:
                     std_print("ERROR", "md", "Failed to create combined elevation plot")
             else:

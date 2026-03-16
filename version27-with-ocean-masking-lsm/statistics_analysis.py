@@ -233,8 +233,10 @@ def analyze_tsi(elevation_metrics_df, coupling_df, output_dir):
             if len(valid_pairs) >= 5:
                 # Compute correlation
                 tsi_duration_corr = valid_pairs["TSI"].corr(valid_pairs["duration_h"])
-                # Plot
+
+                # Figure
                 fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
                 # Scatter plot
                 ax = axes[0]
                 scatter = ax.scatter(
@@ -390,7 +392,7 @@ def analyze_gam_nonlinearity(coupling_metrics_dir, output_dir):
             y = data["FSI"].values
             gam = LinearGAM(s(0, n_splines=10))
             gam.fit(X, y)
-            r_squared = gam.statistics_["GCV"]
+            r_squared = gam.statistics_["pseudo_r2"]
             n_samples = len(data)
             std_print("INFO", "sa", "GAM plateau analysis", f"R²≈{r_squared:.3f}, n={n_samples}")
             return {

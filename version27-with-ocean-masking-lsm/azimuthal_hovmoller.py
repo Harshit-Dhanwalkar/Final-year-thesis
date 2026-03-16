@@ -39,8 +39,8 @@ VARIABLE_UNITS = {
     "vt10": "m/s",
     "vor_rel": "x10⁻⁵ s⁻¹",
     "vor_abs": "x10⁻⁵ s⁻¹",
-    "vor_rel_polar": "x10⁻⁵ s⁻¹",
-    "vor_abs_polar": "x10⁻⁵ s⁻¹",
+    # "vor_rel_polar": "x10⁻⁵ s⁻¹",
+    # "vor_abs_polar": "x10⁻⁵ s⁻¹",
     "speed_kmh": "km/h",
     "speed_ms": "m/s",
     "msl": "hPa",
@@ -65,8 +65,8 @@ VARIABLE_NAMES = {
     "vt10": "Tangential Wind (Swirl)",
     "vor_rel": "Relative Vorticity",
     "vor_abs": "Absolute Vorticity",
-    "vor_rel_polar": "Relative Vorticity",
-    "vor_abs_polar": "Absolute Vorticity",
+    # "vor_rel_polar": "Relative Vorticity",
+    # "vor_abs_polar": "Absolute Vorticity",
     "speed_kmh": "Translation Speed",
     "speed_ms": "Translation Speed",
     "msl": "Mean Sea Level Pressure",
@@ -692,16 +692,16 @@ def average_azimuthally(hov_results, variables, radii_km=None):
             with np.errstate(invalid="ignore"):
                 averaged[var] = np.nanmean(hov_results[var], axis=2)
 
-    # Polar vorticity - derived post-averaging from the V_t radial profile
-    need_polar = any(v in variables for v in ("vor_rel_polar", "vor_abs_polar"))
-    if need_polar and "vt10" in averaged and radii_km is not None:
-        vt_avg = averaged["vt10"]  # (N_steps, N_radii)
-        r_arr = np.asarray(radii_km, dtype=float)
-        vor_p = compute_vorticity_polar(vt_avg, r_arr)  # (N_steps, N_radii)
-        if "vor_rel_polar" in variables:
-            averaged["vor_rel_polar"] = vor_p
-        if "vor_abs_polar" in variables:
-            averaged["vor_abs_polar"] = vor_p  # f added at time of plotting
+    # # Polar vorticity - derived post-averaging from the V_t radial profile
+    # need_polar = any(v in variables for v in ("vor_rel_polar", "vor_abs_polar"))
+    # if need_polar and "vt10" in averaged and radii_km is not None:
+    #     vt_avg = averaged["vt10"]  # (N_steps, N_radii)
+    #     r_arr = np.asarray(radii_km, dtype=float)
+    #     vor_p = compute_vorticity_polar(vt_avg, r_arr)  # (N_steps, N_radii)
+    #     if "vor_rel_polar" in variables:
+    #         averaged["vor_rel_polar"] = vor_p
+    #     if "vor_abs_polar" in variables:
+    #         averaged["vor_abs_polar"] = vor_p  # f added at time of plotting
     return averaged
 
 
@@ -729,7 +729,7 @@ def plot_hovmoller_azimuthal_average(
         cmap = "YlGnBu"
     elif var_name == "w":
         cmap = "Blues"
-    elif var_name in ["vor_rel", "vor_abs", "vor_rel_polar", "vor_abs_polar"]:
+    elif var_name in ["vor_rel", "vor_abs"]: #, "vor_rel_polar", "vor_abs_polar"]:
         hov_arr = hov_arr * 1e5 # Scale vorticity to x10^-5
         cmap = "RdBu_r"  # diverging: cyclonic +ve, anticyclonic -ve
     elif var_name == "dswvl1_dt":

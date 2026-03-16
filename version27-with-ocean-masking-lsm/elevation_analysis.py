@@ -1,11 +1,11 @@
 """
 Elevation Analysis for MD Tracks using SRTM HGT Data
 
-  1. Orographic speed reduction      — terrain slows MDs (barrier effect)
-  2. Orographic precipitation ratio  — windward vs flat TP amplification
-  3. Elevation vs penetration scatter — terrain controls inland reach
-  4. Landfall elevation classification — low-coast vs terrain-facing MDs
-  5. Soil texture map (Clapp & Hornberger 1978) — SM memory interpretation
+  1. Orographic speed reduction      - terrain slows MDs (barrier effect)
+  2. Orographic precipitation ratio  - windward vs flat TP amplification
+  3. Elevation vs penetration scatter - terrain controls inland reach
+  4. Landfall elevation classification - low-coast vs terrain-facing MDs
+  5. Soil texture map (Clapp & Hornberger 1978) - SM memory interpretation
 
 TSI combines three terrain-dependent factors:
   TSI = elevation_effect x slope_effect x roughness_effect
@@ -22,7 +22,9 @@ Reference: Kirshbaum (2018) JGR-Atmos.
 # TODO:
 # 1. Add TSI vs. inland penetration distance (km from landfall to dissipation)
 # 2. Mean elevation along track vs. speed anomaly (speed relative to pre-landfall baseline)
-# FIX: full_track_df is a flat DataFrame (all tracks concatenated). compute_tsi_for_all_tracks calls tracks_df.items() which only works on a dict. You need to convert before the call
+# FIX:
+# 1. Need lag plot seperate and line plot instead of bar chart. 
+# 2. full_track_df is a flat DataFrame (all tracks concatenated). compute_tsi_for_all_tracks calls tracks_df.items() which only works on a dict. You need to convert before the call
 # # Convert full_track_df → dict before calling elevation analysis
 # track_dict_for_elev = {
 #     tid: full_track_df[full_track_df["track_id"] == tid].copy()
@@ -40,6 +42,9 @@ import pandas as pd
 import rasterio
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+from matplotlib.collections import LineCollection
+import matplotlib.cm as cm
+from matplotlib.lines import Line2D
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 from scipy.ndimage import sobel
@@ -379,6 +384,8 @@ class TerrainAnalyzer:
     def get_terrain_metrics_at_point(self, lat, lon, window_size=3):
         """Get comprehensive terrain metrics at a point with local neighborhood"""
         tile_name = self.get_tile_filename(lat, lon)
+        if tile_name is None:
+            return None
         tile_data = self.load_hgt_tile(tile_name)
         if tile_data is None:
             return None
@@ -446,7 +453,7 @@ class TerrainAnalyzer:
             "mean_elevation": np.nan,
             "elevation_range": np.nan,
             "mean_slope": np.nan,
-            "elevation_std": np.nan,
+            "elevation_std": float(valid_elev.std()),  
             "n_valid_points": len(valid_elev),
             "n_land_points": len(land_df), 
         }
@@ -736,11 +743,6 @@ class TerrainAnalyzer:
                     family="monospace"
                 )
 
-        ax.set_xlabel("TSI", fontsize=11, fontweight="bold")
-        ax.set_ylabel("Duration (hours)", fontsize=11, fontweight="bold")
-        ax.set_title("TSI vs Track Duration", fontsize=13, fontweight="bold")
-        ax.grid(True, alpha=0.3)
-
         # 3. Component effects
         ax = axes[1, 0]
         components = []
@@ -766,7 +768,7 @@ class TerrainAnalyzer:
             )
             ax.set_ylim(0, 1.0)
             ax.set_ylabel("Mean Effect Value", fontsize=11, fontweight="bold")
-            ax.set_title("TSI Comnent Effects", fontsize=13, fontweight="bold")
+            ax.set_title("TSI Component Effects", fontsize=13, fontweight="bold")
             ax.grid(True, alpha=0.3, axis="y")
 
             # Value labels
@@ -828,9 +830,9 @@ def compute_orographic_speed_reduction(tracks_df_dict, output_dir):
     """
     Check whether Track translation speed drops as elevation rises.
  
-    For each track that has both 'elevation' and 'speed_kmh' columns, computes:
+    For each track that has both 'elevation' and 'speed_ms' columns, computes:
       - Pearson r between elevation gradient and speed change
-      - Mean speed in low-elevation (<200 m) vs high-elevation (>500 m) segments
+      - Mean speed in low-elevation (<400 m) vs high-elevation (>500 m) segments
     """
     os.makedirs(output_dir, exist_ok=True)
     all_elev = []
@@ -839,16 +841,16 @@ def compute_orographic_speed_reduction(tracks_df_dict, output_dir):
     all_dSpd  = []
  
     for track_id, track_df in tracks_df_dict.items():
-        if "elevation" not in track_df.columns or "speed_kmh" not in track_df.columns:
+        if "elevation" not in track_df.columns or "speed_ms" not in track_df.columns:
             continue
-        df = track_df.dropna(subset=["elevation", "speed_kmh"]).copy()
+        df = track_df.dropna(subset=["elevation", "speed_ms"]).copy()
         if len(df) < 5:
             continue
         # Elevation gradient: change in elev per track step (m per ~step)
         d_elev = df["elevation"].diff().fillna(0).values
-        d_spd  = df["speed_kmh"].diff().fillna(0).values
+        d_spd  = df["speed_ms"].diff().fillna(0).values
         all_elev.extend(df["elevation"].values.tolist())
-        all_spd.extend(df["speed_kmh"].values.tolist())
+        all_spd.extend(df["speed_ms"].values.tolist())
         all_dElev.extend(d_elev.tolist())
         all_dSpd.extend(d_spd.tolist())
  
@@ -881,7 +883,7 @@ def compute_orographic_speed_reduction(tracks_df_dict, output_dir):
         family="monospace"
     )
     ax.set_xlabel("Elevation (m)", fontsize=11, fontweight="bold")
-    ax.set_ylabel("Translation Speed (km/h)", fontsize=11, fontweight="bold")
+    ax.set_ylabel("Translation Speed (m/s)", fontsize=11, fontweight="bold")
     ax.set_title("Orographic Speed Reduction\n(elevation vs translation speed)", fontsize=13, fontweight="bold")
     ax.grid(True, alpha=0.3, linestyle="--")
  
@@ -1049,8 +1051,7 @@ def plot_elevation_vs_penetration(tsi_df, output_dir):
         ax.grid(True, alpha=0.3, linestyle="--")
  
     axes[0].set_ylabel("Inland penetration distance (km)", fontsize=11, fontweight="bold")
-    fig.suptitle("Terrain Metrics vs Inland Penetration Distance",
-                 fontsize=13, fontweight="bold")
+    fig.suptitle("Terrain Metrics vs Inland Penetration Distance",fontsize=13, fontweight="bold")
     plt.tight_layout()
     os.makedirs(output_dir, exist_ok=True)
     outpath = os.path.join(output_dir, "elevation_vs_penetration.png")
@@ -1061,7 +1062,7 @@ def plot_elevation_vs_penetration(tsi_df, output_dir):
 
 # Landfall elevation classification
 def classify_landfall_elevation(tsi_df, output_dir):
-    # FIX: verify 50-200 criterion for flat or elevated region
+    # FIX: verify 50-400 criterion for flat or elevated region
     """
     Classify MDs by landfall-point elevation:
       - Low coast  : elevation at landfall < 50 m (flat)
@@ -1094,7 +1095,7 @@ def classify_landfall_elevation(tsi_df, output_dir):
     std_print("EXPORT", "ea", "Landfall elevation classes", csv_path)
  
     # Box plot: penetration by class
-    classes = [c for c in ["Low coast (<50 m)", "Elevated (50-200 m)", "Terrain-facing (>200 m)"]
+    classes = [c for c in ["Low coast (<50 m)", "Elevated (50-400 m)", "Terrain-facing (>400 m)"]
                if c in tsi_df["lf_class"].values]
     if "penetration_km" in tsi_df.columns and len(classes) >= 2:
         # Figure
@@ -1127,12 +1128,516 @@ def classify_landfall_elevation(tsi_df, output_dir):
     return tsi_df
 
 
-def run_elevation_analysis(tracks_df, coupling_df, hgt_dir, output_dir):
+def plot_track_elevation_profile(track_df, track_id, output_dir):
+    """
+    Elevation along track (left) vs translation speed (right).
+    Highlights where terrain rise coincides with speed drop.
+    """
+    track_id = int(track_id)
+    required = {"time", "elevation", "speed_ms", "is_land"}
+    missing = required - set(track_df.columns)
+    if missing:
+        std_print("WARN", "ea", "plot_track_elevation_profile missing cols", str(missing))
+        return
+
+    df = track_df.sort_values("time").reset_index(drop=True)
+    times      = pd.to_datetime(df["time"])
+    elevation  = df["elevation"].values.astype(float)
+    speed      = df["speed_ms"].values.astype(float)
+    is_land_arr = df["is_land"].values.astype(bool)
+
+    # Landfall time (first ocean→land transition)
+    landfall_time = None
+    for i in range(1, len(df)):
+        if not is_land_arr[i - 1] and is_land_arr[i]:
+            landfall_time = times.iloc[i]
+            break
+
+    # Figure
+    fig, ax1 = plt.subplots(figsize=(16, 7))
+
+    ax1.fill_between(times, 0, 1,where=is_land_arr, transform=ax1.get_xaxis_transform(),color="wheat", alpha=0.45, label="Land phase", zorder=0)
+    ax1.fill_between(times, 0, 1,where=~is_land_arr, transform=ax1.get_xaxis_transform(),color="lightblue", alpha=0.45, label="Ocean phase", zorder=0)
+
+    # Elevation (left axis)
+    elev_land = np.where(is_land_arr, elevation, np.nan)
+    ax1.fill_between(times, 0, elev_land,color="#8B6914", alpha=0.55, label="Elevation (land)", zorder=2)
+    ax1.plot(times, elev_land, color="#5C3D0A", linewidth=1.2, zorder=3)
+
+    # Reference elevations
+    for ref_m, ls, label in [(400, "--", "400 m"), (500, "-.", "500 m")]:
+        ax1.axhline(ref_m, color="gray", linestyle=ls, linewidth=0.8, alpha=0.6, label=label)
+
+    ax1.set_ylabel("Elevation (m)", fontsize=12, fontweight="bold", color="#5C3D0A")
+    ax1.tick_params(axis="y", labelcolor="#5C3D0A")
+    elev_max = np.nanmax(elev_land) if not np.all(np.isnan(elev_land)) else 600
+    ax1.set_ylim(0, max(elev_max * 1.25, 600))
+
+    # Speed (right axis)
+    ax2 = ax1.twinx()
+    ax2.plot(times, speed, "-o", color="royalblue", linewidth=2.2,markersize=4, alpha=0.85, label="Speed (m/s)", zorder=4)
+    ax2.set_ylabel("Translation Speed (m/s)", fontsize=12, fontweight="bold", color="royalblue")
+    ax2.tick_params(axis="y", labelcolor="royalblue")
+
+    # Landfall line
+    if landfall_time is not None:
+        ax1.axvline(landfall_time, color="red", linestyle="--", linewidth=1.8,label="Landfall", zorder=5)
+
+    # Annotate peak elevation on land
+    valid_land = np.where(is_land_arr & ~np.isnan(elevation))[0]
+    if len(valid_land) > 0:
+        peak_idx = valid_land[np.argmax(elevation[valid_land])]
+        peak_elev = elevation[peak_idx]
+        peak_speed = speed[peak_idx]
+        ax1.annotate(
+            f"Peak: {peak_elev:.0f} m\nSpeed: {peak_speed:.1f} m/s",
+            xy=(times.iloc[peak_idx], peak_elev),
+            xytext=(15, 10), textcoords="offset points",
+            fontsize=9, color="#5C3D0A",
+            arrowprops=dict(arrowstyle="->", color="#5C3D0A", lw=1.0),
+            bbox=common_bbox(),
+        )
+        # Minimum speed on land
+        min_spd_idx = valid_land[np.argmin(speed[valid_land])]
+        ax2.annotate(
+            f"Min: {speed[min_spd_idx]:.1f} m/s",
+            xy=(times.iloc[min_spd_idx], speed[min_spd_idx]),
+            xytext=(15, -20), textcoords="offset points",
+            fontsize=9, color="royalblue",
+            arrowprops=dict(arrowstyle="->", color="royalblue", lw=1.0),
+            bbox=common_bbox(),
+        )
+
+    # Pearson r: elevation vs speed (land phase only)
+    land_elev  = elevation[is_land_arr & ~np.isnan(elevation) & ~np.isnan(speed)]
+    land_speed = speed[is_land_arr & ~np.isnan(elevation) & ~np.isnan(speed)]
+    if len(land_elev) >= 5:
+        r, _, p_corr, n_eff = pearsonr_corrected(land_elev, land_speed)
+        sig = "**" if (not np.isnan(p_corr) and p_corr < 0.05) else "ns"
+        p_str = f"{p_corr:.3e}" if not np.isnan(p_corr) else "N/A"
+        stats_text = (
+            f"Land phase (n_eff={n_eff})\n"
+            f"r(elev, speed) = {r:.3f}\n"
+            f"p_corr = {p_str} {sig}"
+        )
+        ax1.text(0.02, 0.97, stats_text,transform=ax1.transAxes, fontsize=9, va="top",family="monospace", bbox=common_bbox())
+
+    # Lag-correlation inset: r(elevation[t], speed[t+k]) for k in -12..+12 h
+    # INFO: lag = +3h means the MD speed drops about 3 hours after encountering high terrain 
+    lags_h  = list(range(-12, 13, 1))
+    lag_rs  = []
+    for lag in lags_h:
+        if lag < 0:
+            xe, xs = land_elev[:lag],  land_speed[-lag:]
+        elif lag > 0:
+            xe, xs = land_elev[lag:],  land_speed[:-lag]
+        else:
+            xe, xs = land_elev, land_speed
+        if len(xe) < 5 or np.std(xe) < 1e-6 or np.std(xs) < 1e-6:
+            lag_rs.append(np.nan)
+        else:
+            r_lag, _ = pearsonr_corrected(xe, xs)[:2]
+            lag_rs.append(float(r_lag) if not np.isnan(r_lag) else np.nan)
+
+    # Inset axes
+    ax_inset = ax1.inset_axes([0.60, 0.65, 0.37, 0.30])
+    ax_inset.bar(lags_h, lag_rs, color=["royalblue" if v < 0 else "tomato"for v in lag_rs], alpha=0.75, width=0.8)
+    ax_inset.axhline(0, color="black", linewidth=0.6)
+    ax_inset.axvline(0, color="gray",  linewidth=0.6, linestyle="--")
+    best_lag = lags_h[np.nanargmin(lag_rs)]   # most negative r
+    ax_inset.axvline(best_lag, color="navy", linewidth=1.2, linestyle=":")
+    ax_inset.set_xlabel("Lag (hours)", fontsize=7)
+    ax_inset.set_ylabel("r", fontsize=7)
+    ax_inset.set_title(f"Speed lag r  (min at {best_lag:+d}h)", fontsize=7)
+    ax_inset.tick_params(labelsize=6)
+    ax_inset.set_ylim(-1, 1)
+
+    # Legend
+    lines1, labels1 = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax1.legend(lines1 + lines2, labels1 + labels2,loc="upper right", **legend_style())
+
+    ax1.set_xlabel("Time", fontsize=12, fontweight="bold")
+    ax1.set_title(f"Track {track_id}: Elevation Profile vs Translation Speed",fontsize=13, fontweight="bold")
+    ax1.grid(True, alpha=0.3, linestyle="--", zorder=0)
+    plt.setp(ax1.xaxis.get_majorticklabels(), rotation=45, ha="right")
+    plt.tight_layout()
+
+    os.makedirs(output_dir, exist_ok=True)
+    outpath = os.path.join(output_dir, f"track_{track_id}_elevation_profile.png")
+    plt.savefig(outpath, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+    std_print("SAVED", "ea", "elevation profile", outpath)
+
+
+def plot_track_elevation_map(track_df, track_id, terrain_analyzer, output_dir):
+    """
+    DEM tiles , track line colored by translation speed.
+    Tracks ran into high terrain vs passed through low-elevation corridors.
+    """
+    track_id = int(track_id)
+    required = {"latitude", "longitude", "speed_ms", "is_land"}
+    if not required.issubset(track_df.columns):
+        std_print("WARN", "ea", "plot_track_elevation_map missing cols",
+                  str(required - set(track_df.columns)))
+        return
+
+    df = track_df.sort_values("time").reset_index(drop=True)
+    lats = df["latitude"].values
+    lons = df["longitude"].values
+    spds = df["speed_ms"].values.astype(float)
+
+    # Bounding box with buffer
+    buf = 1.5
+    lat_min  = lats.min() - buf
+    lat_max  = lats.max() + buf
+    lon_min  = lons.min() - buf
+    lon_max  = lons.max() + buf
+
+    # Figure
+    fig, ax = plt.subplots(figsize=(13, 11),subplot_kw={"projection": ccrs.PlateCarree()})
+
+    ax.set_extent([lon_min, lon_max, lat_min, lat_max], crs=ccrs.PlateCarree())
+
+    # DEM tiles
+    tile_patches = []
+    for lat_int in range(int(np.floor(lat_min)), int(np.ceil(lat_max))):
+        for lon_int in range(int(np.floor(lon_min)), int(np.ceil(lon_max))):
+            tile_path = terrain_analyzer.get_tile_filename(lat_int + 0.5, lon_int + 0.5)
+            if tile_path is None:
+                continue
+            tile_data = terrain_analyzer.load_hgt_tile(tile_path)
+            if tile_data is None:
+                continue
+            elev = tile_data["data"].copy()
+            elev[elev < 0] = 0     # treat void/ocean pixels as 0
+            # Downsample for display speed (step ≈ 30 arc-seconds)
+            step = max(1, elev.shape[0] // 120)
+            elev_ds = elev[::step, ::step]
+            tile_patches.append((elev_ds, lon_int, lat_int))
+
+    # Consistent elevation scale across all tiles
+    if tile_patches:
+        all_vals = [np.nanpercentile(p[0], 98) for p in tile_patches]
+        vmax_elev = max(float(np.nanmax(all_vals)), 400.0)
+    else:
+        vmax_elev = 1000.0
+        ax.add_feature(cfeature.LAND, facecolor="#E8D5B0", alpha=0.6)
+
+    for (elev_ds, lon_int, lat_int) in tile_patches:
+        img_extent = (lon_int, lon_int + 1, lat_int, lat_int + 1)
+        ax.imshow(elev_ds, extent=img_extent, origin="upper",cmap="terrain", vmin=0, vmax=vmax_elev,transform=ccrs.PlateCarree(), alpha=0.85, zorder=1)
+
+    # proxy for the elevation colorbar
+    sm_elev = plt.cm.ScalarMappable(cmap="terrain",norm=plt.Normalize(0, vmax_elev))
+    sm_elev.set_array([])
+    cbar_elev = plt.colorbar(sm_elev, ax=ax, pad=0.01, shrink=0.55, aspect=20)
+    cbar_elev.set_label("Elevation (m)", fontsize=10)
+
+    # Elevation contours from track elevation column
+    if "elevation" in df.columns:
+        elev_vals = df["elevation"].values
+        land_mask = df["is_land"].values.astype(bool)
+        # Contour lines only make sense on a gridded field; here annotate key thresholds
+        for thresh, color, ls in [(400, "saddlebrown", "--"), (500, "sienna", "-.")]:
+            crossings = np.where(np.diff((elev_vals > thresh).astype(int)))[0]
+            for ci in crossings:
+                ax.plot(lons[ci], lats[ci], "^", color=color,markersize=7, transform=ccrs.PlateCarree(), zorder=5,label=f"{thresh} m crossing")
+
+    # Track line colored by speed
+    valid_spd = np.where(np.isnan(spds), np.nanmedian(spds), spds)
+    speed_min = max(0, np.nanpercentile(valid_spd, 5))
+    speed_max = np.nanpercentile(valid_spd, 95)
+
+    points   = np.array([lons, lats]).T.reshape(-1, 1, 2)
+    segments = np.concatenate([points[:-1], points[1:]], axis=1)
+    norm_spd = plt.Normalize(speed_min, speed_max)
+    lc = LineCollection(segments, cmap="RdYlGn",norm=norm_spd, linewidth=3.0,transform=ccrs.PlateCarree(), zorder=6)
+    lc.set_array(valid_spd[:-1])
+    ax.add_collection(lc)
+
+    cbar_spd = plt.colorbar(lc, ax=ax, pad=0.08, shrink=0.55, aspect=20)
+    cbar_spd.set_label("Translation Speed (m/s)", fontsize=10)
+
+    # # Start / End / Landfall markers
+    # ax.plot(lons[0], lats[0], "g*", markersize=10,transform=ccrs.PlateCarree(), zorder=8,label="Origin", markeredgecolor="black", markeredgewidth=0.5)
+    # ax.plot(lons[-1], lats[-1], "rx", markersize=10, markeredgewidth=2,transform=ccrs.PlateCarree(), zorder=8, label="Dissipation")
+
+    is_land_arr = df["is_land"].values.astype(bool)
+    for i in range(1, len(df)):
+        if not is_land_arr[i - 1] and is_land_arr[i]:
+            ax.plot(lons[i], lats[i], "D", color="darkorange",markersize=8, transform=ccrs.PlateCarree(), zorder=8,label="Landfall", markeredgecolor="black", markeredgewidth=0.5)
+            break
+
+    ax.coastlines(resolution="50m", linewidth=1.0, color="black", zorder=7)
+    ax.add_feature(cfeature.BORDERS, linewidth=0.6, linestyle=":", color="gray", zorder=7)
+    ocean_feature = cfeature.NaturalEarthFeature("physical", "ocean", "50m", facecolor="lightcyan", edgecolor="none")
+    ax.add_feature(ocean_feature, facecolor="lightcyan", alpha=0.4, zorder=2)
+    ax.gridlines(draw_labels=True, linestyle="--", alpha=0.4, linewidth=0.5)
+
+    # Deduplicate legend entries
+    handles, labels = ax.get_legend_handles_labels()
+    seen = {}
+    for h, l in zip(handles, labels):
+        if l not in seen:
+            seen[l] = h
+    ax.legend(seen.values(), seen.keys(), loc="lower left", **legend_style())
+
+    ax.set_title(f"Track {track_id}: Track over Terrain",fontsize=13, fontweight="bold")
+    plt.tight_layout()
+
+    os.makedirs(output_dir, exist_ok=True)
+    outpath = os.path.join(output_dir, f"track_{track_id}_elevation_map.png")
+    plt.savefig(outpath, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+    std_print("SAVED", "ea", "elevation map", outpath)
+
+
+def plot_all_tracks_elevation_comparison(tracks_dict, terrain_analyzer, output_dir):
+    """
+    All tracks overlaid on DEM
+    Line width proportional speed (thin = slow = terrain-braked, thick = fast = open corridor).
+    """
+    if not tracks_dict:
+        return
+
+    all_lats = np.concatenate([df["latitude"].values for df in tracks_dict.values()])
+    all_lons = np.concatenate([df["longitude"].values for df in tracks_dict.values()])
+    buf = 2.0
+    lat_min, lat_max = all_lats.min() - buf, all_lats.max() + buf
+    lon_min, lon_max = all_lons.min() - buf, all_lons.max() + buf
+
+    fig, ax = plt.subplots(figsize=(16, 13),subplot_kw={"projection": ccrs.PlateCarree()})
+    ax.set_extent([lon_min, lon_max, lat_min, lat_max], crs=ccrs.PlateCarree())
+
+    # DEM background
+    tile_patches = []
+    for lat_int in range(int(np.floor(lat_min)), int(np.ceil(lat_max))):
+        for lon_int in range(int(np.floor(lon_min)), int(np.ceil(lon_max))):
+            tp = terrain_analyzer.get_tile_filename(lat_int + 0.5, lon_int + 0.5)
+            if tp is None:
+                continue
+            td = terrain_analyzer.load_hgt_tile(tp)
+            if td is None:
+                continue
+            elev = td["data"].copy()
+            elev[elev < 0] = 0
+            step = max(1, elev.shape[0] // 120)
+            tile_patches.append((elev[::step, ::step], lon_int, lat_int))
+
+    vmax_elev = max(
+        (float(np.nanpercentile(p[0], 98)) for p in tile_patches),
+        default=1000.0
+    )
+    for elev_ds, lon_int, lat_int in tile_patches:
+        ax.imshow(
+            elev_ds,
+            extent=(lon_int, lon_int+1, lat_int, lat_int+1),
+            origin="upper",
+            cmap="terrain",
+            vmin=0,
+            vmax=vmax_elev,
+            transform=ccrs.PlateCarree(),
+            alpha=0.75,
+            zorder=1
+        )
+
+    sm_elev = plt.cm.ScalarMappable(cmap="terrain", norm=plt.Normalize(0, vmax_elev))
+    sm_elev.set_array([])
+    plt.colorbar(sm_elev, ax=ax, pad=0.01, shrink=0.5, aspect=18,label="Elevation (m)")
+
+    # Per-track overlays
+    track_colors = plt.cm.tab10(np.linspace(0, 1, len(tracks_dict)))
+    summary_rows = []
+    legend_handles = []
+
+    for (track_id, track_df), color in zip(
+            sorted(tracks_dict.items()), track_colors):
+
+        df = track_df.sort_values("time").reset_index(drop=True)
+        lats = df["latitude"].values
+        lons = df["longitude"].values
+        is_land_arr = df["is_land"].values.astype(bool) if "is_land" in df.columns else np.ones(len(df), bool)
+
+        # Speed column
+        spds = df["speed_ms"].values.astype(float) if "speed_ms" else np.full(len(df), 15.0)
+
+        # Track line — width mapped to speed (3–6 pt range)
+        spd_norm = np.clip((spds - np.nanpercentile(spds, 5)) / (np.nanpercentile(spds, 95) - np.nanpercentile(spds, 5) + 1e-6), 0, 1)
+        lw_arr = 2.0 + spd_norm * 4.0           # thin = slow, thick = fast
+
+        points   = np.array([lons, lats]).T.reshape(-1, 1, 2)
+        segments = np.concatenate([points[:-1], points[1:]], axis=1)
+        lws      = lw_arr[:-1]
+        # Draw in segments so width varies
+        for seg, lw in zip(segments, lws):
+            ax.plot(
+                seg[:, 0],
+                seg[:, 1],
+                color=color,
+                linewidth=lw,
+                transform=ccrs.PlateCarree(),
+                solid_capstyle="round",
+                zorder=6 + 0.01
+            )
+
+        # Origin / dissipation
+        ax.plot(
+            lons[0],
+            lats[0],
+            "*",
+            color=color,
+            markersize=13,
+            markeredgecolor="black",
+            markeredgewidth=0.6,
+            transform=ccrs.PlateCarree(),
+            zorder=9
+        )
+        ax.plot(
+            lons[-1],
+            lats[-1],
+            "X",
+            color=color,
+            markersize=10,
+            markeredgecolor="black",
+            markeredgewidth=0.6,
+            transform=ccrs.PlateCarree(),
+            zorder=9
+        )
+
+        # Landfall marker
+        for i in range(1, len(df)):
+            if not is_land_arr[i-1] and is_land_arr[i]:
+                ax.plot(
+                    lons[i],
+                    lats[i],
+                    "D",
+                    color=color,
+                    markersize=9,
+                    markeredgecolor="black",
+                    markeredgewidth=0.7,
+                    transform=ccrs.PlateCarree(),
+                    zorder=9
+                )
+                break
+
+        # Terrain barrier label: max elevation after landfall
+        if "elevation" in df.columns:
+            land_elev = df.loc[is_land_arr, "elevation"].dropna()
+            max_elev  = float(land_elev.max()) if len(land_elev) else np.nan
+            mean_elev = float(land_elev.mean()) if len(land_elev) else np.nan
+        else:
+            max_elev = mean_elev = np.nan
+
+        land_spd = spds[is_land_arr & ~np.isnan(spds)]
+        mean_spd_land = float(np.mean(land_spd)) if len(land_spd) else np.nan
+
+        # Penetration km (landfall point → dissipation)
+        pen_km = np.nan
+        for i in range(1, len(df)):
+            if not is_land_arr[i-1] and is_land_arr[i]:
+                pen_km = haversine_distance(
+                    lons[i], lats[i], lons[-1], lats[-1]
+                )
+                break
+
+        summary_rows.append({
+            "track_id":       track_id,
+            "max_land_elev_m": round(max_elev, 0),
+            "mean_land_elev_m": round(mean_elev, 0),
+            "mean_land_speed": round(mean_spd_land, 1),
+            "penetration_km":  round(pen_km, 0),
+        })
+
+        # Legend handle
+        legend_handles.append(Line2D(
+            [0], [0], color=color, linewidth=3,
+            label=f"Track {track_id}  max:{max_elev:.0f}m  "
+                  f"pen:{pen_km:.0f}km  "
+                  f"spd:{mean_spd_land:.1f}{'m/s'}"
+        ))
+
+    # Threshold contour lines on DEM (400 m, 500 m, 700 m)
+    # We annotate using a text box since we don't have a gridded elevation object here
+    for thresh_m, ls, lc in [(400,"--","saddlebrown"), (700,"-.", "sienna")]:
+        ax.contour  # not available directly on imshow tiles
+        # Use a proxy label instead
+        ax.plot([], [], linestyle=ls, color=lc, linewidth=1.5,label=f"{thresh_m} m threshold")
+
+    ax.coastlines(resolution="50m", linewidth=1.0, color="black", zorder=7)
+    ax.add_feature(cfeature.BORDERS, linewidth=0.6, linestyle=":", color="gray", zorder=7)
+    ocean_feat = cfeature.NaturalEarthFeature("physical", "ocean", "50m", facecolor="lightcyan", edgecolor="none")
+    ax.add_feature(ocean_feat, alpha=0.4, zorder=2)
+    ax.gridlines(draw_labels=True, linestyle="--", alpha=0.35, linewidth=0.5)
+
+    ax.legend(handles=legend_handles, loc="lower left",**legend_style({"fontsize": 9}))
+    ax.set_title("All Tracks: Path over Terrain", fontsize=13, fontweight="bold")
+    plt.tight_layout()
+
+    os.makedirs(output_dir, exist_ok=True)
+    outpath = os.path.join(output_dir, "all_tracks_elevation_comparison.png")
+    plt.savefig(outpath, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+    std_print("SAVED", "ea", "All-tracks elevation comparison", outpath)
+
+    # Export summary CSV
+    if summary_rows:
+        summary_df = pd.DataFrame(summary_rows)
+        csv_path = os.path.join(output_dir, "track_terrain_summary.csv")
+        summary_df.to_csv(csv_path, index=False)
+        std_print("EXPORT", "ea", "Track terrain summary", csv_path)
+    return summary_rows
+
+
+def run_single_track_elevation_analysis(track_df, track_id, output_dir, terrain_analyzer=None):
+    """
+    Per-track elevation analysis:
+      1. Extract elevation profile
+      2. Profile plot: elevation + speed vs time (orographic braking signal)
+      3. Map plot: DEM background + track colored by speed (corridor vs barrier)
+
+    Called inside the per-track loop in md_detection_tracking.py.
+    Returns track_df enriched with 'elevation' column.
+    """
+    track_id = int(track_id)
+    os.makedirs(output_dir, exist_ok=True)
+
+    # 1. Extract elevation
+    if "speed_ms" not in track_df.columns:
+        std_print("WARN", "ea","speed_ms missing - run compute_track_speeds first")
+
+    try:
+        track_df = terrain_analyzer.get_elevation_profile(track_df)
+    except Exception as e:
+        std_print("ERROR", "ea", "get_elevation_profile failed", str(e))
+        return track_df
+
+    valid = track_df["elevation"].notna().sum()
+    if valid == 0:
+        std_print("WARN", "ea","no elevation data - skipping per-track plots")
+        return track_df
+
+    # 2. Dual-axis profile: elevation + speed over time
+    try:
+        plot_track_elevation_profile(track_df, track_id, output_dir)
+    except Exception as e:
+        std_print("ERROR", "ea", "elevation profile plot failed", str(e))
+        traceback.print_exc()
+
+    # 3. Spatial map: DEM background + track colored by speed
+    try:
+        plot_track_elevation_map(track_df, track_id, terrain_analyzer, output_dir)
+    except Exception as e:
+        std_print("ERROR", "ea", "elevation map plot failed", str(e))
+        traceback.print_exc()
+    return track_df
+
+def run_elevation_analysis(tracks_df, coupling_df, hgt_dir, output_dir, terrain_analyzer=None):
     """
     1. Load SRTM HGT tiles
     2. Extract elevation profiles for all tracks
     3. Compute TSI
-    4. Orographic speed reduction (if speed_kmh available)
+    4. Orographic speed reduction (if speed_ms available)
     5. Elevation vs penetration scatter (if penetration_km available)
     6. Landfall elevation classification (if elevation_at_landfall available)
     7. Soil texture interpretation (if lat_landfall available)
@@ -1140,7 +1645,7 @@ def run_elevation_analysis(tracks_df, coupling_df, hgt_dir, output_dir):
     """
     # std_print("DEBUG", "ea", " --- Elevation analysis ---", f"{len(tracks_df)} tracks")
     # Initialize terrain analyzer
-    terrain = TerrainAnalyzer(hgt_dir=hgt_dir)
+    terrain = terrain_analyzer if terrain_analyzer is not None else TerrainAnalyzer(hgt_dir=hgt_dir)
     os.makedirs(output_dir, exist_ok=True)
 
     # Compute TSI for all tracks

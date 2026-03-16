@@ -79,8 +79,8 @@ def compute_fsi_all_tracks(ds, correlation_results_df, track_df_dict):
     fsi_df = []
     for _, row in correlation_results_df.iterrows():
         track_id = int(row["track_id"])
-        corr_val = row.get("correlation", np.nan)
-        p_val = row.get("p_value", np.nan)
+        pearson_r = row.get("pearson_r", np.nan)
+        pearson_p = row.get("pearson_p", np.nan)
 
         if track_id not in track_df_dict:
             continue
@@ -108,7 +108,9 @@ def compute_fsi_all_tracks(ds, correlation_results_df, track_df_dict):
 
         if len(swvl1_vals) > 0:
             swvl1_array = np.array(swvl1_vals)
-            fsi_dict = compute_feedback_strength_index(corr_val, swvl1_array, p_val)
+            fsi_dict = compute_feedback_strength_index(
+                pearson_r, swvl1_array, pearson_p
+            )
             fsi_df.append(
                 {
                     "track_id": track_id,
@@ -117,7 +119,8 @@ def compute_fsi_all_tracks(ds, correlation_results_df, track_df_dict):
                     "capacity_index": fsi_dict["capacity_index"],
                     "significance_factor": fsi_dict["significance_factor"],
                     "is_significant": fsi_dict["is_significant"],
-                    "p_value": fsi_dict["p_value"],
+                    "pearson_r": fsi_dict["pearson_r"],
+                    "pearson_p": fsi_dict["pearson_p"],
                     "mean_swvl1": float(np.mean(swvl1_array)),
                     "std_swvl1": float(np.std(swvl1_array)),
                 }
@@ -301,25 +304,6 @@ def compute_coupling_efficiency(fsi_df, correlation_df, amplitude_df, duration_d
     merged = fsi_df.merge(correlation_df, on="track_id", how="outer")
     merged = merged.merge(amplitude_df, on="track_id", how="outer")
     merged = merged.merge(duration_df, on="track_id", how="outer")
-
-    def compute_ce(row):
-        fsi = row.get("FSI", np.nan)
-        amp = row.get("diurnal_amplitude_land", np.nan)
-        duration = row.get("duration_hours", np.nan)
-        if np.isnan(fsi) or np.isnan(amp):
-            return np.nan
-        # Normalize
-        # FIX: amp_norm not used
-        amp_norm = np.tanh(amp / 100)  # Saturation curve
-        # Duration decay: systems > 120h show reduced coupling signal
-        if np.isnan(duration):
-            duration_factor = 1.0
-        else:
-            duration_factor = max(1.0, duration / 48)  # 48h as reference
-            # duration_factor = 1.0 / (1.0 + np.exp((duration - 120) / 48))
-        coupling_efficiency = (fsi * amp) / duration_factor
-        return coupling_efficiency
-
     merged["coupling_efficiency"] = merged.apply(compute_ce, axis=1)
     return merged
 
@@ -327,14 +311,14 @@ def compute_coupling_efficiency(fsi_df, correlation_df, amplitude_df, duration_d
 def validate_coupling_data(df):
     """Validate coupling data for analysis"""
     issues = []
+    if df is None or df.empty:
+        issues.append("Data is None or empty")
+        return False, issues
     if df.empty or len(df) < 3:
         return False, "Insufficient data"
     missing_pct = df.isnull().mean() * 100
     if any(missing_pct > 20):
         return False, "Too many missing values"
-    if df is None or df.empty:
-        issues.append("Data is None or empty")
-        return False, issues
     required_columns = ["track_id", "FSI", "correlation_strength"]
     missing = [col for col in required_columns if col not in df.columns]
     if missing:
@@ -355,7 +339,7 @@ def validate_coupling_data(df):
         )
         if corr_range[0] < -1 or corr_range[1] > 1:
             issues.append(f"Correlation out of range [-1,1]: {corr_range}")
-    return True, "Valid", len(issues) == 0, issues
+    return len(issues) == 0, "; ".join(issues) if issues else "Valid"
 
 
 def validate_analysis_inputs(track_df):
@@ -481,3 +465,24 @@ def generate_coupling_metrics_report(
         # f.write("  - Normalized by system duration (longer systems show weaker signal)\n")
     std_print("SAVED", "cm", "Coupling metrics report", report_path)
     return report_path
+
+
+# Helper functions
+def compute_ce(row):
+    fsi = row.get("FSI", np.nan)
+    amp = row.get("diurnal_amplitude_land", np.nan)
+    duration = row.get("duration_hours", np.nan)
+    if np.isnan(fsi) or np.isnan(amp):
+        return np.nan
+    # Duration decay: systems > 120h show reduced coupling signal
+    if np.isnan(duration):
+        duration_factor = 1.0
+    else:
+        duration_factor = max(1.0, duration / 48)  # 48h as reference
+        # duration_factor = 1.0 / (1.0 + np.exp((duration - 120) / 48))
+
+    # Normalize
+    amp_norm = np.tanh(amp / 100)  # Saturation curve
+    # coupling_efficiency = (fsi * amp) / duration_factor
+    coupling_efficiency = (fsi * amp_norm) / duration_factor
+    return coupling_efficiency

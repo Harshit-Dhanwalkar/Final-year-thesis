@@ -326,7 +326,7 @@ def plot_tracks_elevation(track_df, track_id, vrt_path, output_dir):
             plt.tight_layout()
 
             # Save
-            output_filename = f"MD_track_{track_id}_elevation_mosaic.png"
+            output_filename = f"track_{track_id}_elevation_mosaic.png"
             output_path = os.path.join(plot_dir, output_filename)
             plt.savefig(output_path, dpi=300, bbox_inches="tight")
             plt.close(fig)
@@ -449,7 +449,7 @@ def plot_all_tracks_elevation(track_df, vrt_path, output_dir, year):
             plt.tight_layout()
 
             # Save
-            output_filename = f"MD_all_tracks_elevation_mosaic_{year}.png"
+            output_filename = f"All_tracks_elevation_mosaic_{year}.png"
             output_path = os.path.join(plot_dir, output_filename)
             plt.savefig(output_path, dpi=300, bbox_inches="tight")
             plt.close(fig)

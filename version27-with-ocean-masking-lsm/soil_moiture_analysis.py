@@ -8,9 +8,13 @@ Key Questions:
 - Spatial patterns of both variables during passage?
 """
 
-# TODO: add shade region for land (like in latent heat flux transiton and in speed plots)
-# FIX: use buffer_km instaed of buffer_deg
-# FIX: ACF lag selection : Requires>=48 points (24h lag + buffer)
+# TODO:
+# 1. seneviratne2010investigating:  deficit = SWVL1_sat - SWVL1
+#          Low deficit -> soil near saturation -> LHF peaks -> Brown Ocean. High deficit -> soil absorbs rain -> no BOE
+# 2. add shade region for land (like in latent heat flux transiton and in speed plots)
+# FIX:
+# 1. use buffer_km instaed of buffer_deg
+# 2. ACF lag selection : Requires>=48 points (24h lag + buffer)
 
 import os
 import numpy as np

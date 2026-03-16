@@ -21,38 +21,6 @@ from utils import (
 )
 
 
-# Helper functions
-def deaccumulate(ds, var, t_now, t_prev):
-    """Convert accumulated J m-2 to W m-2."""
-    dt = (pd.to_datetime(t_now) - pd.to_datetime(t_prev)).total_seconds()
-    if dt <= 0:
-        return np.nan
-    # ERA5 sign convention: negative downward -> positive upward
-    subset_now = float(ds[var].sel(time=t_now).values)
-    subset_prev = float(ds[var].sel(time=t_prev).values)
-    return -(subset_now - subset_prev) / dt
-
-
-def mean(lst):
-    return np.nanmean(lst) if lst else np.nan
-
-
-def get_environment(is_land_list):
-    """Determine dominant environment (ocean or land)"""
-    if not is_land_list:
-        return "Unknown"
-    land_count = sum(is_land_list)
-    ocean_count = len(is_land_list) - land_count
-    if land_count == 0 and ocean_count == 0:
-        return "Unknown"
-    if land_count > ocean_count:
-        return "Land"
-    elif ocean_count > land_count:
-        return "Ocean"
-    else:
-        return "Mixed"  # Equal land and ocean points
-
-
 def analyze_flux_transition(ds, track_df, track_id, hours_before=24, hours_after=24):
     """
     ERA5 Heat Flux Sign Convention:
@@ -65,11 +33,6 @@ def analyze_flux_transition(ds, track_df, track_id, hours_before=24, hours_after
     track_id = int(track_id)
     ds, time_coord = get_time_coord(ds)
     track_df = track_df.sort_values("time")
-    if "is_land" not in track_df.columns:
-        track_df["is_land"] = track_df.apply(
-            lambda r: is_point_land(r["latitude"], r["longitude"]), axis=1
-        )
-
     # Find first landfall
     # Ensure is_land column exists
     if "is_land" not in track_df.columns:
@@ -300,14 +263,6 @@ def classify_md_duration(track_df, short_threshold_hours=96):  # 96 hours = 4 da
     return classification
 
 
-def export_heat_flux_results(all_flux_results, output_dir="output"):
-    if not all_flux_results:
-        std_print("WARN", "hf", "No flux results to export")
-        return
-    results_df = pd.DataFrame(all_flux_results)
-    export_results_to_csv(results_df, "hf", output_dir, "heat_flux_analysis_summary")
-
-
 def export_landfall_flux_results(all_landfall_results, output_dir):
     """Export landfall flux transition results to CSV"""
     if not all_landfall_results:
@@ -399,3 +354,50 @@ def print_md_classification_summary(classifications, output_dir="output"):
 
     classification_summary_path = os.path.join(output_dir, "classification_summary.txt")
     std_print("SAVED", "hf", "Classification Summary", classification_summary_path)
+
+
+# TODO: trenberth2009earth, bowen ration \beta = SHF / LHF
+# plot_bowen_ratio_evolution(flux_df, track_df, track_id, output_dir):
+
+# TODO: andersen2013 : defines BOE as inland LHF >= 70 W/m² sustained for >= 18 h.
+# classify_boe_candidate(flux_df, lhf_threshold=70, min_hours=18)
+
+
+# Helper functions
+def deaccumulate(ds, var, t_now, t_prev):
+    """Convert accumulated J m-2 to W m-2."""
+    dt = (pd.to_datetime(t_now) - pd.to_datetime(t_prev)).total_seconds()
+    if dt <= 0:
+        return np.nan
+    # ERA5 sign convention: negative downward -> positive upward
+    subset_now = float(ds[var].sel(time=t_now).values)
+    subset_prev = float(ds[var].sel(time=t_prev).values)
+    return -(subset_now - subset_prev) / dt
+
+
+def mean(lst):
+    return np.nanmean(lst) if lst else np.nan
+
+
+def get_environment(is_land_list):
+    """Determine dominant environment (ocean or land)"""
+    if not is_land_list:
+        return "Unknown"
+    land_count = sum(is_land_list)
+    ocean_count = len(is_land_list) - land_count
+    if land_count == 0 and ocean_count == 0:
+        return "Unknown"
+    if land_count > ocean_count:
+        return "Land"
+    elif ocean_count > land_count:
+        return "Ocean"
+    else:
+        return "Mixed"  # Equal land and ocean points
+
+
+def export_heat_flux_results(all_flux_results, output_dir="output"):
+    if not all_flux_results:
+        std_print("WARN", "hf", "No flux results to export")
+        return
+    results_df = pd.DataFrame(all_flux_results)
+    export_results_to_csv(results_df, "hf", output_dir, "heat_flux_analysis_summary")

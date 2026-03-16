@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
+
+# from metpy.calc import equivalent_potential_temperature, mixing_ratio_from_dewpoint
 import traceback
 
 from utils import (
@@ -62,6 +64,12 @@ def extract_heat_flux_timeseries(ds, track_df, track_id, buffer_km=100):
         t_prev = pd.to_datetime(row_prev["time"])
 
         dt_seconds = (t_now - t_prev).total_seconds()
+        std_print(
+            "DEBUG",
+            "ts",
+            f"Computed `dt_seconds` is {dt_seconds}",
+            "expected to be 3600.00",
+        )
         if dt_seconds == 0:
             std_print(
                 "ERROR",
@@ -194,7 +202,6 @@ def extract_heat_flux_timeseries(ds, track_df, track_id, buffer_km=100):
                 # std_print('DEBUG', "ts", f'Using avg_slhtf/avg_ishf: LHF={slhf_w:.4f}, SHF={sshf_w:.4f}')
             elif "slhf" in sub_now.data_vars and "sshf" in sub_now.data_vars:
                 # De-accumulate accumulated fluxes J m-2 -> W m-2
-                dt_seconds = 3600.0  # 1-hour difference
                 if "slhf" in sub_now.data_vars and "slhf" in sub_prev.data_vars:
                     slhf_now = float(sub_now["slhf"].mean().values)
                     slhf_prev = float(sub_prev["slhf"].mean().values)
@@ -414,8 +421,10 @@ def tp_swvl1_timeseries(
         handles.append(Patch(facecolor="wheat", alpha=0.5))
         labels.append("Land Phase")
 
-        legend_handles, labels = ax1.get_legend_handles_labels()
-        if legend_handles:
+        # legend_handles, labels = ax1.get_legend_handles_labels()
+        # if legend_handles:
+        #     ax1.legend(handles, labels, loc="upper right", **legend_style())
+        if handles:
             ax1.legend(handles, labels, loc="upper right", **legend_style())
 
         title = f"Track {track_id}: Precipitation & Soil Water Content Evolution"
@@ -580,3 +589,20 @@ def hf_timeseries(flux_df, track_id, output_dir):
         std_print("ERROR", "ts", "Heat flux timeseries plot failed", str(e))
         traceback.print_exc()
         return False
+
+
+# Equivalent Potential Temperature (\theta_e)
+def compute_theta_e(t2m_K, d2m_K, sp_Pa):
+    """
+    Bolton (1980) approximation:
+    theta_e = T * (P0/P)^(Rd/cp) * exp(Lv*q / (cp*T))
+    where q = mixing ratio from dew point
+    """
+    Lv = 2.501e6  # J/kg
+    Rd = 287.05  # J/kg/K
+    cp = 1005.7  # J/kg/K
+    P0 = 100000.0  # Pa
+    e_s = 611.2 * np.exp(17.67 * (d2m_K - 273.15) / (d2m_K - 29.65))
+    q = 0.622 * e_s / (sp_Pa - e_s)
+    theta_e = t2m_K * (P0 / sp_Pa) ** (Rd / cp) * np.exp(Lv * q / (cp * t2m_K))
+    return theta_e

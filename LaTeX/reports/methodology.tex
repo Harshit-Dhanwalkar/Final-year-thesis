@@ -22,7 +22,7 @@
 	\end{block}
 
 	\vspace{-0.2cm}
-	\begin{columns}[T, totalwidth=0.9\textwidth]
+	\begin{columns}[T]
 		\column{0.43\textwidth}
 		\begin{block}{ERA5 Dataset Variables :}
 			\begin{itemize}\footnotesize
@@ -61,13 +61,13 @@
 				\item \textbf{Saturation Vapor Pressure (\texttt{$e_s$}) :}
 				      \footnotesize
 				      \begin{equation}
-					      e_s = 6.112 \exp\left(\frac{17.67 * D2M}{D2M + 243.5}\right)
+					      e_s = 6.112 \exp\left(\frac{17.67 * \texttt{D2M}}{\texttt{D2M} + 243.5}\right)
 				      \end{equation}
 				      where \texttt{D2M} = 2m Dew Point Temperature in $^\circ$C
 				\item \textbf{Water Vapor Mixing Ratio (\texttt{w}) :}
 				      \footnotesize
 				      \begin{equation}
-					      \texttt{w} = 0.622 \frac{e_s}{SP - e_s} \times 1000
+					      \texttt{w} = 0.622 \frac{e_s}{\texttt{SP} - e_s} \times 1000
 				      \end{equation}
 			\end{itemize}
 		\end{block}
@@ -112,7 +112,7 @@
 			\end{itemize}
 		\end{block}
 
-		% TODO: check SWVVL@ threshold
+		% TODO: check SWVVL1 threshold
 		\begin{block}{Analysis Parameters :}
 			\begin{itemize}
 				\item \textbf{\texttt{SWVL1} Range\footnotemark[2] :} \texttt{0.02 - 0.55 m$^3$/m$^3$}
