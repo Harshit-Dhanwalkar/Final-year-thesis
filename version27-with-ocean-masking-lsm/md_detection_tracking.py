@@ -2926,9 +2926,9 @@ if __name__ == "__main__":
         # 4. Global Elevation Analysis
         std_print("INFO", "md", " --- Global Elevation Analysis ---")
         #std_print("DEBUG", "md", "Skipping Global Elevation Analysis")
+        elevation_dir = os.path.join(output_dir, "Global_elevation_analysis")
+        os.makedirs(elevation_dir, exist_ok=True)
         try:
-            elevation_dir = os.path.join(output_dir, "global_elevation_analysis")
-            os.makedirs(elevation_dir, exist_ok=True)
             # FIX: it is reductant to compute_fsi again for elevation analysis
             elevation_metrics = run_elevation_analysis(
                 tracks_df=full_track_df,
@@ -2992,7 +2992,7 @@ if __name__ == "__main__":
                if stats_results and len(stats_results) > 0:
                    std_print("INFO", "md", "Statistical analyses completed successfully")
                    summary_report_path = os.path.join(output_dir, "Analysis_summary_report.txt")
-                   elevation_df = load_elevation_metrics(output_dir)
+                   elevation_df = load_elevation_metrics(elevation_dir)
                    results = analyze_tsi(
                        elevation_df, fsi_df,
                        # coupling_df,
@@ -3027,7 +3027,7 @@ if __name__ == "__main__":
         std_print("DEBUG", "md", f"FSI columns: {list(fsi_df.columns) if fsi_df is not None else 'None'}")
         if fsi_df is not None and not fsi_df.empty:
             missing_for_stats = []
-            for col in ["TP", "SWVL1", "pearson_r", "pearson_p"]:
+            for col in ["mean_tp", "mean_swvl1", "pearson_r", "pearson_p"]:
                 if col not in fsi_df.columns:
                     missing_for_stats.append(col)
             if missing_for_stats:

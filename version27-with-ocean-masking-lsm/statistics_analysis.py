@@ -24,9 +24,8 @@ MAX_LAG = 1
 def load_elevation_metrics(output_dir):
     """Load TSI metrics computed from HGT elevation data."""
     paths_to_try = [
-        os.path.join(output_dir, "elevation_analysis", "elevation_metrics.csv"),
-        "output/elevation_analysis/elevation_metrics.csv",
-        "elevation_metrics.csv",
+        os.path.join(output_dir, "Global_elevation_analysis", "elevation_metrics.csv"),
+        # "output/elevation_analysis/elevation_metrics.csv",
     ]
     for path in paths_to_try:
         if os.path.exists(path):
@@ -36,9 +35,7 @@ def load_elevation_metrics(output_dir):
                 return df
             except Exception as e:
                 std_print("WARN", "sa", f"Failed to load {path}", str(e)[:40])
-    std_print(
-        "WARN", "sa", "Elevation metrics not found", "TSI analysis will be skipped"
-    )
+    std_print("WARN", "sa", "Elevation metrics not found", "TSI analysis will be skipped")
     return None
 
 
@@ -60,11 +57,6 @@ def analyze_asm_fsi_relationship(coupling_metrics_dir, asm_df, output_dir):
                 os.path.join(
                     output_dir, "coupling_metrics", "coupling_metrics_FSI.csv"
                 ),
-                "coupling_metrics_FSI.csv",
-                "output_2022/coupling_metrics/coupling_metrics_FSI.csv",
-                "output_2023/coupling_metrics/coupling_metrics_FSI.csv",
-                "output_2024/coupling_metrics/coupling_metrics_FSI.csv",
-                "output_2025/coupling_metrics/coupling_metrics_FSI.csv",
             ]
             for alt_path in alt_paths:
                 if os.path.exists(alt_path):
@@ -84,18 +76,30 @@ def analyze_asm_fsi_relationship(coupling_metrics_dir, asm_df, output_dir):
             asm_df = asm_df.copy()
             asm_df["track_id"] = range(len(asm_df))
             asm_df["track_id"] = asm_df["track_id"].astype(int)
-        # Rename ASM column if needed
+
         if "ASM" not in asm_df.columns:
-            if "SWVL1_pre24h_mean" in asm_df.columns:
-                asm_df["ASM"] = asm_df["SWVL1_pre24h_mean"]
-            elif "antecedent_sm" in asm_df.columns:
-                asm_df["ASM"] = asm_df["antecedent_sm"]
+            asm_candidates = [
+                "asmi_24h",          # primary: from antecedent_analysis.py
+                "asmi_7d",           # secondary: 7-day window
+                "SWVL1_pre24h_mean", # legacy name
+                "antecedent_sm",     # alternative name
+            ]
+            for cand in asm_candidates:
+                if cand in asm_df.columns:
+                    asm_df = asm_df.copy()
+                    asm_df["ASM"] = pd.to_numeric(asm_df[cand], errors="coerce")
+                    std_print("INFO", "sa", f"ASM column mapped from '{cand}'")
+                    break
             else:
-                # Use 2nd column
-                try:
-                    asm_df["ASM"] = asm_df.iloc[:, 1]
-                except Exception as e:
-                    std_print("ERROR", "sa", "Could not extract ASM column. Check ASM file", str(e))
+                # Fallback: first numeric column that isn't track_id
+                numeric = asm_df.select_dtypes(include=[np.number]).columns.tolist()
+                numeric = [c for c in numeric if c != "track_id"]
+                if numeric:
+                    asm_df = asm_df.copy()
+                    asm_df["ASM"] = asm_df[numeric[0]]
+                    std_print("WARN", "sa", f"ASM fallback to numeric column '{numeric[0]}'")
+                else:
+                    std_print("ERROR", "sa", "Could not find any numeric ASM column", str(list(asm_df.columns)))
                     return {}
 
         # Check for FSI column in fsi_df
