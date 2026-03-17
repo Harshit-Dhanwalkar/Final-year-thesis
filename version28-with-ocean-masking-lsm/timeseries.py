@@ -33,7 +33,7 @@ def extract_heat_flux_timeseries(ds, track_df, track_id, buffer_km=100):
     ds, time_coord = get_time_coord(ds)
     ds_times = pd.to_datetime(ds.time.values)
 
-    # DEBUG: Check latitude order
+    # Check latitude order
     lat_values = ds.latitude.values
     lat_descending = lat_values[0] > lat_values[-1] if len(lat_values) > 1 else True
     # std_print("DEBUG", "ts", f"Latitude order : {'descending' if lat_descending else 'ascending'}")
@@ -48,12 +48,8 @@ def extract_heat_flux_timeseries(ds, track_df, track_id, buffer_km=100):
     has_accumulated = "slhf" in ds.data_vars and "sshf" in ds.data_vars
     has_average = "avg_slhtf" in ds.data_vars and "avg_ishf" in ds.data_vars
     if not (has_accumulated or has_average):
-        std_print(
-            "ERROR",
-            "ts",
-            f"Track {track_id}: No valid heat flux variables found. Check dataset variables",
-            list(ds.data_vars),
-        )
+        std_print("ERROR", "ts", "No valid heat flux variables found")
+        std_print(None, None, "Check variables",list(ds.data_vars))
         return None
     # flux_type = "average" if has_average else "accumulated"
     # std_print("DEBUG", "ts", f"Using flux type : {flux_type}")
@@ -147,9 +143,9 @@ def extract_heat_flux_timeseries(ds, track_df, track_id, buffer_km=100):
                 sub_prev = ds_prev.sel(latitude=lat_slice, longitude=lon_slice)
             except Exception as e:
                 std_print(
-                    "WARN",
+                    "ERROR",
                     "ts",
-                    f"Track {track_id}: Selection failed for {t_now}:,  {str(e)}. Using alternative approach.",
+                    f"Selection failed for {t_now}:,  {str(e)}. Using alternative approach.",
                 )
                 # Alternative approach using where()
                 lat_mask = (ds_now.latitude >= lat_min) & (ds_now.latitude <= lat_max)
@@ -158,11 +154,7 @@ def extract_heat_flux_timeseries(ds, track_df, track_id, buffer_km=100):
                     sub_now = ds_now.where(lat_mask & lon_mask, drop=True)
                     sub_prev = ds_prev.where(lat_mask & lon_mask, drop=True)
                 else:
-                    std_print(
-                        "WARN",
-                        "ts",
-                        f"Track {track_id}: No data within buffer at {t_now}. Using nearest point.",
-                    )
+                    std_print("WARN", "ts", f"No data within buffer at {t_now}. Using nearest point")
                     sub_now = ds_now.sel(
                         latitude=lat_c, longitude=lon_c, method="nearest"
                     ).expand_dims(["latitude", "longitude"])
@@ -175,11 +167,7 @@ def extract_heat_flux_timeseries(ds, track_df, track_id, buffer_km=100):
                 sub_now.sizes.get("latitude", 0) == 0
                 or sub_now.sizes.get("longitude", 0) == 0
             ):
-                std_print(
-                    "WARN",
-                    "ts",
-                    f"Track {track_id}: Empty subset at {t_now}. Using nearest point.",
-                )
+                std_print("WARN", "ts", f"Empty subset at {t_now}. Using nearest point")
                 sub_now = ds_now.sel(
                     latitude=lat_c, longitude=lon_c, method="nearest"
                 ).expand_dims(["latitude", "longitude"])
@@ -231,11 +219,11 @@ def extract_heat_flux_timeseries(ds, track_df, track_id, buffer_km=100):
             )
             # std_print('DEBUG', "ts", f'Successfully extracted fluxes at {t_now}: LHF={slhf_w:.1f}, SHF={sshf_w:.1f}')
         except Exception as e:
-            std_print("ERROR", "ts", f"Error processing time step at {t_now}", str(e))
+            std_print("ERROR", "ts", f"Processing time step at {t_now}", str(e))
             traceback.print_exc()
             continue
     if not flux_records:
-        std_print("WARN", "ts", f"Track {track_id}: No heat-flux data extracted")
+        std_print("WARN", "ts", "No heat-flux data extracted")
         return None
     # std_print("DEBUG", "ts", "Extracted heat flux records", len(flux_records))
     return pd.DataFrame(flux_records)
@@ -604,10 +592,10 @@ def extract_theta_e_timeseries(ds, track_df, track_id, buffer_km=100):
     has_sp  = "sp"  in ds.data_vars
     has_msl = "msl" in ds.data_vars
     if "t2m" not in ds.data_vars or "d2m" not in ds.data_vars:
-        std_print("WARN", "ts", f"Track {track_id}: t2m or d2m not in dataset - skipping theta_e")
+        std_print("WARN", "ts", "t2m or d2m not in dataset - skipping theta_e")
         return None
     if not has_sp and not has_msl:
-        std_print("WARN", "ts", f"Track {track_id}: sp and msl both absent - skipping theta_e")
+        std_print("WARN", "ts", "sp and msl both absent - skipping theta_e")
         return None
     pressure_var = "sp" if has_sp else "msl"
 
@@ -701,7 +689,7 @@ def theta_e_timeseries(theta_df, track_id, output_dir):
     try:
         track_id = int(track_id)
         if theta_df is None or len(theta_df) < 3:
-            std_print("WARN", "ts", f"Track {track_id}: insufficient theta_e data - skipping plot")
+            std_print("WARN", "ts", "Insufficient theta_e data")
             return False
 
         required = {"time", "theta_e_K", "t2m_K", "d2m_K", "is_land"}

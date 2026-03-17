@@ -326,12 +326,12 @@ def plot_tracks_elevation(track_df, track_id, vrt_path, output_dir):
             plt.tight_layout()
 
             # Save
-            output_filename = f"track_{track_id}_elevation_mosaic.png"
-            output_path = os.path.join(plot_dir, output_filename)
-            plt.savefig(output_path, dpi=300, bbox_inches="tight")
+            elevation_mosaic = f"track_{track_id}_elevation_mosaic.png"
+            elevation_mosaic_path = os.path.join(plot_dir, elevation_mosaic)
+            plt.savefig(elevation_mosaic_path, dpi=300, bbox_inches="tight")
             plt.close(fig)
-            std_print("SAVED", "ev", "Elevation visualization", output_path)
-            return output_path
+            std_print("SAVED", "ev", "Elevation visualization", elevation_mosaic_path)
+            return elevation_mosaic_path
     except Exception as e:
         std_print("ERROR", "ev", "Elevation visualization failed", str(e))
         traceback.print_exc()
@@ -339,16 +339,16 @@ def plot_tracks_elevation(track_df, track_id, vrt_path, output_dir):
 
 
 def plot_all_tracks_elevation(track_df, vrt_path, output_dir, year):
-    """Plot all MD tracks on a single elevation mosaic"""
+    """Plot all MD tracks on a elevation mosaic"""
     if track_df is None or track_df.empty:
         std_print("WARN", "ev", "No tracks to visualize")
         return None
 
-    std_print("INFO", "ev", "Total tracks", len(track_df["track_id"].unique()))
-    std_print("INFO", "ev", "Total points", len(track_df))
+    # std_print("DEBUG", "ev", "Total tracks", len(track_df["track_id"].unique()))
+    # std_print("DEBUG", "ev", "Total points", len(track_df))
 
-    plot_dir = os.path.join(output_dir, "elevation_analysis")
-    os.makedirs(plot_dir, exist_ok=True)
+    elevation_dir = os.path.join(output_dir, "Global_elevation_analysis")
+    os.makedirs(elevation_dir, exist_ok=True)
     try:
         with rasterio.open(vrt_path) as src:
             std_print(
@@ -449,101 +449,21 @@ def plot_all_tracks_elevation(track_df, vrt_path, output_dir, year):
             plt.tight_layout()
 
             # Save
-            output_filename = f"All_tracks_elevation_mosaic_{year}.png"
-            output_path = os.path.join(plot_dir, output_filename)
-            plt.savefig(output_path, dpi=300, bbox_inches="tight")
+            elevation_mosaic_plot = f"All_tracks_elevation_mosaic_{year}.png"
+            elevation_mosaic_plot_path = os.path.join(
+                elevation_dir, elevation_mosaic_plot
+            )
+            plt.savefig(elevation_mosaic_plot_path, dpi=300, bbox_inches="tight")
             plt.close(fig)
-            std_print("SAVED", "ev", "All tracks elevation map", output_path)
-            return output_path
+            std_print(
+                "SAVED",
+                "ev",
+                "All tracks elevation mosaic map",
+                elevation_mosaic_plot_path,
+            )
+            # return output_path
+            return True
     except Exception as e:
         std_print("ERROR", "ev", "Elevation visualization failed", str(e))
         traceback.print_exc()
         return None
-
-
-# def plot_tracks_elevation_mosaic(csv_path, vrt_path, output_path):
-#     """Use plot_tracks_elevation() instead for integrated usage"""
-#     try:
-#         track_df = pd.read_csv(csv_path)
-#         track_df["time"] = pd.to_datetime(track_df["time"])
-#         track_df["month"] = track_df["time"].dt.strftime("%B")
-#         std_print(
-#             "INFO",
-#             "ev",
-#             f"Loaded{len(track_df)}track points",
-#             f"{track_df['month'].nunique()}months",
-#         )
-#         with rasterio.open(vrt_path) as src:
-#             scale_factor = 0.05
-#             out_shape_width = int(src.width * scale_factor)
-#             out_shape_height = int(src.height * scale_factor)
-#             out_shape = [out_shape_height, out_shape_width]
-#             std_print(
-#                 "INFO",
-#                 "ev",
-#                 "Reading elevation",
-#                 f"{out_shape_width}x{out_shape_height}",
-#             )
-#             elev_data = src.read(
-#                 1, out_shape=out_shape, resampling=rasterio.enums.Resampling.bilinear
-#             ).astype(float)
-#             elev_data[elev_data < -50] = 0
-#
-#             # Figure
-#             fig, ax = plt.subplots(figsize=(13, 10), dpi=100)
-#             # Calculate colormap limits (clip at 95th percentile to avoid washout)
-#             vmin, vmax = np.nanpercentile(elev_data, [1, 95])
-#             vmin = max(vmin, 0.1)
-#             im = ax.imshow(
-#                 elev_data + 0.1,
-#                 cmap="terrain",
-#                 norm=LogNorm(vmin=vmin, vmax=vmax),
-#                 extent=[
-#                     src.bounds.left,
-#                     src.bounds.right,
-#                     src.bounds.bottom,
-#                     src.bounds.top,
-#                 ],
-#                 origin="upper",
-#                 zorder=1,
-#             )
-#             for month_name, color in month_colors.items():
-#                 month_subset = track_df[track_df["month"] == month_name]
-#                 if not month_subset.empty:
-#                     for tid in month_subset["track_id"].unique():
-#                         track = month_subset[month_subset["track_id"] == tid]
-#                         label = (
-#                             f"MD Track ({month_name})"
-#                             if tid == month_subset["track_id"].iloc[0]
-#                             else ""
-#                         )
-#                         ax.plot(
-#                             track["longitude"],
-#                             track["latitude"],
-#                             color=color,
-#                             linewidth=1.0,
-#                             alpha=0.9,
-#                             label=label if label else None,
-#                             zorder=10,
-#                         )
-#             cb = plt.colorbar(im, fraction=0.03, pad=0.04)
-#             cb.set_label("Elevation (m)", fontweight="bold")
-#             ax.set_xlabel("Longitude (°E)", fontsize=12, fontweight="bold")
-#             ax.set_ylabel("Latitude (°N)", fontsize=12, fontweight="bold")
-#             ax.grid(True, alpha=0.3, linestyle="--", zorder=1)
-#
-#             # Legend
-#             legend_handles, labels = ax.get_legend_handles_labels()
-#             if legend_handles:
-#                 ax.legend(handles=legend_handles, loc="lower left", **legend_style())
-#
-#             ax.set_title("SRTM Elevation", fontsize=18, fontweight="bold")
-#
-#             plt.tight_layout()
-#             plt.savefig(output_path, dpi=300, bbox_inches="tight")
-#             plt.close(fig)
-#             std_print("SAVED", "ev", "Elevation mosaic plot", output_path)
-#             return output_path
-#     except Exception as e:
-#         std_print("ERROR", "ev", "Failed `plot_tracks_elevation_mosaic`", str(e))
-#         return None

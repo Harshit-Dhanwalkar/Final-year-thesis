@@ -107,236 +107,240 @@ def compute_asmi_multi_lag(ds, track_df, landfall_time, buffer_km=100):
     return results
 
 
-# Single-track spatial map (antecedent snapshot)
-def plot_antecedent_spatial_map(ds, track_df, track_id, hours_before, output_dir):
-    """
-    Spatial map of SWVL1 at `hours_before` before landfall (or system start).
-    Shows future MD track overlaid so the corridor-based logic is visible.
-    """
-    track_id = int(track_id)
-    track = (
-        track_df[track_df["track_id"] == track_id].sort_values("time")
-        if "track_id" in track_df.columns
-        else track_df.sort_values("time")
-    )
-    if track.empty:
-        std_print("ERROR", "as", f"Track {track_id} not found")
-        return False
-
-    # Reference time: landfall if available, else formation
-    if "is_land" in track.columns:
-        land_rows = track[track["is_land"] == True]
-        ref_time = (
-            pd.to_datetime(land_rows.iloc[0]["time"])
-            if not land_rows.empty
-            else pd.to_datetime(track.iloc[0]["time"])
-        )
-    else:
-        ref_time = pd.to_datetime(track.iloc[0]["time"])
-
-    snap_time = ref_time - pd.Timedelta(hours=hours_before)
-
-    # Map extent
-    lat_center = track["latitude"].mean()
-    lon_center = track["longitude"].mean()
-    ext_buf = max(5.0, (track["latitude"].max() - track["latitude"].min()) * 1.5)
-    min_lat = max(CLIPPED_MIN_LAT, lat_center - ext_buf / 2)
-    max_lat = min(CLIPPED_MAX_LAT, lat_center + ext_buf / 2)
-    min_lon = max(CLIPPED_MIN_LON, lon_center - ext_buf / 2)
-    max_lon = min(CLIPPED_MAX_LON, lon_center + ext_buf / 2)
-
-    ds, time_coord = get_time_coord(ds)
-    try:
-        ds_t = ds.sel({time_coord: snap_time}, method="nearest")
-        sm_data = ds_t["swvl1"].sel(
-            latitude=slice(max_lat, min_lat),
-            longitude=slice(min_lon, max_lon),
-        )
-        if sm_data.size == 0:
-            std_print("WARN", "as", f"Track {track_id}", "No SM data at snapshot time")
-            return False
-    except Exception as e:
-        std_print(
-            "ERROR", "as", f"Track {track_id}: snapshot extraction failed", str(e)
-        )
-        return False
-
-    # Figure
-    fig = plt.figure(figsize=(12, 9))
-    ax = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
-
-    ax.coastlines(resolution="50m", linewidth=1.0)
-    ax.add_feature(cfeature.LAND, facecolor="lightgray", alpha=0.3)
-    ax.add_feature(cfeature.BORDERS, linestyle=":", alpha=0.5, zorder=6)
-    ax.add_feature(cfeature.STATES, linewidth=0.5, linestyle="--")
-    gl = ax.gridlines(
-        crs=ccrs.PlateCarree(),
-        draw_labels=True,
-        linewidth=0.5,
-        color="gray",
-        alpha=0.5,
-        linestyle="--",
-    )
-    gl.top_labels = False
-    gl.right_labels = False
-
-    im = ax.contourf(
-        sm_data.longitude,
-        sm_data.latitude,
-        sm_data.values,
-        levels=21,
-        cmap="YlGnBu",
-        transform=ccrs.PlateCarree(),
-        extend="both",
-    )
-    ax.contour(
-        sm_data.longitude,
-        sm_data.latitude,
-        sm_data.values,
-        levels=10,
-        colors="black",
-        linewidths=0.5,
-        alpha=0.4,
-        transform=ccrs.PlateCarree(),
-    )
-
-    # Future track
-    ax.plot(
-        track["longitude"],
-        track["latitude"],
-        "r-",
-        linewidth=2.5,
-        transform=ccrs.PlateCarree(),
-        label="Future MD track",
-        zorder=5,
-    )
-    ax.scatter(
-        track.iloc[0]["longitude"],
-        track.iloc[0]["latitude"],
-        s=250,
-        c="gold",
-        marker="s",
-        edgecolors="black",
-        linewidth=1.5,
-        transform=ccrs.PlateCarree(),
-        label="Formation point",
-        zorder=6,
-    )
-
-    ax.set_extent([min_lon, max_lon, min_lat, max_lat], crs=ccrs.PlateCarree())
-    cbar = plt.colorbar(im, ax=ax, pad=0.02)
-    cbar.set_label("Volumatric Soil Water Layer (0-7cm) (m³/m³)", fontsize=10)
-
-    legend_handles, _ = ax.get_legend_handles_labels()
-    if legend_handles:
-        ax.legend(handles=legend_handles, loc="upper left", **legend_style())
-
-    ax.set_title(
-        f"Track {track_id}: Antecedent Soil Moisture  ({hours_before}h before landfall/formation)\n"
-        f"Snapshot: {snap_time.strftime('%d %b %Y %H:%M UTC')}",
-        fontsize=12,
-        fontweight="bold",
-    )
-    plt.tight_layout()
-    os.makedirs(output_dir, exist_ok=True)
-    outpath = os.path.join(
-        output_dir, f"track_{track_id}_antecedent_spatial_{hours_before}h.png"
-    )
-    plt.savefig(outpath, dpi=300, bbox_inches="tight")
-    plt.close(fig)
-    std_print("SAVED", "as", "Antecedent spatial map", outpath)
-    return True
-
-
-# Antecedent trend (48 h before formation/landfall)
-def analyze_antecedent_trend(ds, track_df, track_id, output_dir):
-    """SM time-series in the 48 h before landfall/formation over the future corridor."""
-    track_id = int(track_id)
-    track = (
-        track_df[track_df["track_id"] == track_id].sort_values("time")
-        if "track_id" in track_df.columns
-        else track_df.sort_values("time")
-    )
-    if track.empty:
-        return None
-
-    if "is_land" in track.columns:
-        land_rows = track[track["is_land"] == True]
-        ref_time = (
-            pd.to_datetime(land_rows.iloc[0]["time"])
-            if not land_rows.empty
-            else pd.to_datetime(track.iloc[0]["time"])
-        )
-    else:
-        ref_time = pd.to_datetime(track.iloc[0]["time"])
-
-    lat_min, lat_max, lon_min, lon_max = future_track_bbox(track, buffer_km=100)
-
-    # Sample every 6 h over [-48h, 0h]
-    hours_before_list = list(range(48, -1, -6))
-    sm_vals = []
-    times = []
-    for h in hours_before_list:
-        t = ref_time - pd.Timedelta(hours=h)
-        sm = sm_at_time(ds, t, lat_min, lat_max, lon_min, lon_max)
-        if not np.isnan(sm):
-            sm_vals.append(sm)
-            times.append(h)
-
-    if len(sm_vals) < 3:
-        std_print("WARN", "as", f"Track {track_id}: insufficient antecedent data")
-        return None
-
-    # Figure
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.plot(times, sm_vals, "o-", linewidth=2.5, markersize=6, color="darkgreen")
-    ax.fill_between(times, sm_vals, alpha=0.2, color="lightgreen")
-
-    # Trend line
-    z = np.polyfit(times, sm_vals, 1)
-    p_fit = np.poly1d(z)
-    ax.plot(
-        times,
-        p_fit(times),
-        "r--",
-        linewidth=1.5,
-        alpha=0.7,
-        label=f"Trend: {z[0]:.5f} m³/m³ per hour",
-    )
-
-    trend_label = "Decreasing toward landfall" if z[0] > 0.001 else \
-                  "Increasing toward landfall" if z[0] < -0.001 else "Stable"
-    ax.text(
-        1.02,
-        0.98,
-        f"{trend_label} SM\nbefore landfall",
-        transform=ax.transAxes,
-        fontsize=11,
-        va="top",
-        bbox=common_bbox(),
-    )
-
-    ax.set_xlabel("Hours before landfall/formation", fontsize=12, fontweight="bold")
-    ax.set_ylabel("SWVL1 (m³/m³)", fontsize=12, fontweight="bold")
-    ax.set_title(
-        f"Track {track_id}: Antecedent SM Trend over Future Inland Corridor\n(48 h window)",
-        fontsize=12,
-        fontweight="bold",
-        pad=15,
-    )
-    ax.grid(True, alpha=0.3, linestyle="--")
-    ax.invert_xaxis()
-    legend_handles, _ = ax.get_legend_handles_labels()
-    if legend_handles:
-        ax.legend(handles=legend_handles, **legend_style())
-    plt.tight_layout()
-
-    os.makedirs(output_dir, exist_ok=True)
-    outpath = os.path.join(output_dir, f"track_{track_id}_antecedent_trend.png")
-    plt.savefig(outpath, dpi=300, bbox_inches="tight")
-    plt.close(fig)
-    std_print("SAVED", "as", "Antecedent trend plot", outpath)
-    return sm_vals
+# # Single-track spatial map (antecedent snapshot)
+# FIX: tracks are out of plot
+# def plot_antecedent_spatial_map(ds, track_df, track_id, hours_before, output_dir):
+#     """
+#     Spatial map of SWVL1 at `hours_before` before landfall (or system start).
+#     Shows future MD track overlaid so the corridor-based logic is visible.
+#     """
+#     track_id = int(track_id)
+#     track = (
+#         track_df[track_df["track_id"] == track_id].sort_values("time")
+#         if "track_id" in track_df.columns
+#         else track_df.sort_values("time")
+#     )
+#     if track.empty:
+#         std_print("ERROR", "as", f"Track {track_id} not found")
+#         return False
+#
+#     # Reference time: landfall if available, else formation
+#     if "is_land" in track.columns:
+#         land_rows = track[track["is_land"] == True]
+#         ref_time = (
+#             pd.to_datetime(land_rows.iloc[0]["time"])
+#             if not land_rows.empty
+#             else pd.to_datetime(track.iloc[0]["time"])
+#         )
+#     else:
+#         ref_time = pd.to_datetime(track.iloc[0]["time"])
+#
+#     snap_time = ref_time - pd.Timedelta(hours=hours_before)
+#
+#     # Map extent
+#     lat_center = track["latitude"].mean()
+#     lon_center = track["longitude"].mean()
+#     ext_buf = max(5.0, (track["latitude"].max() - track["latitude"].min()) * 1.5)
+#     min_lat = max(CLIPPED_MIN_LAT, lat_center - ext_buf / 2)
+#     max_lat = min(CLIPPED_MAX_LAT, lat_center + ext_buf / 2)
+#     min_lon = max(CLIPPED_MIN_LON, lon_center - ext_buf / 2)
+#     max_lon = min(CLIPPED_MAX_LON, lon_center + ext_buf / 2)
+#
+#     ds, time_coord = get_time_coord(ds)
+#     try:
+#         ds_t = ds.sel({time_coord: snap_time}, method="nearest")
+#         sm_data = ds_t["swvl1"].sel(
+#             latitude=slice(max_lat, min_lat),
+#             longitude=slice(min_lon, max_lon),
+#         )
+#         if sm_data.size == 0:
+#             std_print("WARN", "as", f"Track {track_id}", "No SM data at snapshot time")
+#             return False
+#     except Exception as e:
+#         std_print(
+#             "ERROR", "as", f"Track {track_id}: snapshot extraction failed", str(e)
+#         )
+#         return False
+#
+#     # Figure
+#     fig = plt.figure(figsize=(12, 9))
+#     ax = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
+#
+#     ax.coastlines(resolution="50m", linewidth=1.0)
+#     ax.add_feature(cfeature.LAND, facecolor="lightgray", alpha=0.3)
+#     ax.add_feature(cfeature.BORDERS, linestyle=":", alpha=0.5, zorder=6)
+#     ax.add_feature(cfeature.STATES, linewidth=0.5, linestyle="--")
+#     gl = ax.gridlines(
+#         crs=ccrs.PlateCarree(),
+#         draw_labels=True,
+#         linewidth=0.5,
+#         color="gray",
+#         alpha=0.5,
+#         linestyle="--",
+#     )
+#     gl.top_labels = False
+#     gl.right_labels = False
+#
+#     im = ax.contourf(
+#         sm_data.longitude,
+#         sm_data.latitude,
+#         sm_data.values,
+#         levels=21,
+#         cmap="YlGnBu",
+#         transform=ccrs.PlateCarree(),
+#         extend="both",
+#     )
+#     ax.contour(
+#         sm_data.longitude,
+#         sm_data.latitude,
+#         sm_data.values,
+#         levels=10,
+#         colors="black",
+#         linewidths=0.5,
+#         alpha=0.4,
+#         transform=ccrs.PlateCarree(),
+#     )
+#
+#     # Future track
+#     ax.plot(
+#         track["longitude"],
+#         track["latitude"],
+#         "r-",
+#         linewidth=2.5,
+#         transform=ccrs.PlateCarree(),
+#         label="Future MD track",
+#         zorder=5,
+#     )
+#     ax.scatter(
+#         track.iloc[0]["longitude"],
+#         track.iloc[0]["latitude"],
+#         s=250,
+#         c="gold",
+#         marker="s",
+#         edgecolors="black",
+#         linewidth=1.5,
+#         transform=ccrs.PlateCarree(),
+#         label="Formation point",
+#         zorder=6,
+#     )
+#
+#     ax.set_extent([min_lon, max_lon, min_lat, max_lat], crs=ccrs.PlateCarree())
+#     cbar = plt.colorbar(im, ax=ax, pad=0.02)
+#     cbar.set_label("Volumatric Soil Water Layer (0-7cm) (m³/m³)", fontsize=10)
+#
+#     legend_handles, _ = ax.get_legend_handles_labels()
+#     if legend_handles:
+#         ax.legend(handles=legend_handles, loc="upper left", **legend_style())
+#
+#     ax.set_title(
+#         f"Track {track_id}: Antecedent Soil Moisture  ({hours_before}h before landfall/formation)\n"
+#         f"Snapshot: {snap_time.strftime('%d %b %Y %H:%M UTC')}",
+#         fontsize=12,
+#         fontweight="bold",
+#     )
+#     plt.tight_layout()
+#     os.makedirs(output_dir, exist_ok=True)
+#     outpath = os.path.join(
+#         output_dir, f"track_{track_id}_antecedent_spatial_{hours_before}h.png"
+#     )
+#     plt.savefig(outpath, dpi=300, bbox_inches="tight")
+#     plt.close(fig)
+#     std_print("SAVED", "as", "Antecedent spatial map", outpath)
+#     return True
+#
+#
+# # Antecedent trend (48 h before formation/landfall)
+# def analyze_antecedent_trend(ds, track_df, track_id, output_dir):
+#     """SM time-series in the 48 h before landfall/formation over the future corridor."""
+#     track_id = int(track_id)
+#     track = (
+#         track_df[track_df["track_id"] == track_id].sort_values("time")
+#         if "track_id" in track_df.columns
+#         else track_df.sort_values("time")
+#     )
+#     if track.empty:
+#         return None
+#
+#     if "is_land" in track.columns:
+#         land_rows = track[track["is_land"] == True]
+#         ref_time = (
+#             pd.to_datetime(land_rows.iloc[0]["time"])
+#             if not land_rows.empty
+#             else pd.to_datetime(track.iloc[0]["time"])
+#         )
+#     else:
+#         ref_time = pd.to_datetime(track.iloc[0]["time"])
+#
+#     lat_min, lat_max, lon_min, lon_max = future_track_bbox(track, buffer_km=100)
+#
+#     # Sample every 6 h over [-48h, 0h]
+#     hours_before_list = list(range(48, -1, -6))
+#     sm_vals = []
+#     times = []
+#     for h in hours_before_list:
+#         t = ref_time - pd.Timedelta(hours=h)
+#         sm = sm_at_time(ds, t, lat_min, lat_max, lon_min, lon_max)
+#         if not np.isnan(sm):
+#             sm_vals.append(sm)
+#             times.append(h)
+#
+#     if len(sm_vals) < 3:
+#         std_print("WARN", "as", f"Track {track_id}: insufficient antecedent data")
+#         return None
+#
+#     # Figure
+#     fig, ax = plt.subplots(figsize=(10, 6))
+#     ax.plot(times, sm_vals, "o-", linewidth=2.5, markersize=6, color="darkgreen")
+#     ax.fill_between(times, sm_vals, alpha=0.2, color="lightgreen")
+#
+#     # Trend line
+#     z = np.polyfit(times, sm_vals, 1)
+#     p_fit = np.poly1d(z)
+#     ax.plot(
+#         times,
+#         p_fit(times),
+#         "r--",
+#         linewidth=1.5,
+#         alpha=0.7,
+#         label=f"Trend: {z[0]:.5f} m³/m³ per hour",
+#     )
+#
+#     trend_label = (
+#         "Decreasing toward landfall"
+#         if z[0] > 0.001
+#         else "Increasing toward landfall" if z[0] < -0.001 else "Stable"
+#     )
+#     ax.text(
+#         1.02,
+#         0.98,
+#         f"{trend_label} SM\nbefore landfall",
+#         transform=ax.transAxes,
+#         fontsize=11,
+#         va="top",
+#         bbox=common_bbox(),
+#     )
+#
+#     ax.set_xlabel("Hours before landfall/formation", fontsize=12, fontweight="bold")
+#     ax.set_ylabel("SWVL1 (m³/m³)", fontsize=12, fontweight="bold")
+#     ax.set_title(
+#         f"Track {track_id}: Antecedent SM Trend over Future Inland Corridor\n(48 h window)",
+#         fontsize=12,
+#         fontweight="bold",
+#         pad=15,
+#     )
+#     ax.grid(True, alpha=0.3, linestyle="--")
+#     ax.invert_xaxis()
+#     legend_handles, _ = ax.get_legend_handles_labels()
+#     if legend_handles:
+#         ax.legend(handles=legend_handles, **legend_style())
+#     plt.tight_layout()
+#
+#     os.makedirs(output_dir, exist_ok=True)
+#     outpath = os.path.join(output_dir, f"track_{track_id}_antecedent_trend.png")
+#     plt.savefig(outpath, dpi=300, bbox_inches="tight")
+#     plt.close(fig)
+#     std_print("SAVED", "as", "Antecedent trend plot", outpath)
+#     return sm_vals
 
 
 # Multi-lag ASMI vs penetration scatter
@@ -541,17 +545,49 @@ def plot_antecedent_vs_duration(results_df, output_dir):
     std_print("SAVED", "as", "Antecedent SM vs duration", outpath)
 
 
-# Wet / Dry classification and comparative analysis
-def classify_antecedent_conditions(asmi_series):
-    """
-    Classify tracks as Wet / Dry based on median ASMI split.
-    Returns a boolean Series: True = Wet.
-    """
-    valid = asmi_series.dropna()
-    if len(valid) < 4:
-        return (asmi_series >= asmi_series.median()).astype(bool)
-    median_val = valid.median()
-    return asmi_series >= median_val
+def analyze_all_tracks_antecedent(ds, full_track_df, output_dir):
+    unique_tracks = (
+        sorted(full_track_df["track_id"].unique())
+        if "track_id" in full_track_df.columns
+        else [0]
+    )
+
+    all_results = []
+    for track_id in unique_tracks:
+        try:
+            track_sub = (
+                full_track_df[full_track_df["track_id"] == track_id].copy()
+                if "track_id" in full_track_df.columns
+                else full_track_df.copy()
+            )
+            result = compute_antecedent_for_track(ds, track_sub, track_id, output_dir)
+            if result is not None:
+                all_results.append(result)
+        except Exception as e:
+            std_print("ERROR", "as", f"Track {track_id}: analysis failed", str(e))
+            traceback.print_exc()
+
+    if not all_results:
+        std_print("WARN", "as", "No antecedent results to export")
+        return pd.DataFrame()
+
+    results_df = pd.DataFrame(all_results)
+
+    # Export CSV
+    os.makedirs(output_dir, exist_ok=True)
+    csv_path = os.path.join(output_dir, "antecedent_analysis.csv")
+    results_df.to_csv(csv_path, index=False)
+    std_print("EXPORT", "as", "Antecedent analysis results", csv_path)
+
+    # Summary plots (need ≥3 tracks)
+    if len(results_df) >= 3:
+        plot_asmi_multi_lag_summary(results_df, output_dir)
+        plot_antecedent_vs_duration(results_df, output_dir)
+
+    if len(results_df) >= 4:  # need ≥4 for wet/dry split
+        compare_wet_dry_tracks(results_df, output_dir)
+        create_antecedent_summary_report(results_df, output_dir)
+    return results_df
 
 
 def compare_wet_dry_tracks(results_df, output_dir):
@@ -668,126 +704,14 @@ def compare_wet_dry_tracks(results_df, output_dir):
     return comparison
 
 
-# Main per-track
-def compute_antecedent_for_track(ds, track_df, track_id, output_dir):
-    """
-    Compute all antecedent SM metrics for a single track.
-
-    Returns a dict with:
-      - asmi_{lag} for each lag window
-      - origin_type, duration_hours, has_landfall
-      - landfall_time (pd.Timestamp or None)
-    """
-    track_id = int(track_id)
-    track = (
-        track_df[track_df["track_id"] == track_id].sort_values("time")
-        if "track_id" in track_df.columns
-        else track_df.sort_values("time")
-    )
-
-    if track.empty:
-        std_print("ERROR", "as", f"Track {track_id}: not found")
-        return None
-
-    times = pd.to_datetime(track["time"])
-    duration_h = (times.max() - times.min()).total_seconds() / 3600
-
-    # Landfall
-    landfall_time = None
-    has_landfall = False
-    if "is_land" in track.columns:
-        land_rows = track[track["is_land"] == True]
-        if not land_rows.empty:
-            landfall_time = pd.to_datetime(land_rows.iloc[0]["time"])
-            has_landfall = True
-
-    ref_time = landfall_time if landfall_time is not None else times.min()
-
-    # Multi-lag ASMI
-    asmi_dict = compute_asmi_multi_lag(ds, track, ref_time, buffer_km=100)
-
-    result = {
-        "track_id": track_id,
-        "origin_type": find_origin_type(track),
-        "has_landfall": has_landfall,
-        "landfall_time": landfall_time,
-        "duration_hours": duration_h,
-        **asmi_dict,
-    }
-
-    # Antecedent trend plot
-    try:
-        analyze_antecedent_trend(ds, track_df, track_id, output_dir=output_dir)
-    except Exception as e:
-        std_print("WARN", "as", "Antecedent Trend plot failed", str(e))
-
-    # Spatial map at 24 h before
-    try:
-        plot_antecedent_spatial_map(ds, track_df, track_id, hours_before=24, output_dir=output_dir)
-    except Exception as e:
-        std_print("WARN", "as", "spatial map failed", str(e))
-
-    std_print(
-        "INFO",
-        "as",
-        f"Track {track_id} ASMI",
-        f"24h={asmi_dict.get('asmi_24h', np.nan):.4f} "
-        f"7d={asmi_dict.get('asmi_7d', np.nan):.4f}",
-    )
-    return result
-
-
-def analyze_all_tracks_antecedent(ds, full_track_df, output_dir):
-    unique_tracks = (
-        sorted(full_track_df["track_id"].unique())
-        if "track_id" in full_track_df.columns
-        else [0]
-    )
-
-    all_results = []
-    for track_id in unique_tracks:
-        try:
-            track_sub = (
-                full_track_df[full_track_df["track_id"] == track_id].copy()
-                if "track_id" in full_track_df.columns
-                else full_track_df.copy()
-            )
-            result = compute_antecedent_for_track(ds, track_sub, track_id, output_dir)
-            if result is not None:
-                all_results.append(result)
-        except Exception as e:
-            std_print("ERROR", "as", f"Track {track_id}: analysis failed", str(e))
-            traceback.print_exc()
-
-    if not all_results:
-        std_print("WARN", "as", "No antecedent results to export")
-        return pd.DataFrame()
-
-    results_df = pd.DataFrame(all_results)
-
-    # Export CSV
-    os.makedirs(output_dir, exist_ok=True)
-    csv_path = os.path.join(output_dir, "antecedent_analysis.csv")
-    results_df.to_csv(csv_path, index=False)
-    std_print("EXPORT", "as", "Antecedent analysis results", csv_path)
-
-    # Summary plots (need ≥3 tracks)
-    if len(results_df) >= 3:
-        plot_asmi_multi_lag_summary(results_df, output_dir)
-        plot_antecedent_vs_duration(results_df, output_dir)
-
-    if len(results_df) >= 4:   # need ≥4 for wet/dry split
-        compare_wet_dry_tracks(results_df, output_dir)
-        create_antecedent_summary_report(results_df, output_dir)
-    return results_df
-
-
 def create_antecedent_summary_report(results_df, output_dir):
     """Write a plain-text summary report of the antecedent analysis."""
     os.makedirs(output_dir, exist_ok=True)
-    report_path = os.path.join(output_dir, "antecedent_analysis_report.txt")
+    antecedent_analysis_report_path = os.path.join(
+        output_dir, "antecedent_analysis_report.txt"
+    )
 
-    with open(report_path, "w") as f:
+    with open(antecedent_analysis_report_path, "w") as f:
         f.write("Antecedent Soil Moisture Analysis - Summary Report\n")
         f.write(f"Total tracks analyzed: {len(results_df)}\n\n")
 
@@ -817,10 +741,14 @@ def create_antecedent_summary_report(results_df, output_dir):
                 )
                 f.write("ASMI_7d vs Duration\n")
                 f.write(f"  Pearson r              : {r:.4f}\n")
-                f.write(f"  Pearson p (raw)        : {p_raw:.4e}  [inflated by autocorrelation]\n")
+                f.write(
+                    f"  Pearson p (raw)        : {p_raw:.4e}  [inflated by autocorrelation]\n"
+                )
                 f.write(f"  Pearson p (corrected)  : {p_corr:.4e}  [{sig}]\n")
                 f.write(f"  n_eff                  : {n_eff}\n\n")
-    std_print("SAVED", "as", "Antecedent summary report", report_path)
+    std_print(
+        "SAVED", "as", "Antecedent summary report", antecedent_analysis_report_path
+    )
 
 
 # Helper function
@@ -879,3 +807,83 @@ def future_track_bbox(track_df, buffer_km=100):
     lon_max = min(inland["longitude"].max() + lon_buf, CLIPPED_MAX_LON)
     return lat_min, lat_max, lon_min, lon_max
 
+
+def classify_antecedent_conditions(asmi_series):
+    """
+    Classify tracks as Wet / Dry based on median ASMI split.
+    Returns a boolean Series: True = Wet.
+    """
+    valid = asmi_series.dropna()
+    if len(valid) < 4:
+        return (asmi_series >= asmi_series.median()).astype(bool)
+    median_val = valid.median()
+    return asmi_series >= median_val
+
+
+def compute_antecedent_for_track(ds, track_df, track_id, output_dir):
+    """
+    Compute all antecedent SM metrics for a single track.
+
+    Returns a dict with:
+      - asmi_{lag} for each lag window
+      - origin_type, duration_hours, has_landfall
+      - landfall_time (pd.Timestamp or None)
+    """
+    track_id = int(track_id)
+    track = (
+        track_df[track_df["track_id"] == track_id].sort_values("time")
+        if "track_id" in track_df.columns
+        else track_df.sort_values("time")
+    )
+
+    if track.empty:
+        std_print("ERROR", "as", f"Track {track_id}: not found")
+        return None
+
+    times = pd.to_datetime(track["time"])
+    duration_h = (times.max() - times.min()).total_seconds() / 3600
+
+    # Landfall
+    landfall_time = None
+    has_landfall = False
+    if "is_land" in track.columns:
+        land_rows = track[track["is_land"] == True]
+        if not land_rows.empty:
+            landfall_time = pd.to_datetime(land_rows.iloc[0]["time"])
+            has_landfall = True
+
+    ref_time = landfall_time if landfall_time is not None else times.min()
+
+    # Multi-lag ASMI
+    asmi_dict = compute_asmi_multi_lag(ds, track, ref_time, buffer_km=100)
+
+    result = {
+        "track_id": track_id,
+        "origin_type": find_origin_type(track),
+        "has_landfall": has_landfall,
+        "landfall_time": landfall_time,
+        "duration_hours": duration_h,
+        **asmi_dict,
+    }
+
+    # # Spatial map at 24 h before
+    # try:
+    #     plot_antecedent_spatial_map(ds, track_df, track_id, hours_before=24, output_dir)
+    # except Exception as e:
+    #     std_print("WARN", "as", "spatial map failed", str(e))
+
+    # # Antecedent trend plot
+    # try:
+    #     analyze_antecedent_trend(ds, track_df, track_id, output_dir)
+    # except Exception as e:
+    #     std_print("WARN", "as", "Antecedent Trend plot failed", str(e))
+    #
+
+    std_print(
+        "INFO",
+        "as",
+        f"Track {track_id} ASMI",
+        f"24h={asmi_dict.get('asmi_24h', np.nan):.4f} "
+        f"7d={asmi_dict.get('asmi_7d', np.nan):.4f}",
+    )
+    return result

@@ -20,7 +20,7 @@ Reference: Kirshbaum (2018) JGR-Atmos.
 """
 
 # TODO:
-# 1. TSI vs. inland penetration distance — plot_elevation_vs_penetration() already covers this
+# 1. TSI vs. inland penetration distance - plot_elevation_vs_penetration() already covers this
 #    (plots mean_elevation, TSI, and elevation_range vs penetration_km).  Verify output is sufficient.
 # 2. Mean elevation along track vs. speed anomaly (speed relative to pre-landfall baseline) - not implemented yet.
 
@@ -320,8 +320,8 @@ def plot_elevation_metrics(tsi_df, output_dir):
             ax.grid(True, alpha=0.3)
 
     plt.tight_layout()
-    plot_path = os.path.join(output_dir, "elevation_metrics_analysis.png")
-    plt.savefig(plot_path, dpi=300, bbox_inches="tight")
+    elevation_metrics_path = os.path.join(output_dir, "elevation_metrics_analysis.png")
+    plt.savefig(elevation_metrics_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
     # std_print("SAVED", "ea", "Elevation metric plots", plot_path)
 
@@ -333,7 +333,7 @@ def compute_orographic_speed_reduction(tracks_df_dict, output_dir):
  
     For each track that has both 'elevation' and 'speed_ms' columns, computes:
       - Pearson r between elevation gradient and speed change
-      - Mean speed in low-elevation (<400 m) vs high-elevation (>500 m) segments
+      - Mean speed in low-elevation (<400 m)
     """
     os.makedirs(output_dir, exist_ok=True)
     all_elev = []
@@ -471,15 +471,16 @@ def compute_orographic_precip_ratio(tracks_df_dict, ds, output_dir):
     if not oer_results:
         std_print("WARN", "ea", "No OER results - add tp_mmhr column to track DataFrames")
         return pd.DataFrame()
- 
     oer_df = pd.DataFrame(oer_results)
+
     # Export
-    csv_path = os.path.join(output_dir, "orographic_precip_ratio.csv")
-    oer_df.to_csv(csv_path, index=False)
-    std_print("EXPORT", "ea", "OER results", csv_path)
+    oer_CSV= os.path.join(output_dir, "orographic_precip_ratio.csv")
+    oer_df.to_csv(oer_CSV, index=False)
+    std_print("EXPORT", "ea", "OER results", oer_CSV)
  
     # Figure
     fig, ax = plt.subplots(figsize=(10, 6))
+
     valid = oer_df["oer"].dropna()
     valid_mean = valid.mean()
     ax.hist(valid, bins=15, edgecolor="black", alpha=0.75, color="teal")
@@ -493,10 +494,12 @@ def compute_orographic_precip_ratio(tracks_df_dict, ds, output_dir):
     if legend_handles:
         ax.legend(handles=legend_handles, **legend_style())
     plt.tight_layout()
-    outpath = os.path.join(output_dir, "orographic_precip_ratio.png")
-    plt.savefig(outpath, dpi=300, bbox_inches="tight")
+
+    # Save
+    oer_ratio_path = os.path.join(output_dir, "orographic_precip_ratio.png")
+    plt.savefig(oer_ratio_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
-    std_print("SAVED", "ea", "OER plot", outpath)
+    std_print("SAVED", "ea", "OER plot", oer_ratio_path)
     return oer_df
 
 
@@ -562,6 +565,27 @@ def plot_elevation_vs_penetration(tsi_df, output_dir):
     plt.savefig(outpath, dpi=300, bbox_inches="tight")
     plt.close(fig)
     std_print("SAVED", "ea", "Elevation vs penetration scatter", outpath)
+
+
+def plot_speed_anomaly_vs_elevation(tsi_df, output_dir):
+    if "mean_elevation" not in tsi_df or "speed_anomaly" not in tsi_df:
+        std_print("WARN", "ea", "Missing columns for speed anomaly plot")
+        return
+
+    # Figure
+    fig, ax = plt.subplots(figsize=(8,6))
+
+    ax.scatter(tsi_df["mean_elevation"], tsi_df["speed_anomaly"], alpha=0.7, edgecolors='k')
+    ax.set_xlabel("Mean elevation (m)")
+    ax.set_ylabel("Speed anomaly (m/s)")
+    ax.set_title("Mean elevation vs speed anomaly")
+    ax.grid(True, alpha=0.3)
+    plt.tight_layout()
+
+    elevation_vs_speed_anomaly_path = os.path.join(output_dir, "elevation_vs_speed_anomaly.png")
+    plt.savefig(elevation_vs_speed_anomaly_path, dpi=300)
+    plt.close(fig)
+    std_print("SAVED", "ea", "Speed anomaly vs elevation", elevation_vs_speed_anomaly_path)
 
 
 # Landfall elevation classification
@@ -660,7 +684,8 @@ def plot_track_elevation_profile(track_df, track_id, output_dir):
     ax1.plot(times, elev_land, color="#5C3D0A", linewidth=1.2, zorder=3)
 
     # Reference elevations
-    for ref_m, ls, label in [(400, "--", "400 m"), (500, "-.", "500 m")]:
+    # for ref_m, ls, label in [(400, "--", "400 m"), (500, "-.", "500 m")]:
+    for ref_m, ls, label in [(400, "--", "400 m")]:
         ax1.axhline(ref_m, color="gray", linestyle=ls, linewidth=0.8, alpha=0.6, label=label)
 
     ax1.set_ylabel("Elevation (m)", fontsize=12, fontweight="bold", color="#5C3D0A")
@@ -799,8 +824,8 @@ def plot_track_elevation_profile(track_df, track_id, output_dir):
 
 def plot_track_elevation_map(track_df, track_id, output_dir):
     """
-    DEM tiles, track line colored by translation speed.
-    Tracks ran into high terrain vs passed through low-elevation corridors.
+    DEM tiles, track line colored by translation speed
+    Tracks ran into high terrain vs passed through low-elevation corridors
     """
     track_id = int(track_id)
     required = {"latitude", "longitude", "speed_ms", "is_land"}
@@ -843,7 +868,6 @@ def plot_track_elevation_map(track_df, track_id, output_dir):
             elev_ds = elev[::step, ::step]
             tile_patches.append((elev_ds, lon_int, lat_int))
 
-    # Consistent elevation scale across all tiles
     if tile_patches:
         all_vals = [np.nanpercentile(p[0], 98) for p in tile_patches]
         vmax_elev = max(float(np.nanmax(all_vals)), 400.0)
@@ -861,12 +885,13 @@ def plot_track_elevation_map(track_df, track_id, output_dir):
     cbar_elev = plt.colorbar(sm_elev, ax=ax, pad=0.01, shrink=0.55, aspect=20)
     cbar_elev.set_label("Elevation (m)", fontsize=10)
 
-    # Elevation contours from track elevation column
+    # Elevation contours
     if "elevation" in df.columns:
         elev_vals = df["elevation"].values
         land_mask = df["is_land"].values.astype(bool)
-        # Contour lines only make sense on a gridded field; here annotate key thresholds
-        for thresh, color, ls in [(400, "saddlebrown", "--"), (500, "sienna", "-.")]:
+
+        # for thresh, color, ls in [(400, "brown", "--"), (700, "sienna", "-.")]:
+        for thresh, color, ls in [(400, "brown", "--")]:
             crossings = np.where(np.diff((elev_vals > thresh).astype(int)))[0]
             for ci in crossings:
                 ax.plot(lons[ci], lats[ci], "^", color=color,markersize=7, transform=ccrs.PlateCarree(), zorder=5,label=f"{thresh} m crossing")
@@ -1091,8 +1116,9 @@ def plot_all_tracks_elevation_comparison(track_dict, output_dir):
                   f"speed:{mean_speed_land:.1f}{speed_unit}"
         ))
 
-    # Threshold contour lines on DEM (400 m, 500 m, 700 m)
-    for thresh_m, ls, lc in [(400,"--","saddlebrown"), (700,"-.", "sienna")]:
+    # Threshold contour lines on DEM (400 m, 700 m)
+    # for thresh_m, ls, lc in [(400,"--","saddlebrown"), (700,"-.", "sienna")]:
+    for thresh_m, ls, lc in [(400,"--","saddlebrown")]:
         ax.contour
         ax.plot([], [], linestyle=ls, color=lc, linewidth=1.5,label=f"{thresh_m} m threshold")
 
@@ -1290,9 +1316,9 @@ def load_hgt_tile(tile_path):
                 "shape":     elevation.shape,
             }
             tiles_cache[tile_path] = tile_data
-            elev_min  = np.nanmin(elevation)
-            elev_max  = np.nanmax(elevation)
-            valid_pct = 100 * (~np.isnan(elevation)).sum() / elevation.size
+            # elev_min  = np.nanmin(elevation)
+            # elev_max  = np.nanmax(elevation)
+            # valid_pct = 100 * (~np.isnan(elevation)).sum() / elevation.size
             # std_print("DEBUG", "ea", f"Loaded {os.path.basename(tile_path)}")
             # std_print("DEBUG", "ea", f"Elevation: [{elev_min:.0f}, {elev_max:.0f}] m")
             # std_print("DEBUG", "ea", f"Valid: {valid_pct:.1f}%")
@@ -1300,25 +1326,6 @@ def load_hgt_tile(tile_path):
     except Exception as e:
         std_print("ERROR", "ea", f"Failed to load {tile_path}", str(e))
         return None
-
-
-def load_elevation_metrics(output_dir):
-    """Load TSI metrics computed from HGT elevation data"""
-    for path in [
-        os.path.join(output_dir, "elevation_analysis", "elevation_metrics.csv"),
-        "output/elevation_analysis/elevation_metrics.csv",
-        "elevation_metrics.csv",
-    ]:
-        if os.path.exists(path):
-            try:
-                df = pd.read_csv(path)
-                std_print("INFO", "ea", "Loaded elevation metrics", path)
-                return df
-            except Exception as e:
-                std_print("ERROR", "ea", f"Failed to load {path}", str(e))
-
-    std_print("WARN", "ea", "Elevation metrics not found", "TSI analysis will be skipped")
-    return None
 
 
 def get_elevation_at_point(lat, lon):
@@ -1444,10 +1451,12 @@ def get_terrain_metrics_at_point(lat, lon, window_size=3):
     tile_data = load_hgt_tile(tile_name)
     if tile_data is None:
         return None
+
     # Get pixel coordinates
     transform = tile_data["transform"]
     col, row = ~transform * (lon, lat)
     row, col = int(round(row)), int(round(col))
+
     # Check bounds
     shape = tile_data["shape"]
     if not (0 <= row < shape[0] and 0 <= col < shape[1]):
@@ -1475,14 +1484,26 @@ def get_terrain_metrics_at_point(lat, lon, window_size=3):
             "elevation_std": 0.0,
             "n_valid_neighbors": 0,
         }
+
+    # Aspect needs bivariate gradient
+    if neighborhood.shape[0] >= 3 and neighborhood.shape[1] >= 3:
+        # Use central differences
+        gy, gx = np.gradient(neighborhood, 1, 1)  # spacing assumed 1 pixel
+        aspect_rad = np.arctan2(-gx, gy)  # appropriate formula
+        aspect_deg = np.degrees(aspect_rad).mean()
+        aspect_deg = (aspect_deg + 360) % 360
+    else:
+        aspect_deg = -1.0
+    std_print("DEBUG", "ea", "Using aspect_deg", aspect_deg)
+
     # Metrics
     metrics = {
         "elevation": float(point_elev),
         "slope": float(np.nanmean(np.abs(np.diff(valid_neighborhood)))),
-        "aspect": -1.0,  #TODO: Aspect needs bivariate gradient  – not implemented
         "roughness": float(np.nanstd(valid_neighborhood)),
         "elevation_std": float(np.nanstd(valid_neighborhood)),
         "n_valid_neighbors": len(valid_neighborhood),
+        "aspect": float(aspect_deg),
     }
     return metrics
 
@@ -1518,13 +1539,17 @@ def compute_tsi(track_df, track_coupling=None):
 
     # 1. Elevation effect
     elev_range = valid_elev.max() - valid_elev.min()
+    # INFO: total elevation change along a track rarely exceeds 3000 m
+    # TODO: would it be better to use max_elevation along track instead of hardcoded 3000m?
     elev_eff = min(1.0, elev_range / 3000.0)
 
     # 2. Slope effect
     mean_slope = np.abs(valid_elev.diff().dropna()).mean()
+    # INFO: 30m per step over ~0.25° grid
     slope_eff = min(1.0, mean_slope / 30.0)
 
     # 3. Roughness effect
+    # INFO: 500 m represents a high degree of roughness, typical of the most complex topography in the region.
     roughness_eff = min(1.0, valid_elev.std() / 500.0)
 
     # Compute TSI
@@ -1567,8 +1592,8 @@ def compute_tsi_for_all_tracks(tracks_df, coupling_df):
             std_print("ERROR", "ea", "tracks_df has no track_id column")
             return pd.DataFrame(), {}
         tracks_df = {
-            int(tid): tracks_df[tracks_df["track_id"] == tid].copy()
-            for tid in tracks_df["track_id"].unique()
+            int(track_id): tracks_df[tracks_df["track_id"] == track_id].copy()
+            for track_id in tracks_df["track_id"].unique()
         }
 
     all_results = []
@@ -1594,6 +1619,9 @@ def compute_tsi_for_all_tracks(tracks_df, coupling_df):
             # Compute TSI
             tsi_result = compute_tsi(track_with_elev, track_coupling)
             tsi_result["track_id"] = track_id
+
+             # TODO:
+            # tsi_result["speed_anomaly"] = compute_speed_anomaly(track_with_elev)
 
             # Calculate duration if available
             if "time" in track_df.columns:
@@ -1722,3 +1750,19 @@ def export_elevation_metrics(tsi_df, output_dir):
                 f.write("TSI vs Duration\n")
                 f.write(f"  r = {r:.3f}, p_corr = {p_corr:.4e} [{sig}], n_eff = {n_eff}")
     std_print("SAVED", "ea", "Elevation summary report", report_path)
+
+
+def load_elevation_metrics(output_dir):
+    """Load TSI metrics computed from HGT elevation data for statistical analysis"""
+    path = os.path.join(output_dir, "Global_elevation_analysis", "elevation_metrics.csv")
+    try:
+        df = pd.read_csv(path)
+        std_print("INFO", "ea", "Loaded elevation metrics", path)
+        return df
+    except Exception as e:
+        std_print("ERROR", "ea", f"Failed to load {path}", str(e))
+
+    std_print("WARN", "ea", "Elevation metrics not found", "TSI analysis will be skipped")
+    return None
+
+

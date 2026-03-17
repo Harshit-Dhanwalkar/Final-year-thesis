@@ -187,7 +187,7 @@ def analyze_asm_fsi_relationship(coupling_metrics_dir, asm_df, output_dir):
         # Save plot
         stats_dir = os.path.join(output_dir, "statistical_analysis")
         os.makedirs(stats_dir, exist_ok=True)
-        plot_path = os.path.join(stats_dir, "h3_asm_fsi_scatter.png")
+        plot_path = os.path.join(stats_dir, "asm_fsi_scatter.png")
         plt.tight_layout()
         plt.savefig(plot_path, dpi=300, bbox_inches="tight")
         plt.close(fig)
@@ -200,7 +200,7 @@ def analyze_asm_fsi_relationship(coupling_metrics_dir, asm_df, output_dir):
         std_print("SAVED", "sa", "ASM-FSI plot", plot_path)
 
         # Save results
-        results_path = os.path.join(stats_dir, "h3_asm_fsi_results.csv")
+        results_path = os.path.join(stats_dir, "asm_fsi_results.csv")
         merged_df.to_csv(results_path, index=False)
         std_print("EXPORT", "sa", "results CSV", results_path)
         return {

@@ -1,6 +1,4 @@
 # FIX:
-# 0.0 output_2024/elevation_analysis and output_2024/Global_elevation_analysis should be merged...find out reason why they are seperate.
-
 # 0.1 why seperate augmented csv for speed plots? just merge/append in main detection csv.
 # 0.2. Need to replace 'run_all_statistical_analyses', instaed just call individual functions
 # 0.3. Exporting 2 seperate CSVs (MD-track-id-coordinates.csv and output_2024/track_id/track_id_detections.csv) which have difference of date format.
@@ -115,8 +113,8 @@ from speed_analysis import (
     plot_speed_analysis_ms
 )
 from antecedent_analysis import (
-    plot_antecedent_spatial_map,
-    analyze_antecedent_trend,
+    # plot_antecedent_spatial_map,
+    # analyze_antecedent_trend,
     analyze_all_tracks_antecedent
 )
 from correlation_analysis import (
@@ -2592,20 +2590,20 @@ if __name__ == "__main__":
             #     std_print("ERROR", "md", "Hovmöller computation failed", str(e))
             #     traceback.print_exc()
 
-            # 8) Antecedent Soil Moisture Analysis
-            print(f"\n----------------------------------Antecedent Soil Moisture Analysis for Track {track_id} ----------------------------------")
-            # std_print("DEBUG", "md", f"Skipping antecedent SM for Track {track_id}")
-            # Ensure is_land column exists for antecedent analysis
-            # track_df['is_land'] = track_df.apply(lambda row: is_point_land(row['latitude'], row['longitude']), axis=1)
-            # std_print('DEBUG', 'md', 'Land/ocean classification computed', f'{track_df["is_land"].sum()} land points')
-            try:
-                asm_dir = os.path.join(track_dir, "antecedent_sm")
-                os.makedirs(asm_dir, exist_ok=True)
-                analyze_antecedent_trend(ds, track_df, track_id, output_dir=asm_dir)
-                plot_antecedent_spatial_map(ds, track_df, track_id, hours_before=24, output_dir=asm_dir)
-            except Exception as e:
-                std_print("ERROR", "md", "ASM analysis failed", str(e))
-                traceback.print_exc()
+            # # 8) Antecedent Soil Moisture Analysis
+            # print(f"\n----------------------------------Antecedent Soil Moisture Analysis for Track {track_id} ----------------------------------")
+            # # std_print("DEBUG", "md", f"Skipping antecedent SM for Track {track_id}")
+            # # Ensure is_land column exists for antecedent analysis
+            # # track_df['is_land'] = track_df.apply(lambda row: is_point_land(row['latitude'], row['longitude']), axis=1)
+            # # std_print('DEBUG', 'md', 'Land/ocean classification computed', f'{track_df["is_land"].sum()} land points')
+            # try:
+            #     asm_dir = os.path.join(track_dir, "antecedent_sm")
+            #     os.makedirs(asm_dir, exist_ok=True)
+            #     # analyze_antecedent_trend(ds, track_df, track_id, output_dir=asm_dir)
+            #     # plot_antecedent_spatial_map(ds, track_df, track_id, hours_before=24, output_dir=asm_dir)
+            # except Exception as e:
+            #     std_print("ERROR", "md", "ASM analysis failed", str(e))
+            #     traceback.print_exc()
 
             # 9) Correlation analysis (swvl1 vs tp vs heat flux)
             print(f"\n---------------------------------------- Correlation analysis for Track {track_id} ----------------------------------------")
@@ -2869,8 +2867,8 @@ if __name__ == "__main__":
                 std_print("EXPORT", "md", "FSI metrics with TP/SWVL1", fsi_path)
                 if os.path.exists(fsi_path):
                     df = pd.read_csv(fsi_path)
-                    std_print('DEBUG', 'md', ' FSI shape', f'{df.shape}')
-                    std_print('DEBUG', 'md', ' FSI columns', str(list(df.columns)))
+                    std_print('DEBUG', 'md', 'FSI shape', f'{df.shape}')
+                    std_print('DEBUG', 'md', 'FSI columns', str(list(df.columns)))
                     required_cols = ['mean_tp', 'mean_swvl1']
                     missing = [col for col in required_cols if col not in df.columns]
                     if missing:
@@ -2892,15 +2890,15 @@ if __name__ == "__main__":
         std_print("INFO", "md", " --- Antecedent soil moisture analysis ---")
         # std_print("DEBUG", "md", "Skipping Global Antecedent soil moisture Analysis")
         try:
-            asm_dir = os.path.join(output_dir, "global_antecedent_analysis")
+            asm_dir = os.path.join(output_dir, "Global_antecedent_analysis")
             os.makedirs(asm_dir, exist_ok=True)
             asm_results_df = analyze_all_tracks_antecedent(ds, full_track_df, output_dir=asm_dir)
             all_asm_results = asm_results_df
             # Export the combined results for all tracks
             if asm_results_df is not None:
-                csv_path = os.path.join(asm_dir, "all_tracks_antecedent_sm.csv")
-                asm_results_df.to_csv(csv_path, index=False)
-                std_print("EXPORT", "md", "Global Antecedent SM Results", csv_path)
+                antecedent_sm_CSV = os.path.join(asm_dir, "all_tracks_antecedent_sm.csv")
+                asm_results_df.to_csv(antecedent_sm_CSV, index=False)
+                std_print("EXPORT", "md", "Global Antecedent SM Results", antecedent_sm_CSV)
             # ASM results reuse
             if (
                 all_asm_results is not None
@@ -2908,7 +2906,7 @@ if __name__ == "__main__":
                 and not all_asm_results.empty
             ):
                 asm_df = all_asm_results.copy()
-                std_print("INFO", "md", "Using ASM data from antecedent analysis", f"{len(asm_df)} tracks")
+                # std_print("DEBUG", "md", "ASM data from antecedent analysis", f"{len(asm_df)} tracks")
         except Exception as e:
             std_print("ERROR", "md", "Global antecedent analysis failed", str(e))
             traceback.print_exc()
@@ -2917,7 +2915,7 @@ if __name__ == "__main__":
         std_print("INFO", "md", " --- Global Soil Moisture Memory Analysis ---")
         # std_print("DEBUG", "md", "Skipping Global Soil Moisture Memory Analysis")
         try:
-            memory_dir = os.path.join(output_dir, "global_soil_memory")
+            memory_dir = os.path.join(output_dir, "Global_soil_memory")
             os.makedirs(memory_dir, exist_ok=True)
             if "all_memory_results" in locals() and all_memory_results:
                 memory_df = pd.DataFrame(all_memory_results)
@@ -2965,7 +2963,7 @@ if __name__ == "__main__":
             traceback.print_exc()
         try:
             if vrt_path is not None and os.path.exists(vrt_path) and full_track_df is not None and not full_track_df.empty:
-                combined_plot_path = plot_all_tracks_elevation(full_track_df, vrt_path, output_dir, year=MONSOON_YEAR)
+                combined_plot_path = plot_all_tracks_elevation(full_track_df, vrt_path, output_dir=elevation_dir, year=MONSOON_YEAR)
                 if combined_plot_path:
                     std_print("INFO", "md", "Combined elevation", combined_plot_path)
                 else:
@@ -2980,14 +2978,19 @@ if __name__ == "__main__":
         std_print("INFO", "md", " --- Global Statistical Analysis ---")
         # std_print("DEBUG", "md", "Skipping Global Statistical Analysis")
         try:
-           if (all_asm_results is not None and isinstance(all_asm_results, pd.DataFrame) and not all_asm_results.empty):
+           if (
+                all_asm_results is not None and
+                isinstance(all_asm_results, pd.DataFrame) and
+                not all_asm_results.empty
+               ):
                asm_df = all_asm_results.copy()
                std_print("INFO", "md", "ASM data from antecedent analysis", len(asm_df))
            else:
                std_print("WARN", "md", "No ASM data available", "Skipping statistical analyses")
                asm_df = pd.DataFrame()
            clay_data_path = os.path.join("..", "Data", "soil", "clay_percentage.csv")
-           # Only run statistical analyses if we have both coupling and ASM data
+
+           # Only run statistical analyses if both coupling and ASM data exist
            coupling_metrics_FSI_CSV = os.path.join(coupling_metrics_dir, "coupling_metrics_FSI.csv")
            if not asm_df.empty and os.path.exists(coupling_metrics_FSI_CSV):
                stats_results = run_all_statistical_analyses(
@@ -2996,30 +2999,36 @@ if __name__ == "__main__":
                    output_dir,
                )
                if stats_results and len(stats_results) > 0:
-                   std_print("INFO", "md", "Statistical analyses completed successfully")
                    summary_report_path = os.path.join(output_dir, "Analysis_summary_report.txt")
-                   elevation_df = load_elevation_metrics(elevation_dir)
-                   results = analyze_tsi(
-                       elevation_df, fsi_df,
-                       # coupling_df,
-                       output_dir,
-                   )
+
+                   # EXPORT
+                   stats_dir = os.path.join(output_dir, "statistical_analysis")
+                   os.makedirs(stats_dir, exist_ok=True)
+
+                   # Granger test analysis
+                   std_print("INFO", "md", " --- Granger Statistical analysis ---")
+                   granger = stats_results.get("granger", {})
+                   if granger and granger.get("status") == "success":
+                       pd.DataFrame([granger]).to_csv(os.path.join(stats_dir, "granger_causality.csv"), index=False)
+                       granger_causality_CSV =  os.path.join(stats_dir, "granger_causality.csv")
+                       std_print("EXPORT", "md", "Granger causality results", granger_causality_CSV)
+
                    if os.path.exists(summary_report_path):
                        with open(summary_report_path, "a") as f:
                            f.write("\n7. Statistical Analysis Results\n\n")
                            if stats_results.get("asm_fsi"):
-                               f.write(f"(ASM-FSI): r = {stats_results['asm_fsi'].get('correlation', 'N/A'):.3f}\n")
+                               f.write(f"  (ASM-FSI): r = {stats_results['asm_fsi'].get('correlation', 'N/A'):.3f}\n")
                            if stats_results.get("gam"):
                                gam_r2 = stats_results["gam"].get("r_squared", "N/A")
                                r2_str = (f"{gam_r2:.3f}" if isinstance(gam_r2, (int, float)) else "N/A")
-                               f.write(f"(GAM plateau): r-squared = {r2_str}\n")
+                               f.write(f"  (GAM plateau): r-squared = {r2_str}\n")
                            if stats_results.get("granger"):
-                               f.write(f"(Granger causality): {stats_results['granger'].get('n_significant_tracks', 'N/A')} tracks significant\n")
+                               f.write(f"  (Granger causality): {stats_results['granger'].get('n_significant_tracks', 'N/A')} tracks significant\n")
                            tsi_dur_corr = stats_results.get("tsi", {}).get("tsi_duration_correlation")
                            if tsi_dur_corr is not None and isinstance(tsi_dur_corr, (int, float, np.number)):
-                               f.write(f"(TSI-duration): r = {tsi_dur_corr:.3f}\n")
+                               f.write(f"  (TSI-duration): r = {tsi_dur_corr:.3f}\n")
                            else:
-                               f.write("(TSI-duration): r = N/A\n")
+                               f.write("  (TSI-duration): r = N/A\n")
                else:
                    std_print("WARN", "md", "Statistical analyses returned no results")
            else:
@@ -3027,10 +3036,12 @@ if __name__ == "__main__":
         except Exception as e:
             std_print("ERROR", "md", "Statistical analyses failed", str(e))
             traceback.print_exc()
-        std_print("DEBUG", "md", f"Total tracks: {len(full_track_df['track_id'].unique()) if full_track_df is not None else 0}")
-        std_print("DEBUG", "md", f"Correlation results: {len(all_correlation_results)}")
-        std_print("DEBUG", "md", f"FSI data shape: {fsi_df.shape if fsi_df is not None else 'None'}")
-        std_print("DEBUG", "md", f"FSI columns: {list(fsi_df.columns) if fsi_df is not None else 'None'}")
+        std_print("DEBUG", "md", "Total tracks", len(full_track_df['track_id'].unique()))
+        std_print("DEBUG", "md", "Correlation results", len(all_correlation_results))
+        # std_print("DEBUG", "md", "FSI data shape", f"{fsi_df.shape if fsi_df is not None else 'None'}")
+        # std_print("DEBUG", "md", "FSI columns", f"{list(fsi_df.columns) if fsi_df is not None else 'None'}")
+        std_print("DEBUG", "md", "FSI data shape", fsi_df.shape)
+        std_print("DEBUG", "md", "FSI columns", list(fsi_df.columns))
         if fsi_df is not None and not fsi_df.empty:
             missing_for_stats = []
             for col in ["mean_tp", "mean_swvl1", "pearson_r", "pearson_p"]:
@@ -3038,7 +3049,7 @@ if __name__ == "__main__":
                     missing_for_stats.append(col)
             if missing_for_stats:
                 std_print("WARN", "md", "Missing columns for stats", str(missing_for_stats))
-                std_print("DEBUG", "md", f"Available columns : {list(fsi_df.columns)}")
+                std_print("DEBUG", "md", "Available columns", list(fsi_df.columns))
         # TODO: Implement: analyze_asm_fsi_relationship, analyze_gam_nonlinearity, test_granger_causality
         # stats_dir = os.path.join(output_dir, "statistical_analysis")
         # os.makedirs(stats_dir, exist_ok=True)
