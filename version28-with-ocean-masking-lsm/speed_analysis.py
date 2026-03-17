@@ -64,7 +64,7 @@ def compute_track_speeds(track_df):
     # track_df['distance_km'] = distances_km
 
     # Haversine-like approximation for distance
-    a = np.sin(dlat / 2) ** 2 + np.cos(lat) * np.cos(lat) * np.sin(dlon / 2) ** 2
+    a = np.sin(dlat / 2) ** 2 + np.cos(lat) * np.cos(lat - dlat) * np.sin(dlon / 2) ** 2
     c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
     track_df["distance_km"] = EARTH_R * c  # Earth Radius in km
 

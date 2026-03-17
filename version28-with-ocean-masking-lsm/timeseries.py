@@ -65,7 +65,7 @@ def extract_heat_flux_timeseries(ds, track_df, track_id, buffer_km=100):
 
         dt_seconds = int((t_now - t_prev).total_seconds())
         if dt_seconds != 3600 :
-            std_print("DEBUG", "ts", f"Computed `dt_seconds` is {dt_seconds} (!= 3600)")
+            std_print("WARN", "ts", f"Computed `dt_seconds` is {dt_seconds} (!= 3600)")
 
         if dt_seconds == 0:
             std_print("ERROR", "ts", "Time dt_seconds = 0", "Continuing...")
@@ -142,12 +142,9 @@ def extract_heat_flux_timeseries(ds, track_df, track_id, buffer_km=100):
                 sub_now = ds_now.sel(latitude=lat_slice, longitude=lon_slice)
                 sub_prev = ds_prev.sel(latitude=lat_slice, longitude=lon_slice)
             except Exception as e:
-                std_print(
-                    "ERROR",
-                    "ts",
-                    f"Selection failed for {t_now}:,  {str(e)}. Using alternative approach.",
-                )
+                std_print("ERROR", "ts", f"Selection failed for {t_now}", {str(e)})
                 # Alternative approach using where()
+                std_print("DEBUG", "ts", "Alternative approach", "Using `where()`")
                 lat_mask = (ds_now.latitude >= lat_min) & (ds_now.latitude <= lat_max)
                 lon_mask = (ds_now.longitude >= lon_min) & (ds_now.longitude <= lon_max)
                 if lat_mask.any() and lon_mask.any():
@@ -198,12 +195,7 @@ def extract_heat_flux_timeseries(ds, track_df, track_id, buffer_km=100):
                 std_print("WARN", "ts", "No valid heat flux variables found at", t_now)
                 continue
             if np.isnan(slhf_w) or np.isnan(sshf_w):
-                std_print(
-                    "WARN",
-                    "ts",
-                    f"NaN values encountered at {t_now}",
-                    f"SLHF={slhf_w:.4f}, SSHF={sshf_w:.4f}",
-                )
+                std_print("WARN", "ts", f"NaN values at {t_now}", f"SLHF={slhf_w:.4f}, SSHF={sshf_w:.4f}")
                 continue
 
             flux_records.append(
@@ -229,16 +221,7 @@ def extract_heat_flux_timeseries(ds, track_df, track_id, buffer_km=100):
     return pd.DataFrame(flux_records)
 
 
-def tp_swvl1_timeseries(
-    track_df,
-    track_id,
-    tp,
-    swvl1,
-    valid_times,
-    landfall_index,
-    output_dir,
-    originates_over_land=True,
-):
+def tp_swvl1_timeseries(track_df, track_id, tp, swvl1, valid_times, landfall_index, output_dir, originates_over_land=True):
     track_id = int(track_id)
     try:
         if not isinstance(tp, np.ndarray):
@@ -354,7 +337,7 @@ def tp_swvl1_timeseries(
             color=color_swvl1,
             linewidth=2.5,
             markersize=5,
-            label="Soil Water Volumetric Level-1 (Ocean=0)",
+            label="Soil Water Volumetric Level-1",
             alpha=0.8,
             zorder=4,
         )
@@ -390,7 +373,7 @@ def tp_swvl1_timeseries(
             labels.append(status_text)
 
         handles.append(Patch(facecolor="lightblue", alpha=0.5))
-        labels.append("Ocean Phase (SWVL1=0)")
+        labels.append("Ocean Phase")
         handles.append(Patch(facecolor="wheat", alpha=0.5))
         labels.append("Land Phase")
 
@@ -467,8 +450,9 @@ def hf_timeseries(flux_df, track_id, output_dir):
 
         is_land_array = flux_df["is_land"].values
 
-        # Figure with 3 subplots
-        fig, axes = plt.subplots(3, 1, figsize=(16, 12))
+        # Figure with subplots
+        # fig, axes = plt.subplots(3, 1, figsize=(16, 12))
+        fig, axes = plt.subplots(2, 1, figsize=(16, 10), sharex=True)
 
         # plot 1: latent heat flux
         ax1 = axes[0]
@@ -514,31 +498,31 @@ def hf_timeseries(flux_df, track_id, output_dir):
         ax2.set_ylabel("Sensible Heat Flux (W/m²)", fontsize=11, fontweight="bold")
         ax2.grid(True, alpha=0.4, linestyle="--", zorder=0)
 
-        # subplot 3: total heat flux
-        ax3 = axes[2]
-        ax3.plot(
-            times,
-            flux_df["total_heat_flux"],
-            color="purple",
-            linewidth=2.5,
-            marker="D",
-            markersize=6,
-            alpha=0.8,
-            zorder=3,
-        )
-        # ocean/land shading
-        add_land_ocean_shading(
-            ax3, times, is_land_array, land_color="wheat", ocean_color="lightblue"
-        )
-        ax3.set_ylabel("Total Heat Flux (W/m²)", fontsize=11, fontweight="bold")
-        ax3.set_xlabel("Time", fontsize=11, fontweight="bold")
-        ax3.grid(True, alpha=0.4, linestyle="--", zorder=0)
-
-        legend_handles = [
-            Patch(facecolor="lightblue", alpha=0.5, label="Ocean Phase"),
-            Patch(facecolor="wheat", alpha=0.5, label="Land Phase"),
-        ]
-        ax3.legend(handles=legend_handles, loc="lower left", **legend_style())
+        # # subplot 3: total heat flux
+        # ax3 = axes[2]
+        # ax3.plot(
+        #     times,
+        #     flux_df["total_heat_flux"],
+        #     color="purple",
+        #     linewidth=2.5,
+        #     marker="D",
+        #     markersize=6,
+        #     alpha=0.8,
+        #     zorder=3,
+        # )
+        # # ocean/land shading
+        # add_land_ocean_shading(
+        #     ax3, times, is_land_array, land_color="wheat", ocean_color="lightblue"
+        # )
+        # ax3.set_ylabel("Total Heat Flux (W/m²)", fontsize=11, fontweight="bold")
+        # ax3.set_xlabel("Time", fontsize=11, fontweight="bold")
+        # ax3.grid(True, alpha=0.4, linestyle="--", zorder=0)
+        #
+        # legend_handles = [
+        #     Patch(facecolor="lightblue", alpha=0.5, label="Ocean Phase"),
+        #     Patch(facecolor="wheat", alpha=0.5, label="Land Phase"),
+        # ]
+        # ax3.legend(handles=legend_handles, loc="lower left", **legend_style())
 
         # Format x-axis for all subplots
         for ax in axes:
@@ -711,10 +695,11 @@ def theta_e_timeseries(theta_df, track_id, output_dir):
                 landfall_time = times.iloc[i]
                 break
 
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 10), sharex=True)
+        # Figure
+        fig, axes = plt.subplots(2, 1, figsize=(16, 10), sharex=True)
 
         # Panel 1: theta_e
-        add_land_ocean_shading(ax1, times, is_land_arr,land_color="wheat", ocean_color="lightblue")
+        ax1 = axes[0]
         ax1.plot(
             times,
             theta_e,
@@ -726,12 +711,12 @@ def theta_e_timeseries(theta_df, track_id, output_dir):
             label="θ_e (K)",
             zorder=4
         )
+        add_land_ocean_shading(ax1, times, is_land_arr,land_color="wheat", ocean_color="lightblue")
         if landfall_time is not None:
             ax1.axvline(landfall_time, color="red", linestyle="--", linewidth=1.8,label="Landfall", zorder=5)
         ax1.set_ylabel("Equiv. Potential Temperature θ_e (K)",fontsize=11, fontweight="bold")
         ax1.set_title(
-            f"Track {track_id}: Atmospheric Stability - Equivalent Potential Temperature\n"
-            "(Rising θ_e = increasing instability / moisture)",
+            f"Track {track_id}: Atmospheric Stability - Equivalent Potential Temperature",
             fontsize=13, fontweight="bold", pad=10,
         )
         ax1.grid(True, alpha=0.4, linestyle="--", zorder=0)
@@ -753,7 +738,7 @@ def theta_e_timeseries(theta_df, track_id, output_dir):
             )
 
         # Panel 2: t2m and d2m
-        add_land_ocean_shading(ax2, times, is_land_arr,land_color="wheat", ocean_color="lightblue")
+        ax2 = axes[1]
         ax2.plot(
             times,
             t2m - 273.15,
@@ -776,6 +761,7 @@ def theta_e_timeseries(theta_df, track_id, output_dir):
             label="D2m (°C)",
             zorder=4
         )
+        add_land_ocean_shading(ax2, times, is_land_arr,land_color="wheat", ocean_color="lightblue")
         if landfall_time is not None:
             ax2.axvline(landfall_time, color="red", linestyle="--", linewidth=1.8, zorder=5)
         ax2.set_ylabel("Temperature (°C)", fontsize=11, fontweight="bold")

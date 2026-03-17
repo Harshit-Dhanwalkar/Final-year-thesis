@@ -456,20 +456,20 @@ def test_granger_causality(coupling_df, output_dir):
         try:
             gc_result = grangercausalitytests(data, maxlag=maxlag, verbose=False)
             # Get p-value for MAX_LAG
-            p_value = gc_result[1][0]["ssr_ftest"][1]
+            pearson_p = gc_result[1][0]["ssr_ftest"][1]
             result = {
-                "p_value": p_value,
-                "significant": p_value < 0.05,
+                "pearson_p": pearson_p,
+                "significant": pearson_p < 0.05,
                 "n_samples": len(data),
                 "tp_column": tp_col,
                 "sm_column": sm_col,
                 "maxlag": maxlag,
                 "status": "success"
             }
-            if p_value < 0.05:
-                std_print("INFO", "sa", "Granger causality", f"p={p_value:.4f}")
+            if pearson_p < 0.05:
+                std_print("INFO", "sa", "Granger causality", f"p={pearson_p:.4f}")
             else:
-                std_print("INFO", "sa", "No significant causality", f"p={p_value:.4f}")
+                std_print("INFO", "sa", "No significant causality", f"p={pearson_p:.4f}")
             return result
         except Exception as e:
             std_print("WARN", "sa", "Granger test error", str(e))
@@ -708,7 +708,7 @@ def run_all_statistical_analyses(coupling_metrics_dir, asm_df, correlation_df, o
 
             f.write("ranger Causality (TP -> SWVL1)\n\n")
             if granger_results and "significant" in granger_results:
-                p_val = granger_results.get("p_value", "N/A")
+                p_val = granger_results.get("pearson_p", "N/A")
                 sig = granger_results.get("significant", False)
                 f.write(f"p-value: {p_val}\n")
                 f.write(f"Significant at α=0.05: {'YES' if sig else 'NO'}\n")
@@ -747,8 +747,8 @@ def run_all_statistical_analyses(coupling_metrics_dir, asm_df, correlation_df, o
             if len(coupling_df) < 10:
                 f.write(f"  Only {len(coupling_df)} tracks - statistical power limited\n")
                 f.write("   Consider relaxing detection thresholds to get more tracks\n")
-            if "p_value" in coupling_df.columns:
-                nan_pct = (coupling_df["p_value"].isna().sum() / len(coupling_df)) * 100
+            if "pearson_p" in coupling_df.columns:
+                nan_pct = (coupling_df["pearson_p"].isna().sum() / len(coupling_df)) * 100
                 if nan_pct > 20:
                     f.write(f"  {nan_pct:.1f}% of p-values are NaN\n")
         std_print("SAVED", "sa", "Statistical analysis summary", summary_path)
