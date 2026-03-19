@@ -657,7 +657,7 @@ def classify_landfall_elevation(tsi_df, output_dir):
     return tsi_df
 
 
-def plot_track_elevation_map(track_df, track_id, output_dir):
+def plot_track_elevation_speed_map(track_df, track_id, output_dir):
     """
     DEM tiles, track line colored by translation speed
     Tracks ran into high terrain vs passed through low-elevation corridors
@@ -665,7 +665,7 @@ def plot_track_elevation_map(track_df, track_id, output_dir):
     track_id = int(track_id)
     required = {"latitude", "longitude", "speed_ms", "is_land"}
     if not required.issubset(track_df.columns):
-        std_print("WARN", "ea", "plot_track_elevation_map missing cols",
+        std_print("WARN", "ea", "plot_track_elevation_speed_map missing cols",
                   str(required - set(track_df.columns)))
         return
 
@@ -785,10 +785,10 @@ def plot_track_elevation_map(track_df, track_id, output_dir):
 
     # Save
     os.makedirs(output_dir, exist_ok=True)
-    elevation_map_path = os.path.join(output_dir, f"track_{track_id}_elevation_map.png")
-    plt.savefig(elevation_map_path, dpi=300, bbox_inches="tight")
+    elevation_speed_map_path = os.path.join(output_dir, f"track_{track_id}_elevation_spped_map.png")
+    plt.savefig(elevation_speed_map_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
-    std_print("SAVED", "ea", "elevation map", elevation_map_path)
+    std_print("SAVED", "ea", "elevation map", elevation_speed_map_path)
 
 
 def plot_track_elevation_profile(track_df, track_id, output_dir):
@@ -1238,7 +1238,7 @@ def run_single_track_elevation_analysis(track_df, track_id, output_dir):
 
     # 3. Spatial map: DEM background + track colored by speed
     try:
-        plot_track_elevation_map(track_df, track_id, output_dir)
+        plot_track_elevation_speed_map(track_df, track_id, output_dir)
     except Exception as e:
         std_print("ERROR", "ea", "elevation map plot failed", str(e))
         traceback.print_exc()

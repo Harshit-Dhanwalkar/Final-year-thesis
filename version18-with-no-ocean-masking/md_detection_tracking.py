@@ -178,13 +178,13 @@ MONSOON_SEASONS = {
         "September-2021",
     ],
     2022: [
-        # "June-2022",
+        "June-2022",
         "July-2022",
         "August-2022",
         "September-2022",
     ],
     2023: [
-        # "June-2023",
+        "June-2023",
         "July-2023",
         "August-2023",
         "September-2023",
@@ -196,7 +196,7 @@ MONSOON_SEASONS = {
         "September-2024",
     ],
     2025: [
-        # "June-2025",
+        "June-2025",
         "July-2025",
         "August-2025",
         "September-2025",
