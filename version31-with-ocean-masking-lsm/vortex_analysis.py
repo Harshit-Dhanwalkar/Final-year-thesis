@@ -1,11 +1,11 @@
 """
-Vortex Structure Analysis for Bay of Bengal Monsoon Depressions
+Vortex Structure Analyses for Monsoon Depressions
 Uses ERA5 pressure-level data (u, v, vo, t, q, w, z) at 200/300/400/500/600/700/850 hPa.
 
-1. Vortex tilt vector                - displacement of vo max at 850 hPa vs 500 hPa over time
+1. Vortex tilt vector                - displacement of vo max at 850 hPa vs 200 hPa over time
 2. Cold-core intensity               - 850 hPa temperature anomaly relative to 300 km ambient ring
 3. Warm-core index                   - 400 hPa temperature anomaly (MD warm core peaks near 400 hPa)
-4. Vortex structure metric           - vo(850) <-> vo(500) difference tracks system coherence
+4. Vortex structure metric           - vo(850) <-> vo(200) difference tracks system coherence
 5. Integrated Vapour Transport (IVT) - moisture flux column-integral 850->300 hPa
 6. Orographic omega cross-section    - 700 hPa vertical velocity ±150 km across track
 7. All-tracks tilt comparison plot   - tilt magnitude for all ocean-originated tracks
@@ -40,13 +40,16 @@ warnings.filterwarnings("ignore", message="facecolor will have no effect", categ
 
 # Constants
 G = 9.80665  # m s⁻²
-SEARCH_RADIUS_DEG = 3.0    # vortex centre search radius around single-level track (°)
+L_v = 2.5e6      # J kg⁻¹ — latent heat of vaporisation
+RHO_W = 1000.0   # kg m⁻³ — water density
+
+SEARCH_RADIUS_DEG = 3.0  # vortex centre search radius around single-level track (°)
 AMBIENT_RING_KM   = 300.0  # radius for temperature anomaly background ring
 LEVELS = [850, 700,600, 500, 400, 300, 200]
 OMEGA_TRANSECT_KM = 150.0  # perpendicular transect half-width for omega cross-section
 
-# Module-level dataset cache.
-DS_CACHE = {} 
+# Module-level dataset cache
+DS_CACHE = {}
 
 # Data loading
 def load_level_at_time(pl_dir, t, level_hpa, year):
@@ -59,7 +62,7 @@ def load_level_at_time(pl_dir, t, level_hpa, year):
 
 
 # TODO: add all intermidiate levels
-# Analysis 1: Vortex tilt
+# Vortex tilt
 def compute_vortex_tilt(track_df, pl_dir,year, output_dir):
     """
     Compute the vortex tilt vector (850 hPa -> 200 hPa) at each track time step.
@@ -144,18 +147,17 @@ def compute_vortex_tilt(track_df, pl_dir,year, output_dir):
     return tilt_df
 
 
-# Analysis 2 & 3: Thermal structure - cold-core + warm-core 
+# Thermal structure - cold-core + warm-core 
 def compute_thermal_structure(track_df, pl_dir,year, output_dir):
     """
     At each track time step extract:
       - T_850_anomaly : 850 hPa temperature minus ambient ring mean (cold core signal)
-      - T_400_anomaly : 400 hPa temperature minus ambient ring mean (warm core signal)
-      - T_200_anomaly : 200 hPa temperature minus ambient ring mean (top layer)
+      - T_200_anomaly : 200 hPa temperature minus ambient ring mean (warm core signal)
 
     Reference:
     Classical MD thermal structure (Rashid & Srinivasan 2005):
       Cold core: T_850_anomaly < 0  (−2 to −4 K at peak)
-      Warm core: T_400_anomaly > 0  (+1 to +3 K at peak)
+      Warm core: T_200_anomaly > 0  (+1 to +3 K at peak)
 
     When the cold core warms (anomaly -> 0) the system is weakening
     When it warms faster over terrain than over flat land -> terrain-induced dissipation
@@ -169,38 +171,32 @@ def compute_thermal_structure(track_df, pl_dir,year, output_dir):
         tlon = float(df["longitude"].iloc[i])
         tlat = float(df["latitude"].iloc[i])
 
-        level_hpa = LEVELS
-        for level in level_hpa:
+        rec = {"time": t}
+        for level in LEVELS:
+            rec[f"T{level}_centre"] = np.nan
+            rec[f"T{level}_anom"]   = np.nan
+
+        for level in LEVELS:
             ds = load_level_at_time(pl_dir, t, level , year)
-            rec = {
-                "time": t,
-                f"T{level}_centre": np.nan,
-                f"T{level}_anom": np.nan,
-            }
+            if ds is None or "t" not in ds:
+                continue
+            t_slice = ds["t"].squeeze()
 
-            for ds, key_t, key_a in [(ds, f"T{level}_centre", f"T{level}_anom")]:
-                if ds is None or "t" not in ds:
-                    continue
-                t_slice = ds["t"].squeeze()
-
+            try:
                 # Vortex centre temperature (interpolate to track position)
-                try:
-                    t_centre = float(t_slice.sel(
-                        latitude=tlat, longitude=tlon, method="nearest"
-                    ).values)
-                except Exception:
-                    t_centre = np.nan
+                t_centre = float(t_slice.sel(latitude=tlat, longitude=tlon, method="nearest").values)
+            except Exception:
+                t_centre = np.nan
+            t_amb = ambient_temperature(t_slice, tlat, tlon)
+            rec[f"T{level}_centre"] = t_centre
+            rec[f"T{level}_anom"]   = t_centre - t_amb
 
-                # Ambient ring mean
-                t_amb = ambient_temperature(t_slice, tlat, tlon)
-                theraml_sturcture_records[key_t] = t_centre
-                theraml_sturcture_records[key_a] = t_centre - t_amb
-            theraml_sturcture_records.append(rec)
+        theraml_sturcture_records.append(rec)
     therm_df = pd.DataFrame(theraml_sturcture_records)
 
     # Export
     os.makedirs(output_dir, exist_ok=True)
-    thermal_structure_CSV = os.path.join(output_dir, f"track_{track_id}_thermal_structure.csv")
+    thermal_structure_CSV = os.path.join(output_dir, f"Track_{track_id}_thermal_structure.csv")
     therm_df.to_csv(thermal_structure_CSV, index=False)
     std_print("EXPORT", "va", "Thermal structure", thermal_structure_CSV)
 
@@ -208,47 +204,46 @@ def compute_thermal_structure(track_df, pl_dir,year, output_dir):
     return therm_df
 
 
-# Analysis 4: Vorticity column coherence (850 - 500 hPa)
+# Vorticity column coherence (850 -> 200 hPa full column)
 def compute_vorticity_column(track_df, pl_dir,year, output_dir):
     """
     At each time step, extract the relative vorticity at the track centre
     for 850, 700, 600, 500, 400, 300, 200hPa
 
-    Δvo = vo_850 − vo_500 measures vortex column coherence.
+    Δvo = vo_850 − vo_200 measures vortex column coherence.
     When Δvo drops sharply (upper-level vorticity lags or reverses sign),
     the system is losing vertical coherence - a dissipation precursor.
 
     Reference:
-    Rashid & Srinivasan (2005) showed that positive vorticity at 850 and 500 hPa
+    Rashid & Srinivasan (2005) showed that positive vorticity at 850+700+500 hPa
     with negative vorticity at 200 hPa characterises a mature MD.
     """
     track_id = int(track_df["track_id"].iloc[0]) if "track_id" in track_df.columns else 0
     df = track_df.sort_values("time").reset_index(drop=True)
     times = pd.to_datetime(df["time"])
 
-    records = []
+    vorticity_column_records = []
     for i, t in enumerate(times):
-        tlon = float(df["longitude"].iloc[i])
-        tlat = float(df["latitude"].iloc[i])
+        lon_at_t = float(df["longitude"].iloc[i])
+        lat_at_t = float(df["latitude"].iloc[i])
         rec = {"time": t}
 
-        levels_hpa = LEVELS
-        for lvl in levels_hpa:
-            ds = load_level_at_time(pl_dir, t, lvl, year)
+        for level in LEVELS:
+            ds = load_level_at_time(pl_dir, t, level, year)
             if ds is None or "vo" not in ds:
-                rec[f"vo_{lvl}"] = np.nan
+                rec[f"vo_{level}"] = np.nan
                 continue
             vo_slice = ds["vo"].squeeze()
 
             try:
-                vo_val = float(vo_slice.sel(latitude=tlat, longitude=tlon, method="nearest").values)
+                vo_val = float(vo_slice.sel(latitude=lat_at_t, longitude=lon_at_t, method="nearest").values)
             except Exception:
                 vo_val = np.nan
-            rec[f"vo_{lvl}"] = vo_val
-        records.append(rec)
+            rec[f"vo_{level}"] = vo_val
+        vorticity_column_records.append(rec)
 
-    col_df = pd.DataFrame(records)
-    col_df["delta_vo_850_500"] = col_df["vo_850"] - col_df["vo_500"]
+    col_df = pd.DataFrame(vorticity_column_records)
+    col_df["delta_vo_850_200"] = col_df["vo_850"] - col_df["vo_200"]
 
     # Export
     os.makedirs(output_dir, exist_ok=True)
@@ -260,7 +255,7 @@ def compute_vorticity_column(track_df, pl_dir,year, output_dir):
     return col_df
 
 
-# Analysis 5 Integrated Vapour Transport (IVT)
+# Integrated Vapour Transport (IVT)
 def compute_ivt(track_df, pl_dir, year, output_dir):
     """
     IVT = (1/g) * sqrt( (Σ q·u·Δp)² + (Σ q·v·Δp)² )
@@ -271,7 +266,7 @@ def compute_ivt(track_df, pl_dir, year, output_dir):
     A drop in IVT during the land phase - especially over terrain - indicates that orographic 
     blocking is cutting off the moisture flux that sustains the MD's convection
     Reference threshold: IVT < 250 kg m⁻¹ s⁻¹ is considered below the threshold for sustained
-    deep convection in tropical systems (high-end estimates for intense monsoon systems are 500–800)
+    deep convection in tropical systems (high-end estimates for intense monsoon systems are 200–800)
     """
     track_id = int(track_df["track_id"].iloc[0]) if "track_id" in track_df.columns else 0
     df = track_df.sort_values("time").reset_index(drop=True)
@@ -288,15 +283,16 @@ def compute_ivt(track_df, pl_dir, year, output_dir):
         else:
             dp.append((levels_hpa[j-1] - levels_hpa[j+1]) * 100 / 2)
 
-    records = []
+    ivt_records = []
     for i, t in enumerate(times):
         tlon = float(df["longitude"].iloc[i])
         tlat = float(df["latitude"].iloc[i])
 
-        sum_qu, sum_qv = 0.0, 0.0
+        sum_qu = 0.0
+        sum_qv = 0.0
         valid = True
-        for lvl, dpj in zip(levels_hpa, dp):
-            ds = load_level_at_time(pl_dir, t, lvl, year)
+        for level, dpj in zip(levels_hpa, dp):
+            ds = load_level_at_time(pl_dir, t, level, year)
             if ds is None or "q" not in ds or "u" not in ds or "v" not in ds:
                 valid = False
                 break
@@ -312,28 +308,104 @@ def compute_ivt(track_df, pl_dir, year, output_dir):
                 break
 
         ivt = float(np.sqrt(sum_qu**2 + sum_qv**2) / G) if valid else np.nan
-        records.append({
+        ivt_records.append({
             "time": t,
             "IVT": ivt,
             "IVT_u": float(abs(sum_qu) / G) if valid else np.nan,
             "IVT_v": float(abs(sum_qv) / G) if valid else np.nan
         })
-
-    ivt_df = pd.DataFrame(records)
+    ivt_df = pd.DataFrame(ivt_records)
 
     # Export
     os.makedirs(output_dir, exist_ok=True)
     ivt_CSV = os.path.join(output_dir, f"track_{track_id}_ivt.csv")
     ivt_df.to_csv(ivt_CSV, index=False)
-    std_print("EXPORT", "va", f"Track {track_id} IVT", ivt_CSV)
+    std_print("EXPORT", "va", f"Track {track_id}: IVT", ivt_CSV)
 
     plot_ivt(ivt_df, track_df, track_id, output_dir)
     return ivt_df
 
+#  Precipitation Recycling Ratio
+# TODO: this is the simplified single-column Budyko formulation, not the full
+# two-dimensional recycling ratio which requires wind field integration across
+# the domain.
+def compute_recycling_ratio(track_df, track_id, output_dir, buffer_km=100.0):
+    """
+    Precipitation recycling ratio along the MD track.
+ 
+    recycling_ratio (ρ) = local_evaporation / total_precipitation
+ 
+    Uses ERA5 single-level fields already loaded in track_df:
+      - LHF (avg_slhtf, W m⁻²) -> E (mm h⁻¹) via latent heat of vaporisation
+      - TP (tp, m h⁻¹)
+ 
+    ρ ≈ 0   -> rainfall is almost entirely advected moisture (oceanic source)
+    ρ -> 1  -> rainfall is mostly recycled from local land evaporation -> Brown Ocean Effect signature
+ 
+    Reference: Eltahir & Bras (1996) define ρ as the fraction of
+    precipitation that originates from within the region of interest.
+    For tropical land systems, ρ > 0.25 is considered significant local
+    moisture recycling. 
+    """
+    track_id = int(track_id)
+    df = track_df.sort_values("time").reset_index(drop=True)
+ 
+    # Require both LHF and TP columns
+    lhf_col = None
+    for candidate in ["avg_slhtf", "slhf", "lhf"]:
+        if candidate in df.columns:
+            lhf_col = candidate
+            break
+    tp_col = None
+    for candidate in ["tp", "total_precipitation"]:
+        if candidate in df.columns:
+            tp_col = candidate
+            break
+ 
+    if lhf_col is None or tp_col is None:
+        # std_print("WARN", "va","Recycling ratio requires LHF and TP columns", f"available: {list(df.columns)}")
+        return pd.DataFrame()
+ 
+    times = pd.to_datetime(df["time"])
+    is_land_arr = df["is_land"].values.astype(bool) \
+        if "is_land" in df.columns else np.ones(len(df), bool)
+ 
+    # ERA5 LHF is negative downward (convention: positive = upward = evaporation)
+    lhf_vals = df[lhf_col].values.astype(float) # W m⁻²
+    tp_vals  = df[tp_col].values.astype(float)  # m (accumulated per step)
+ 
+    # Convert LHF (W m⁻²) -> evaporation rate (mm h⁻¹)
+    # E = LHF / (L_v * rho_w) in m s⁻¹, 
+    E_m_s = (np.abs(lhf_vals) / (L_v * RHO_W))
+    E_mm_h = E_m_s * 3600.0 * 1000.0
+ 
+    # TP is hourly accumulated (m) -> mm h⁻¹
+    P_mm_h = tp_vals * 1000.0
+    P_mm_h = np.clip(P_mm_h, 0, None)   # negative TP is deaccumulation artefact
+ 
+    # Recycling ratio: ρ = E / P, clipped [0, 1]
+    with np.errstate(divide="ignore", invalid="ignore"):
+        rho = np.where(P_mm_h >= 0.01, np.clip(E_mm_h / P_mm_h, 0, 1), np.nan)
+ 
+    records = pd.DataFrame({
+        "time": times,
+        "is_land": is_land_arr,
+        "LHF_Wm2": lhf_vals,
+        "E_mm_h": E_mm_h,
+        "P_mm_h": P_mm_h,
+        "recycling_ratio": rho,
+    })
+ 
+    os.makedirs(output_dir, exist_ok=True)
+    csv_path = os.path.join(output_dir, f"track_{track_id}_recycling_ratio.csv")
+    records.to_csv(csv_path, index=False)
+    std_print("EXPORT", "va", f"Track {track_id} recycling ratio", csv_path)
+ 
+    plot_recycling_ratio(records, track_id, output_dir)
+    return records
 
 
-
-# All-tracks tilt comparison 
+# All-tracks tilt comparison
 def plot_all_tracks_tilt_comparison(tilt_results, track_dict, output_dir):
     """
     Overlay tilt magnitude time series for all tracks on a single plot,
@@ -397,7 +469,7 @@ def plot_all_tracks_tilt_comparison(tilt_results, track_dict, output_dir):
     ax.axvline(0, color="red", linestyle="--", linewidth=1.8, label="Landfall (t = 0)")
     ax.axhline(0, color="gray", linewidth=0.5)
     ax.set_xlabel("Hours relative to landfall", fontsize=12, fontweight="bold")
-    ax.set_ylabel("Vortex tilt 850 -> 500 hPa (km)", fontsize=12, fontweight="bold")
+    ax.set_ylabel("Vortex tilt 850 -> 200 hPa (km)", fontsize=12, fontweight="bold")
     # "Diamonds = land-phase points.  Rising tilt after landfall = terrain-induced decoupling",
     ax.set_title("All Tracks: Vortex Tilt Evolution", fontsize=13, fontweight="bold")
     ax.grid(True, alpha=0.3, linestyle="--")
@@ -460,6 +532,13 @@ def run_vortex_analysis(track_dict, pl_dir, year, output_dir):
             std_print("ERROR", "va", f"Track {track_id} omega failed", str(e))
             traceback.print_exc()
 
+        std_print("INFO", "va", f"Track {track_id} - recycling ratio")
+        try:
+            compute_recycling_ratio(track_df, track_id, track_out)
+        except Exception as e:
+            std_print("ERROR", "va", f"Track {track_id} recycling ratio failed", str(e))
+            traceback.print_exc()
+
     # Global comparison
     std_print("INFO", "va", "Global - all-tracks tilt comparison")
     try:
@@ -472,7 +551,7 @@ def run_vortex_analysis(track_dict, pl_dir, year, output_dir):
     return {"tilt": tilt_results, "thermal": therm_results}
 
 
-# Helper function
+# Helper functions
 def load_pl_level(pl_dir, month_str, level_hpa):
     """Load one pressure-level month file.  Returns None if file missing"""
     cache_key = (month_str, level_hpa)
@@ -717,9 +796,9 @@ def plot_vortex_tilt(tilt_df, track_df, track_id, output_dir):
             bbox=bbox,
             family="monospace"
         )
-    ax.set_ylabel("Tilt 850->500 hPa (km)", fontsize=12, fontweight="bold")
+    ax.set_ylabel("Tilt 850->200 hPa (km)", fontsize=12, fontweight="bold")
     ax.set_title(
-        f"Track {track_id}: Vortex Tilt\n(850 hPa -> 500 hPa vorticity centre displacement)",
+        f"Track {track_id}: Vortex Tilt\n(850 hPa -> 200 hPa vorticity centre displacement)",
         fontsize=13,
         fontweight="bold"
     )
@@ -903,7 +982,7 @@ def plot_thermal_structure(therm_df, track_df, track_id, output_dir):
 
 
 def plot_vorticity_column(col_df, track_df, track_id, output_dir):
-    """Two-panel: vorticity at 4 levels as line plot, and Δvo(850-500) below
+    """Two-panel: vorticity at 4 levels as line plot, and Δvo(850-200) below
     Mature MD: positive at 850+700+500 hPa, negative (anticyclonic) at 300+200 hPa
     """
     times = pd.to_datetime(col_df["time"])
@@ -968,8 +1047,8 @@ def plot_vorticity_column(col_df, track_df, track_id, output_dir):
     ax1.grid(True, alpha=0.3, linestyle="--")
     ax1.legend(loc="upper right", **legend_style({"fontsize": 9}))
 
-    # Δvo(850-500)
-    delta = col_df["delta_vo_850_500"].values * 1e4
+    # Δvo(850-200)
+    delta = col_df["delta_vo_850_200"].values * 1e4
     ax2.plot(
         times,
         delta,
@@ -978,7 +1057,7 @@ def plot_vorticity_column(col_df, track_df, track_id, output_dir):
         linewidth=2.0,
         markersize=4,
         alpha=0.85,
-        label="Δvo = vo(850) − vo(500)  (x10⁻⁴ s⁻¹)"
+        label="Δvo = vo(850) − vo(200)  (x10⁻⁴ s⁻¹)"
     )
     ax2.fill_between(
         times,
@@ -1002,7 +1081,7 @@ def plot_vorticity_column(col_df, track_df, track_id, output_dir):
     ax2.set_ylabel("Δvo (x10⁻⁴ s⁻¹)", fontsize=12, fontweight="bold")
     ax2.set_xlabel("Time", fontsize=12, fontweight="bold")
     ax2.set_title(
-        "Column coherence: Δvo(850−500)\n"
+        "Column coherence: Δvo(850−200)\n"
         "Drop to zero = system losing vertical structure",
         fontsize=13,
         fontweight="bold"
@@ -1013,13 +1092,19 @@ def plot_vorticity_column(col_df, track_df, track_id, output_dir):
     plt.tight_layout()
 
     # Save
-    vorticity_column_path = os.path.join(output_dir, f"track_{track_id}_vorticity_column.png")
+    vorticity_column_path = os.path.join(output_dir, f"Track_{track_id}_vorticity_column.png")
     plt.savefig(vorticity_column_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
     std_print("SAVED", "va", "Vorticity column plot", vorticity_column_path)
 
 
 # Omega cross-section at 700 hPa
+# INFO:
+# Why 700 hPa for omega? 700 hPa is the level where orographic uplift signal is
+# strongest over the Eastern Ghats (~1500 m peak elevation = ~850 hPa surface, so
+# forced ascent signal propagates to ~700 hPa). It's also above boundary layer so
+# it captures free-tropospheric vertical motion rather than surface-forced turbulence.
+# 500 hPa would show weaker signal because it's above most of orographic forcing.
 def compute_omega_cross_section(track_df, pl_dir,year, output_dir):
     """
     At each land-phase time step, extract 700 hPa omega (Pa/s) along a
@@ -1118,3 +1203,104 @@ def compute_omega_cross_section(track_df, pl_dir,year, output_dir):
     omega_csv_path = os.path.join(output_dir, f"track_{track_id}_omega_cross_section.csv")
     omega_out.to_csv(omega_csv_path)
     std_print("EXPORT", "va", "Omega cross-section CSV", omega_csv_path)
+
+
+def plot_recycling_ratio(rr_df, track_id, output_dir):
+    """Plot recycling ratio and component fluxes alongside land/ocean phase"""
+    times = pd.to_datetime(rr_df["time"])
+    is_land = rr_df["is_land"].values.astype(bool)
+    rho = rr_df["recycling_ratio"].values
+    E = rr_df["E_mm_h"].values
+    P = rr_df["P_mm_h"].values
+ 
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 10), sharex=True)
+ 
+    shade_kw = dict(transform=ax1.get_xaxis_transform(), zorder=0, alpha=0.35)
+    for ax in (ax1, ax2):
+        ax.fill_between(
+            times,
+            0,
+            1,
+            where=is_land,
+            color="wheat",
+            **shade_kw,
+            label="Land phase"
+        )
+        ax.fill_between(
+            times,
+            0,
+            1,
+            where=~is_land,
+            color="lightblue",
+            **shade_kw,
+            label="Ocean phase"
+        )
+        for i in range(1, len(is_land)):
+            if not is_land[i-1] and is_land[i]:
+                ax.axvline(
+                    times.iloc[i],
+                    color="red",
+                    linestyle="--",
+                    linewidth=1.8,
+                    label="Landfall",
+                    zorder=5
+                )
+                break
+ 
+    # Panel 1: ρ (recycling ratio)
+    ax1.plot(
+        times,
+        rho,
+        "-o",
+        color="teal",
+        linewidth=2.2,
+        markersize=5,
+        alpha=0.85,
+        label="Recycling ratio ρ = E / P"
+    )
+    ax1.axhline(0.25, color="darkorange", linestyle="--", linewidth=1.5, label="ρ = 0.25  (significant local recycling)")
+    ax1.axhline(0, color="gray", linewidth=0.5)
+    ax1.set_ylim(-0.05, 1.05)
+    ax1.set_ylabel("Recycling ratio ρ", fontsize=12, fontweight="bold")
+    ax1.set_title(
+        f"Track {track_id}: Precipitation Recycling Ratio  ρ = E / P\n"
+        "ρ → 1: rainfall is locally recycled (BOE signature)  |  "
+        "ρ → 0: rainfall from advected oceanic moisture",
+        fontsize=12, fontweight="bold"
+    )
+    ax1.grid(True, alpha=0.3, linestyle="--")
+    ax1.legend(loc="upper right", **legend_style({"fontsize": 9}))
+ 
+    # Panel 2: E and P fluxes
+    ax2.plot(
+        times,
+        P,
+        "-o",
+        color="royalblue",
+        linewidth=2.0,
+        markersize=4,
+        alpha=0.85,
+        label="Precipitation P (mm h⁻¹)"
+    )
+    ax2.plot(
+        times,
+        E,
+        "-o",
+        color="tomato",
+        linewidth=2.0,
+        markersize=4,
+        alpha=0.85,
+        label="Evaporation E from LHF (mm h⁻¹)"
+    )
+    ax2.set_ylabel("Flux (mm h⁻¹)", fontsize=12, fontweight="bold")
+    ax2.set_xlabel("Time", fontsize=12, fontweight="bold")
+    ax2.grid(True, alpha=0.3, linestyle="--")
+    ax2.legend(loc="upper right", **legend_style({"fontsize": 9}))
+    plt.setp(ax2.xaxis.get_majorticklabels(), rotation=45, ha="right")
+    plt.tight_layout()
+
+    # Save
+    recycling_ratio_path = os.path.join(output_dir, f"track_{track_id}_recycling_ratio.png")
+    plt.savefig(recycling_ratio_path, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+    std_print("SAVED", "va", "Recycling ratio plot", recycling_ratio_path)

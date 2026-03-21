@@ -119,14 +119,10 @@ def plot_tracks_elevation(track_df, track_id, vrt_path, output_dir):
         std_print("WARN", "ev", "No tracks to visualize")
         return None
     std_print("INFO", "ev", f"Input track {track_id} points", len(track_df))
-    std_print(
-        "INFO",
-        "ev",
-        f"Input track {track_id} length",
-        len(track_df["track_id"].unique()),
+    elevation_plot_dir = os.path.join(
+        output_dir, f"track_{track_id}", "elevation_analysis"
     )
-    plot_dir = os.path.join(output_dir, f"track_{track_id}", "elevation_analysis")
-    os.makedirs(plot_dir, exist_ok=True)
+    os.makedirs(elevation_plot_dir, exist_ok=True)
 
     track_df = track_df.copy()
     # if "month" not in track_df.columns:
@@ -327,7 +323,7 @@ def plot_tracks_elevation(track_df, track_id, vrt_path, output_dir):
 
             # Save
             elevation_mosaic = f"track_{track_id}_elevation_mosaic.png"
-            elevation_mosaic_path = os.path.join(plot_dir, elevation_mosaic)
+            elevation_mosaic_path = os.path.join(elevation_plot_dir, elevation_mosaic)
             plt.savefig(elevation_mosaic_path, dpi=300, bbox_inches="tight")
             plt.close(fig)
             std_print("SAVED", "ev", "Elevation visualization", elevation_mosaic_path)

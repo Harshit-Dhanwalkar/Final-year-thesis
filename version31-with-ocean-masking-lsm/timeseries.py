@@ -644,7 +644,6 @@ def extract_heat_flux_timeseries(ds, track_df, track_id, buffer_km=100):
                 }
             )
             # std_print("DEBUG", "ts", f'Successfully extracted fluxes at {t_now}: LHF={slhf_w:.1f}, SHF={sshf_w:.1f}')
-            std_print("INFO", "ts", "Extracted heat flux points", len(flux_records))
         except Exception as e:
             std_print("ERROR", "ts", f"Processing time step at {t_now}", str(e))
             traceback.print_exc()
@@ -652,6 +651,7 @@ def extract_heat_flux_timeseries(ds, track_df, track_id, buffer_km=100):
     if not flux_records:
         std_print("ERROR", "ts", "No heat-flux data extracted")
         return None
+    std_print("INFO", "ts", "Extracted heat-flux points", len(flux_records))
     return pd.DataFrame(flux_records)
 
 

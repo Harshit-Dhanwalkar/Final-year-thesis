@@ -205,8 +205,8 @@ MONSOON_SEASONS = {
         "September-2023",
     ],
     2024: [
-        # "June-2024",
-        # "July-2024",
+        "June-2024",
+        "July-2024",
         "August-2024",
         "September-2024",
     ],
@@ -2128,6 +2128,7 @@ def load_dataset_async(month_dirs, data_dir, result_container):
         result_container["error"] = ("No netCDF files found in the specified directories")
         result_container["success"] = False
         return
+
     try:
         # FIX: Issue: .compute() loads entire dataset into memory, Could cause OOM for very large datasets
         ds = xr.open_mfdataset(
@@ -2652,7 +2653,6 @@ if __name__ == "__main__":
                 if flux_df is not None:
                     flux_dict[track_id] = flux_df.copy()  # store for coupling metrics
                     # std_print('DEBUG', 'md', 'flux columns', list(flux_df.columns))
-                    std_print("INFO", "md", "No. of heat flux data extracted points", len(flux_df))
                     flux_analysis = analyze_heat_flux_evolution(flux_df, track_id)
                     if flux_analysis:
                         all_flux_results.append(
@@ -3008,125 +3008,125 @@ if __name__ == "__main__":
 
         # 7. Global Statistical Analysis
         std_print("INFO", "md", "--- Global Statistical Analysis ---")
-        # std_print("DEBUG", "md", "Skipping Global Statistical Analysis")
-        try:
-           if (
-                all_asm_results is not None and
-                isinstance(all_asm_results, pd.DataFrame) and
-                not all_asm_results.empty
-               ):
-               asm_df = all_asm_results.copy()
-               std_print("INFO", "md", "ASM data from antecedent analysis", len(asm_df))
-           else:
-               std_print("WARN", "md", "No ASM data available", "Skipping statistical analyses")
-               asm_df = pd.DataFrame()
-           clay_data_path = os.path.join("..", "Data", "soil", "clay_percentage.csv")
-
-           # Only run statistical analyses if both coupling and ASM data exist
-           coupling_metrics_FSI_CSV = os.path.join(coupling_metrics_dir, "coupling_metrics_FSI.csv")
-           if not asm_df.empty and os.path.exists(coupling_metrics_FSI_CSV):
-               std_print("INFO", "sa", "--- Starting Statistical Analyses ---")
-               fsi_df_stats = pd.read_csv(coupling_metrics_FSI_CSV)
-               std_print("INFO", "sa", "Loaded coupling data", coupling_metrics_FSI_CSV)
-               std_print("DEBUG", "sa", "Columns available", str(list(fsi_df_stats.columns)))
-               stats_results = {}
-
-               # 1. ASM-FSI relationship
-               std_print("INFO", "sa", "--- Analyzing ASM-FSI relationship ---")
-               try:
-                   stats_results["asm_fsi"] = analyze_asm_fsi_relationship(
-                       fsi_df_stats, asm_df, output_dir
-                   )
-               except Exception as e:
-                   std_print("ERROR", "md", "ASM-FSI analysis failed", str(e))
-                   stats_results["asm_fsi"] = {}
-
-               # 2. GAM nonlinearity (skip if < 10 tracks)
-               std_print("INFO", "sa", "--- Running GAM nonlinear analysis ---")
-               MIN_GAM_TRACKS = 10
-               if len(fsi_df_stats) >= MIN_GAM_TRACKS:
-                   try:
-                       stats_results["gam"] = analyze_gam_nonlinearity(fsi_df_stats, output_dir)
-                   except Exception as e:
-                       std_print("ERROR", "md", "GAM analysis failed", str(e))
-                       stats_results["gam"] = {}
-               else:
-                   std_print("WARN", "sa", "Skipping GAM",
-                             f"Need ≥{MIN_GAM_TRACKS} tracks, have {len(fsi_df_stats)}")
-                   stats_results["gam"] = {
-                       "status": "skipped",
-                       "reason": f"Only {len(fsi_df_stats)} tracks (need ≥{MIN_GAM_TRACKS})"
-                   }
-
-               # 3. Granger causality
-               std_print("INFO", "sa", "--- Testing Granger causality ---")
-               try:
-                   stats_results["granger"] = test_granger_causality(fsi_df_stats, output_dir)
-               except Exception as e:
-                   std_print("ERROR", "md", "Granger analysis failed", str(e))
-                   stats_results["granger"] = {}
-
-               # 4. TSI from elevation data
-               std_print("INFO", "sa", "--- Analyzing TSI with elevation data ---")
-               try:
-                   elevation_metrics_df = load_elevation_metrics(output_dir)
-                   if elevation_metrics_df is not None and not elevation_metrics_df.empty:
-                       stats_results["tsi"] = analyze_tsi(
-                           elevation_metrics_df, fsi_df_stats, output_dir
-                       )
-                   else:
-                       std_print("WARN", "sa", "Skipping TSI analysis", "Elevation metrics not available")
-                       stats_results["tsi"] = {
-                           "status": "skipped",
-                           "reason": "Elevation metrics file not found",
-                       }
-               except Exception as e:
-                   std_print("ERROR", "md", "TSI analysis failed", str(e))
-                   stats_results["tsi"] = {}
-
-               # 5. Write summary report
-               write_statistical_summary(stats_results, fsi_df_stats, output_dir)
-
-               if stats_results:
-                   std_print("INFO", "md", "Statistical analyses completed successfully")
-                   summary_report_path = os.path.join(output_dir, "Analysis_summary_report.txt")
-                   if os.path.exists(summary_report_path):
-                       with open(summary_report_path, "a") as f:
-                           f.write("\n7. Statistical Analysis Results\n\n")
-                           if stats_results.get("asm_fsi"):
-                               f.write(f"  (ASM-FSI): r = {stats_results['asm_fsi'].get('correlation', 'N/A'):.3f}\n")
-                           if stats_results.get("gam"):
-                               gam_r2 = stats_results["gam"].get("r_squared", "N/A")
-                               r2_str = f"{gam_r2:.3f}" if isinstance(gam_r2, (int, float)) else "N/A"
-                               f.write(f"  (GAM plateau): r-squared = {r2_str}\n")
-                           if stats_results.get("granger"):
-                               f.write(f"  (Granger causality): p = {stats_results['granger'].get('pearson_p', 'N/A')}\n")
-                           tsi_dur_corr = stats_results.get("tsi", {}).get("tsi_duration_correlation")
-                           if tsi_dur_corr is not None and isinstance(tsi_dur_corr, (int, float, np.number)):
-                               f.write(f"  (TSI-duration): r = {tsi_dur_corr:.3f}\n")
-                           else:
-                               f.write("  (TSI-duration): r = N/A\n")
-               else:
-                   std_print("WARN", "md", "Statistical analyses returned no results")
-           else:
-               std_print("WARN", "md", "Insufficient data for statistical analyses", "Check coupling metrics and ASM files")
-        except Exception as e:
-            std_print("ERROR", "md", "Statistical analyses failed", str(e))
-            traceback.print_exc()
-        std_print("DEBUG", "md", "Total tracks", len(full_track_df['track_id'].unique()))
-        std_print("DEBUG", "md", "Correlation results", len(all_correlation_results))
-        # std_print("DEBUG", "md", "FSI data shape", f"{fsi_df.shape if fsi_df is not None else 'None'}")
-        # std_print("DEBUG", "md", "FSI columns", f"{list(fsi_df.columns) if fsi_df is not None else 'None'}")
-        std_print("DEBUG", "md", "FSI data shape", fsi_df.shape)
-        std_print("DEBUG", "md", "FSI columns", list(fsi_df.columns))
-        if fsi_df is not None and not fsi_df.empty:
-            missing_for_stats = []
-            for col in ["mean_tp", "mean_swvl1", "pearson_r", "pearson_p"]:
-                if col not in fsi_df.columns:
-                    missing_for_stats.append(col)
-            if missing_for_stats:
-                std_print("WARN", "md", "Missing columns for stats", str(missing_for_stats))
-                std_print("DEBUG", "md", "Available columns", list(fsi_df.columns))
+        std_print("DEBUG", "md", "Skipping Global Statistical Analysis")
+        # try:
+        #    if (
+        #         all_asm_results is not None and
+        #         isinstance(all_asm_results, pd.DataFrame) and
+        #         not all_asm_results.empty
+        #        ):
+        #        asm_df = all_asm_results.copy()
+        #        std_print("INFO", "md", "ASM data from antecedent analysis", len(asm_df))
+        #    else:
+        #        std_print("WARN", "md", "No ASM data available", "Skipping statistical analyses")
+        #        asm_df = pd.DataFrame()
+        #    clay_data_path = os.path.join("..", "Data", "soil", "clay_percentage.csv")
+        #
+        #    # Only run statistical analyses if both coupling and ASM data exist
+        #    coupling_metrics_FSI_CSV = os.path.join(coupling_metrics_dir, "coupling_metrics_FSI.csv")
+        #    if not asm_df.empty and os.path.exists(coupling_metrics_FSI_CSV):
+        #        std_print("INFO", "sa", "--- Starting Statistical Analyses ---")
+        #        fsi_df_stats = pd.read_csv(coupling_metrics_FSI_CSV)
+        #        std_print("INFO", "sa", "Loaded coupling data", coupling_metrics_FSI_CSV)
+        #        std_print("DEBUG", "sa", "Columns available", str(list(fsi_df_stats.columns)))
+        #        stats_results = {}
+        #
+        #        # 1. ASM-FSI relationship
+        #        std_print("INFO", "sa", "--- Analyzing ASM-FSI relationship ---")
+        #        try:
+        #            stats_results["asm_fsi"] = analyze_asm_fsi_relationship(
+        #                fsi_df_stats, asm_df, output_dir
+        #            )
+        #        except Exception as e:
+        #            std_print("ERROR", "md", "ASM-FSI analysis failed", str(e))
+        #            stats_results["asm_fsi"] = {}
+        #
+        #        # 2. GAM nonlinearity (skip if < 10 tracks)
+        #        std_print("INFO", "sa", "--- Running GAM nonlinear analysis ---")
+        #        MIN_GAM_TRACKS = 10
+        #        if len(fsi_df_stats) >= MIN_GAM_TRACKS:
+        #            try:
+        #                stats_results["gam"] = analyze_gam_nonlinearity(fsi_df_stats, output_dir)
+        #            except Exception as e:
+        #                std_print("ERROR", "md", "GAM analysis failed", str(e))
+        #                stats_results["gam"] = {}
+        #        else:
+        #            std_print("WARN", "sa", "Skipping GAM",
+        #                      f"Need ≥{MIN_GAM_TRACKS} tracks, have {len(fsi_df_stats)}")
+        #            stats_results["gam"] = {
+        #                "status": "skipped",
+        #                "reason": f"Only {len(fsi_df_stats)} tracks (need ≥{MIN_GAM_TRACKS})"
+        #            }
+        #
+        #        # 3. Granger causality
+        #        std_print("INFO", "sa", "--- Testing Granger causality ---")
+        #        try:
+        #            stats_results["granger"] = test_granger_causality(fsi_df_stats, output_dir)
+        #        except Exception as e:
+        #            std_print("ERROR", "md", "Granger analysis failed", str(e))
+        #            stats_results["granger"] = {}
+        #
+        #        # 4. TSI from elevation data
+        #        std_print("INFO", "sa", "--- Analyzing TSI with elevation data ---")
+        #        try:
+        #            elevation_metrics_df = load_elevation_metrics(output_dir)
+        #            if elevation_metrics_df is not None and not elevation_metrics_df.empty:
+        #                stats_results["tsi"] = analyze_tsi(
+        #                    elevation_metrics_df, fsi_df_stats, output_dir
+        #                )
+        #            else:
+        #                std_print("WARN", "sa", "Skipping TSI analysis", "Elevation metrics not available")
+        #                stats_results["tsi"] = {
+        #                    "status": "skipped",
+        #                    "reason": "Elevation metrics file not found",
+        #                }
+        #        except Exception as e:
+        #            std_print("ERROR", "md", "TSI analysis failed", str(e))
+        #            stats_results["tsi"] = {}
+        #
+        #        # 5. Write summary report
+        #        write_statistical_summary(stats_results, fsi_df_stats, output_dir)
+        #
+        #        if stats_results:
+        #            std_print("INFO", "md", "Statistical analyses completed successfully")
+        #            summary_report_path = os.path.join(output_dir, "Analysis_summary_report.txt")
+        #            if os.path.exists(summary_report_path):
+        #                with open(summary_report_path, "a") as f:
+        #                    f.write("\n7. Statistical Analysis Results\n\n")
+        #                    if stats_results.get("asm_fsi"):
+        #                        f.write(f"  (ASM-FSI): r = {stats_results['asm_fsi'].get('correlation', 'N/A'):.3f}\n")
+        #                    if stats_results.get("gam"):
+        #                        gam_r2 = stats_results["gam"].get("r_squared", "N/A")
+        #                        r2_str = f"{gam_r2:.3f}" if isinstance(gam_r2, (int, float)) else "N/A"
+        #                        f.write(f"  (GAM plateau): r-squared = {r2_str}\n")
+        #                    if stats_results.get("granger"):
+        #                        f.write(f"  (Granger causality): p = {stats_results['granger'].get('pearson_p', 'N/A')}\n")
+        #                    tsi_dur_corr = stats_results.get("tsi", {}).get("tsi_duration_correlation")
+        #                    if tsi_dur_corr is not None and isinstance(tsi_dur_corr, (int, float, np.number)):
+        #                        f.write(f"  (TSI-duration): r = {tsi_dur_corr:.3f}\n")
+        #                    else:
+        #                        f.write("  (TSI-duration): r = N/A\n")
+        #        else:
+        #            std_print("WARN", "md", "Statistical analyses returned no results")
+        #    else:
+        #        std_print("WARN", "md", "Insufficient data for statistical analyses", "Check coupling metrics and ASM files")
+        # except Exception as e:
+        #     std_print("ERROR", "md", "Statistical analyses failed", str(e))
+        #     traceback.print_exc()
+        # std_print("DEBUG", "md", "Total tracks", len(full_track_df['track_id'].unique()))
+        # std_print("DEBUG", "md", "Correlation results", len(all_correlation_results))
+        # # std_print("DEBUG", "md", "FSI data shape", f"{fsi_df.shape if fsi_df is not None else 'None'}")
+        # # std_print("DEBUG", "md", "FSI columns", f"{list(fsi_df.columns) if fsi_df is not None else 'None'}")
+        # std_print("DEBUG", "md", "FSI data shape", fsi_df.shape)
+        # std_print("DEBUG", "md", "FSI columns", list(fsi_df.columns))
+        # if fsi_df is not None and not fsi_df.empty:
+        #     missing_for_stats = []
+        #     for col in ["mean_tp", "mean_swvl1", "pearson_r", "pearson_p"]:
+        #         if col not in fsi_df.columns:
+        #             missing_for_stats.append(col)
+        #     if missing_for_stats:
+        #         std_print("WARN", "md", "Missing columns for stats", str(missing_for_stats))
+        #         std_print("DEBUG", "md", "Available columns", list(fsi_df.columns))
 
         # 8. Final Summaries and Report Generation
         std_print("INFO", "md", "--- Overall Classification Summary ---")

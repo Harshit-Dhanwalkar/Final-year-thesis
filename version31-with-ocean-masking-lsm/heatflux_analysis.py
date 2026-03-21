@@ -6,6 +6,10 @@
 5. Duration-dependent analysis of MD behavior
 """
 
+# INFO :
+# 1. recycling_ratio = (local_evaporation) / (total_rainfall) computed via vortenx_analysis.py
+# TODO: Plot timeseries of recycling_ratio
+
 import os
 import numpy as np
 import pandas as pd
