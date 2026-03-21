@@ -1506,7 +1506,7 @@ def plot_tracks(track_df, output_dir="output"):
     fig = plt.figure(figsize=(14, 11))
     ax: GeoAxes = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())  # type: ignore[assignment]
     # ax.set_extent([70, 100, 5, 30], crs=ccrs.PlateCarree())
-    ax.set_extent([clipped_min_lon, clipped_max_lon, clipped_min_lat, clipped_max_lat], crs=ccrs.PlateCarree(),)
+    ax.set_extent([clipped_min_lon, clipped_max_lon, clipped_min_lat, clipped_max_lat], crs=ccrs.PlateCarree())
     ax.add_feature(cfeature.LAND, facecolor="lightgray", edgecolor="black", linewidth=0.5)
     ax.add_feature(cfeature.OCEAN, facecolor="lightblue")
     ax.add_feature(cfeature.LAKES, facecolor="lightblue")
@@ -2554,7 +2554,7 @@ if __name__ == "__main__":
                 hov_dir, times, landfall_idx = compute_azimuthal_hovmoller_sectors(ds, track_df, radii_km, variables, n_theta=16)
                 hov_avg = average_azimuthally(hov_dir, variables)
                 for var in variables:
-                    plot_hovmoller_azimuthal_average(hov_avg[var], times, radii_km, var, track_df, track_id, output_dir, landfall_idx,)
+                    plot_hovmoller_azimuthal_average(hov_avg[var], times, radii_km, var, track_df, track_id, output_dir, landfall_idx)
             except Exception as e:
                 std_print("ERROR", "md", f"Hovmöller computation failed for Track {track_id}", str(e))
                 traceback.print_exc()
@@ -2719,7 +2719,7 @@ if __name__ == "__main__":
                         for _, row in track_df.iterrows():
                             try:
                                 # FIX: use extract_and_average_variable()
-                                subset = extract_spatial_subset(ds, row["latitude"], row["longitude"], pd.to_datetime(row["time"]), buffer_km=100, time_coord=time_coord,)
+                                subset = extract_spatial_subset(ds, row["latitude"], row["longitude"], pd.to_datetime(row["time"]), buffer_km=100, time_coord=time_coord)
                                 if subset is not None and "swvl1" in subset.data_vars:
                                     sm_val = float(subset["swvl1"].mean().values)
                                     if not np.isnan(sm_val):
@@ -2888,7 +2888,7 @@ if __name__ == "__main__":
         # try:
         #     fsi_df = compute_fsi_all_tracks(correlation_df, track_dict, ds)
         #     hdt_dir = os.path.abspath("../Data/Elevation/HGT-files/")
-        #     elevation_metrics = run_elevation_analysis(tracks_df=full_track_df, coupling_df=fsi_df, output_dir=output_dir, hgt_dir=hdt_dir,)
+        #     elevation_metrics = run_elevation_analysis(tracks_df=full_track_df, coupling_df=fsi_df, output_dir=output_dir, hgt_dir=hdt_dir)
         #     if not elevation_metrics.empty:
         #         std_print("INFO", "md", "Elevation analysis complete", f"{len(elevation_metrics)} tracks with TSI computed")
         #         std_print(None, None, f"  Mean TSI: {elevation_metrics['TSI'].mean():.3f}")

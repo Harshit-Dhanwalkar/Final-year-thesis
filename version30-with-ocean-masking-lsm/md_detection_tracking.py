@@ -2569,27 +2569,27 @@ if __name__ == "__main__":
 
             # 7) Generate Hovmöller Plots
             print(f"\n-------------------------------------- Azimuthal Hovmoller Plots for Track {track_id} --------------------------------------")
-            std_print('DEBUG', 'md', f'Skipping Hovmöller for Track {track_id}')
-            # hov_dir = os.path.join(track_dir, "hovmoller")
-            # os.makedirs(hov_dir, exist_ok=True)
-            # try:
-            #     radii_km = [0] + radii
-            #     hov_dir, track_times_arr, landfall_index, per_radius_lf = compute_azimuthal_hovmoller_sectors(
-            #         ds, track_df, radii_km, variables, n_theta=16, lsm_2d=LSM_DA
-            #     )
-            #     hov_avg = average_azimuthally(hov_dir, variables, radii_km=radii_km)
-            #     if "swvl1" in hov_avg and hov_avg["swvl1"] is not None:
-            #         hov_avg["dswvl1_dt"] = compute_swvl1_tendency(hov_avg["swvl1"], track_times_arr)
-            #     plot_vars = list(variables) + (["dswvl1_dt"] if "dswvl1_dt" in hov_avg else [])
-            #     for var in plot_vars:
-            #         if var in hov_avg:
-            #             plot_hovmoller_azimuthal_average(
-            #                 hov_avg[var], track_times_arr, radii_km, var,
-            #                 track_df, track_id, output_dir, landfall_index, per_radius_lf
-            #             )
-            # except Exception as e:
-            #     std_print("ERROR", "md", "Hovmöller computation failed", str(e))
-            #     traceback.print_exc()
+            # std_print('DEBUG', 'md', f'Skipping Hovmöller for Track {track_id}')
+            hov_dir = os.path.join(track_dir, "hovmoller")
+            os.makedirs(hov_dir, exist_ok=True)
+            try:
+                radii_km = [0] + radii
+                hov_dir, track_times_arr, landfall_index, per_radius_lf = compute_azimuthal_hovmoller_sectors(
+                    ds, track_df, radii_km, variables, n_theta=16, lsm_2d=LSM_DA
+                )
+                hov_avg = average_azimuthally(hov_dir, variables, radii_km=radii_km)
+                if "swvl1" in hov_avg and hov_avg["swvl1"] is not None:
+                    hov_avg["dswvl1_dt"] = compute_swvl1_tendency(hov_avg["swvl1"], track_times_arr)
+                plot_vars = list(variables) + (["dswvl1_dt"] if "dswvl1_dt" in hov_avg else [])
+                for var in plot_vars:
+                    if var in hov_avg:
+                        plot_hovmoller_azimuthal_average(
+                            hov_avg[var], track_times_arr, radii_km, var,
+                            track_df, track_id, output_dir, landfall_index, per_radius_lf
+                        )
+            except Exception as e:
+                std_print("ERROR", "md", "Hovmöller computation failed", str(e))
+                traceback.print_exc()
 
             # # 8) Antecedent Soil Moisture Analysis
             # print(f"\n----------------------------------Antecedent Soil Moisture Analysis for Track {track_id} ----------------------------------")
@@ -2606,31 +2606,31 @@ if __name__ == "__main__":
             #     std_print("ERROR", "md", "ASM analysis failed", str(e))
             #     traceback.print_exc()
 
-            # # 9) Correlation analysis (swvl1 vs tp vs heat flux)
-            # print(f"\n---------------------------------------- Correlation analysis for Track {track_id} ----------------------------------------")
-            std_print("DEBUG", "md", f"Skipping Correlation Analysis for Track {track_id}")
-            # correlation_dir = os.path.join(track_dir, "correlation_analysis")
-            # os.makedirs(correlation_dir, exist_ok=True)
-            # # correlation_result = analyze_single_track(ds, track_df, track_id, buffer_km=100, max_lag_hours=24, output_dir=correlation_dir)
-            # correlation_result = analyze_single_track(ds, track_df, track_id, buffer_km=100, max_lag_hours=48, output_dir=correlation_dir)
-            # try:
-            #     # FIX: If analyze_single_track returns None, line 'landfall_time': correlation_result.get('landfall_time') will fail
-            #     if correlation_result:
-            #         all_correlation_results.append({
-            #                 "track_id": track_id,
-            #                 "pearson_r": correlation_result["pearson_r"],
-            #                 "pearson_p": correlation_result["pearson_p"],
-            #                 "mean_tp": correlation_result["mean_tp"],
-            #                 "mean_swvl1": correlation_result["mean_swvl1"],
-            #                 "n_samples": correlation_result["n_samples"],
-            #                 "landfall_time": correlation_result.get("landfall_time"),
-            #                 "landfall_index": correlation_result.get("landfall_index"),
-            #                 "tp_series": tp_series,
-            #                 "swvl1_series": swvl1_series,
-            #                 "valid_times": valid_times,
-            #         })
-            # except Exception as e:
-            #     std_print("ERROR", "md", "Correlation analysis failed", str(e))
+            # 9) Correlation analysis (swvl1 vs tp vs heat flux)
+            print(f"\n---------------------------------------- Correlation analysis for Track {track_id} ----------------------------------------")
+            # std_print("DEBUG", "md", f"Skipping Correlation Analysis for Track {track_id}")
+            correlation_dir = os.path.join(track_dir, "correlation_analysis")
+            os.makedirs(correlation_dir, exist_ok=True)
+            # correlation_result = analyze_single_track(ds, track_df, track_id, buffer_km=100, max_lag_hours=24, output_dir=correlation_dir)
+            correlation_result = analyze_single_track(ds, track_df, track_id, buffer_km=100, max_lag_hours=48, output_dir=correlation_dir)
+            try:
+                # FIX: If analyze_single_track returns None, line 'landfall_time': correlation_result.get('landfall_time') will fail
+                if correlation_result:
+                    all_correlation_results.append({
+                            "track_id": track_id,
+                            "pearson_r": correlation_result["pearson_r"],
+                            "pearson_p": correlation_result["pearson_p"],
+                            "mean_tp": correlation_result["mean_tp"],
+                            "mean_swvl1": correlation_result["mean_swvl1"],
+                            "n_samples": correlation_result["n_samples"],
+                            "landfall_time": correlation_result.get("landfall_time"),
+                            "landfall_index": correlation_result.get("landfall_index"),
+                            "tp_series": tp_series,
+                            "swvl1_series": swvl1_series,
+                            "valid_times": valid_times,
+                    })
+            except Exception as e:
+                std_print("ERROR", "md", "Correlation analysis failed", str(e))
 
             # 10) Heat Flux Analysis and MD Duration Classification
             print(f"\n------------------------------------ Heat Flux & Duration Analysis for Track {track_id} ------------------------------------")

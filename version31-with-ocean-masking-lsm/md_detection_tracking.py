@@ -2,25 +2,26 @@
 # 0.1 why seperate augmented csv for speed plots? just merge/append in main detection csv.
 # 0.2. Need to replace 'run_all_statistical_analyses', instaed just call individual functions
 # 0.3. Exporting 2 seperate CSVs (MD-track-id-coordinates.csv and output_2024/track_id/track_id_detections.csv) which have difference of date format.
-# 1. No Memory Management for Large Datasets
+# 1.  Relative humidity physically out of range (-11, 198)% due to ERA5 artifact from spectral-to-grid interpolation. Do not use raw r values in any threshold logic (e.g. "convection active if r > 70%") without clipping.
+# 2. No Memory Management for Large Datasets
 #    Location: md_detection_tracking.py, load_dataset_async()
 #    Issue   : .compute() loads entire dataset into memory
 #              .compute() # Could cause OOM for very large datasets
-# 2. Ocean-land shading to incorporate landfall line
-# 3. Inconsistent Landfall Detection
+# 3. Ocean-land shading to incorporate landfall line
+# 4. Inconsistent Landfall Detection
 #    Location: Multiple files (antecedent_analysis.py, correlation_analysis.py)
 #    Issue   : Different logic for detecting landfall in different functions
 #    antecedent_analysis.py: is_point_land()
 #    correlation_analysis.py: row.get('is_land', False)
 #    Fix     : Standardize to use pre-computed 'is_land' column
-# 4. Inconsistent Parameter Names
+# 5. Inconsistent Parameter Names
 #    Location: Multiple functions use buffer_km vs buffer_deg
 #    antecedent_analysis.py uses buffer_km=100
 #    plot_sm_tp_map() uses buffer_deg=5.0
-# 5. Rephase CE 0.5/0.3 vs 8.0/3.0" -> Standardize (use 8-15)
+# 6. Rephase CE 0.5/0.3 vs 8.0/3.0" -> Standardize (use 8-15)
 
 # TODO:
-# 2. Add land-surface-mask (Data/nc-files/lsm.nc) for rest (used in azimuthal_hovmoller plot)
+# 2. Add land-surface-mask (Data/nc-files/lsm-soiltype-z.nc) for rest (used in azimuthal_hovmoller plot)
 # 3. H4 GAM: pip install pygam; SM ~ s(TP) -> Plateau fig
 # 4. H5 HWSD:
 #    ds = xr.open_dataset('SoilGrids250m_CLAY.nc')
@@ -171,11 +172,6 @@ from statistics_analysis import (
     write_statistical_summary,
 )
 
-DATA_DIR = os.path.join("..", "Data", "single-levels", "ncfiles")
-HGT_DIR = os.path.join("..", "Data", "elevation", "hgtfiles")
-# lsm values: 1.0 = land, 0.0 = ocean. Threshold >= 0.5 gives boolean mask
-LSM_PATH = os.path.join("..", "Data", "single-levels", "ncfiles", "lsm.nc")
-
 MONSOON_SEASONS = {
     2019: [
         "June-2019",
@@ -223,6 +219,11 @@ MONSOON_SEASONS = {
 
 # TODO: make MONSOON_YEAR global so every module can access it
 MONSOON_YEAR = 2024
+DATA_DIR = os.path.join("..", "Data", "single-levels", "ncfiles", f"{MONSOON_YEAR}")
+HGT_DIR = os.path.join("..", "Data", "elevation", "hgtfiles")
+# lsm values: 1.0 = land, 0.0 = ocean. Threshold >= 0.5 gives boolean mask
+LSM_PATH = os.path.join("..", "Data", "single-levels", "ncfiles", "lsm.nc")
+
 MONTH_DIRS = MONSOON_SEASONS.get(MONSOON_YEAR, [])
 output_dir = f"output_{MONSOON_YEAR}"
 if not os.path.exists(output_dir):
@@ -241,6 +242,8 @@ try:
 except Exception as e:
     LSM_DA = None
     std_print("WARN", "md", "lsm.nc not found - ocean masking disabled for SWVL1/STL1", str(e))
+
+
 
 
 # TODO: make clipping global so every module can use `full_extent`

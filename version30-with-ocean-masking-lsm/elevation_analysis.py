@@ -644,6 +644,7 @@ def classify_landfall_elevation(tsi_df, output_dir):
     if "penetration_km" in tsi_df.columns and len(classes) >= 2:
         # Figure
         fig, ax = plt.subplots(figsize=(10, 6))
+
         data = [tsi_df[tsi_df["lf_class"] == c]["penetration_km"].dropna().values for c in classes]
         bp = ax.boxplot(
             data,
@@ -729,7 +730,17 @@ def plot_track_elevation_speed_map(track_df, track_id, output_dir):
 
     for (elev_ds, lon_int, lat_int) in tile_patches:
         img_extent = (lon_int, lon_int + 1, lat_int, lat_int + 1)
-        ax.imshow(elev_ds, extent=img_extent, origin="upper",cmap="terrain", vmin=0, vmax=vmax_elev,transform=ccrs.PlateCarree(), alpha=0.85, zorder=1)
+        ax.imshow(
+          elev_ds,
+          extent=img_extent,
+          origin="upper",
+          cmap="terrain",
+          vmin=0,
+          vmax=vmax_elev,
+          transform=ccrs.PlateCarree(),
+          alpha=0.85,
+          zorder=1
+        )
 
     # proxy for the elevation colorbar
     sm_elev = plt.cm.ScalarMappable(cmap="terrain",norm=plt.Normalize(0, vmax_elev))
@@ -1078,6 +1089,7 @@ def plot_all_tracks_elevation_comparison(track_dict, output_dir):
         (float(np.nanpercentile(p[0], 98)) for p in tile_patches),
         default=1000.0
     )
+
     for elev_ds, lon_int, lat_int in tile_patches:
         ax.imshow(
             elev_ds,
@@ -1234,8 +1246,15 @@ def plot_all_tracks_elevation_comparison(track_dict, output_dir):
                   # f"spd:{mean_speed_land:.1f}{speed_unit}"
         ))
 
-    # 600 m threshold legend proxy (no actual contour - only a legend entry)
-    ax.plot([], [], linestyle="--", color="saddlebrown", linewidth=1.5, label="600 m threshold")
+    # 600 m threshold legend proxy
+    ax.plot(
+      [],
+      [],
+      linestyle="--",
+      color="saddlebrown",
+      linewidth=1.5,
+      label="600 m threshold"
+    )
 
     ax.coastlines(resolution="50m", linewidth=1.0, color="black", zorder=7)
     ax.add_feature(cfeature.BORDERS, linewidth=0.6, linestyle=":", color="gray", zorder=7)
@@ -1478,7 +1497,6 @@ def plot_barrier_encounter_profile(track_df, track_id, output_dir,threshold_m_pe
     """
     Elevation profile with terrain barrier encounters shaded in red and annotated.
 
-    Same dual-axis layout as plot_track_elevation_profile but with:
       - Red shading over each barrier encounter window
       - Arrow annotation: "Barrier → speed ↓" at the first encounter
       - Speed response window shown for each encounter (speed 6 h after vs at start)
@@ -1769,18 +1787,18 @@ def plot_dissipation_terrain_map(track_dict, output_dir):
         ax.plot(
           diss_lon,
           diss_lat,
-          "X",
           color=color,
-          markersize=14,
+          marker="o",
+          markersize=10,
           markeredgecolor="black",
           markeredgewidth=1.0,
           transform=ccrs.PlateCarree(),
           zorder=9
         )
 
-        elev_str = f" @ {diss_elev:.0f} m" if not np.isnan(diss_elev) else ""
+        elev_str = f"@ {diss_elev:.0f} m" if not np.isnan(diss_elev) else ""
         ax.annotate(
-          f"T{track_id}  {dur_h:.0f}h{elev_str}",
+          f"T{track_id}  {dur_h:.0f}h {elev_str}",
           xy=(diss_lon, diss_lat),
           xytext=(6, 8),
           textcoords="offset points",
@@ -1796,14 +1814,14 @@ def plot_dissipation_terrain_map(track_dict, output_dir):
           Line2D(
             [0],
             [0],
-            marker="X",
+            marker="o",
             color=color,
-            markersize=9,
+            markersize=3,
             linestyle="--",
             linewidth=1.5,
+            markeredgewidth=0.6,
+            # markeredgecolor="black",
             label=f"T{track_id}  {dur_h:.0f} h",
-            markeredgecolor="black",
-            markeredgewidth=0.6
           )
         )
 
@@ -2479,7 +2497,7 @@ def compute_tsi_for_all_tracks(tracks_df, coupling_df):
                 duration_h = (times.max() - times.min()).total_seconds() / 3600
                 tsi_result["duration_h"] = duration_h
             all_results.append(tsi_result)
-            std_print("DEBUG", "ea", "TSI", f"{tsi_result['TSI']:.3f} ({tsi_result['TSI_class']})")
+            std_print("DEBUG", "ea", f"TSI for track {track_id}", f"{tsi_result['TSI']:.3f} ({tsi_result['TSI_class']})")
         except Exception as e:
             std_print("ERROR", "ea", "Computing TSI Failed", str(e))
             traceback.print_exc()

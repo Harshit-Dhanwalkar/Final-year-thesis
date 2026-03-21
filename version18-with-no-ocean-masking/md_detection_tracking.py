@@ -1346,7 +1346,7 @@ def process_files(ds):
             if i % 5 == 0:  # Update progress every 5 steps
                 progress_bar.update(current=i)
             data_slice = ds.sel(**{time_coord: time_step})
-            center = find_low_pressure_center(data_slice, time_step, prev_center, search_radius_km=TRACKING_SEARCH_RADIUS_KM, smoothing_radius_km=100,)
+            center = find_low_pressure_center(data_slice, time_step, prev_center, search_radius_km=TRACKING_SEARCH_RADIUS_KM, smoothing_radius_km=100)
             if center is not None:
                 lat, lon = center
                 data_slice = ds.sel(time=time_step)
@@ -1368,7 +1368,7 @@ def process_files(ds):
         detection_hours = [int(h) for h in detections_df["time"].dt.hour.unique()]
         std_print(None, None, "Detections occur at hours", sorted(detection_hours))
         # Initial Tracking
-        initial_tracks = track_monsoon_depressions(detections_df, max_speed_ms=MAX_SPEED_MS, search_radius_km=LINKING_SEARCH_RADIUS_KM, max_time_gap_hours=MAX_GAP_HOURS,)
+        initial_tracks = track_monsoon_depressions(detections_df, max_speed_ms=MAX_SPEED_MS, search_radius_km=LINKING_SEARCH_RADIUS_KM, max_time_gap_hours=MAX_GAP_HOURS)
         std_print("INFO", "md", "Initial raw tracks found", len(initial_tracks))
 
         # Filter out very short tracks immediately (<5 points)
@@ -1392,7 +1392,7 @@ def process_files(ds):
         # std_print('INFO', 'md', 'Tracks over ocean', len(ocean_tracks)")
 
         # Quality Filter tracks (Noise Removal)
-        filtered_valid_tracks = filter_valid_tracks(consolidated_tracks, min_duration=MIN_TRACK_DURATION_HOURS, min_distance=MIN_NET_DISPLACEMENT_KM,)
+        filtered_valid_tracks = filter_valid_tracks(consolidated_tracks, min_duration=MIN_TRACK_DURATION_HOURS, min_distance=MIN_NET_DISPLACEMENT_KM)
         std_print("INFO", "md", "Valid tracks after QC", len(filtered_valid_tracks))
         if not filtered_valid_tracks:
             std_print(None, None, "No tracks survived filtering criteria")
@@ -1408,7 +1408,7 @@ def process_files(ds):
                 smoothed_tracks.append(track)
 
         # Assign track IDs
-        track_df_with_ids = pd.concat([track.assign(track_id=i + 1) for i, track in enumerate(smoothed_tracks)], ignore_index=True,)
+        track_df_with_ids = pd.concat([track.assign(track_id=i + 1) for i, track in enumerate(smoothed_tracks)], ignore_index=True)
         # Restore month column if lost
         if "month" not in track_df_with_ids.columns:
             track_df_with_ids["month"] = pd.to_datetime(
@@ -1433,7 +1433,7 @@ def plot_tracks(track_df, output_dir="output"):
     fig = plt.figure(figsize=(14, 11))
     ax: GeoAxes = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())  # type: ignore[assignment]
     # ax.set_extent([70, 100, 5, 30], crs=ccrs.PlateCarree())
-    ax.set_extent([clipped_min_lon, clipped_max_lon, clipped_min_lat, clipped_max_lat], crs=ccrs.PlateCarree(),)
+    ax.set_extent([clipped_min_lon, clipped_max_lon, clipped_min_lat, clipped_max_lat], crs=ccrs.PlateCarree())
     ax.add_feature(cfeature.LAND, facecolor="lightgray", edgecolor="black", linewidth=0.5)
     ax.add_feature(cfeature.OCEAN, facecolor="lightblue")
     ax.add_feature(cfeature.LAKES, facecolor="lightblue")
@@ -1466,10 +1466,10 @@ def plot_tracks(track_df, output_dir="output"):
 
         month = track_data["month"].iloc[0]
         color = month_colors.get(month, "black")
-        common_bbox = dict(boxstyle="round,pad=0.05", facecolor="white", alpha=0.7, edgecolor="none", linewidth=0.8,)
+        common_bbox = dict(boxstyle="round,pad=0.05", facecolor="white", alpha=0.7, edgecolor="none", linewidth=0.8)
 
         # Plot all detection points
-        plt.plot(track_data["longitude"], track_data["latitude"], "o", color=color, markersize=1.2, transform=ccrs.PlateCarree(), zorder=3,)
+        plt.plot(track_data["longitude"], track_data["latitude"], "o", color=color, markersize=1.2, transform=ccrs.PlateCarree(), zorder=3)
         # Plot connecting lines
         line, = plt.plot(track_data["longitude"], track_data["latitude"], "-", color=color, alpha=0.8, linewidth=1.2, label=f"Low-press. sys. Track ({month})", transform=ccrs.PlateCarree(), zorder=2)
         month_already_in_legend = False
@@ -1485,7 +1485,7 @@ def plot_tracks(track_df, output_dir="output"):
         plt.text(start_lon - 0.4, start_lat, f"T{int(track_id_str)}", transform=ccrs.PlateCarree(), fontsize=8, fontweight="bold", color="black", ha="center", va="center", bbox=common_bbox, zorder=9)
         plt.text(start_lon + 0.3, start_lat, start_time, transform=ccrs.PlateCarree(), fontsize=8, fontweight="normal", color="black", ha="left", va="center", bbox=common_bbox)
         # # Annotate End point
-        plt.plot(end_lon, end_lat, marker="o", color="orange", markersize=7, markeredgewidth=0, transform=ccrs.PlateCarree(), zorder=8,)
+        plt.plot(end_lon, end_lat, marker="o", color="orange", markersize=7, markeredgewidth=0, transform=ccrs.PlateCarree(), zorder=8)
         plt.text(end_lon - 0.4, end_lat, f"T{int(track_id_str)}", transform=ccrs.PlateCarree(), fontsize=8, fontweight="bold", color="black", ha="center", va="center", bbox=common_bbox, zorder=9)
         plt.text(end_lon + 0.3, end_lat, end_time, transform=ccrs.PlateCarree(), fontsize=8, fontweight="normal", color="black", ha="left", va="center", bbox=common_bbox)
     ax.set_title(f"Detected MD Tracks ({month_order[0]}-{month_order[-1]}, {MONSOON_YEAR})", fontsize=13, fontweight='bold', pad=12)
@@ -1545,7 +1545,7 @@ def plot_track_full_map(track_df_single, track_id, full_extent, output_dir):
     )
     start_lon, end_lon = track_df["longitude"].iloc[0], track_df["longitude"].iloc[-1]
     start_lat, end_lat = track_df["latitude"].iloc[0], track_df["latitude"].iloc[-1]
-    ax.plot(track_data["longitude"], track_data["latitude"], "-o", color=track_color, transform=ccrs.PlateCarree(), linewidth=1, markersize=2, zorder=5,)
+    ax.plot(track_data["longitude"], track_data["latitude"], "-o", color=track_color, transform=ccrs.PlateCarree(), linewidth=1, markersize=2, zorder=5)
     # 12-hour interval markers
     hours_elapsed = (track_times - start_datetime).dt.total_seconds() / 3600
     for elapsed_hours in np.arange(0, hours_elapsed.max() + 12, 12):
@@ -1642,8 +1642,8 @@ def plot_single_track(track_df, track_id, output_dir):
     gl.xformatter = LongitudeFormatter()
     gl.yformatter = LatitudeFormatter()
 
-    ax.plot(track_df["longitude"], track_df["latitude"], "-", color=track_color, alpha=0.8, linewidth=1.5, transform=ccrs.PlateCarree(), zorder=2,)  # connecting lines
-    ax.plot(track_df["longitude"], track_df["latitude"], "o", color=track_color, markersize=2, alpha=0.5, transform=ccrs.PlateCarree(), zorder=3,)  # markers for all points (hourly detections)
+    ax.plot(track_df["longitude"], track_df["latitude"], "-", color=track_color, alpha=0.8, linewidth=1.5, transform=ccrs.PlateCarree(), zorder=2)  # connecting lines
+    ax.plot(track_df["longitude"], track_df["latitude"], "o", color=track_color, markersize=2, alpha=0.5, transform=ccrs.PlateCarree(), zorder=3)  # markers for all points (hourly detections)
     # 12-hour interval markers
     hours_elapsed = (track_times - start_datetime).dt.total_seconds() / 3600
     # INFO:

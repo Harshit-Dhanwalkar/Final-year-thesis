@@ -4,6 +4,8 @@
 
 Documentation : https://confluence.ecmwf.int/display/CKB/ERA5%3A+data+documentation
 
+### Variables:
+
 1. Mean Sea Level Pressure (`msl`)
 2. Surface Pressure (`sp`)
 3. 10m U-Component of Wind (`u10`)
@@ -15,6 +17,43 @@ Documentation : https://confluence.ecmwf.int/display/CKB/ERA5%3A+data+documentat
 9. Volumetric Soil Water Layer 1 (`swvl1`)
 10. 2m Temperature (`t2m`)
 11. 2m Dew Point Temperature (`d2m`)
+
+### Constants:
+
+1. Land-sea mask (`lsm`)
+2. Geopotential (`z`)
+3. Soil Type (`slt`)
+
+---
+
+## [ERA5 hourly data on pressure levels from 1940 to present](https://cds.climate.copernicus.eu/datasets/reanalysis-era5-pressure-levels?tab=overview)
+
+1. U-component of Wind
+2. V-component of wind
+3. Vertical velocity
+4. Vorticity (relative)
+5. Relative humidity
+6. Specific humidity
+7. Temperature
+8. Geopotential
+
+### Pressure levels:
+
+1. 200
+2. 300
+3. 400
+4. 500
+5. 600
+6. 700
+7. 850
+
+## Dataset bounds
+
+Latitude = [7, 30] degrees
+Longitude = [70, 95] degrees
+Time = [June, July, August, September]
+
+---
 
 ## Elevation data
 

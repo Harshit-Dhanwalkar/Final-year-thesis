@@ -2867,12 +2867,7 @@ if __name__ == "__main__":
                         landfall_idx,
                     )
             except Exception as e:
-                std_print(
-                    "ERROR",
-                    "md",
-                    f"Hovmöller computation failed for Track {track_id}",
-                    str(e),
-                )
+                std_print("ERROR", "md", f"Hovmöller computation failed for Track {track_id}", str(e))
                 traceback.print_exc()
 
             # 9) Antecedent Soil Moisture Analysis
