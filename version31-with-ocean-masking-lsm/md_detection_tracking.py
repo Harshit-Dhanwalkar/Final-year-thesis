@@ -163,6 +163,7 @@ from timeseries import (
    extract_theta_e_timeseries,
    theta_e_timeseries,
 )
+from vortex_analysis import run_vortex_analysis
 from statistics_analysis import (
     analyze_asm_fsi_relationship,
     analyze_gam_nonlinearity,
@@ -204,8 +205,8 @@ MONSOON_SEASONS = {
         "September-2023",
     ],
     2024: [
-        "June-2024",
-        "July-2024",
+        # "June-2024",
+        # "July-2024",
         "August-2024",
         "September-2024",
     ],
@@ -220,9 +221,10 @@ MONSOON_SEASONS = {
 # TODO: make MONSOON_YEAR global so every module can access it
 MONSOON_YEAR = 2024
 DATA_DIR = os.path.join("..", "Data", "single-levels", "ncfiles", f"{MONSOON_YEAR}")
+PL_DIR = os.path.join("..", "Data", "pressure-levels", "nc-files", f"{MONSOON_YEAR}")
 HGT_DIR = os.path.join("..", "Data", "elevation", "hgtfiles")
 # lsm values: 1.0 = land, 0.0 = ocean. Threshold >= 0.5 gives boolean mask
-LSM_PATH = os.path.join("..", "Data", "single-levels", "ncfiles", "lsm.nc")
+LSM_SOILTYPE_Z_PATH = os.path.join("..", "Data", "single-levels", "ncfiles", "lsm-soiltype-z.nc")
 
 MONTH_DIRS = MONSOON_SEASONS.get(MONSOON_YEAR, [])
 output_dir = f"output_{MONSOON_YEAR}"
@@ -233,17 +235,17 @@ else:
     std_print("WARN", "md", f"Using existing output directory for year {MONSOON_YEAR}", output_dir)
 
 try:
-    lsm_ds = xr.open_dataset(LSM_PATH)
-    lsm_var = "lsm" if "lsm" in lsm_ds else list(lsm_ds.data_vars)[0]
-    # Squeeze time dim if present, keep as DataArray (NOT .values) so coords survive
-    LSM_DA = lsm_ds[lsm_var].squeeze()
-    lsm_ds.close()
-    std_print("INFO", "md", "Land-sea mask loaded", LSM_PATH)
+    lsm_soiltype_z_ds = xr.open_dataset(LSM_SOILTYPE_Z_PATH)
+    lsm_var = "lsm" if "lsm" in lsm_soiltype_z_ds else list(lsm_soiltype_z_ds.data_vars)[0]
+    # Squeeze time dim if present and store in DataArrays
+    LSM_DA       = lsm_soiltype_z_ds["lsm"].squeeze()
+    SOIL_TYPE_DA = lsm_soiltype_z_ds["slt"].squeeze()
+    OROG_M_DA    = lsm_soiltype_z_ds["z"].squeeze() / 9.80665   # Pa s⁻² -> metres
+    lsm_soiltype_z_ds.close()
+    std_print("INFO", "md", "Land-sea, Soil type and Geopotential mask loaded", LSM_SOILTYPE_Z_PATH)
 except Exception as e:
     LSM_DA = None
-    std_print("WARN", "md", "lsm.nc not found - ocean masking disabled for SWVL1/STL1", str(e))
-
-
+    std_print("ERROR", "md", "lsm_soiltype_z.nc .nc not found - ocean masking disabled for SWVL1/STL1", str(e))
 
 
 # TODO: make clipping global so every module can use `full_extent`
@@ -1602,7 +1604,7 @@ def process_files(ds):
 
 
 def plot_and_export_tracks(track_df, output_dir):
-    std_print("INFO", "md", " --- MD track plots ---")
+    std_print("INFO", "md", "--- MD track plots ---")
     track_data = track_df.sort_values("time")
 
     fig = plt.figure(figsize=(14, 11))
@@ -1758,8 +1760,8 @@ def plot_and_export_tracks(track_df, output_dir):
 
     title =  f"Detected MD Tracks ({month_order[0]}-{month_order[-1]}, {MONSOON_YEAR})"
     ax.set_title(title, fontsize=13, fontweight="bold", pad=10)
-    ax.set_xlabel("Longitude (°E)", fontsize=11, fontweight="bold")
-    ax.set_ylabel("Latitude (°N)", fontsize=11, fontweight="bold")
+    ax.set_xlabel("Longitude (°E)", fontsize=12, fontweight="bold")
+    ax.set_ylabel("Latitude (°N)", fontsize=12, fontweight="bold")
     ax.grid(True, linestyle="--", alpha=0.5)
     plt.tight_layout()
 
@@ -2163,7 +2165,7 @@ def diagnose_detection_issues(track_df):
     - False detections (weak systems)
     - Tracking jumps
     """
-    std_print("INFO", "md", " --- Detection Quality Diagnostics --")
+    std_print("INFO", "md", "--- Detection Quality Diagnostics --")
     # 1. Check for large gaps in time
     times = pd.to_datetime(track_df["time"])
     time_diffs = times.diff().dt.total_seconds().dropna() / 3600
@@ -2362,7 +2364,7 @@ if __name__ == "__main__":
     max_speed_kmh = ms_to_kmh(MAX_SPEED_MS)
     daily_rain_mm = PRECIPITATION_THRESHOLD_MM * 24
 
-    std_print("INFO", "md", " --- Applied Thresholds ---")
+    std_print("INFO", "md", "--- Applied Thresholds ---")
     # Radius used to associate a detection in time t with time t+1
     std_print(None, None, "Search Radius (Tracking)", f"{TRACKING_SEARCH_RADIUS_KM} km")
     # Radius used to bridge gaps if a system disappears for a few hours
@@ -2389,7 +2391,7 @@ if __name__ == "__main__":
     std_print(None, None, "Merge Distance", f"{MERGE_DISTANCE_KM} km")
 
     print("\n----------------------------------------------- Combining monthly netCDF files --------------------------------------")
-    std_print("INFO", "md", " --- Combining all monthly files for track detection ---")
+    std_print("INFO", "md", "--- Combining all monthly files for track detection ---")
     start_processing_time = time.time()
     num_files = len(MONTH_DIRS) * 3
 
@@ -2423,7 +2425,7 @@ if __name__ == "__main__":
         std_print("INFO", "md", "Time for load and combine files", f"{end_processing_time - start_processing_time:.2f} seconds")
         # Diagnose temporal issues
         diag_report = diagnose_temporal_issues(ds)
-        std_print("INFO", "md", " --- Applying temporal fix ---")
+        std_print("INFO", "md", "--- Applying temporal fix ---")
         std_print(None, None, "Original dataset has variable time spacing")
         std_print(None, None, "Resampling to regular 1-hour grid...")
         ds = fix_temporal_resolution(ds, target_resolution_hours=1)
@@ -2529,26 +2531,26 @@ if __name__ == "__main__":
             track_df = (full_track_df[full_track_df["track_id"] == track_id].reset_index(drop=True).copy())
 
             print(f"\n----------------------------------------------- MD Track {track_id} --------------------------------------------------------")
-            # 1) Land/Ocean classification
+            # 1. Land/Ocean classification
             landfall_time = find_landfall_time(track_df)  # Ensure is_land column exists
             std_print("INFO", "md", "Land/ocean classification computed", f"{track_df['is_land'].sum()} land points")
 
-            # 2) Smooth coordinates
+            # 2. Smooth coordinates
             track_df = smooth_track_coordinates(track_df, window_size=3, iterations=4)
 
-            # 3) Diagnose detections
+            # 3. Diagnose detections
             diagnose_detection_issues(track_df)
 
-            # 4) Plot maps
+            # 4. Plot tracks map
             plot_track_full_map(track_df, track_id, track_dir)
             plot_detailed_track(track_df, track_id, track_dir)
 
-            # 5) Export detections csv
+            # 5. Export detections csv
             track_csv = os.path.join(track_dir, f"track_{track_id}_detections.csv")
             track_df.to_csv(track_csv, index=False)
             std_print("EXPORT", "md", "Detections to CSV", track_csv)
 
-            # 6) Plot speed analysis
+            # 6. Plot speed analysis
             print(f"\n-------------------------------------- Translational Speed Plots for Track {track_id} --------------------------------------")
             speed_dir = os.path.join(track_dir, "translational-speed")
             os.makedirs(speed_dir, exist_ok=True)
@@ -2570,7 +2572,7 @@ if __name__ == "__main__":
             std_print(None, None, "total distance", f"{distance_km.sum():.1f} km")
             std_print(None, None, "duration", f"{(track_df['time'].max() - track_df['time'].min()).total_seconds() / 3600:.1f} hours")
 
-            # 7) Generate Hovmöller Plots
+            # 7. Generate Hovmöller Plots
             print(f"\n-------------------------------------- Azimuthal Hovmoller Plots for Track {track_id} --------------------------------------")
             # std_print('DEBUG', 'md', f'Skipping Hovmöller for Track {track_id}')
             hov_dir = os.path.join(track_dir, "hovmoller")
@@ -2594,7 +2596,7 @@ if __name__ == "__main__":
                 std_print("ERROR", "md", "Hovmöller computation failed", str(e))
                 traceback.print_exc()
 
-            # # 8) Antecedent Soil Moisture Analysis
+            # 8. Antecedent Soil Moisture Analysis
             # print(f"\n----------------------------------Antecedent Soil Moisture Analysis for Track {track_id} ----------------------------------")
             # # std_print("DEBUG", "md", f"Skipping antecedent SM for Track {track_id}")
             # # Ensure is_land column exists for antecedent analysis
@@ -2609,7 +2611,7 @@ if __name__ == "__main__":
             #     std_print("ERROR", "md", "ASM analysis failed", str(e))
             #     traceback.print_exc()
 
-            # 9) Correlation analysis (swvl1 vs tp vs heat flux)
+            # 9. Correlation analysis (swvl1 vs tp vs heat flux)
             print(f"\n---------------------------------------- Correlation analysis for Track {track_id} ----------------------------------------")
             # std_print("DEBUG", "md", f"Skipping Correlation Analysis for Track {track_id}")
             correlation_dir = os.path.join(track_dir, "correlation_analysis")
@@ -2635,7 +2637,7 @@ if __name__ == "__main__":
             except Exception as e:
                 std_print("ERROR", "md", "Correlation analysis failed", str(e))
 
-            # 10) Heat Flux Analysis and MD Duration Classification
+            # 10. Heat Flux Analysis and MD Duration Classification
             print(f"\n------------------------------------ Heat Flux & Duration Analysis for Track {track_id} ------------------------------------")
             # std_print("DEBUG", "md", f"Skipping Heat Flux and Duration Analysis for Track {track_id}")
             classification = classify_md_duration(track_df, short_threshold_hours=96)
@@ -2676,7 +2678,7 @@ if __name__ == "__main__":
                 std_print("ERROR", "md", "Heat Flux analysis failed", str(e))
                 traceback.print_exc()
             try:
-                std_print("INFO", "md", " --- Landfall transition ---")
+                std_print("INFO", "md", "--- Landfall transition ---")
                 landfall_result = analyze_flux_transition(ds, track_df, track_id, hours_before=24, hours_after=24)
                 if landfall_result:
                     std_print("INFO", "md", "Before landfall")
@@ -2697,13 +2699,13 @@ if __name__ == "__main__":
                 std_print("ERROR", "md", "Landfall Flux analysis failed", str(e))
                 traceback.print_exc()
 
-            # 11) Time series
+            # 11. Time series
             print(f"\n--------------------------------------------Time Series for Track {track_id} -----------------------------------------------")
             # std_print("DEBUG", "md", f"Skipping Time series for Track {track_id}")
             timeseries_dir = os.path.join(track_dir, "time_series")
             os.makedirs(timeseries_dir, exist_ok=True)
             try:
-                std_print("INFO", "md", " --- TP-SWVL1 time series analysis ---")
+                std_print("INFO", "md", "--- TP-SWVL1 time series analysis ---")
                 if correlation_result:
                     # Check if the required keys exist in correlation_result
                     if all(
@@ -2721,16 +2723,16 @@ if __name__ == "__main__":
                         )
                     else:
                         std_print("WARN", "md", "Time series data not available in correlation_result")
-                std_print("INFO", "md", " --- Heat flux time series analysis ---")
+                std_print("INFO", "md", "--- Heat flux time series analysis ---")
                 hf_timeseries(flux_df, track_id, output_dir=timeseries_dir)
-                std_print("INFO", "md", " --- Atmospheric stability (θ_e) time series ---")
+                std_print("INFO", "md", "--- Atmospheric stability (θ_e) time series ---")
                 theta_df = extract_theta_e_timeseries(ds, track_df, track_id, buffer_km=100)
                 theta_e_timeseries(theta_df, track_id, output_dir=timeseries_dir)
             except Exception as e:
                 std_print("ERROR", "md", "Time series failed", str(e))
                 traceback.print_exc()
 
-            # 12) Soil moisture analysis
+            # 12. Soil moisture analysis
             print(f"\n---------------------------------------- Soil Moisture Analysis for Track {track_id} ---------------------------------------")
             # std_print("DEBUG", "md", f"Skipping Soil Moisture Analysis for Track {track_id}")
             try:
@@ -2780,7 +2782,7 @@ if __name__ == "__main__":
                 traceback.print_exc()
                 # TODO:     analyze_soil_memory_by_track
 
-            # 13) Elevation analysis
+            # 13. Elevation analysis
             print(f"\n------------------------------------------ Elevation Analysis for Track {track_id} -----------------------------------------")
             # std_print("DEBUG", "md", f"Skipping Elevation Analysis for Track {track_id}")
             try:
@@ -2805,7 +2807,7 @@ if __name__ == "__main__":
 
         print("\n------------------------------------------------ Global Analysis for all Track ---------------------------------------------")
         # 1. Global Coupling metrics
-        std_print("INFO", "md", " --- Coupling Metrics Analysis ---")
+        std_print("INFO", "md", "--- Coupling Metrics Analysis ---")
         # std_print("DEBUG", "md", "Skipping Coupling Metrics Analysis")
         correlation_df = (
             pd.DataFrame(all_correlation_results)
@@ -2890,33 +2892,8 @@ if __name__ == "__main__":
             std_print("ERROR", "md", "Coupling metrics analysis failed", str(e))
             traceback.print_exc()
 
-        # 2. Global Antecedent soil moisture Analysis
-        std_print("INFO", "md", " --- Antecedent soil moisture analysis ---")
-        # std_print("DEBUG", "md", "Skipping Global Antecedent soil moisture Analysis")
-        try:
-            asm_dir = os.path.join(output_dir, "Global_antecedent_analysis")
-            os.makedirs(asm_dir, exist_ok=True)
-            asm_results_df = analyze_all_tracks_antecedent(ds, full_track_df, output_dir=asm_dir)
-            all_asm_results = asm_results_df
-            # Export the combined results for all tracks
-            if asm_results_df is not None:
-                antecedent_sm_CSV = os.path.join(asm_dir, "all_tracks_antecedent_sm.csv")
-                asm_results_df.to_csv(antecedent_sm_CSV, index=False)
-                std_print("EXPORT", "md", "Global Antecedent SM Results", antecedent_sm_CSV)
-            # ASM results reuse
-            if (
-                all_asm_results is not None
-                and isinstance(all_asm_results, pd.DataFrame)
-                and not all_asm_results.empty
-            ):
-                asm_df = all_asm_results.copy()
-                # std_print("DEBUG", "md", "ASM data from antecedent analysis", f"{len(asm_df)} tracks")
-        except Exception as e:
-            std_print("ERROR", "md", "Global antecedent analysis failed", str(e))
-            traceback.print_exc()
-
-        # 3. Global Soil Moisture Memory Analysis
-        std_print("INFO", "md", " --- Global Soil Moisture Memory Analysis ---")
+        # 2. Global Soil Moisture Memory Analysis
+        std_print("INFO", "md", "--- Global Soil Moisture Memory Analysis ---")
         # std_print("DEBUG", "md", "Skipping Global Soil Moisture Memory Analysis")
         try:
             memory_dir = os.path.join(output_dir, "Global_soil_memory")
@@ -2937,8 +2914,44 @@ if __name__ == "__main__":
             std_print("ERROR", "md", "Global soil memory analysis failed", str(e))
             traceback.print_exc()
 
-        # 4. Global Elevation Analysis
-        std_print("INFO", "md", " --- Global Elevation Analysis ---")
+        # # 3. Global Antecedent soil moisture Analysis
+        # std_print("INFO", "md", "--- Antecedent soil moisture analysis ---")
+        # # std_print("DEBUG", "md", "Skipping Global Antecedent soil moisture Analysis")
+        # try:
+        #     asm_dir = os.path.join(output_dir, "Global_antecedent_analysis")
+        #     os.makedirs(asm_dir, exist_ok=True)
+        #     asm_results_df = analyze_all_tracks_antecedent(ds, full_track_df, output_dir=asm_dir)
+        #     all_asm_results = asm_results_df
+        #     # Export the combined results for all tracks
+        #     if asm_results_df is not None:
+        #         antecedent_sm_CSV = os.path.join(asm_dir, "all_tracks_antecedent_sm.csv")
+        #         asm_results_df.to_csv(antecedent_sm_CSV, index=False)
+        #         std_print("EXPORT", "md", "Global Antecedent SM Results", antecedent_sm_CSV)
+        #     # ASM results reuse
+        #     if (
+        #         all_asm_results is not None
+        #         and isinstance(all_asm_results, pd.DataFrame)
+        #         and not all_asm_results.empty
+        #     ):
+        #         asm_df = all_asm_results.copy()
+        #         # std_print("DEBUG", "md", "ASM data from antecedent analysis", f"{len(asm_df)} tracks")
+        # except Exception as e:
+        #     std_print("ERROR", "md", "Global antecedent analysis failed", str(e))
+        #     traceback.print_exc()
+
+        # 4. Global Flux Analysis
+        std_print("INFO", "md", "--- Global Flux Analysis ---")
+        # std_print("DEBUG", "md", "Skipping Heat FLux Analysis")
+        if all_flux_results:
+            all_flux_results = ensure_flux_results_complete(all_flux_results, all_classifications)
+            export_heat_flux_results(all_flux_results, output_dir)
+        if all_landfall_results:
+            export_landfall_flux_results(all_landfall_results, output_dir)
+        else:
+            std_print("WARN", "md", "No Global heat flux transition results to export")
+
+        # 5. Global Elevation Analysis
+        std_print("INFO", "md", "--- Global Elevation Analysis ---")
         #std_print("DEBUG", "md", "Skipping Global Elevation Analysis")
         elevation_dir = os.path.join(output_dir, "Global_elevation_analysis")
         os.makedirs(elevation_dir, exist_ok=True)
@@ -2983,8 +2996,18 @@ if __name__ == "__main__":
             std_print('ERROR', 'md', 'Combined elevation plot failed', str(e))
             traceback.print_exc()
 
-        # 5. Global Statistical Analysis
-        std_print("INFO", "md", " --- Global Statistical Analysis ---")
+        # 6. Vortex analysis
+        std_print("INFO", "md", "--- Global Vortex Analysis ---")
+        # std_print("DEBUG", "md", f"Skipping Vortex Analysis for Track {track_id}")
+        try:
+            vortex_dir = os.path.join(output_dir, "Global_vortex_analysis")
+            run_vortex_analysis(track_dict, pl_dir=PL_DIR, year=MONSOON_YEAR, output_dir=vortex_dir)
+        except Exception as e:
+            std_print("ERROR", "md", "Per-track vortex analysis failed", str(e))
+            traceback.print_exc()
+
+        # 7. Global Statistical Analysis
+        std_print("INFO", "md", "--- Global Statistical Analysis ---")
         # std_print("DEBUG", "md", "Skipping Global Statistical Analysis")
         try:
            if (
@@ -3104,23 +3127,13 @@ if __name__ == "__main__":
             if missing_for_stats:
                 std_print("WARN", "md", "Missing columns for stats", str(missing_for_stats))
                 std_print("DEBUG", "md", "Available columns", list(fsi_df.columns))
-        # 6. Global Flux Analysis
-        std_print("INFO", "md", " --- Global Flux Analysis ---")
-        # std_print("DEBUG", "md", "Skipping Heat FLux Analysis")
-        if all_flux_results:
-            all_flux_results = ensure_flux_results_complete(all_flux_results, all_classifications)
-            export_heat_flux_results(all_flux_results, output_dir)
-        if all_landfall_results:
-            export_landfall_flux_results(all_landfall_results, output_dir)
-        else:
-            std_print("WARN", "md", "No Global heat flux transition results to export")
 
-        # 7. Final Summaries and Report Generation
-        std_print("INFO", "md", " --- Overall Classification Summary ---")
+        # 8. Final Summaries and Report Generation
+        std_print("INFO", "md", "--- Overall Classification Summary ---")
         # std_print("DEBUG", "md", "Skipping Global Summaries")
         if all_classifications:
             print_md_classification_summary(all_classifications, output_dir)
-        std_print("INFO", "md", " --- Generating Overall Summary Report ---")
+        std_print("INFO", "md", "--- Generating Overall Summary Report ---")
         try:
             generate_summary_report(
                 all_correlation_results if all_correlation_results else [],

@@ -314,7 +314,7 @@ def compute_asmi_multi_lag(ds, track_df, landfall_time, buffer_km=100):
 #         0.98,
 #         f"{trend_label} SM\nbefore landfall",
 #         transform=ax.transAxes,
-#         fontsize=11,
+#         fontsize=12,
 #         va="top",
 #         bbox=common_bbox(),
 #     )
@@ -394,11 +394,11 @@ def plot_asmi_vs_penetration(results_df, output_dir):
             family="monospace",
         )
         lag_label = col.replace("asmi_", "").upper()
-        ax.set_xlabel(f"ASMI {lag_label} (m³/m³)", fontsize=11, fontweight="bold")
+        ax.set_xlabel(f"ASMI {lag_label} (m³/m³)", fontsize=12, fontweight="bold")
         ax.set_title(f"ASMI {lag_label}", fontsize=12, fontweight="bold")
         ax.grid(True, alpha=0.3, linestyle="--")
 
-    axes[0].set_ylabel("Inland penetration (km)", fontsize=11, fontweight="bold")
+    axes[0].set_ylabel("Inland penetration (km)", fontsize=12, fontweight="bold")
     fig.suptitle(
         "Antecedent SM vs Inland Penetration Distance", fontsize=13, fontweight="bold"
     )
@@ -758,9 +758,9 @@ def compare_wet_dry_tracks(results_df, output_dir):
                 family="monospace",
             )
             ax.set_xticks([0, 1])
-            ax.set_xticklabels(["Wet ASMI", "Dry ASMI"], fontsize=11)
-            ax.set_ylabel(info["label"], fontsize=11, fontweight="bold")
-            ax.set_title(info["label"], fontsize=11, fontweight="bold", pad=8)
+            ax.set_xticklabels(["Wet ASMI", "Dry ASMI"], fontsize=12)
+            ax.set_ylabel(info["label"], fontsize=12, fontweight="bold")
+            ax.set_title(info["label"], fontsize=12, fontweight="bold", pad=8)
             ax.grid(True, axis="y", alpha=0.3, linestyle="--")
         fig.suptitle(
             "Wet vs Dry Antecedent Conditions - Track Metrics\n"

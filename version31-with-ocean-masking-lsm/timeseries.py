@@ -22,9 +22,466 @@ from utils import (
 )
 
 
-def extract_heat_flux_timeseries(ds, track_df, track_id, buffer_km=100):
+def tp_swvl1_timeseries(track_df, track_id, tp, swvl1, valid_times, landfall_index, output_dir, originates_over_land=True):
+    track_id = int(track_id)
+    try:
+        if not isinstance(tp, np.ndarray):
+            tp = np.array(tp)
+        if not isinstance(swvl1, np.ndarray):
+            swvl1 = np.array(swvl1)
+        if not isinstance(valid_times, (list, np.ndarray, pd.DatetimeIndex)):
+            raise ValueError("valid_times must be datetime-like")
+
+        # Create a copy of swvl1
+        swvl1_land = swvl1.copy()
+
+        # Get land array for shading and for zeroing ocean values
+        if track_df is not None and "is_land" in track_df.columns:
+            is_land_array = track_df["is_land"].values
+
+            # Set SWVL1 to 0 for ocean points (not land)
+            swvl1_land[~is_land_array] = 0
+            # std_print("DEBUG", "ts", "Setting SWVL1=0 ocean points", np.sum(~is_land_array))
+        else:
+            is_land_array = np.zeros(len(valid_times), dtype=bool)
+            if originates_over_land:
+                is_land_array[:] = True
+                # All points are land, no modification needed
+            elif landfall_index > 0:
+                is_land_array[landfall_index:] = True
+                # Set pre-landfall points (ocean) to 0
+                swvl1_land[:landfall_index] = 0
+                # std_print("DEBUG", "ts", "Setting SWVL1=0 for pre-landfall ocean points", landfall_index,)
+
+        valid_data_mask = ~(np.isnan(tp) | np.isnan(swvl1_land))
+        valid_count = np.sum(valid_data_mask)
+        if valid_count < 2:
+            std_print("WARN", "ts", "Insufficient valid data", f"{valid_count} < 2 points")
+            return False
+        if len(tp) != len(swvl1_land) or len(tp) != len(valid_times):
+            std_print("WARN", "ts", "Data length mismatch", "swvl1_land != tp != times")
+            return False
+
+        std_print("INFO", "ts", "Extracted TP-SWVL1", len(valid_times))
+
+        # Figure
+        fig, ax1 = plt.subplots(figsize=(18, 6))
+        # bbox_style = common_bbox()
+
+        # Determine landfall status
+        if originates_over_land:
+            status_text = "Originates over land"
+            status_color = "blue"
+        elif landfall_index == -1:
+            status_text = "No Landfall"
+            status_color = "gray"
+        else:
+            status_text = "Landfall"
+            status_color = "red"
+
+        # Plot TP on primary axis
+        color_tp = "tab:blue"
+        ax1.set_xlabel("Time", fontsize=12, fontweight="bold")
+        ax1.set_ylabel(
+            "Total Precipitation (tp) (mm/hr)",
+            color=color_tp,
+            fontsize=10,
+            fontweight="bold",
+        )
+        line1 = ax1.plot(
+            valid_times,
+            tp,
+            "-o",
+            color=color_tp,
+            linewidth=2.5,
+            markersize=5,
+            label="Total Precipitation",
+            alpha=0.8,
+            zorder=4,
+        )
+        ax1.tick_params(axis="y", labelcolor=color_tp)
+        ax1.grid(True, alpha=0.5, linestyle="--", zorder=0)
+        add_land_ocean_shading(
+            ax1,
+            pd.to_datetime(valid_times),
+            is_land_array,
+            land_color="wheat",
+            ocean_color="lightblue",
+        )
+        if (
+            landfall_index != -1
+            and landfall_index < len(valid_times)
+            and not originates_over_land
+        ):
+            landfall_time = valid_times[landfall_index]
+            ax1.axvline(
+                x=landfall_time,
+                color=status_color,
+                linestyle="--",
+                linewidth=2.5,
+                alpha=0.8,
+                label=status_text,
+                zorder=5,
+            )
+
+        # Plot SWVL1 on secondary axis (using swvl1_land with ocean=0)
+        ax2 = ax1.twinx()
+        color_swvl1 = "tab:brown"
+        ax2.set_ylabel(
+            "Soil Water Volumetric Layer-1 (swvl1) (m³/m³)",
+            color=color_swvl1,
+            fontsize=12,
+            fontweight="bold",
+        )
+        line2 = ax2.plot(
+            valid_times,
+            swvl1_land,
+            "s-",
+            color=color_swvl1,
+            linewidth=2.5,
+            markersize=5,
+            label="Volumetric Soil Water Level-1",
+            alpha=0.8,
+            zorder=4,
+        )
+        ax2.tick_params(axis="y", labelcolor=color_swvl1)
+
+        # Set y-limits to include zero on both axes
+        tp_clean = tp[~np.isnan(tp)]
+        swvl1_clean = swvl1_land[~np.isnan(swvl1_land)]
+        tp_max = np.max(tp_clean) if len(tp_clean) > 0 else 1
+        swvl1_max = np.max(swvl1_clean) if len(swvl1_clean) > 0 else 0.1
+        tp_pad = (tp_max) * 0.1 if tp_max > 0 else 0.5
+        swvl1_pad = (swvl1_max) * 0.1 if swvl1_max > 0 else 0.05
+
+        ax1.set_ylim(bottom=0, top=tp_max + tp_pad)
+        ax2.set_ylim(bottom=0, top=swvl1_max + swvl1_pad)
+        ax1.axhline(y=0, color="gray", linestyle="-", linewidth=0.8, alpha=0.3, zorder=1)
+        ax2.axhline(y=0, color="gray", linestyle="-", linewidth=0.8, alpha=0.3, zorder=1)
+
+        # Legend
+        handles = []
+        labels = []
+        handles.extend(line1 + line2)
+        labels.extend([l.get_label() for l in line1 + line2])
+
+        if (
+            landfall_index != -1
+            and landfall_index < len(valid_times)
+            and not originates_over_land
+        ):
+            handles.append(
+                plt.Line2D([0], [0], color=status_color, linestyle="--", linewidth=2.5)
+            )
+            labels.append(status_text)
+
+        handles.append(Patch(facecolor="lightblue", alpha=0.5))
+        labels.append("Ocean Phase")
+        handles.append(Patch(facecolor="wheat", alpha=0.5))
+        labels.append("Land Phase")
+
+        # legend_handles, labels = ax1.get_legend_handles_labels()
+        # if legend_handles:
+        #     ax1.legend(handles, labels, loc="upper right", **legend_style())
+        if handles:
+            ax1.legend(handles, labels, loc="upper right", **legend_style())
+
+        title = f"Track {track_id}: Precipitation & Soil Water Content Evolution"
+        if originates_over_land:
+            title += "\n(Land-Originated MD)"
+        elif landfall_index != -1:
+            title += "\n(Ocean-Originated, Landfall Detected)"
+        else:
+            title += "\n(Ocean-Originated, No Landfall)"
+        ax1.set_title(title, fontsize=13, fontweight="bold", pad=12)
+
+        plt.setp(ax1.xaxis.get_majorticklabels(), rotation=30, ha="right")
+        ax1.xaxis.set_major_formatter(
+            plt.matplotlib.dates.DateFormatter("%d/%m/%Y %H:%M")
+        )
+
+        # Save
+        os.makedirs(output_dir, exist_ok=True)
+        tp_swvl1_timeseries_plot = f"track_{track_id}_TP-SWVL1_time_series.png"
+        tp_swvl1_timeseries_plot_path = os.path.join(output_dir, tp_swvl1_timeseries_plot)
+        plt.savefig(tp_swvl1_timeseries_plot_path, dpi=300, bbox_inches="tight")
+        plt.close(fig)
+        std_print("SAVED", "ts", "TP-SWVL1 time series", tp_swvl1_timeseries_plot_path)
+        return True
+    except Exception as e:
+        std_print("ERROR", "ts", "TP-SWVL1 plot failed", str(e))
+        traceback.print_exc()
+        return False
+
+
+def hf_timeseries(flux_df, track_id, output_dir):
+    try:
+        track_id = int(track_id)
+        # Validate input
+        if flux_df is None or len(flux_df) < 3:
+            std_print(
+                "WARN",
+                "ts",
+                "Insufficient data points",
+                f"{len(flux_df) if flux_df is not None else 0} < 3",
+            )
+            return False
+
+        # Check required columns
+        required_cols = [
+            "time",
+            "latent_heat_flux",
+            "sensible_heat_flux",
+            "total_heat_flux",
+        ]
+        missing_cols = [col for col in required_cols if col not in flux_df.columns]
+        if missing_cols:
+            std_print("ERROR", "ts", "Missing columns", missing_cols)
+            return False
+
+        # Ensure is_land column exists
+        if "is_land" not in flux_df.columns:
+            std_print("DEBUG", "ts", "Creating is_land column", "Default to False")
+            flux_df = flux_df.copy()
+            flux_df["is_land"] = False
+
+        # Convert time to datetime
+        try:
+            times = pd.to_datetime(flux_df["time"])
+        except Exception as e:
+            std_print("ERROR", "ts", "Time conversion failed", str(e))
+            return False
+
+        is_land_array = flux_df["is_land"].values
+
+        # Figure with subplots
+        # fig, axes = plt.subplots(3, 1, figsize=(16, 12))
+        fig, axes = plt.subplots(2, 1, figsize=(16, 10), sharex=True)
+
+        # plot 1: latent heat flux
+        ax1 = axes[0]
+        ax1.plot(
+            times,
+            flux_df["latent_heat_flux"],
+            color="green",
+            linewidth=2.5,
+            marker="o",
+            markersize=6,
+            alpha=0.8,
+            zorder=3,
+        )
+        # ocean/land shading
+        add_land_ocean_shading(
+            ax1, times, is_land_array, land_color="wheat", ocean_color="lightblue"
+        )
+        ax1.set_ylabel("Latent Heat Flux (W/m²)", fontsize=12, fontweight="bold")
+        ax1.grid(True, alpha=0.4, linestyle="--", zorder=0)
+        ax1.set_title(
+            f"Track {track_id}: Surface Heat Flux Evolution",
+            fontsize=13,
+            fontweight="bold",
+            pad=12,
+        )
+
+        # subplot 2: sensible heat flux
+        ax2 = axes[1]
+        ax2.plot(
+            times,
+            flux_df["sensible_heat_flux"],
+            color="orange",
+            linewidth=2.5,
+            marker="s",
+            markersize=6,
+            alpha=0.8,
+            zorder=3,
+        )
+        # ocean/land shading
+        add_land_ocean_shading(
+            ax2, times, is_land_array, land_color="wheat", ocean_color="lightblue"
+        )
+        ax2.set_ylabel("Sensible Heat Flux (W/m²)", fontsize=12, fontweight="bold")
+        ax2.grid(True, alpha=0.4, linestyle="--", zorder=0)
+
+        # # subplot 3: total heat flux
+        # ax3 = axes[2]
+        # ax3.plot(
+        #     times,
+        #     flux_df["total_heat_flux"],
+        #     color="purple",
+        #     linewidth=2.5,
+        #     marker="D",
+        #     markersize=6,
+        #     alpha=0.8,
+        #     zorder=3,
+        # )
+        # # ocean/land shading
+        # add_land_ocean_shading(
+        #     ax3, times, is_land_array, land_color="wheat", ocean_color="lightblue"
+        # )
+        # ax3.set_ylabel("Total Heat Flux (W/m²)", fontsize=12, fontweight="bold")
+        # ax3.set_xlabel("Time", fontsize=12, fontweight="bold")
+        # ax3.grid(True, alpha=0.4, linestyle="--", zorder=0)
+        #
+        # legend_handles = [
+        #     Patch(facecolor="lightblue", alpha=0.5, label="Ocean Phase"),
+        #     Patch(facecolor="wheat", alpha=0.5, label="Land Phase"),
+        # ]
+        # ax3.legend(handles=legend_handles, loc="lower left", **legend_style())
+
+        # Format x-axis for all subplots
+        for ax in axes:
+            plt.setp(ax.xaxis.get_majorticklabels(), rotation=30, ha="right")
+            ax.xaxis.set_major_formatter(
+                plt.matplotlib.dates.DateFormatter("%d/%m/%Y %H:%M")
+            )
+        plt.tight_layout()
+
+        # Save
+        os.makedirs(output_dir, exist_ok=True)
+        hf_timeseries_plot = f"track_{track_id}_HF_time_series.png"
+        hf_timeseries_plot_path = os.path.join(output_dir, hf_timeseries_plot)
+        plt.savefig(hf_timeseries_plot_path, dpi=300, bbox_inches="tight")
+        plt.close(fig)
+        std_print("SAVED", "ts", "Heat flux timeseries", hf_timeseries_plot_path)
+        return True
+    except Exception as e:
+        std_print("ERROR", "ts", "Heat flux timeseries plot failed", str(e))
+        traceback.print_exc()
+        return False
+
+
+def theta_e_timeseries(theta_df, track_id, output_dir):
     """
-    Handles two ERA5 conventions:
+    Plot equivalent potential temperature (theta_e) along the MD track over time.
+
+    theta_e is a proxy for atmospheric instability:
+      - Rising theta_e -> increasing instability / moisture
+      - Sharp theta_e increase before/at landfall -> elevated convective potential
+
+      1. theta_e (K) - primary stability signal
+      2. t2m (K) and d2m (K) - the two drivers of theta_e
+    """
+    try:
+        track_id = int(track_id)
+        if theta_df is None or len(theta_df) < 3:
+            std_print("WARN", "ts", "Insufficient theta_e data")
+            return False
+
+        required = {"time", "theta_e_K", "t2m_K", "d2m_K", "is_land"}
+        missing  = required - set(theta_df.columns)
+        if missing:
+            std_print("ERROR", "ts", "theta_e_timeseries: missing columns", str(missing))
+            return False
+
+        times = pd.to_datetime(theta_df["time"])
+        theta_e = theta_df["theta_e_K"].values
+        t2m = theta_df["t2m_K"].values
+        d2m = theta_df["d2m_K"].values
+        is_land_arr  = theta_df["is_land"].values.astype(bool)
+
+        # Detect landfall (first ocean -> land transition)
+        landfall_time = None
+        for i in range(1, len(theta_df)):
+            if not is_land_arr[i - 1] and is_land_arr[i]:
+                landfall_time = times.iloc[i]
+                break
+
+        # Figure
+        fig, axes = plt.subplots(2, 1, figsize=(16, 10), sharex=True)
+
+        # Panel 1: theta_e
+        ax1 = axes[0]
+        ax1.plot(
+            times,
+            theta_e,
+            "-o",
+            color="darkorange",
+            linewidth=2.5,
+            markersize=4,
+            alpha=0.85,
+            label="θ_e (K)",
+            zorder=4
+        )
+        add_land_ocean_shading(ax1, times, is_land_arr, land_color="wheat", ocean_color="lightblue")
+        if landfall_time is not None:
+            ax1.axvline(landfall_time, color="red", linestyle="--", linewidth=1.8, label="Landfall", zorder=5)
+        ax1.set_ylabel("Equiv. Potential Temperature θ_e (K)", fontsize=12, fontweight="bold")
+        ax1.set_title(
+            f"Track {track_id}: Atmospheric Stability - Equivalent Potential Temperature",
+            fontsize=13, fontweight="bold", pad=10,
+        )
+        ax1.grid(True, alpha=0.4, linestyle="--", zorder=0)
+        ax1.legend(loc="upper left", **legend_style())
+
+        # Annotate min/max theta_e on land
+        land_idx = np.where(is_land_arr & ~np.isnan(theta_e))[0]
+        if len(land_idx) > 0:
+            peak_i = land_idx[np.argmax(theta_e[land_idx])]
+            ax1.annotate(
+                f"Peak: {theta_e[peak_i]:.1f} K",
+                xy=(times.iloc[peak_i], theta_e[peak_i]),
+                xytext=(12, 6),
+                textcoords="offset points",
+                fontsize=9,
+                color="darkorange",
+                arrowprops=dict(arrowstyle="->", color="darkorange", lw=1.0),
+                bbox=common_bbox()
+            )
+
+        # Panel 2: t2m and d2m
+        ax2 = axes[1]
+        ax2.plot(
+            times,
+            t2m - 273.15,
+            "-o",
+            color="firebrick",
+            linewidth=2.2,
+            markersize=4,
+            alpha=0.8,
+            label="T2m (°C)",
+            zorder=4
+        )
+        ax2.plot(
+            times,
+            d2m - 273.15,
+            "-s",
+            color="steelblue",
+            linewidth=2.2,
+            markersize=4,
+            alpha=0.8,
+            label="D2m (°C)",
+            zorder=4
+        )
+        add_land_ocean_shading(ax2, times, is_land_arr, land_color="wheat", ocean_color="lightblue")
+        if landfall_time is not None:
+            ax2.axvline(landfall_time, color="red", linestyle="--", linewidth=1.8, zorder=5)
+        ax2.set_ylabel("Temperature (°C)", fontsize=12, fontweight="bold")
+        ax2.set_xlabel("Time", fontsize=12, fontweight="bold")
+        ax2.grid(True, alpha=0.4, linestyle="--", zorder=0)
+        ax2.legend(loc="upper left", **legend_style())
+
+        for ax in (ax1, ax2):
+            plt.setp(ax.xaxis.get_majorticklabels(), rotation=30, ha="right")
+            ax.xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter("%d/%m/%Y %H:%M"))
+        plt.tight_layout()
+
+        # Save
+        os.makedirs(output_dir, exist_ok=True)
+        theta_e_plot = f"track_{track_id}_theta_e_timeseries.png"
+        theta_e_plot_path = os.path.join(output_dir,theta_e_plot)
+        plt.savefig(theta_e_plot_path, dpi=300, bbox_inches="tight")
+        plt.close(fig)
+        std_print("SAVED", "ts", "theta_e timeseries", theta_e_plot_path)
+        return True
+    except Exception as e:
+        std_print("ERROR", "ts", "theta_e timeseries plot failed", str(e))
+        traceback.print_exc()
+        return False
+
+
+# Helper functions
+def extract_heat_flux_timeseries(ds, track_df, track_id, buffer_km=100):
+    """Handles two ERA5 conventions:
     1. Accumulated: slhf, sshf (J m⁻²) - negative = away from surface
     2. Instantaneous Average: avg_slhtf, avg_ishf (W m⁻²)
     """
@@ -101,29 +558,6 @@ def extract_heat_flux_timeseries(ds, track_df, track_id, buffer_km=100):
                 continue
             # std_print('DEBUG', 'ts', f'Bounds after clipping: lat={float(lat_min):.4f} to {float(lat_max):.4f}, lon={float(lon_min):.4f} to {float(lon_max):.4f}')
 
-            #####
-            # sub_now = ds.isel({time_coord: idx_now}).sel(
-            #     latitude=slice(lat_max, lat_min),  # North to South
-            #     longitude=slice(lon_min, lon_max)   # West to East
-            # )
-            # # Check valid data
-            # if sub_now.sizes.get('latitude', 0) == 0 or sub_now.sizes.get('longitude', 0) == 0:
-            #     std_print('WARN', "ts", f'No data within buffer at', t_now)
-            #     continue
-            #####
-            # sub_now = ds_now.sel(
-            #     latitude=slice(lat_max, lat_min),  # North to South
-            #     longitude=slice(lon_min, lon_max)  # West to East
-            # )
-            # sub_prev = ds_prev.sel(
-            #     latitude=slice(lat_max, lat_min),  # North to South
-            #     longitude=slice(lon_min, lon_max)  # West to East
-            # )
-            # # Check if subset is empty
-            # if sub_now.sizes.get('latitude', 0) == 0 or sub_now.sizes.get('longitude', 0) == 0:
-            #     std_print('WARN', "ts", f'No data within buffer at', t_now)
-            #     continue
-            #####
             # Select time slices
             ds_now = ds.isel({time_coord: idx_now})
             ds_prev = ds.isel({time_coord: idx_prev})
@@ -209,341 +643,16 @@ def extract_heat_flux_timeseries(ds, track_df, track_id, buffer_km=100):
                     "is_land": is_land,
                 }
             )
-            # std_print('DEBUG', "ts", f'Successfully extracted fluxes at {t_now}: LHF={slhf_w:.1f}, SHF={sshf_w:.1f}')
+            # std_print("DEBUG", "ts", f'Successfully extracted fluxes at {t_now}: LHF={slhf_w:.1f}, SHF={sshf_w:.1f}')
+            std_print("INFO", "ts", "Extracted heat flux points", len(flux_records))
         except Exception as e:
             std_print("ERROR", "ts", f"Processing time step at {t_now}", str(e))
             traceback.print_exc()
             continue
     if not flux_records:
-        std_print("WARN", "ts", "No heat-flux data extracted")
+        std_print("ERROR", "ts", "No heat-flux data extracted")
         return None
-    # std_print("DEBUG", "ts", "Extracted heat flux records", len(flux_records))
     return pd.DataFrame(flux_records)
-
-
-def tp_swvl1_timeseries(track_df, track_id, tp, swvl1, valid_times, landfall_index, output_dir, originates_over_land=True):
-    track_id = int(track_id)
-    try:
-        if not isinstance(tp, np.ndarray):
-            tp = np.array(tp)
-        if not isinstance(swvl1, np.ndarray):
-            swvl1 = np.array(swvl1)
-        if not isinstance(valid_times, (list, np.ndarray, pd.DatetimeIndex)):
-            raise ValueError("valid_times must be datetime-like")
-
-        # Create a copy of swvl1
-        swvl1_land = swvl1.copy()
-
-        # Get land array for shading and for zeroing ocean values
-        if track_df is not None and "is_land" in track_df.columns:
-            is_land_array = track_df["is_land"].values
-
-            # Set SWVL1 to 0 for ocean points (not land)
-            swvl1_land[~is_land_array] = 0
-            # std_print("DEBUG", "ts", "Setting SWVL1=0 ocean points", np.sum(~is_land_array))
-        else:
-            is_land_array = np.zeros(len(valid_times), dtype=bool)
-            if originates_over_land:
-                is_land_array[:] = True
-                # All points are land, no modification needed
-            elif landfall_index > 0:
-                is_land_array[landfall_index:] = True
-                # Set pre-landfall points (ocean) to 0
-                swvl1_land[:landfall_index] = 0
-                # std_print("DEBUG", "ts", "Setting SWVL1=0 for pre-landfall ocean points", landfall_index,)
-
-        valid_data_mask = ~(np.isnan(tp) | np.isnan(swvl1_land))
-        valid_count = np.sum(valid_data_mask)
-        if valid_count < 2:
-            std_print("WARN", "ts", "Insufficient valid data", f"{valid_count} < 2 points")
-            return False
-        if len(tp) != len(swvl1_land) or len(tp) != len(valid_times):
-            std_print("WARN", "ts", "Data length mismatch", "swvl1_land != tp != times")
-            return False
-
-        # Figure
-        fig, ax1 = plt.subplots(figsize=(18, 6))
-        # bbox_style = common_bbox()
-
-        # Determine landfall status
-        if originates_over_land:
-            status_text = "Originates over land"
-            status_color = "blue"
-        elif landfall_index == -1:
-            status_text = "No Landfall"
-            status_color = "gray"
-        else:
-            status_text = "Landfall"
-            status_color = "red"
-
-        # Plot TP on primary axis
-        color_tp = "tab:blue"
-        ax1.set_xlabel("Time", fontsize=11, fontweight="bold")
-        ax1.set_ylabel(
-            "Total Precipitation (tp) (mm/hr)",
-            color=color_tp,
-            fontsize=10,
-            fontweight="bold",
-        )
-        line1 = ax1.plot(
-            valid_times,
-            tp,
-            "-o",
-            color=color_tp,
-            linewidth=2.5,
-            markersize=5,
-            label="Total Precipitation",
-            alpha=0.8,
-            zorder=4,
-        )
-        ax1.tick_params(axis="y", labelcolor=color_tp)
-        ax1.grid(True, alpha=0.5, linestyle="--", zorder=0)
-        add_land_ocean_shading(
-            ax1,
-            pd.to_datetime(valid_times),
-            is_land_array,
-            land_color="wheat",
-            ocean_color="lightblue",
-        )
-        if (
-            landfall_index != -1
-            and landfall_index < len(valid_times)
-            and not originates_over_land
-        ):
-            landfall_time = valid_times[landfall_index]
-            ax1.axvline(
-                x=landfall_time,
-                color=status_color,
-                linestyle="--",
-                linewidth=2.5,
-                alpha=0.8,
-                label=status_text,
-                zorder=5,
-            )
-
-        # Plot SWVL1 on secondary axis (using  swvl1_land with ocean=0)
-        ax2 = ax1.twinx()
-        color_swvl1 = "tab:brown"
-        ax2.set_ylabel(
-            "Soil Water Volumetric Layer 1 (swvl1) (m³/m³)",
-            color=color_swvl1,
-            fontsize=11,
-            fontweight="bold",
-        )
-        line2 = ax2.plot(
-            valid_times,
-            swvl1_land,
-            "s-",
-            color=color_swvl1,
-            linewidth=2.5,
-            markersize=5,
-            label="Soil Water Volumetric Level-1",
-            alpha=0.8,
-            zorder=4,
-        )
-        ax2.tick_params(axis="y", labelcolor=color_swvl1)
-
-        # Set y-limits to include zero on both axes
-        tp_clean = tp[~np.isnan(tp)]
-        swvl1_clean = swvl1_land[~np.isnan(swvl1_land)]
-        tp_max = np.max(tp_clean) if len(tp_clean) > 0 else 1
-        swvl1_max = np.max(swvl1_clean) if len(swvl1_clean) > 0 else 0.1
-        tp_pad = (tp_max) * 0.1 if tp_max > 0 else 0.5
-        swvl1_pad = (swvl1_max) * 0.1 if swvl1_max > 0 else 0.05
-
-        ax1.set_ylim(bottom=0, top=tp_max + tp_pad)
-        ax2.set_ylim(bottom=0, top=swvl1_max + swvl1_pad)
-        ax1.axhline(y=0, color="gray", linestyle="-", linewidth=0.8, alpha=0.3, zorder=1)
-        ax2.axhline(y=0, color="gray", linestyle="-", linewidth=0.8, alpha=0.3, zorder=1)
-
-        # Legend
-        handles = []
-        labels = []
-        handles.extend(line1 + line2)
-        labels.extend([l.get_label() for l in line1 + line2])
-
-        if (
-            landfall_index != -1
-            and landfall_index < len(valid_times)
-            and not originates_over_land
-        ):
-            handles.append(
-                plt.Line2D([0], [0], color=status_color, linestyle="--", linewidth=2.5)
-            )
-            labels.append(status_text)
-
-        handles.append(Patch(facecolor="lightblue", alpha=0.5))
-        labels.append("Ocean Phase")
-        handles.append(Patch(facecolor="wheat", alpha=0.5))
-        labels.append("Land Phase")
-
-        # legend_handles, labels = ax1.get_legend_handles_labels()
-        # if legend_handles:
-        #     ax1.legend(handles, labels, loc="upper right", **legend_style())
-        if handles:
-            ax1.legend(handles, labels, loc="upper right", **legend_style())
-
-        title = f"Track {track_id}: Precipitation & Soil Water Content Evolution"
-        if originates_over_land:
-            title += "\n(Land-Originated MD)"
-        elif landfall_index != -1:
-            title += "\n(Ocean-Originated, Landfall Detected)"
-        else:
-            title += "\n(Ocean-Originated, No Landfall)"
-        ax1.set_title(title, fontsize=13, fontweight="bold", pad=12)
-
-        plt.setp(ax1.xaxis.get_majorticklabels(), rotation=30, ha="right")
-        ax1.xaxis.set_major_formatter(
-            plt.matplotlib.dates.DateFormatter("%d/%m/%Y %H:%M")
-        )
-
-        os.makedirs(output_dir, exist_ok=True)
-        tp_swvl1_timeseries_plot = f"track_{track_id}_TP-SWVL1_time_series.png"
-        tp_swvl1_timeseries_plot_path = os.path.join(output_dir, tp_swvl1_timeseries_plot)
-        plt.savefig(tp_swvl1_timeseries_plot_path, dpi=300, bbox_inches="tight")
-        plt.close(fig)
-        std_print("SAVED", "ts", "TP-SWVL1 time series", tp_swvl1_timeseries_plot_path)
-        return True
-    except Exception as e:
-        std_print("ERROR", "ts", "TP-SWVL1 plot failed", str(e))
-        traceback.print_exc()
-        return False
-
-
-def hf_timeseries(flux_df, track_id, output_dir):
-    try:
-        track_id = int(track_id)
-        # Validate input
-        if flux_df is None or len(flux_df) < 3:
-            std_print(
-                "WARN",
-                "ts",
-                "Insufficient data points",
-                f"{len(flux_df) if flux_df is not None else 0} < 3",
-            )
-            return False
-
-        # Check required columns
-        required_cols = [
-            "time",
-            "latent_heat_flux",
-            "sensible_heat_flux",
-            "total_heat_flux",
-        ]
-        missing_cols = [col for col in required_cols if col not in flux_df.columns]
-        if missing_cols:
-            std_print("ERROR", "ts", "Missing columns", missing_cols)
-            return False
-
-        # Ensure is_land column exists
-        if "is_land" not in flux_df.columns:
-            std_print("DEBUG", "ts", "Creating is_land column", "Default to False")
-            flux_df = flux_df.copy()
-            flux_df["is_land"] = False
-
-        # Convert time to datetime
-        try:
-            times = pd.to_datetime(flux_df["time"])
-        except Exception as e:
-            std_print("ERROR", "ts", "Time conversion failed", str(e))
-            return False
-
-        is_land_array = flux_df["is_land"].values
-
-        # Figure with subplots
-        # fig, axes = plt.subplots(3, 1, figsize=(16, 12))
-        fig, axes = plt.subplots(2, 1, figsize=(16, 10), sharex=True)
-
-        # plot 1: latent heat flux
-        ax1 = axes[0]
-        ax1.plot(
-            times,
-            flux_df["latent_heat_flux"],
-            color="green",
-            linewidth=2.5,
-            marker="o",
-            markersize=6,
-            alpha=0.8,
-            zorder=3,
-        )
-        # ocean/land shading
-        add_land_ocean_shading(
-            ax1, times, is_land_array, land_color="wheat", ocean_color="lightblue"
-        )
-        ax1.set_ylabel("Latent Heat Flux (W/m²)", fontsize=11, fontweight="bold")
-        ax1.grid(True, alpha=0.4, linestyle="--", zorder=0)
-        ax1.set_title(
-            f"Track {track_id}: Surface Heat Flux Evolution",
-            fontsize=13,
-            fontweight="bold",
-            pad=12,
-        )
-
-        # subplot 2: sensible heat flux
-        ax2 = axes[1]
-        ax2.plot(
-            times,
-            flux_df["sensible_heat_flux"],
-            color="orange",
-            linewidth=2.5,
-            marker="s",
-            markersize=6,
-            alpha=0.8,
-            zorder=3,
-        )
-        # ocean/land shading
-        add_land_ocean_shading(
-            ax2, times, is_land_array, land_color="wheat", ocean_color="lightblue"
-        )
-        ax2.set_ylabel("Sensible Heat Flux (W/m²)", fontsize=11, fontweight="bold")
-        ax2.grid(True, alpha=0.4, linestyle="--", zorder=0)
-
-        # # subplot 3: total heat flux
-        # ax3 = axes[2]
-        # ax3.plot(
-        #     times,
-        #     flux_df["total_heat_flux"],
-        #     color="purple",
-        #     linewidth=2.5,
-        #     marker="D",
-        #     markersize=6,
-        #     alpha=0.8,
-        #     zorder=3,
-        # )
-        # # ocean/land shading
-        # add_land_ocean_shading(
-        #     ax3, times, is_land_array, land_color="wheat", ocean_color="lightblue"
-        # )
-        # ax3.set_ylabel("Total Heat Flux (W/m²)", fontsize=11, fontweight="bold")
-        # ax3.set_xlabel("Time", fontsize=11, fontweight="bold")
-        # ax3.grid(True, alpha=0.4, linestyle="--", zorder=0)
-        #
-        # legend_handles = [
-        #     Patch(facecolor="lightblue", alpha=0.5, label="Ocean Phase"),
-        #     Patch(facecolor="wheat", alpha=0.5, label="Land Phase"),
-        # ]
-        # ax3.legend(handles=legend_handles, loc="lower left", **legend_style())
-
-        # Format x-axis for all subplots
-        for ax in axes:
-            plt.setp(ax.xaxis.get_majorticklabels(), rotation=30, ha="right")
-            ax.xaxis.set_major_formatter(
-                plt.matplotlib.dates.DateFormatter("%d/%m/%Y %H:%M")
-            )
-        plt.tight_layout()
-
-        # Save
-        os.makedirs(output_dir, exist_ok=True)
-        hf_timeseries_plot = f"track_{track_id}_HF_time_series.png"
-        hf_timeseries_plot_path = os.path.join(output_dir, hf_timeseries_plot)
-        plt.savefig(hf_timeseries_plot_path, dpi=300, bbox_inches="tight")
-        plt.close(fig)
-        std_print("SAVED", "ts", "Heat flux timeseries", hf_timeseries_plot_path)
-        return True
-    except Exception as e:
-        std_print("ERROR", "ts", "Heat flux timeseries plot failed", str(e))
-        traceback.print_exc()
-        return False
 
 
 # Equivalent Potential Temperature (\theta_e)
@@ -592,7 +701,7 @@ def extract_theta_e_timeseries(ds, track_df, track_id, buffer_km=100):
             lambda r: is_point_land(r["latitude"], r["longitude"]), axis=1
         )
 
-    records = []
+    theta_e_records = []
     for i in range(len(track)):
         row = track.iloc[i]
         t_now  = pd.to_datetime(row["time"])
@@ -638,7 +747,7 @@ def extract_theta_e_timeseries(ds, track_df, track_id, buffer_km=100):
             if any(np.isnan(v) for v in (t2m_val, d2m_val, sp_val)):
                 continue
             theta_val = float(compute_theta_e(t2m_val, d2m_val, sp_val))
-            records.append({
+            theta_e_records.append({
                 "time":      t_now,
                 "theta_e_K": theta_val,
                 "t2m_K":     t2m_val,
@@ -652,136 +761,10 @@ def extract_theta_e_timeseries(ds, track_df, track_id, buffer_km=100):
             std_print("WARN", "ts", f"theta_e failed at {t_now}", str(e))
             continue
 
-    if not records:
+    if not theta_e_records:
         std_print("ERROR", "ts", "No theta_e data extracted")
         return None
-    std_print("INFO", "ts", "theta_e extracted", f"{len(records)} points")
-    return pd.DataFrame(records)
+    std_print("INFO", "ts", "Extracted theta_e points", len(theta_e_records))
+    return pd.DataFrame(theta_e_records)
 
 
-def theta_e_timeseries(theta_df, track_id, output_dir):
-    """
-    Plot equivalent potential temperature (theta_e) along the MD track over time.
-
-    theta_e is a proxy for atmospheric instability:
-      - Rising theta_e -> increasing instability / moisture
-      - Sharp theta_e increase before/at landfall -> elevated convective potential
-
-      1. theta_e (K) - primary stability signal
-      2. t2m (K) and d2m (K) - the two drivers of theta_e
-    """
-    try:
-        track_id = int(track_id)
-        if theta_df is None or len(theta_df) < 3:
-            std_print("WARN", "ts", "Insufficient theta_e data")
-            return False
-
-        required = {"time", "theta_e_K", "t2m_K", "d2m_K", "is_land"}
-        missing  = required - set(theta_df.columns)
-        if missing:
-            std_print("ERROR", "ts", "theta_e_timeseries: missing columns", str(missing))
-            return False
-
-        times        = pd.to_datetime(theta_df["time"])
-        theta_e      = theta_df["theta_e_K"].values
-        t2m          = theta_df["t2m_K"].values
-        d2m          = theta_df["d2m_K"].values
-        is_land_arr  = theta_df["is_land"].values.astype(bool)
-
-        # Detect landfall (first ocean → land transition)
-        landfall_time = None
-        for i in range(1, len(theta_df)):
-            if not is_land_arr[i - 1] and is_land_arr[i]:
-                landfall_time = times.iloc[i]
-                break
-
-        # Figure
-        fig, axes = plt.subplots(2, 1, figsize=(16, 10), sharex=True)
-
-        # Panel 1: theta_e
-        ax1 = axes[0]
-        ax1.plot(
-            times,
-            theta_e,
-            "-o",
-            color="darkorange",
-            linewidth=2.5,
-            markersize=4,
-            alpha=0.85,
-            label="θ_e (K)",
-            zorder=4
-        )
-        add_land_ocean_shading(ax1, times, is_land_arr,land_color="wheat", ocean_color="lightblue")
-        if landfall_time is not None:
-            ax1.axvline(landfall_time, color="red", linestyle="--", linewidth=1.8,label="Landfall", zorder=5)
-        ax1.set_ylabel("Equiv. Potential Temperature θ_e (K)",fontsize=11, fontweight="bold")
-        ax1.set_title(
-            f"Track {track_id}: Atmospheric Stability - Equivalent Potential Temperature",
-            fontsize=13, fontweight="bold", pad=10,
-        )
-        ax1.grid(True, alpha=0.4, linestyle="--", zorder=0)
-        ax1.legend(loc="upper left", **legend_style())
-
-        # Annotate min/max theta_e on land
-        land_idx = np.where(is_land_arr & ~np.isnan(theta_e))[0]
-        if len(land_idx) > 0:
-            peak_i = land_idx[np.argmax(theta_e[land_idx])]
-            ax1.annotate(
-                f"Peak: {theta_e[peak_i]:.1f} K",
-                xy=(times.iloc[peak_i], theta_e[peak_i]),
-                xytext=(12, 6),
-                textcoords="offset points",
-                fontsize=9,
-                color="darkorange",
-                arrowprops=dict(arrowstyle="->", color="darkorange", lw=1.0),
-                bbox=common_bbox()
-            )
-
-        # Panel 2: t2m and d2m
-        ax2 = axes[1]
-        ax2.plot(
-            times,
-            t2m - 273.15,
-            "-o",
-            color="firebrick",
-            linewidth=2.2,
-            markersize=4,
-            alpha=0.8,
-            label="T2m (°C)",
-            zorder=4
-        )
-        ax2.plot(
-            times,
-            d2m - 273.15,
-            "-s",
-            color="steelblue",
-            linewidth=2.2,
-            markersize=4,
-            alpha=0.8,
-            label="D2m (°C)",
-            zorder=4
-        )
-        add_land_ocean_shading(ax2, times, is_land_arr,land_color="wheat", ocean_color="lightblue")
-        if landfall_time is not None:
-            ax2.axvline(landfall_time, color="red", linestyle="--", linewidth=1.8, zorder=5)
-        ax2.set_ylabel("Temperature (°C)", fontsize=11, fontweight="bold")
-        ax2.set_xlabel("Time", fontsize=11, fontweight="bold")
-        ax2.grid(True, alpha=0.4, linestyle="--", zorder=0)
-        ax2.legend(loc="upper left", **legend_style())
-
-        for ax in (ax1, ax2):
-            plt.setp(ax.xaxis.get_majorticklabels(), rotation=30, ha="right")
-            ax.xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter("%d/%m/%Y %H:%M"))
-        plt.tight_layout()
-
-        os.makedirs(output_dir, exist_ok=True)
-        theta_e_plot = f"track_{track_id}_theta_e_timeseries.png"
-        theta_e_plot_path = os.path.join(output_dir,theta_e_plot) 
-        plt.savefig(theta_e_plot_path, dpi=300, bbox_inches="tight")
-        plt.close(fig)
-        std_print("SAVED", "ts", "theta_e timeseries", theta_e_plot_path)
-        return True
-    except Exception as e:
-        std_print("ERROR", "ts", "theta_e timeseries plot failed", str(e))
-        traceback.print_exc()
-        return False

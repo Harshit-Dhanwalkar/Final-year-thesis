@@ -91,7 +91,7 @@ def plot_tp_swvl1_correlation(ds, track_df, track_id, buffer_km, output_dir):
         # ax_main.legend(loc="bottom right", **legend_style())
 
     cbar = plt.colorbar(sc, cax=ax_cbar)
-    cbar.set_label("Track Time", fontsize=11, fontweight="bold")
+    cbar.set_label("Track Time", fontsize=12, fontweight="bold")
     format_colorbar_time(cbar, t_numeric if len(tp_land) >= 3 else t_numeric)
 
     # Recalculate statistics using only land points (SWVL1 > 0.03)
@@ -130,13 +130,13 @@ def plot_tp_swvl1_correlation(ds, track_df, track_id, buffer_km, output_dir):
         0.95,
         stats_text,
         transform=ax_stats.transAxes,
-        fontsize=11,
+        fontsize=12,
         verticalalignment="top",
         family="monospace",
         bbox=bbox_style,
     )
-    ax_main.set_xlabel("Total Precipitation (mm/hr)", fontsize=11, fontweight="bold")
-    ax_main.set_ylabel("Volumetric Soil Water Layer-1 (0-7cm) (m³/m³)", fontsize=11, fontweight="bold")
+    ax_main.set_xlabel("Total Precipitation (mm/hr)", fontsize=12, fontweight="bold")
+    ax_main.set_ylabel("Volumetric Soil Water Layer-1 (0-7cm) (m³/m³)", fontsize=12, fontweight="bold")
     ax_main.set_title(
         f"Track {track_id}: TP-SWVL1 Correlation (Land Only: SWVL1 > 0.03)",
         fontsize=13,
@@ -196,8 +196,8 @@ def plot_swvl1_hf_correlation(swvl1, latent_hf, sensible_hf, valid_times, landfa
             linewidth=0.6,
             zorder=3,
         )
-        ax.set_xlabel("SWVL1 (m³/m³)", fontsize=11, fontweight="bold")
-        ax.set_ylabel(y_labels[i], fontsize=11, fontweight="bold")
+        ax.set_xlabel("SWVL1 (m³/m³)", fontsize=12, fontweight="bold")
+        ax.set_ylabel(y_labels[i], fontsize=12, fontweight="bold")
         ax.set_title(
             titles[i],
             fontsize=13,
@@ -230,7 +230,7 @@ def plot_swvl1_hf_correlation(swvl1, latent_hf, sensible_hf, valid_times, landfa
         except Exception:
             pass
     cbar = plt.colorbar(sc, cax=ax_cbar)
-    cbar.set_label("Track Time", fontsize=11, fontweight="bold")
+    cbar.set_label("Track Time", fontsize=12, fontweight="bold")
     format_colorbar_time(cbar, t_numeric)
 
     status_text = "Land-Originated" if originates_over_land else "After Landfall"
@@ -294,8 +294,8 @@ def plot_tp_hf_correlation(tp, latent_hf, sensible_hf, valid_times, landfall_ind
             linewidth=0.6,
             zorder=3
         )
-        ax.set_xlabel("Total Precipitation (mm/hr)", fontsize=11, fontweight="bold")
-        ax.set_ylabel(y_labels[i], fontsize=11, fontweight="bold")
+        ax.set_xlabel("Total Precipitation (mm/hr)", fontsize=12, fontweight="bold")
+        ax.set_ylabel(y_labels[i], fontsize=12, fontweight="bold")
         ax.set_title(
             titles[i],
             fontsize=13,
@@ -323,7 +323,7 @@ def plot_tp_hf_correlation(tp, latent_hf, sensible_hf, valid_times, landfall_ind
             pass
 
     cbar = plt.colorbar(sc, cax=ax_cbar)
-    cbar.set_label("Track Time", fontsize=11, fontweight="bold")
+    cbar.set_label("Track Time", fontsize=12, fontweight="bold")
     format_colorbar_time(cbar, t_numeric)
     status_text = "Land-Originated" if originates_over_land else "After Landfall"
     fig.suptitle(
@@ -387,13 +387,13 @@ def plot_tp_swvl1_lag_correlation(tp, sm, max_lag_hours, track_id, output_dir):
         0.94,
         lag_interpretation,
         transform=ax.transAxes,
-        fontsize=11,
+        fontsize=12,
         va="top",
         ha="right",
         bbox=bbox_style,
     )
-    ax.set_xlabel("Lag (hours)", fontsize=11, fontweight="bold")
-    ax.set_ylabel("Correlation (r)", fontsize=11, fontweight="bold")
+    ax.set_xlabel("Lag (hours)", fontsize=12, fontweight="bold")
+    ax.set_ylabel("Correlation (r)", fontsize=12, fontweight="bold")
     ax.set_title(
         f"Track {track_id}: TP-SWVL1 Lagged Correlation",
         fontsize=13,
@@ -461,13 +461,13 @@ def plot_swvl1_hf_lag_correlation(sm, hf, max_lag_hours, track_id, hf_name, outp
         0.94,
         interp,
         transform=ax.transAxes,
-        fontsize=11,
+        fontsize=12,
         va="top",
         ha="right",
         bbox=bbox_style,
     )
-    ax.set_xlabel("Lag (hours)", fontsize=11, fontweight="bold")
-    ax.set_ylabel("Correlation (r)", fontsize=11, fontweight="bold")
+    ax.set_xlabel("Lag (hours)", fontsize=12, fontweight="bold")
+    ax.set_ylabel("Correlation (r)", fontsize=12, fontweight="bold")
     ax.set_title(
         f"Track {track_id}: SWVL1-{hf_name} Lagged Correlation",
         fontsize=13,
@@ -541,13 +541,13 @@ def plot_tp_hf_lag_correlation(flux, tp, max_lag_hours, track_id, flux_name, out
         0.94,
         interp,
         transform=ax.transAxes,
-        fontsize=11,
+        fontsize=12,
         va="top",
         ha="right",
         bbox=bbox_style
     )
-    ax.set_xlabel("Lag (hours)", fontsize=11, fontweight="bold")
-    ax.set_ylabel("Correlation (r)", fontsize=11, fontweight="bold")
+    ax.set_xlabel("Lag (hours)", fontsize=12, fontweight="bold")
+    ax.set_ylabel("Correlation (r)", fontsize=12, fontweight="bold")
     ax.set_title(
         f"Track {track_id}: Lagged {flux_label} vs Total Precipitation",
         fontsize=13,
@@ -594,8 +594,8 @@ def plot_lag_autocorrelation(data, var_name, track_id, output_dir):
     ax.fill_between(lags, correlations, alpha=0.2, color="steelblue")
     ax.axvline(0, color="black", linestyle="--", linewidth=1, alpha=0.6)
     ax.axhline(0, color="gray", linestyle=":", linewidth=1, alpha=0.6)
-    ax.set_xlabel("Lag (hours)", fontsize=11, fontweight="bold")
-    ax.set_ylabel("Correlation Coefficient (r)", fontsize=11, fontweight="bold")
+    ax.set_xlabel("Lag (hours)", fontsize=12, fontweight="bold")
+    ax.set_ylabel("Correlation Coefficient (r)", fontsize=12, fontweight="bold")
     ax.grid(True, alpha=0.5, linestyle="--")
     ax.set_ylim(-1.0, 1.05)
 

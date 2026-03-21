@@ -314,7 +314,7 @@ def plot_tracks_elevation(track_df, track_id, vrt_path, output_dir):
             )
 
             cbar = plt.colorbar(im, fraction=0.03, pad=0.04)
-            cbar.set_label("Elevation (m)", fontsize=11, fontweight="bold")
+            cbar.set_label("Elevation (m)", fontsize=12, fontweight="bold")
 
             # Legend
             legend_handles, labels = ax.get_legend_handles_labels()
@@ -437,7 +437,7 @@ def plot_global_elevation(track_df, vrt_path, output_dir, year):
                 )
 
             cbar = plt.colorbar(im, fraction=0.03, pad=0.04)
-            cbar.set_label("Elevation (m)", fontsize=11, fontweight="bold")
+            cbar.set_label("Elevation (m)", fontsize=12, fontweight="bold")
 
             # Legend
             legend_handles, labels = ax.get_legend_handles_labels()

@@ -52,8 +52,8 @@ from utils import (
 )
 
 hgt_dir = ""
-tile_index = {}   # "N24E087.HGT" → full path
-tiles_cache = {}   # tile_path → tile_data dict
+tile_index = {}   # "N24E087.HGT" -> full path
+tiles_cache = {}   # tile_path -> tile_data dict
 
 ELEV_VMAX = None
 ELEV_VMIN = 0.0   # always sea level
@@ -135,11 +135,155 @@ def init_terrain(new_hgt_dir):
     std_print("INFO", "ea", "Global elevation colour scale set", f"vmin={ELEV_VMIN:.0f} m, vmax={ELEV_VMAX:.0f} m")
 
 
+def run_single_track_elevation_analysis(track_df, track_id, output_dir):
+    """Per-track elevation analysis"""
+    track_id = int(track_id)
+    os.makedirs(output_dir, exist_ok=True)
+
+    # 1. Extract elevation
+    if "speed_ms" not in track_df.columns:
+        std_print("WARN", "ea", "speed_ms missing - run compute_track_speeds first")
+
+    try:
+        track_df = get_elevation_profile(track_df)
+    except Exception as e:
+        std_print("ERROR", "ea", "get_elevation_profile failed", str(e))
+        return track_df
+
+    valid = track_df["elevation"].notna().sum()
+    if valid == 0:
+        std_print("WARN", "ea","no elevation data - skipping per-track plots")
+        return track_df
+
+    # 2. Dual-axis profile: elevation + speed over time
+    try:
+        plot_track_elevation_profile(track_df, track_id, output_dir)
+    except Exception as e:
+        std_print("ERROR", "ea", "Elevation profile plot failed", str(e))
+        traceback.print_exc()
+
+    # 3. Spatial map: DEM background + track colored by speed
+    try:
+        plot_track_elevation_speed_map(track_df, track_id, output_dir)
+    except Exception as e:
+        std_print("ERROR", "ea", "elevation map plot failed", str(e))
+        traceback.print_exc()
+
+    # 4. Barrier encounter annotation (terrain braking hypothesis)
+    try:
+        plot_barrier_encounter_profile(track_df, track_id, output_dir)
+    except Exception as e:
+        std_print("ERROR", "ea", "Barrier encounter profile failed", str(e))
+        traceback.print_exc()
+
+    # 5. Bearing change at terrain crossings (deflection / stall hypothesis)
+    try:
+        plot_bearing_change_at_terrain(track_df, track_id, output_dir)
+    except Exception as e:
+        std_print("ERROR", "ea", "Bearing change plot failed", str(e))
+        traceback.print_exc()
+
+    # 6. Terrain corridor width (perpendicular transect — corridor vs barrier)
+    try:
+        compute_terrain_corridor_width(track_df, track_id, output_dir)
+    except Exception as e:
+        std_print("ERROR", "ea", "Corridor width failed", str(e))
+        traceback.print_exc()
+ 
+    # 7. Effective blocking factor (terrain elevation gradient ahead of motion)
+    try:
+        compute_effective_blocking_factor(track_df, track_id, output_dir)
+    except Exception as e:
+        std_print("ERROR", "ea", "Blocking factor failed", str(e))
+        traceback.print_exc()
+ 
+    # 8. Terrain motion decomposition (parallel vs perpendicular to Eastern Ghats ridge)
+    try:
+        decompose_terrain_motion(track_df, track_id, output_dir)
+    except Exception as e:
+        std_print("ERROR", "ea", "Terrain motion decomposition failed", str(e))
+        traceback.print_exc()
+    return track_df
+
+
+def run_elevation_analysis(tracks_df, coupling_df, hgt_dir, output_dir):
+    """
+    1. Initialise terrain (if not already done)
+    2. Extract elevation profiles for all tracks
+    3. Compute TSI
+    4. Orographic speed reduction (if speed_ms available)
+    5. Elevation vs penetration scatter (if penetration_km available)
+    6. Landfall elevation classification (if elevation_at_landfall available)
+    7. Soil texture interpretation (if lat_landfall available)
+    8. Export elevation_metrics.csv
+    """
+    if not tile_index:
+      init_terrain(hgt_dir)
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Compute TSI for all tracks
+    tsi_df, elevation_enriched_tracks_df = compute_tsi_for_all_tracks(tracks_df, coupling_df)
+    if tsi_df.empty:
+        std_print("ERROR", "ea", "No TSI results computed", "No elevation data")
+        return pd.DataFrame()
+
+    # Export results
+    export_elevation_metrics(tsi_df, output_dir)
+    plot_elevation_metrics(tsi_df, output_dir)
+
+    # Orographic speed reduction
+    try:
+        compute_orographic_speed_reduction(elevation_enriched_tracks_df, output_dir)
+    except Exception as e:
+        std_print("ERROR", "ea", "Orographic speed reduction failed", str(e))
+
+    # Elevation vs penetration (only if column available)
+    try:
+        plot_elevation_vs_penetration(tsi_df, output_dir)
+    except Exception as e:
+        std_print("ERROR", "ea", "Elevation vs penetration plot failed", str(e))
+
+    # Landfall elevation classification
+    try:
+        classify_landfall_elevation(tsi_df, output_dir)
+    except Exception as e:
+        std_print("ERROR", "ea", "Landfall elevation classification failed", str(e))
+
+    # Soil texture
+    try:
+        plot_soil_texture_interpretation(tsi_df, output_dir)
+    except Exception as e:
+        std_print("ERROR", "ea", "Soil texture plot failed", str(e))
+
+    # Dissipation terrain map
+    try:
+        if elevation_enriched_tracks_df:
+            plot_dissipation_terrain_map(elevation_enriched_tracks_df, output_dir)
+    except Exception as e:
+        std_print("ERROR", "ea", "Dissipation terrain map failed", str(e))
+    return tsi_df
+
+
+# HGT I/O helpers
+def build_tile_index():
+    """Walk _hgt_dir and populate _tile_index {canonical_name -> full_path}"""
+    pattern = re.compile(r'[NS]\d{2}[EW]\d{3}\.hgt', re.IGNORECASE)
+    for root, dirs, files in os.walk(hgt_dir):
+        for fname in files:
+            full_path = os.path.join(root, fname)
+            # Direct match: file is exactly "N24E087.hgt"
+            if pattern.fullmatch(fname):
+                tile_index[fname.upper()] = full_path
+            else:
+                # Embedded match: file is something like "H44N24E087.hgt"
+                m = pattern.search(fname)
+                if m:
+                    tile_index[m.group().upper()] = full_path
+
+
 # FIX: empty/blank left panel
 def plot_soil_texture_interpretation(results_df, output_dir):
-    """
-    Bar chart of inferred soil texture zones along track corridors and their implied SM memory timescales.
-    """
+    """Bar chart of inferred soil texture zones along track corridors and their implied SM memory timescales"""
     os.makedirs(output_dir, exist_ok=True)
     if "lat_landfall" not in results_df.columns:
         std_print("WARN", "ea", "plot_soil_texture_interpretation", "no lat_landfall column")
@@ -172,7 +316,7 @@ def plot_soil_texture_interpretation(results_df, output_dir):
     # Panel 1: track count per zone
     ax = axes[0]
     bars = ax.barh(zones, counts, color=colors, edgecolor="black", linewidth=1)
-    ax.set_xlabel("Track count", fontsize=11, fontweight="bold")
+    ax.set_xlabel("Track count", fontsize=12, fontweight="bold")
     ax.set_title("Landfall Zone - Soil Texture Distribution", fontsize=13, fontweight="bold")
     ax.grid(True, axis="x", alpha=0.3, linestyle="--")
     for i, v in enumerate(counts):
@@ -181,7 +325,7 @@ def plot_soil_texture_interpretation(results_df, output_dir):
     # Panel 2: SM memory timescale per zone
     ax = axes[1]
     bars = ax.barh(zones, taus, color=colors, edgecolor="black", linewidth=1, alpha=0.8)
-    ax.set_xlabel("SM memory timescale (days)", fontsize=11, fontweight="bold")
+    ax.set_xlabel("SM memory timescale (days)", fontsize=12, fontweight="bold")
     ax.set_title("Inferred SM Memory by Soil Texture", fontsize=13, fontweight="bold")
     ax.grid(True, axis="x", alpha=0.3, linestyle="--")
     for i, (v, b) in enumerate(zip(taus, betas)):
@@ -215,10 +359,8 @@ def plot_elevation_metrics(tsi_df, output_dir):
             linewidth=2,
             label=f"Mean: {valid_tsi.mean():.3f}",
         )
-        ax.set_xlabel(
-            "Topographic Sensitivity Index (TSI)", fontsize=11, fontweight="bold"
-        )
-        ax.set_ylabel("Frequency", fontsize=11)
+        ax.set_xlabel("Topographic Sensitivity Index (TSI)", fontsize=12, fontweight="bold")
+        ax.set_ylabel("Frequency", fontsize=12)
         ax.set_title("TSI Distribution", fontsize=13, fontweight="bold")
         ax.grid(True, alpha=0.3)
         # Legend
@@ -242,8 +384,8 @@ def plot_elevation_metrics(tsi_df, output_dir):
                 edgecolors="black",
                 linewidth=0.8,
             )
-            ax.set_xlabel("TSI", fontsize=11, fontweight="bold")
-            ax.set_ylabel("Duration (hours)", fontsize=11, fontweight="bold")
+            ax.set_xlabel("TSI", fontsize=12, fontweight="bold")
+            ax.set_ylabel("Duration (hours)", fontsize=12, fontweight="bold")
             ax.set_title("TSI vs Track Duration", fontsize=13, fontweight="bold")
             ax.grid(True, alpha=0.3)
 
@@ -253,7 +395,7 @@ def plot_elevation_metrics(tsi_df, output_dir):
 
             # Correlation
             # corr = valid_subset["TSI"].corr(valid_subset["duration_h"])
-            r, _, p_corr, n_eff = pearsonr_corrected(valid_subset["TSI"].values, valid_subset["duration_h"].values)
+            r, p_raw, p_corr, n_eff = pearsonr_corrected(valid_subset["TSI"].values, valid_subset["duration_h"].values)
             sig = "**" if (not np.isnan(p_corr) and p_corr < 0.05) else "ns"
             ax.text(
                 0.05,
@@ -290,7 +432,7 @@ def plot_elevation_metrics(tsi_df, output_dir):
             alpha=0.7,
         )
         ax.set_ylim(0, 1.0)
-        ax.set_ylabel("Mean Effect Value", fontsize=11, fontweight="bold")
+        ax.set_ylabel("Mean Effect Value", fontsize=12, fontweight="bold")
         ax.set_title("TSI Component Effects", fontsize=13, fontweight="bold")
         ax.grid(True, alpha=0.3, axis="y")
 
@@ -337,8 +479,8 @@ def plot_elevation_metrics(tsi_df, output_dir):
                 bbox=bbox_style,
                 family="monospace"
             )
-            ax.set_xlabel("Elevation Range (m)", fontsize=11, fontweight="bold")
-            ax.set_ylabel("TSI", fontsize=11, fontweight="bold")
+            ax.set_xlabel("Elevation Range (m)", fontsize=12, fontweight="bold")
+            ax.set_ylabel("TSI", fontsize=12, fontweight="bold")
             ax.set_title("Elevation Range vs TSI", fontsize=13, fontweight="bold")
             ax.grid(True, alpha=0.3)
     plt.tight_layout()
@@ -372,7 +514,7 @@ def compute_orographic_speed_reduction(tracks_df_dict, output_dir):
         if len(df) < 5:
             continue
 
-        # Elevation gradient: change in elev per track step (m per ~step)
+        # Elevation gradient: change in elev per track step (m per step)
         d_elev = df["elevation"].diff().fillna(0).values
         d_speed = df["speed_ms"].diff().fillna(0).values
         all_elev.extend(df["elevation"].values.tolist())
@@ -415,8 +557,8 @@ def compute_orographic_speed_reduction(tracks_df_dict, output_dir):
         bbox=common_bbox(),
         family="monospace"
     )
-    ax.set_xlabel("Elevation (m)", fontsize=11, fontweight="bold")
-    ax.set_ylabel("Translation Speed (m/s)", fontsize=11, fontweight="bold")
+    ax.set_xlabel("Elevation (m)", fontsize=12, fontweight="bold")
+    ax.set_ylabel("Translation Speed (m/s)", fontsize=12, fontweight="bold")
     ax.set_title("Orographic Speed Reduction\n(elevation vs translation speed)", fontsize=13, fontweight="bold")
     ax.grid(True, alpha=0.3, linestyle="--")
  
@@ -456,8 +598,8 @@ def compute_orographic_speed_reduction(tracks_df_dict, output_dir):
             family="monospace"
         )
     ax.axhline(0, color="black", linestyle="--", lw=0.8, alpha=0.5)
-    ax.set_xlabel("Elevation change per step (m)", fontsize=11, fontweight="bold")
-    ax.set_ylabel("Speed change per step (km/h)", fontsize=11, fontweight="bold")
+    ax.set_xlabel("Elevation change per step (m)", fontsize=12, fontweight="bold")
+    ax.set_ylabel("Speed change per step (km/h)", fontsize=12, fontweight="bold")
     ax.set_title("Terrain Ascent vs Speed Change\n(positive dElev = moving uphill)", fontsize=13, fontweight="bold")
     ax.grid(True, alpha=0.3, linestyle="--")
     plt.tight_layout()
@@ -524,8 +666,8 @@ def compute_orographic_precip_ratio(tracks_df_dict, ds, output_dir):
     ax.hist(valid, bins=15, edgecolor="black", alpha=0.75, color="teal")
     ax.axvline(1.0, color="black", linestyle="--", lw=1.5, label="OER = 1.0 (no enhancement)")
     ax.axvline(valid_mean, color="red",  linestyle="--", lw=1.5, label=f"Mean OER = {valid_mean:.2f}")
-    ax.set_xlabel("Orographic Enhancement Ratio (OER)", fontsize=11, fontweight="bold")
-    ax.set_ylabel("Track count", fontsize=11, fontweight="bold")
+    ax.set_xlabel("Orographic Enhancement Ratio (OER)", fontsize=12, fontweight="bold")
+    ax.set_ylabel("Track count", fontsize=12, fontweight="bold")
     ax.set_title("Orographic Precipitation Enhancement", fontsize=13, fontweight="bold")
     ax.grid(True, alpha=0.3, linestyle="--")
     legend_handles, _ = ax.get_legend_handles_labels()
@@ -573,7 +715,16 @@ def plot_elevation_vs_penetration(tsi_df, output_dir):
         if len(sub) < 3:
             continue
         x, y = sub[col].values, sub["penetration_km"].values
-        ax.scatter(x, y, s=80, alpha=0.75, c=color, edgecolors="black", lw=0.7, zorder=3)
+        ax.scatter(
+          x,
+          y,
+          s=80,
+          alpha=0.75,
+          c=color,
+          edgecolors="black",
+          lw=0.7,
+          zorder=3
+        )
 
         r, p_raw, p_corr, n_eff = pearsonr_corrected(x, y)
         rho, p = spearmanr(x, y)
@@ -598,11 +749,10 @@ def plot_elevation_vs_penetration(tsi_df, output_dir):
             bbox=common_bbox(),
             family="monospace"
         )
-        ax.set_xlabel(lbl, fontsize=11, fontweight="bold")
+        ax.set_xlabel(lbl, fontsize=12, fontweight="bold")
         ax.set_title(f"{lbl} vs\nPenetration", fontsize=13, fontweight="bold")
         ax.grid(True, alpha=0.3, linestyle="--")
- 
-    axes[0].set_ylabel("Inland penetration distance (km)", fontsize=11, fontweight="bold")
+    axes[0].set_ylabel("Inland penetration distance (km)", fontsize=12, fontweight="bold")
     fig.suptitle("Terrain Metrics vs Inland Penetration Distance",fontsize=13, fontweight="bold")
     plt.tight_layout()
 
@@ -622,7 +772,12 @@ def plot_speed_anomaly_vs_elevation(tsi_df, output_dir):
     # Figure
     fig, ax = plt.subplots(figsize=(8,6))
 
-    ax.scatter(tsi_df["mean_elevation"], tsi_df["speed_anomaly"], alpha=0.7, edgecolors='k')
+    ax.scatter(
+      tsi_df["mean_elevation"],
+      tsi_df["speed_anomaly"],
+      alpha=0.7,
+      edgecolors='k'
+    )
     ax.set_xlabel("Mean elevation (m)")
     ax.set_ylabel("Speed anomaly (m/s)")
     ax.set_title("Mean elevation vs speed anomaly")
@@ -676,7 +831,7 @@ def classify_landfall_elevation(tsi_df, output_dir):
             boxprops=dict(facecolor="steelblue", alpha=0.7),
             medianprops=dict(color="red", linewidth=2)
         )
-        ax.set_ylabel("Inland penetration (km)", fontsize=11, fontweight="bold")
+        ax.set_ylabel("Inland penetration (km)", fontsize=12, fontweight="bold")
         ax.set_title("Inland Penetration by Landfall Elevation Class", fontsize=13, fontweight="bold")
         ax.grid(True, axis="y", alpha=0.3, linestyle="--")
         for i, d in enumerate(data):
@@ -724,7 +879,7 @@ def plot_track_elevation_speed_map(track_df, track_id, output_dir):
 
     # Figure
     fig, ax = plt.subplots(figsize=(13, 11),subplot_kw={"projection": ccrs.PlateCarree()})
-
+    ax: GeoAxes = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())  # type: ignore[assignment]
     ax.set_extent([lon_min, lon_max, lat_min, lat_max], crs=ccrs.PlateCarree())
 
     # DEM tiles
@@ -738,7 +893,7 @@ def plot_track_elevation_speed_map(track_df, track_id, output_dir):
             if tile_data is None:
                 continue
             elev = tile_data["data"].copy()
-            elev[elev < 0] = 0     # treat void/ocean pixels as 0
+            elev[elev < 0] = 0  # treat void/ocean pixels as 0
             # Downsample for display speed (step ≈ 30 arc-seconds)
             step = max(1, elev.shape[0] // 120)
             elev_ds = elev[::step, ::step]
@@ -802,7 +957,7 @@ def plot_track_elevation_speed_map(track_df, track_id, output_dir):
     cbar_speed = plt.colorbar(lc, ax=ax, pad=0.08, shrink=0.55, aspect=20)
     cbar_speed.set_label("Translation Speed (m/s)", fontsize=10)
 
-    # # Start / End / Landfall markers
+    # Start / End / Landfall markers
     # ax.plot(lons[0], lats[0], "g*", markersize=8, transform=ccrs.PlateCarree(), zorder=8,label="Origin", markeredgecolor="black", markeredgewidth=0.5)
     # ax.plot(lons[-1], lats[-1], "rx", markersize=8, markeredgewidth=2,transform=ccrs.PlateCarree(), zorder=8, label="Dissipation")
 
@@ -828,7 +983,7 @@ def plot_track_elevation_speed_map(track_df, track_id, output_dir):
     ocean_feature = cfeature.NaturalEarthFeature("physical", "ocean", "50m", facecolor="lightcyan", edgecolor="none")
     ax.add_feature(ocean_feature, alpha=0.4, zorder=2)
     ax.gridlines(draw_labels=True, linestyle="--", alpha=0.4, linewidth=0.5)
-    gl = ax.gridlines(draw_labels=True, linestyle="--", alpha=0.35, linewidth=0.5)
+    gl = ax.gridlines(draw_labels=True, linestyle="--", alpha=0.3, linewidth=0.5)
     gl.right_labels = False
 
     # Legend
@@ -867,7 +1022,7 @@ def plot_track_elevation_profile(track_df, track_id, output_dir):
     speed = df["speed_ms"].values.astype(float)
     is_land_arr = df["is_land"].values.astype(bool)
 
-    # Landfall time (first ocean→land transition)
+    # Landfall time (first ocean->land transition)
     landfall_time = None
     for i in range(1, len(df)):
         if not is_land_arr[i - 1] and is_land_arr[i]:
@@ -902,7 +1057,15 @@ def plot_track_elevation_profile(track_df, track_id, output_dir):
 
     # Elevation (left axis)
     elev_land = np.where(is_land_arr, elevation, np.nan)
-    ax1.fill_between(times, 0, elev_land, color="#8B6914", alpha=0.55, label="Elevation (land)", zorder=2)
+    ax1.fill_between(
+      times,
+      0,
+      elev_land,
+      color="#8B6914",
+      alpha=0.55,
+      label="Elevation (land)",
+      zorder=2
+    )
     ax1.plot(
       times,
       elev_land,
@@ -974,7 +1137,7 @@ def plot_track_elevation_profile(track_df, track_id, output_dir):
     land_elev = elevation[is_land_arr & ~np.isnan(elevation) & ~np.isnan(speed)]
     land_speed = speed[is_land_arr & ~np.isnan(elevation) & ~np.isnan(speed)]
     if len(land_elev) >= 5:
-        r, _, p_corr, n_eff = pearsonr_corrected(land_elev, land_speed)
+        r, p_raw, p_corr, n_eff = pearsonr_corrected(land_elev, land_speed)
         sig = "**" if (not np.isnan(p_corr) and p_corr < 0.05) else "ns"
         p_str = f"{p_corr:.3e}" if not np.isnan(p_corr) else "N/A"
         stats_text = (
@@ -1033,6 +1196,7 @@ def plot_track_elevation_profile(track_df, track_id, output_dir):
         best_lag = lags_h[np.nanargmin(lag_rs)]   # most negative r = strongest braking lag
         lag_rs_arr = np.array(lag_rs, dtype=float)
 
+        # Figure
         fig_lag, ax_lag = plt.subplots(figsize=(10, 5))
         ax_lag.plot(
             lags_h,
@@ -1054,8 +1218,8 @@ def plot_track_elevation_profile(track_df, track_id, output_dir):
         ax_lag.axhline(0, color="black", linewidth=0.8, linestyle="-")
         ax_lag.axvline(0, color="gray",  linewidth=0.8, linestyle="--", label="Lag = 0")
         ax_lag.axvline(best_lag, color="navy",  linewidth=1.5, linestyle=":",label=f"Min r at lag {best_lag:+d} h")
-        ax_lag.set_xlabel("Lag (hours)", fontsize=11, fontweight="bold")
-        ax_lag.set_ylabel("Pearson r", fontsize=11, fontweight="bold")
+        ax_lag.set_xlabel("Lag (hours)", fontsize=12, fontweight="bold")
+        ax_lag.set_ylabel("Pearson r", fontsize=12, fontweight="bold")
         ax_lag.set_title(
             f"Track {track_id}: Lag correlation – elevation vs translation speed\n"
             f"min r at {best_lag:+d} h",
@@ -1278,7 +1442,7 @@ def plot_global_elevation_comparison(track_dict, output_dir):
     ocean_feature = cfeature.NaturalEarthFeature("physical", "ocean", "50m", facecolor="lightcyan", edgecolor="none")
     ax.add_feature(ocean_feature, alpha=0.4, zorder=2)
     ax.gridlines(draw_labels=True, linestyle="--", alpha=0.4, linewidth=0.5)
-    gl = ax.gridlines(draw_labels=True, linestyle="--", alpha=0.35, linewidth=0.5)
+    gl = ax.gridlines(draw_labels=True, linestyle="--", alpha=0.3, linewidth=0.5)
     gl.right_labels = False
 
     ax.legend(handles=legend_handles, loc="lower left", **legend_style({"fontsize": 9}))
@@ -1492,7 +1656,7 @@ def plot_barrier_encounter_profile(track_df, track_id, output_dir,threshold_m_pe
 
     Same dual-axis layout as plot_track_elevation_profile but with:
       - Red shading over each barrier encounter window
-      - Arrow annotation: "Barrier → speed ↓" at the first encounter
+      - Arrow annotation: "Barrier -> speed ↓" at the first encounter
       - Speed response window shown for each encounter (speed 6 h after vs at start)
 
     Hypothesis test: Does each barrier encounter correspond to a speed drop in the
@@ -1592,7 +1756,7 @@ def plot_barrier_encounter_profile(track_df, track_id, output_dir,threshold_m_pe
 
         # Speed 6 h after encounter end vs at encounter start
         t_after = t1 + pd.Timedelta(hours=6)
-        speed_at   = speed[enc["start_idx"]]
+        speed_at   = speed[enc["startime_index"]]
         idx_after = np.argmin(np.abs(times - t_after))
         speed_after = speed[idx_after]
         delta_speed = speed_after - speed_at
@@ -1680,7 +1844,6 @@ def plot_dissipation_terrain_map(track_dict, output_dir):
 
     # Figure
     # fig, ax = plt.subplots(figsize=(14, 12), subplot_kw={"projection": ccrs.PlateCarree()})
-    # ax.set_extent([lon_min, lon_max, lat_min, lat_max], crs=ccrs.PlateCarree())
     fig = plt.figure(figsize=(16, 13))
     ax: GeoAxes = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())  # type: ignore[assignment]
     ax.set_extent([lon_min, lon_max, lat_min, lat_max], crs=ccrs.PlateCarree())
@@ -1883,8 +2046,7 @@ def plot_bearing_change_at_terrain(track_df, track_id, output_dir):
     track_id = int(track_id)
     required = {"time", "latitude", "longitude", "is_land"}
     if not required.issubset(track_df.columns):
-        std_print("WARN", "ea", "plot_bearing_change_at_terrain missing cols",
-                  str(required - set(track_df.columns)))
+        std_print("WARN", "ea", "plot_bearing_change_at_terrain missing cols", str(required - set(track_df.columns)))
         return
 
     df = track_df.sort_values("time").reset_index(drop=True)
@@ -1923,12 +2085,29 @@ def plot_bearing_change_at_terrain(track_df, track_id, output_dir):
     bbox_style = common_bbox()
 
     # Panel 1: Elevation
-    ax1.fill_between(times, 0, 1, where=is_land,transform=ax1.get_xaxis_transform(),color="wheat", alpha=0.35, zorder=0)
-    ax1.fill_between(times, 0, land_elev, color="#8B6914", alpha=0.5, label="Elevation (m)", zorder=2)
+    ax1.fill_between(
+      times,
+      0,
+      1,
+      where=is_land,
+      transform=ax1.get_xaxis_transform(),
+      color="wheat",
+      alpha=0.35,
+      zorder=0
+    )
+    ax1.fill_between(
+      times,
+      0,
+      land_elev,
+      color="#8B6914",
+      alpha=0.5,
+      label="Elevation (m)",
+      zorder=2
+    )
     ax1.axhline(500, color="gray", linestyle="--", linewidth=0.8, alpha=0.7, label="500 m")
     for ci in crossings_500:
         ax1.axvline(times.iloc[ci], color="purple", linestyle=":", linewidth=1.2, alpha=0.7)
-    ax1.set_ylabel("Elevation (m)", fontsize=11, fontweight="bold", color="#5C3D0A")
+    ax1.set_ylabel("Elevation (m)", fontsize=12, fontweight="bold", color="#5C3D0A")
     ax1.tick_params(axis="y", labelcolor="#5C3D0A")
     ax1.set_title(f"Track {track_id}: Bearing, Bearing-Change Rate & Terrain Crossing", fontsize=13, fontweight="bold")
     ax1.legend(loc="upper right", **legend_style())
@@ -1950,7 +2129,7 @@ def plot_bearing_change_at_terrain(track_df, track_id, output_dir):
     ax2.axhline(270, color="navy", linestyle=":", linewidth=0.8, alpha=0.5,label="W  (270°)")
     for ci in crossings_500:
         ax2.axvline(times.iloc[ci], color="purple", linestyle=":", linewidth=1.2, alpha=0.8)
-    ax2.set_ylabel("Bearing (°)", fontsize=11, fontweight="bold", color="steelblue")
+    ax2.set_ylabel("Bearing (°)", fontsize=12, fontweight="bold", color="steelblue")
     ax2.set_ylim(0, 360)
     ax2.tick_params(axis="y", labelcolor="steelblue")
     ax2.legend(loc="upper right", **legend_style())
@@ -1970,11 +2149,19 @@ def plot_bearing_change_at_terrain(track_df, track_id, output_dir):
     )
     ax3.axhline(0, color="black", linewidth=0.6)
     # Shade large deflections (|rate| > 15 °/h)
-    ax3.fill_between(times, land_rate, 0,where=(np.abs(np.nan_to_num(land_rate)) > 15),color="darkorange", alpha=0.25, label="Deflection > 15°/h")
+    ax3.fill_between(
+      times,
+      land_rate,
+      0,
+      where=(np.abs(np.nan_to_num(land_rate)) > 15),
+      color="darkorange",
+      alpha=0.25,
+      label="Deflection > 15°/h"
+    )
     for ci in crossings_500:
         ax3.axvline(times.iloc[ci], color="purple", linestyle=":", linewidth=1.2, alpha=0.8)
-    ax3.set_ylabel("Bearing change (°/h)", fontsize=11, fontweight="bold",color="darkorange")
-    ax3.set_xlabel("Time", fontsize=11, fontweight="bold")
+    ax3.set_ylabel("Bearing change (°/h)", fontsize=12, fontweight="bold",color="darkorange")
+    ax3.set_xlabel("Time", fontsize=12, fontweight="bold")
     ax3.tick_params(axis="y", labelcolor="darkorange")
     ax3.legend(loc="upper right", **legend_style())
     ax3.grid(True, alpha=0.3, linestyle="--")
@@ -1991,147 +2178,465 @@ def plot_bearing_change_at_terrain(track_df, track_id, output_dir):
     # Export crossings table
     if crossings_500:
         rows = []
-        for ci in crossings_500:
+        for crossing_index in crossings_500:
             rows.append({
                 "track_id":      track_id,
-                "time":          str(times.iloc[ci]),
-                "elevation_m":   float(elevation[ci]) if not np.isnan(elevation[ci]) else np.nan,
-                "bearing_deg":   float(bearing[ci]),
-                "bearing_rate":  float(bearing_rate[ci]) if not np.isnan(bearing_rate[ci]) else np.nan,
-                "latitude":      float(df["latitude"].iloc[ci]),
-                "longitude":     float(df["longitude"].iloc[ci]),
+                "time":          str(times.iloc[crossing_index]),
+                "elevation_m":   float(elevation[crossing_index]) if not np.isnan(elevation[crossing_index]) else np.nan,
+                "bearing_deg":   float(bearing[crossing_index]),
+                "bearing_rate":  float(bearing_rate[crossing_index]) if not np.isnan(bearing_rate[crossing_index]) else np.nan,
+                "latitude":      float(df["latitude"].iloc[crossing_index]),
+                "longitude":     float(df["longitude"].iloc[crossing_index]),
             })
         terrain_crossings_CSV= os.path.join(output_dir, f"track_{track_id}_terrain_crossings.csv")
         pd.DataFrame(rows).to_csv(terrain_crossings_CSV, index=False)
         std_print("EXPORT", "ea", "Terrain crossing table", terrain_crossings_CSV)
     return bearing_terrain_path
 
-
-def run_single_track_elevation_analysis(track_df, track_id, output_dir):
-    """Per-track elevation analysis"""
+def compute_terrain_corridor_width(track_df, track_id, output_dir, transect_km=200.0, elev_threshold_m=200.0, n_transect_pts=41):
+    """
+    Corridor width analysis: at each land-phase track point, extract a
+    perpendicular elevation transect ±transect_km across the track bearing
+    and measure the continuous width of terrain below elev_threshold_m.
+ 
+    A wide low-elevation corridor means the MD can propagate without
+    hitting blocking terrain on its flanks. The long-lived track should
+    show a consistently wide corridor; terminating tracks should show the
+    corridor narrowing before dissipation.
+    """
     track_id = int(track_id)
-    os.makedirs(output_dir, exist_ok=True)
-
-    # 1. Extract elevation
-    if "speed_ms" not in track_df.columns:
-        std_print("WARN", "ea", "speed_ms missing - run compute_track_speeds first")
-
-    try:
-        track_df = get_elevation_profile(track_df)
-    except Exception as e:
-        std_print("ERROR", "ea", "get_elevation_profile failed", str(e))
-        return track_df
-
-    valid = track_df["elevation"].notna().sum()
-    if valid == 0:
-        std_print("WARN", "ea","no elevation data - skipping per-track plots")
-        return track_df
-
-    # 2. Dual-axis profile: elevation + speed over time
-    try:
-        plot_track_elevation_profile(track_df, track_id, output_dir)
-    except Exception as e:
-        std_print("ERROR", "ea", "Elevation profile plot failed", str(e))
-        traceback.print_exc()
-
-    # 3. Spatial map: DEM background + track colored by speed
-    try:
-        plot_track_elevation_speed_map(track_df, track_id, output_dir)
-    except Exception as e:
-        std_print("ERROR", "ea", "elevation map plot failed", str(e))
-        traceback.print_exc()
-
-    # 4. Barrier encounter annotation (terrain braking hypothesis)
-    try:
-        plot_barrier_encounter_profile(track_df, track_id, output_dir)
-    except Exception as e:
-        std_print("ERROR", "ea", "Barrier encounter profile failed", str(e))
-        traceback.print_exc()
-
-    # 5. Bearing change at terrain crossings (deflection / stall hypothesis)
-    try:
-        plot_bearing_change_at_terrain(track_df, track_id, output_dir)
-    except Exception as e:
-        std_print("ERROR", "ea", "Bearing change plot failed", str(e))
-        traceback.print_exc()
-    return track_df
-
-
-def run_elevation_analysis(tracks_df, coupling_df, hgt_dir, output_dir):
-    """
-    1. Initialise terrain (if not already done)
-    2. Extract elevation profiles for all tracks
-    3. Compute TSI
-    4. Orographic speed reduction (if speed_ms available)
-    5. Elevation vs penetration scatter (if penetration_km available)
-    6. Landfall elevation classification (if elevation_at_landfall available)
-    7. Soil texture interpretation (if lat_landfall available)
-    8. Export elevation_metrics.csv
-    """
-    if not tile_index:
-      init_terrain(hgt_dir)
-    os.makedirs(output_dir, exist_ok=True)
-
-    # Compute TSI for all tracks
-    tsi_df, elevation_enriched_tracks_df = compute_tsi_for_all_tracks(tracks_df, coupling_df)
-    if tsi_df.empty:
-        std_print("ERROR", "ea", "No TSI results computed", "No elevation data")
+    df = track_df.sort_values("time").reset_index(drop=True)
+    is_land_arr = df["is_land"].values.astype(bool) \
+        if "is_land" in df.columns else np.ones(len(df), bool)
+    land_df = df[is_land_arr].reset_index(drop=True)
+ 
+    if len(land_df) < 3:
+        std_print("WARN", "ea", "Too few land-phase points for corridor analysis")
         return pd.DataFrame()
+ 
+    times = pd.to_datetime(land_df["time"])
+ 
+    # Perpendicular distances to sample
+    dist_km = np.linspace(-transect_km, transect_km, n_transect_pts)
+    DEG_PER_KM = 1.0 / 111.0
+ 
+    records = []
+    for i in range(len(land_df)):
+        c_lat  = float(land_df["latitude"].iloc[i])
+        c_lon  = float(land_df["longitude"].iloc[i])
 
-    # Export results
-    export_elevation_metrics(tsi_df, output_dir)
-    plot_elevation_metrics(tsi_df, output_dir)
+        # Track bearing at this step
+        if "bearing" in land_df.columns:
+            bear = float(land_df["bearing"].iloc[i])
+        elif i < len(land_df) - 1:
+            dlat = land_df["latitude"].iloc[i+1] - c_lat
+            dlon = land_df["longitude"].iloc[i+1] - c_lon
+            bear = float(np.degrees(np.arctan2(dlon * np.cos(np.radians(c_lat)), dlat)) % 360)
+        else:
+            bear = 270.0   # fallback: westward
+ 
+        perp_deg = (bear + 90) % 360   # perpendicular bearing
+ 
+        # Sample elevation along the transect
+        elev_transect = []
+        for d in dist_km:
+            p_lat = c_lat + d * DEG_PER_KM * np.cos(np.radians(perp_deg))
+            p_lon = c_lon + d * DEG_PER_KM * np.sin(np.radians(perp_deg)) \
+                    / max(np.cos(np.radians(c_lat)), 1e-6)
+            elev = get_elevation_at_point(p_lat, p_lon)
+            elev_transect.append(elev if elev is not None else np.nan)
+ 
+        elev_arr = np.array(elev_transect, dtype=float)
+        elev_arr = np.where(np.isnan(elev_arr), 9999.0, elev_arr)
+        elev_arr = np.clip(elev_arr, 0, None)
+ 
+        # Find the longest continuous run of points below elev_threshold_m
+        # that includes the track centre (index n_transect_pts//2)
+        centre_idx = n_transect_pts // 2
+        below = elev_arr < elev_threshold_m
+ 
+        # Extend outward from centre while still below threshold
+        left = centre_idx
+        while left > 0 and below[left - 1]:
+            left -= 1
+        right = centre_idx
+        while right < n_transect_pts - 1 and below[right + 1]:
+            right += 1
+ 
+        corridor_km = float((right - left) * (2 * transect_km / (n_transect_pts - 1)))
+ 
+        records.append({
+            "time":             str(times.iloc[i]),
+            "latitude":         c_lat,
+            "longitude":        c_lon,
+            "corridor_width_km": corridor_km,
+            "centre_elev_m":    float(elev_arr[centre_idx]),
+            "min_transect_elev": float(np.nanmin(elev_arr[elev_arr < 9999])),
+            "max_transect_elev": float(np.nanmax(elev_arr[elev_arr < 9999])),
+        })
+ 
+    result_df = pd.DataFrame(records)
+ 
+    # Export
+    os.makedirs(output_dir, exist_ok=True)
+    corridor_width_CSV = os.path.join(output_dir, f"track_{track_id}_corridor_width.csv")
+    result_df.to_csv(corridor_width_CSV, index=False)
+    std_print("EXPORT", "ea", "Corridor width results", corridor_width_CSV)
+ 
+    # Figure
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 10), sharex=True)
+    time_index = np.arange(len(result_df))
+ 
+    ax1.plot(
+      time_index,
+      result_df["corridor_width_km"].values,
+      "-o",
+      color="steelblue",
+      linewidth=2.2,
+      markersize=5,
+      alpha=0.85,
+      label=f"Corridor width (<{elev_threshold_m:.0f} m, km)"
+    )
+    ax1.axhline(100, color="tomato", linestyle="--", linewidth=1.2,label="100 km - narrow corridor threshold")
+    ax1.set_ylabel("Corridor width (km)", fontsize=12, fontweight="bold")
+    ax1.set_title(
+        f"Track {track_id}: Terrain Corridor Width  (continuous terrain < {elev_threshold_m:.0f} m perpendicular to track, ±{transect_km:.0f} km)\n"
+        "Narrowing corridor -> terrain flanking -> increased friction -> speed reduction",
+        fontsize=13, fontweight="bold"
+    )
+    ax1.grid(True, alpha=0.3, linestyle="--")
+    ax1.legend(loc="upper right", **legend_style())
+ 
+    ax2.fill_between(
+      time_index,
+      result_df["min_transect_elev"].values,
+      result_df["max_transect_elev"].values,
+      alpha=0.3,
+      color="saddlebrown",
+      label="Transect elevation range"
+    )
+    ax2.plot(
+      time_index,
+      result_df["centre_elev_m"].values,
+      "-",
+      color="saddlebrown",
+      linewidth=2.0,
+      label="Centre elevation (m)"
+    )
+    ax2.axhline(elev_threshold_m, color="gray", linestyle="--",linewidth=0.8, label=f"{elev_threshold_m:.0f} m threshold")
+    ax2.set_ylabel("Elevation (m)", fontsize=12, fontweight="bold")
+    ax2.set_xlabel("Land-phase time step", fontsize=12, fontweight="bold")
+    ax2.grid(True, alpha=0.3, linestyle="--")
+    ax2.legend(loc="upper right", **legend_style())
+ 
+    plt.tight_layout()
+    outpath = os.path.join(output_dir, f"track_{track_id}_corridor_width.png")
+    plt.savefig(outpath, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+    std_print("SAVED", "ea", "Corridor width plot", outpath)
+    return result_df
+ 
+ 
+def compute_effective_blocking_factor(track_df, track_id, output_dir, ahead_km=50.0, elev_threshold_m=200.0):
+    """
+    Effective Blocking Factor (BF) at each track step
+      BF(t) = mean_elev_ahead(t) - mean_elev_behind(t)
+ 
+    Where:
+      ahead  = mean SRTM elevation in a 50 km semicircle in the direction of motion
+      behind = mean SRTM elevation in a 50 km semicircle in the opposite direction
+ 
+    A rising BF means the MD is approaching higher terrain - a mechanistically
+    cleaner indicator than raw elevation because it captures the *gradient*
+    the system is about to experience.
+ 
+    Plotted alongside translation speed to show the lead/lag relationship
+    between the terrain gradient signal and speed response.
+    """
+    track_id = int(track_id)
+    df = track_df.sort_values("time").reset_index(drop=True)
+    times = pd.to_datetime(df["time"])
+    is_land_arr = df["is_land"].values.astype(bool) \
+        if "is_land" in df.columns else np.ones(len(df), bool)
+    speed = df["speed_ms"].values.astype(float) \
+        if "speed_ms" in df.columns else np.full(len(df), np.nan)
+ 
+    DEG_PER_KM = 1.0 / 111.0
+    N_RING_PTS = 12   # points to sample along each semicircle
+ 
+    records = []
+    for i in range(len(df)):
+        c_lat = float(df["latitude"].iloc[i])
+        c_lon = float(df["longitude"].iloc[i])
+        if "bearing" in df.columns:
+            bear = float(df["bearing"].iloc[i])
+        elif i < len(df) - 1:
+            dlat = df["latitude"].iloc[i+1] - c_lat
+            dlon = df["longitude"].iloc[i+1] - c_lon
+            bear = float(np.degrees(np.arctan2(
+                dlon * np.cos(np.radians(c_lat)), dlat)) % 360)
+        else:
+            bear = 270.0
+ 
+        ahead_elevs, behind_elevs = [], []
+        for angle_offset in np.linspace(-90, 90, N_RING_PTS):
+            for direction, elev_list in [(bear, ahead_elevs),((bear + 180) % 360, behind_elevs)]:
+                a = (direction + angle_offset) % 360
+                p_lat = c_lat + ahead_km * DEG_PER_KM * np.cos(np.radians(a))
+                p_lon = c_lon + ahead_km * DEG_PER_KM * np.sin(np.radians(a)) \
+                        / max(np.cos(np.radians(c_lat)), 1e-6)
+                e = get_elevation_at_point(p_lat, p_lon)
+                if e is not None:
+                    elev_list.append(max(e, 0))
+ 
+        mean_ahead  = float(np.mean(ahead_elevs))  if ahead_elevs  else np.nan
+        mean_behind = float(np.mean(behind_elevs)) if behind_elevs else np.nan
+        bf = mean_ahead - mean_behind
+ 
+        records.append({
+            "time":          str(times.iloc[i]),
+            "is_land":       bool(is_land_arr[i]),
+            "blocking_factor_m": bf,
+            "mean_ahead_m":  mean_ahead,
+            "mean_behind_m": mean_behind,
+            "speed_ms":      float(speed[i]),
+            "bearing_deg":   bear,
+        })
+ 
+    bf_df = pd.DataFrame(records)
+ 
+    os.makedirs(output_dir, exist_ok=True)
+    blocking_factor_CSV = os.path.join(output_dir, f"track_{track_id}_blocking_factor.csv")
+    bf_df.to_csv(blocking_factor_CSV, index=False)
+    std_print("EXPORT", "ea", "Blocking factor results", blocking_factor_CSV)
+ 
+    # Plot: dual-axis - BF and speed on same time axis
+    fig, ax1 = plt.subplots(figsize=(16, 7))
+    bbox = common_bbox()
+    time_index = np.arange(len(bf_df))
+ 
+    ax1.fill_between(
+      time_index,
+      0,
+      1,
+      where=bf_df["is_land"].values,
+      transform=ax1.get_xaxis_transform(),
+      color="wheat",
+      alpha=0.35,
+      label="Land phase",
+      zorder=0
+    )
+    ax1.fill_between(
+      time_index,
+      0,
+      1,
+      where=~bf_df["is_land"].values,
+      transform=ax1.get_xaxis_transform(),
+      color="lightblue",
+      alpha=0.35,
+      label="Ocean phase",
+      zorder=0
+    )
+    ax1.plot(
+      time_index,
+      bf_df["blocking_factor_m"].values,
+      "-o",
+      color="saddlebrown",
+      linewidth=2.2,
+      markersize=5,
+      alpha=0.85,
+      label=f"Blocking Factor (m)  [ahead−behind, r={ahead_km:.0f} km]"
+    )
+    ax1.axhline(0, color="gray", linewidth=0.8, linestyle="--")
+    # Landfall
+    for i, r in bf_df.iterrows():
+        if i > 0 and bf_df["is_land"].iloc[i] and not bf_df["is_land"].iloc[i-1]:
+            ax1.axvline(i, color="red", linestyle="--", linewidth=1.8,label="Landfall", zorder=5)
+            break
+    ax1.set_ylabel("Blocking Factor (m)", fontsize=12, fontweight="bold",color="saddlebrown")
+    ax1.tick_params(axis="y", labelcolor="saddlebrown")
+ 
+    ax2 = ax1.twinx()
+    ax2.plot(
+      time_index,
+      bf_df["speed_ms"].values,
+      "-o",
+      color="royalblue",
+      linewidth=2.0,
+      markersize=4,
+      alpha=0.75,
+      label="Speed (m/s)"
+    )
+    ax2.set_ylabel("Translation Speed (m/s)", fontsize=12, fontweight="bold",color="royalblue")
+    ax2.tick_params(axis="y", labelcolor="royalblue")
+ 
+    lines1, lbls1 = ax1.get_legend_handles_labels()
+    lines2, lbls2 = ax2.get_legend_handles_labels()
+    ax1.legend(lines1 + lines2, lbls1 + lbls2, loc="upper right", **legend_style({"fontsize": 9}))
+    ax1.set_xlabel("Time step", fontsize=12, fontweight="bold")
+    ax1.set_title(
+        f"Track {track_id}: Effective Blocking Factor vs Translation Speed\n"
+        f"BF = mean elevation ahead − behind in {ahead_km:.0f} km semicircle (positive = heading into rising terrain)",
+        fontsize=12, fontweight="bold"
+    )
+    ax1.grid(True, alpha=0.3, linestyle="--", zorder=0)
+    plt.tight_layout()
 
-    # Orographic speed reduction
-    try:
-        compute_orographic_speed_reduction(elevation_enriched_tracks_df, output_dir)
-    except Exception as e:
-        std_print("ERROR", "ea", "Orographic speed reduction failed", str(e))
+    # Save
+    blocking_factor_path = os.path.join(output_dir, f"track_{track_id}_blocking_factor.png")
+    plt.savefig(blocking_factor_path, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+    std_print("SAVED", "ea", "Blocking factor plot", blocking_factor_path)
+    return bf_df
+ 
+ 
+def decompose_terrain_motion(track_df, track_id, output_dir):
+    """
+    Decompose the MD's motion vector into terrain-parallel and
+    terrain-perpendicular components relative to the Eastern Ghats ridge.
+ 
+    Eastern Ghats main axis runs approximately NNE-SSW, azimuth ~20° (or ~200°).
+    A motion vector pointing toward 110° (east-southeast, perpendicular to ridge)
+    means the MD is moving directly into the barrier. A motion vector near 20°
+    means the MD is tracking parallel to the ridge - corridor navigation.
+ 
+    Perpendicular component magnitude = |v| * sin(angle_to_ridge)
+    Parallel component magnitude      = |v| * cos(angle_to_ridge)
+    """
+    track_id = int(track_id)
+    df = track_df.sort_values("time").reset_index(drop=True)
+    times = pd.to_datetime(df["time"])
+    is_land_arr = df["is_land"].values.astype(bool) \
+        if "is_land" in df.columns else np.ones(len(df), bool)
+    speed = df["speed_ms"].values.astype(float) \
+        if "speed_ms" in df.columns else np.full(len(df), np.nan)
+ 
+    # Eastern Ghats ridge azimuth (NNE-SSW, approximately 20° from north)
+    GHATS_RIDGE_AZ = 20.0  # degrees
+ 
+    records = []
+    for i in range(len(df)):
+        if "bearing" in df.columns:
+            bear = float(df["bearing"].iloc[i])
+        elif i < len(df) - 1:
+            dlat = df["latitude"].iloc[i+1] - df["latitude"].iloc[i]
+            dlon = df["longitude"].iloc[i+1] - df["longitude"].iloc[i]
+            bear = float(np.degrees(np.arctan2(
+                dlon * np.cos(np.radians(df["latitude"].iloc[i])), dlat)) % 360)
+        else:
+            bear = 270.0
+ 
+        # Angle between motion bearing and ridge axis (smallest angle)
+        angle_to_ridge = abs(bear - GHATS_RIDGE_AZ) % 180
+        if angle_to_ridge > 90:
+            angle_to_ridge = 180 - angle_to_ridge
+ 
+        spd = speed[i]
+        v_perp = spd * np.sin(np.radians(angle_to_ridge))   # toward ridge
+        v_par  = spd * np.cos(np.radians(angle_to_ridge))   # along ridge
+ 
+        records.append({
+            "time":              str(times.iloc[i]),
+            "is_land":           bool(is_land_arr[i]),
+            "speed_ms":          float(spd),
+            "bearing_deg":       bear,
+            "angle_to_ridge_deg": angle_to_ridge,
+            "v_perpendicular_ms": v_perp,
+            "v_parallel_ms":     v_par,
+            "perpendicular_fraction": float(v_perp / spd) if spd > 0.01 else np.nan,
+        })
+ 
+    motion_df = pd.DataFrame(records)
+ 
+    # Export
+    os.makedirs(output_dir, exist_ok=True)
+    terrain_motion_CSV = os.path.join(output_dir, f"track_{track_id}_terrain_motion.csv")
+    motion_df.to_csv(terrain_motion_CSV, index=False)
+    std_print("EXPORT", "ea", "Terrain motion decomposition", terrain_motion_CSV)
+ 
+    # Figure
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 10), sharex=True)
+    time_index = np.arange(len(motion_df))
+ 
+    shade_kw = dict(transform=ax1.get_xaxis_transform(), zorder=0, alpha=0.35)
+    for ax in (ax1, ax2):
+        ax.fill_between(
+          time_index,
+          0,
+          1,
+          where=motion_df["is_land"].values,
+          color="wheat",
+          **shade_kw,
+          label="Land phase"
+        )
+        ax.fill_between(
+          time_index,
+          0,
+          1,
+          where=~motion_df["is_land"].values,
+          color="lightblue",
+          **shade_kw,
+          label="Ocean phase"
+        )
+        for i, r in motion_df.iterrows():
+            if i > 0 and r["is_land"] and not motion_df["is_land"].iloc[i-1]:
+                ax.axvline(i, color="red", linestyle="--", linewidth=1.8,label="Landfall")
+                break
+ 
+    ax1.plot(
+      time_index,
+      motion_df["v_perpendicular_ms"].values,
+      "-o",
+      color="tomato",
+      linewidth=2.2,
+      markersize=5,
+      alpha=0.85,
+      label="v⊥ - terrain-perpendicular (toward Eastern Ghats ridge)"
+    )
+    ax1.plot(
+      time_index,
+      motion_df["v_parallel_ms"].values,
+      "-o",
+      color="steelblue",
+      linewidth=2.0,
+      markersize=4,
+      alpha=0.75,
+      label="v∥ - terrain-parallel (along ridge)"
+    )
+    ax1.axhline(0, color="gray", linewidth=0.5)
+    ax1.set_ylabel("Speed component (m/s)", fontsize=12, fontweight="bold")
+    ax1.set_title(
+        f"Track {track_id}: Terrain Motion Decomposition  (ridge azimuth = {GHATS_RIDGE_AZ}° / Eastern Ghats NNE-SSW)\n"
+        "High v⊥ = frontal terrain impact;  high v∥ = corridor tracking",
+        fontsize=12, fontweight="bold"
+    )
+    ax1.grid(True, alpha=0.3, linestyle="--")
+    ax1.legend(loc="upper right", **legend_style({"fontsize": 9}))
+ 
+    ax2.plot(
+      time_index,
+      motion_df["perpendicular_fraction"].values * 100,
+      "-o",
+      color="purple",
+      linewidth=2.2,
+      markersize=5,
+      alpha=0.85,
+      label="Perpendicular fraction of motion (%)"
+    )
+    ax2.axhline(50, color="darkorange", linestyle="--", linewidth=1.2, label="50% - equal perpendicular and parallel")
+    ax2.set_ylim(0, 105)
+    ax2.set_ylabel("Perpendicular fraction (%)", fontsize=12, fontweight="bold")
+    ax2.set_xlabel("Time step", fontsize=12, fontweight="bold")
+    ax2.grid(True, alpha=0.3, linestyle="--")
+    ax2.legend(loc="upper right", **legend_style({"fontsize": 9}))
+    plt.tight_layout()
 
-    # Elevation vs penetration (only if column available)
-    try:
-        plot_elevation_vs_penetration(tsi_df, output_dir)
-    except Exception as e:
-        std_print("ERROR", "ea", "Elevation vs penetration plot failed", str(e))
-
-    # Landfall elevation classification
-    try:
-        classify_landfall_elevation(tsi_df, output_dir)
-    except Exception as e:
-        std_print("ERROR", "ea", "Landfall elevation classification failed", str(e))
-
-    # Soil texture
-    try:
-        plot_soil_texture_interpretation(tsi_df, output_dir)
-    except Exception as e:
-        std_print("ERROR", "ea", "Soil texture plot failed", str(e))
-
-    # Dissipation terrain map
-    try:
-        if elevation_enriched_tracks_df:
-            plot_dissipation_terrain_map(elevation_enriched_tracks_df, output_dir)
-    except Exception as e:
-        std_print("ERROR", "ea", "Dissipation terrain map failed", str(e))
-
-    std_print("INFO", "ea", "Elevation analysis complete", output_dir)
-    return tsi_df
-
-
-# HGT I/O helpers
-def build_tile_index():
-    """Walk _hgt_dir and populate _tile_index {canonical_name → full_path}"""
-    pattern = re.compile(r'[NS]\d{2}[EW]\d{3}\.hgt', re.IGNORECASE)
-    for root, dirs, files in os.walk(hgt_dir):
-        for fname in files:
-            full_path = os.path.join(root, fname)
-            # Direct match: file is exactly "N24E087.hgt"
-            if pattern.fullmatch(fname):
-                tile_index[fname.upper()] = full_path
-            else:
-                # Embedded match: file is something like "H44N24E087.hgt"
-                m = pattern.search(fname)
-                if m:
-                    tile_index[m.group().upper()] = full_path
+    # Save
+    terrain_motion_path = os.path.join(output_dir, f"track_{track_id}_terrain_motion.png")
+    plt.savefig(terrain_motion_path, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+    std_print("SAVED", "ea", "Terrain motion decomposition", terrain_motion_path)
+    return motion_df
 
 
 # Helper functions
@@ -2559,8 +3064,8 @@ def calculate_slope(tile_name, cell_size=30.0):
 def get_elevation_at_point(lat, lon):
     """Return elevation (m) at a single lat/lon point, or None if tile unavailable"""
     tile_path = get_tile_filename(lat, lon)
-    # if tile_name is None: # tile not available
-    #     return None
+    if tile_path is None: # tile not available
+        return None
     tile_data = load_hgt_tile(tile_path)
     if tile_data is None: # tile found but failed to read
         return None
@@ -2667,7 +3172,7 @@ def detect_barrier_encounters(elevation, times, threshold_m_per_h=15.0, min_step
                 j += 1
             if (j - i) >= min_steps:
                 encounters.append({
-                    "start_idx":  i,
+                    "startime_index":  i,
                     "end_idx":    j - 1,
                     "start_time": times.iloc[i],
                     "end_time":   times.iloc[j - 1],

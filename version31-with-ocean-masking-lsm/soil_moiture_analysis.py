@@ -158,7 +158,7 @@ def plot_spatial_tp_swvl1(ds, track_df, track_id, output_dir, buffer_km=500):
     ax1.set_extent([min_lon, max_lon, min_lat, max_lat], crs=ccrs.PlateCarree())
 
     cbar1 = plt.colorbar(im1, ax=ax1, pad=0.02)
-    cbar1.set_label("Total Precipitation (mm)", fontsize=11)
+    cbar1.set_label("Total Precipitation (mm)", fontsize=12)
 
     legend_handles, labels = ax1.get_legend_handles_labels()
     if legend_handles:
@@ -169,8 +169,8 @@ def plot_spatial_tp_swvl1(ds, track_df, track_id, output_dir, buffer_km=500):
         fontsize=13,
         fontweight="bold",
     )
-    ax1.set_xlabel("Longitude (°E)", fontsize=11, fontweight="bold")
-    ax1.set_ylabel("Latitude (°N)", fontsize=11, fontweight="bold")
+    ax1.set_xlabel("Longitude (°E)", fontsize=12, fontweight="bold")
+    ax1.set_ylabel("Latitude (°N)", fontsize=12, fontweight="bold")
     ax1.grid(True, linestyle="--", alpha=0.5)
     plt.tight_layout()
 
