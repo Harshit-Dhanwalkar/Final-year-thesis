@@ -29,40 +29,6 @@ def compute_track_speeds(track_df):
     dlat = np.diff(lat, prepend=lat[0])
     dlon = np.diff(lon, prepend=lon[0])
 
-    # n = len(track_df)
-    # speeds_kmh = np.full(n, np.nan)
-    # distances_km = np.full(n, np.nan)
-    #
-    # # Calculate speed between consecutive points
-    # for i in range(n - 1):
-    #     time_gap = (times[i+1] - times[i]).astype('timedelta64[s]').astype(float) / 3600.0
-    #     # Accept gaps between 0.5 and 12 hours
-    #     if 0.5 <= time_gap <= 12:
-    #         dist = geodesic((lats[i], lons[i]), (lats[i+1], lons[i+1])).km
-    #         if time_gap <= 0:
-    #             speeds_kmh[i] = np.nan
-    #             continue
-    #         if np.isnan(lats[i]) or np.isnan(lons[i]) or np.isnan(lats[i+1]) or np.isnan(lons[i+1]):
-    #             speeds_kmh[i] = np.nan
-    #             distances_km[i] = np.nan
-    #             continue
-    #         speed = dist / time_gap
-    #         speeds_kmh[i] = speed
-    #         distances_km[i] = dist
-    #
-    # # Forward fill last point
-    # if n > 1 and not np.isnan(speeds_kmh[-2]):
-    #     speeds_kmh[-1] = speeds_kmh[-2]
-    #     distances_km[-1] = distances_km[-2]
-    #
-    # # Smooth with 3-point rolling mean
-    # speeds_series = pd.Series(speeds_kmh)
-    # speeds_smoothed = speeds_series.rolling(window=3, center=True, min_periods=1).mean().values
-    #
-    # track_df['speed_kmh'] = speeds_smoothed
-    # track_df['speed_ms'] = speeds_smoothed / 3.6
-    # track_df['distance_km'] = distances_km
-
     # Haversine-like approximation for distance
     a = np.sin(dlat / 2) ** 2 + np.cos(lat) * np.cos(lat - dlat) * np.sin(dlon / 2) ** 2
     c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))

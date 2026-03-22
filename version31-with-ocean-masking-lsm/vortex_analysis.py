@@ -16,6 +16,9 @@ Rashid & Srinivasan (2005) MAP - vorticity budget, cold-core/warm-core character
 Mishra (2021) MWR - MD development and large-scale interaction
 """
 
+# FIX:
+# 1. Time series panel is empty
+
 import os
 import warnings
 import numpy as np
@@ -147,7 +150,7 @@ def compute_vortex_tilt(track_df, pl_dir,year, output_dir):
     return tilt_df
 
 
-# Thermal structure - cold-core + warm-core 
+# Thermal structure - cold-core + warm-core
 def compute_thermal_structure(track_df, pl_dir,year, output_dir):
     """
     At each track time step extract:
@@ -451,7 +454,7 @@ def plot_all_tracks_tilt_comparison(tilt_results, track_dict, output_dir):
             linewidth=2.0,
             markersize=5,
             alpha=0.85,
-            label=f"T{track_id}"
+            label=f"Track {track_id}"
         )
         # Mark land phase
         land_hours = np.array(hours)[is_land[:len(hours)]]
@@ -622,7 +625,7 @@ def plot_ivt(ivt_df, track_df, track_id, output_dir):
         color="teal",
         alpha=0.15
     )
-    ax.axhline(250, color="darkorange", linestyle="--", linewidth=1.5, label="250 kg m⁻¹ s⁻¹ - minimum convection threshold")
+    ax.axhline(250, color="darkorange", linestyle="--", linewidth=1.5, label="Min. convection threshold")
     ax.fill_between(
         times,
         0,
@@ -865,7 +868,7 @@ def plot_vortex_tilt(tilt_df, track_df, track_id, output_dir):
     std_print("SAVED", "va", "Vortex tilt plot", vortex_tilt_path)
 
 
-# TODO: Add intermidiate levels
+# TODO: Add intermidiate levels and only to one plot (no subplots)
 def plot_thermal_structure(therm_df, track_df, track_id, output_dir):
     """
     3-panel: cold-core anomaly (850 hPa) and warm-core anomaly (400 hPa) and top 200hPa
@@ -886,7 +889,7 @@ def plot_thermal_structure(therm_df, track_df, track_id, output_dir):
     is_land = merged["is_land"].fillna(False).values.astype(bool)
 
     # Figure
-    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(16, 10), sharex=True)
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 10), sharex=True)
     bbox = common_bbox()
 
     for ax, col, color, title, ref_line, ref_label in [
@@ -900,14 +903,6 @@ def plot_thermal_structure(therm_df, track_df, track_id, output_dir):
         ),
         (
             ax2,
-            "T400_anom",
-            "tomato",
-            "Warm-core anomaly at 400 hPa  (ΔT relative to 300 km ambient ring)",
-            0,
-            "ΔT = 0"
-        ),
-        (
-            ax3,
             "T200_anom",
             "lightgreen",
             "Warm-core anomaly at 200 hPa  (ΔT relative to 300 km ambient ring)",
@@ -964,10 +959,10 @@ def plot_thermal_structure(therm_df, track_df, track_id, output_dir):
         ax.set_title(title, fontsize=13, fontweight="bold")
         ax.grid(True, alpha=0.3, linestyle="--")
         ax.legend(loc="upper right", **legend_style({"fontsize": 9}))
-    ax3.set_xlabel("Time", fontsize=12, fontweight="bold")
-    plt.setp(ax3.xaxis.get_majorticklabels(), rotation=45, ha="right")
+    ax2.set_xlabel("Time", fontsize=12, fontweight="bold")
+    plt.setp(ax2.xaxis.get_majorticklabels(), rotation=45, ha="right")
     fig.suptitle(
-        f"Track {track_id}: Thermal Structure\nCold-core 850 hPa, Warm-core 400 hPa and Top 200 hPa",
+        f"Track {track_id}: Thermal Structure\nCold-core 850 hPa, Warm-core 200 hPa",
         fontsize=13,
         fontweight="bold",
         y=1
@@ -994,12 +989,12 @@ def plot_vorticity_column(col_df, track_df, track_id, output_dir):
 
     colors = {
         "vo_850": "royalblue",
-        "vo_700": "steelblue",
-        "vo_600": "red",
-        "vo_500": "darkorange",
-        "vo_400": "yellow",
-        "vo_300": "gray",
-        "vo_200": "green"
+        "vo_700": "blue",
+        "vo_600": "green",
+        "vo_500": "yellow",
+        "vo_400": "gray",
+        "vo_300": "darkorange",
+        "vo_200": "red",
     }
     labels = {
         "vo_850": "850 hPa",

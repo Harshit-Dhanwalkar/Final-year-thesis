@@ -2535,18 +2535,24 @@ if __name__ == "__main__":
             # 6. Plot speed analysis
             print(f"\n-------------------------------------- Translational Speed Plots for Track {track_id} --------------------------------------")
             speed_dir = os.path.join(track_dir, "translational-speed")
-            os.makedirs(speed_dir, exist_ok=True)
             track_df = compute_track_speeds(track_df)
+
+            # Update track_dict so that distance_km are available to analyses (vortex, coupling, elevation)
+            track_dict[track_id] = track_df.copy()
+
+            # Export
+            os.makedirs(speed_dir, exist_ok=True)
             track_csv = os.path.join(speed_dir, f"track_{track_id}_detections_augmented.csv")
             track_df.to_csv(track_csv, index=False)
-            std_print("EXPORT", "md", "Augmented track data", track_csv)
+            std_print("EXPORT", "md", "Augmented track data with computed MD speeds", track_csv)
             plot_speed_analysis_kmh(track_df, track_id, speed_dir)
             plot_speed_analysis_ms(track_df, track_id, speed_dir)
+
             # track_df_augmented = analyze_translational_speed(track_df, output_dir=speed_dir)
             speed_kmh = track_df["speed_kmh"].dropna()
             speed_ms = track_df["speed_ms"].dropna()
             distance_km = track_df["distance_km"].dropna()
-            std_print("INFO", "md", "Speed Statistics")
+            std_print("INFO", "md", "--- Speed Statistics ---")
             std_print(None, None, "mean", f"{speed_kmh.mean():.2f} km/h ({speed_ms.mean():.2f} m/s)")
             std_print(None, None, "median", f"{speed_kmh.median():.2f} km/h ({speed_ms.median():.2f} m/s)")
             std_print(None, None, "std deviation", f"{speed_kmh.std():.2f} km/h ({speed_ms.std():.2f} m/s)")
@@ -2795,7 +2801,7 @@ if __name__ == "__main__":
 
         print("\n------------------------------------------------ Global Analysis for all Track ---------------------------------------------")
         # 1. Global Coupling metrics
-        std_print("INFO", "md", "--- Coupling Metrics Analysis ---")
+        std_print("INFO", "md", "--- Global Coupling Metrics Analysis ---")
         # std_print("DEBUG", "md", "Skipping Coupling Metrics Analysis")
         correlation_df = (
             pd.DataFrame(all_correlation_results)
@@ -2944,7 +2950,7 @@ if __name__ == "__main__":
         elevation_dir = os.path.join(output_dir, "Global_elevation_analysis")
         os.makedirs(elevation_dir, exist_ok=True)
         try:
-            # FIX: it is reductant to compute_fsi again for elevation analysis
+            # FIX: It is reductant to compute_fsi again for elevation analysis
             elevation_metrics = run_elevation_analysis(
                 tracks_df=full_track_df,
                 coupling_df=fsi_df,
@@ -2952,7 +2958,7 @@ if __name__ == "__main__":
                 output_dir=elevation_dir
             )
             if not elevation_metrics.empty:
-                std_print("INFO", "md", "Elevation analysis complete", f"{len(elevation_metrics)} tracks with TSI computed")
+                std_print("INFO", "md", "Elevation analysis with TSI computed on", f"{len(elevation_metrics)} tracks")
                 std_print(None, None, f"Mean TSI: {elevation_metrics['TSI'].mean():.3f}")
                 std_print(None, None, f"TSI range: [{elevation_metrics['TSI'].min():.3f}, {elevation_metrics['TSI'].max():.3f}]")
             else:

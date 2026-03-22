@@ -16,9 +16,6 @@ Rashid & Srinivasan (2005) MAP - vorticity budget, cold-core/warm-core character
 Mishra (2021) MWR - MD development and large-scale interaction
 """
 
-# FIX:
-# 1. Time series panel is empty
-
 import os
 import warnings
 import numpy as np
@@ -36,22 +33,21 @@ from utils import (
     haversine_distance,
     common_bbox,
     legend_style,
-    pearsonr_corrected,
 )
 
 warnings.filterwarnings("ignore", message="facecolor will have no effect", category=UserWarning, module="cartopy")
 
 # Constants
-G = 9.80665  # m s⁻²
-L_v = 2.5e6      # J kg⁻¹ — latent heat of vaporisation
-RHO_W = 1000.0   # kg m⁻³ — water density
+G = 9.80665      # m s⁻²
+L_v = 2.5e6      # J kg⁻¹ - latent heat of vaporisation
+RHO_W = 1000.0   # kg m⁻³ - water density
 
-SEARCH_RADIUS_DEG = 3.0  # vortex centre search radius around single-level track (°)
+SEARCH_RADIUS_DEG = 3.0    # vortex centre search radius around single-level track (°)
 AMBIENT_RING_KM   = 300.0  # radius for temperature anomaly background ring
 LEVELS = [850, 700,600, 500, 400, 300, 200]
 OMEGA_TRANSECT_KM = 150.0  # perpendicular transect half-width for omega cross-section
 
-# Module-level dataset cache
+# Dataset cache
 DS_CACHE = {}
 
 # Data loading
@@ -167,9 +163,9 @@ def compute_vortex_tilt(track_df, pl_dir,year, output_dir):
 
     # Export
     os.makedirs(output_dir, exist_ok=True)
-    csv_path = os.path.join(output_dir, f"track_{track_id}_vortex_tilt.csv")
-    tilt_df.to_csv(csv_path, index=False)
-    std_print("EXPORT", "va", f"Track {track_id} vortex tilt", csv_path)
+    vortex_tilt_CSV = os.path.join(output_dir, f"track_{track_id}_vortex_tilt.csv")
+    tilt_df.to_csv(vortex_tilt_CSV, index=False)
+    std_print("EXPORT", "va", f"Vortex tilt for track {track_id}", vortex_tilt_CSV)
 
     plot_vortex_tilt(tilt_df, track_df, track_id, output_dir)
     return tilt_df
@@ -772,11 +768,14 @@ def plot_vortex_tilt(tilt_df, track_df, track_id, output_dir):
     times = pd.to_datetime(tilt_df["time"])
     track_sorted = track_df.sort_values("time").copy()
     track_sorted["time"] = pd.to_datetime(track_sorted["time"])
-    merge_cols = ["time"]
-    if "is_land"  in track_sorted.columns:
+
+    if "speed_ms" not in track_sorted.columns:
+        std_print("WARN", "va", "speed_ms missing from track_df")
+        track_sorted["speed_ms"] = np.nan
+
+    merge_cols = ["time", "speed_ms"]
+    if "is_land" in track_sorted.columns:
         merge_cols.append("is_land")
-    if "speed_ms" in track_sorted.columns:
-        merge_cols.append("speed_ms")
 
     tilt_merged = pd.merge_asof(
         tilt_df[["time"]].assign(time=pd.to_datetime(tilt_df["time"])),
@@ -785,14 +784,13 @@ def plot_vortex_tilt(tilt_df, track_df, track_id, output_dir):
     )
     is_land = tilt_merged["is_land"].fillna(False).values.astype(bool) \
         if "is_land"  in tilt_merged.columns else np.ones(len(tilt_df), bool)
-    speed = tilt_merged["speed_ms"].values.astype(float) \
-        if "speed_ms" in tilt_merged.columns else np.full(len(tilt_df), np.nan)
+    speed = tilt_merged["speed_ms"].values.astype(float)
 
     # Figure
     fig, axes = plt.subplots(3, 1, figsize=(16, 12), sharex=True)
     bbox = common_bbox()
 
-    # Top: tilt magnitude
+    # Top: Tilt magnitude
     ax = axes[0]
     tilt_km = tilt_df["tilt_magnitude_km"].values
     ax.plot(
@@ -823,7 +821,7 @@ def plot_vortex_tilt(tilt_df, track_df, track_id, output_dir):
         1,
         where=~is_land,
         transform=ax.get_xaxis_transform(),
-        color="lightblue",
+        color="blue",
         alpha=0.3,
         label="Ocean phase",
         zorder=0
@@ -863,7 +861,7 @@ def plot_vortex_tilt(tilt_df, track_df, track_id, output_dir):
     ax.grid(True, alpha=0.3, linestyle="--")
     ax.legend(loc="upper right", **legend_style({"fontsize": 9}))
 
-    # Middle: tilt bearing
+    # Middle: Tilt bearing
     ax = axes[1]
     bearing = tilt_df["tilt_bearing_deg"].values
     ax.plot(
@@ -902,7 +900,7 @@ def plot_vortex_tilt(tilt_df, track_df, track_id, output_dir):
     ax.grid(True, alpha=0.3, linestyle="--")
     ax.legend(loc="upper right", **legend_style({"fontsize": 9}))
 
-    # Bottom: translation speed
+    # Bottom: Translation speed
     ax = axes[2]
     ax.plot(
         times,

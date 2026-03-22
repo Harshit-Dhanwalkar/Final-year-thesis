@@ -112,7 +112,7 @@ def tp_swvl1_timeseries(
             std_print("WARN", "ts", "Data length mismatch", "swvl1_land != tp != times")
             return False
 
-        std_print("INFO", "ts", "Extracted TP-SWVL1", len(valid_times))
+        # std_print("DEBUG", "ts", "Extracted TP-SWVL1", len(valid_times))
 
         # Figure
         fig, ax1 = plt.subplots(figsize=(18, 6))
@@ -206,20 +206,10 @@ def tp_swvl1_timeseries(
         ax1.set_ylim(bottom=0, top=tp_max + tp_pad)
         ax2.set_ylim(bottom=0, top=swvl1_max + swvl1_pad)
         ax1.axhline(
-            y=0,
-            color="gray",
-            linestyle="-",
-            linewidth=0.8,
-            alpha=0.3,
-            zorder=1
+            y=0, color="gray", linestyle="-", linewidth=0.8, alpha=0.3, zorder=1
         )
         ax2.axhline(
-            y=0,
-            color="gray",
-            linestyle="-",
-            linewidth=0.8,
-            alpha=0.3,
-            zorder=1
+            y=0, color="gray", linestyle="-", linewidth=0.8, alpha=0.3, zorder=1
         )
 
         # Legend
@@ -233,13 +223,9 @@ def tp_swvl1_timeseries(
             and landfall_index < len(valid_times)
             and not originates_over_land
         ):
-            handles.append(plt.Line2D(
-                [0],
-                [0],
-                color=status_color,
-                linestyle="--",
-                linewidth=2.5
-            ))
+            handles.append(
+                plt.Line2D([0], [0], color=status_color, linestyle="--", linewidth=2.5)
+            )
             labels.append(status_text)
 
         handles.append(Patch(facecolor="lightblue", alpha=0.5))
@@ -292,6 +278,8 @@ def hf_timeseries(flux_df, track_id, output_dir):
             )
             return False
 
+        # std_print("DEBUG", "ts", "Extracted heat-flux points", len(flux_df))
+
         required_cols = [
             "time",
             "latent_heat_flux",
@@ -316,6 +304,7 @@ def hf_timeseries(flux_df, track_id, output_dir):
 
         is_land_array = flux_df["is_land"].values
 
+        # Figure
         fig, axes = plt.subplots(2, 1, figsize=(16, 10), sharex=True)
 
         # Panel 1: Latent Heat Flux
@@ -331,11 +320,7 @@ def hf_timeseries(flux_df, track_id, output_dir):
             zorder=3,
         )
         add_land_ocean_shading(
-            ax1,
-            times,
-            is_land_array,
-            land_color="wheat",
-            ocean_color="lightblue"
+            ax1, times, is_land_array, land_color="wheat", ocean_color="lightblue"
         )
         ax1.set_ylabel("Latent Heat Flux (W/m²)", fontsize=12, fontweight="bold")
         ax1.grid(True, alpha=0.4, linestyle="--", zorder=0)
@@ -359,11 +344,7 @@ def hf_timeseries(flux_df, track_id, output_dir):
             zorder=3,
         )
         add_land_ocean_shading(
-            ax2,
-            times,
-            is_land_array,
-            land_color="wheat",
-            ocean_color="lightblue"
+            ax2, times, is_land_array, land_color="wheat", ocean_color="lightblue"
         )
         ax2.set_ylabel("Sensible Heat Flux (W/m²)", fontsize=12, fontweight="bold")
         ax2.grid(True, alpha=0.4, linestyle="--", zorder=0)
@@ -408,6 +389,8 @@ def theta_e_timeseries(theta_df, track_id, output_dir):
         if theta_df is None or len(theta_df) < 3:
             std_print("WARN", "ts", "Insufficient theta_e data")
             return False
+
+        # std_print("DEBUG", "ts", "Extracted theta_e points", len(theta_df))
 
         required = {"time", "theta_e_K", "t2m_K", "d2m_K", "is_land"}
         missing = required - set(theta_df.columns)
@@ -469,11 +452,7 @@ def theta_e_timeseries(theta_df, track_id, output_dir):
 
         # Land / ocean background shading
         add_land_ocean_shading(
-            ax,
-            times,
-            is_land_arr,
-            land_color="wheat",
-            ocean_color="lightblue"
+            ax, times, is_land_arr, land_color="wheat", ocean_color="lightblue"
         )
 
         # Landfall line
@@ -532,7 +511,9 @@ def theta_e_timeseries(theta_df, track_id, output_dir):
 
         # Save
         os.makedirs(output_dir, exist_ok=True)
-        theta_e_plot_path = os.path.join(output_dir, f"track_{track_id}_theta_e_timeseries.png")
+        theta_e_plot_path = os.path.join(
+            output_dir, f"track_{track_id}_theta_e_timeseries.png"
+        )
         plt.savefig(theta_e_plot_path, dpi=300, bbox_inches="tight")
         plt.close(fig)
         std_print("SAVED", "ts", "theta_e timeseries", theta_e_plot_path)
@@ -696,7 +677,6 @@ def extract_heat_flux_timeseries(ds, track_df, track_id, buffer_km=100):
     if not flux_records:
         std_print("ERROR", "ts", "No heat-flux data extracted")
         return None
-    std_print("INFO", "ts", "Extracted heat-flux points", len(flux_records))
     return pd.DataFrame(flux_records)
 
 
@@ -807,5 +787,4 @@ def extract_theta_e_timeseries(ds, track_df, track_id, buffer_km=100):
     if not theta_e_records:
         std_print("ERROR", "ts", "No theta_e data extracted")
         return None
-    std_print("INFO", "ts", "Extracted theta_e points", len(theta_e_records))
     return pd.DataFrame(theta_e_records)
