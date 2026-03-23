@@ -296,6 +296,16 @@ def hf_timeseries(flux_df, track_id, output_dir):
             flux_df = flux_df.copy()
             flux_df["is_land"] = False
 
+        times = pd.to_datetime(flux_df["time"])
+        is_land_arr = flux_df["is_land"].values.astype(bool)
+
+        # Detect landfall
+        landfall_time = None
+        for i in range(1, len(flux_df)):
+            if not is_land_arr[i - 1] and is_land_arr[i]:
+                landfall_time = times.iloc[i]
+                break
+
         try:
             times = pd.to_datetime(flux_df["time"])
         except Exception as e:
@@ -322,6 +332,18 @@ def hf_timeseries(flux_df, track_id, output_dir):
         add_land_ocean_shading(
             ax1, times, is_land_array, land_color="wheat", ocean_color="lightblue"
         )
+
+        # Landfall line
+        if landfall_time is not None:
+            ax1.axvline(
+                landfall_time,
+                color="red",
+                linestyle="--",
+                linewidth=1.8,
+                label="Landfall",
+                zorder=5,
+            )
+
         ax1.set_ylabel("Latent Heat Flux (W/m²)", fontsize=12, fontweight="bold")
         ax1.grid(True, alpha=0.4, linestyle="--", zorder=0)
         ax1.set_title(
@@ -346,6 +368,18 @@ def hf_timeseries(flux_df, track_id, output_dir):
         add_land_ocean_shading(
             ax2, times, is_land_array, land_color="wheat", ocean_color="lightblue"
         )
+
+        # Landfall line
+        if landfall_time is not None:
+            ax2.axvline(
+                landfall_time,
+                color="red",
+                linestyle="--",
+                linewidth=1.8,
+                label="Landfall",
+                zorder=5,
+            )
+
         ax2.set_ylabel("Sensible Heat Flux (W/m²)", fontsize=12, fontweight="bold")
         ax2.grid(True, alpha=0.4, linestyle="--", zorder=0)
 

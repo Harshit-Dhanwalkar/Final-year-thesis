@@ -273,7 +273,7 @@ def compute_vorticity_column(track_df, pl_dir,year, output_dir):
     os.makedirs(output_dir, exist_ok=True)
     vorticity_column_csv= os.path.join(output_dir, f"track_{track_id}_vorticity_column.csv")
     col_df.to_csv(vorticity_column_csv, index=False)
-    std_print("EXPORT", "va", f"Track {track_id} vorticity column", vorticity_column_csv)
+    std_print("EXPORT", "va", "Vorticity column", vorticity_column_csv)
 
     plot_vorticity_column(col_df, track_df, track_id, output_dir)
     return col_df
@@ -344,7 +344,7 @@ def compute_ivt(track_df, pl_dir, year, output_dir):
     os.makedirs(output_dir, exist_ok=True)
     ivt_CSV = os.path.join(output_dir, f"track_{track_id}_ivt.csv")
     ivt_df.to_csv(ivt_CSV, index=False)
-    std_print("EXPORT", "va", f"Track {track_id}: IVT", ivt_CSV)
+    std_print("EXPORT", "va", "IVT", ivt_CSV)
 
     plot_ivt(ivt_df, track_df, track_id, output_dir)
     return ivt_df
@@ -423,7 +423,7 @@ def compute_recycling_ratio(track_df, track_id, output_dir, buffer_km=100.0):
     os.makedirs(output_dir, exist_ok=True)
     csv_path = os.path.join(output_dir, f"track_{track_id}_recycling_ratio.csv")
     records.to_csv(csv_path, index=False)
-    std_print("EXPORT", "va", f"Track {track_id} recycling ratio", csv_path)
+    std_print("EXPORT", "va", "Recycling ratio", csv_path)
  
     plot_recycling_ratio(records, track_id, output_dir)
     return records
@@ -526,51 +526,52 @@ def run_vortex_analysis(track_dict, pl_dir, year, output_dir):
     therm_results = {}
 
     for track_id, track_df in sorted(track_dict.items()):
-        track_out = os.path.join(output_dir, f"track_{track_id}")
-        os.makedirs(track_out, exist_ok=True)
+        track_output = os.path.join(output_dir, f"track_{track_id}")
+        os.makedirs(track_output, exist_ok=True)
+        std_print("INFO", "va", f"--- Track {track_id} ---")
 
-        std_print("INFO", "va", f"Track {track_id} - vortex tilt")
+        std_print("INFO", "va", "Vortex tilt")
         try:
-            tilt_df = compute_vortex_tilt(track_df, pl_dir, year, track_out)
+            tilt_df = compute_vortex_tilt(track_df, pl_dir, year, track_output)
             tilt_results[track_id] = tilt_df
         except Exception as e:
-            std_print("ERROR", "va", f"Track {track_id} tilt failed", str(e))
+            std_print("ERROR", "va", "Tilt failed", str(e))
             traceback.print_exc()
 
-        std_print("INFO", "va", f"Track {track_id} - thermal structure")
+        std_print("INFO", "va", "Thermal structure")
         try:
-            therm_df = compute_thermal_structure(track_df, pl_dir, year, track_out)
+            therm_df = compute_thermal_structure(track_df, pl_dir, year, track_output)
             therm_results[track_id] = therm_df
         except Exception as e:
-            std_print("ERROR", "va", f"Track {track_id} thermal failed", str(e))
+            std_print("ERROR", "va", "Thermal failed", str(e))
             traceback.print_exc()
 
-        std_print("INFO", "va", f"Track {track_id} - vorticity column")
+        std_print("INFO", "va", "Vorticity column")
         try:
-            compute_vorticity_column(track_df, pl_dir, year, track_out)
+            compute_vorticity_column(track_df, pl_dir, year, track_output)
         except Exception as e:
-            std_print("ERROR", "va", f"Track {track_id} vorticity column failed", str(e))
+            std_print("ERROR", "va", "Vorticity column failed", str(e))
             traceback.print_exc()
 
-        std_print("INFO", "va", f"Track {track_id} - IVT")
+        std_print("INFO", "va", "IVT")
         try:
-            compute_ivt(track_df, pl_dir, year, track_out)
+            compute_ivt(track_df, pl_dir, year, track_output)
         except Exception as e:
-            std_print("ERROR", "va", f"Track {track_id} IVT failed", str(e))
+            std_print("ERROR", "va", "IVT failed", str(e))
             traceback.print_exc()
 
-        std_print("INFO", "va", f"Track {track_id} - omega cross-section")
+        std_print("INFO", "va", "Omega cross-section")
         try:
-            compute_omega_cross_section(track_df, pl_dir, year, track_out)
+            compute_omega_cross_section(track_df, pl_dir, year, track_output)
         except Exception as e:
-            std_print("ERROR", "va", f"Track {track_id} omega failed", str(e))
+            std_print("ERROR", "va", "Omega failed", str(e))
             traceback.print_exc()
 
-        std_print("INFO", "va", f"Track {track_id} - recycling ratio")
+        std_print("INFO", "va", "Recycling ratio")
         try:
-            compute_recycling_ratio(track_df, track_id, track_out)
+            compute_recycling_ratio(track_df, track_id, track_output)
         except Exception as e:
-            std_print("ERROR", "va", f"Track {track_id} recycling ratio failed", str(e))
+            std_print("ERROR", "va", "Recycling ratio failed", str(e))
             traceback.print_exc()
 
     # Global comparison

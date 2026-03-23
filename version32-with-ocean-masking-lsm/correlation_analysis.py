@@ -401,8 +401,8 @@ def plot_tp_swvl1_lag_correlation(tp, sm, max_lag_hours, track_id, output_dir):
     )
 
     ax.grid(True, alpha=0.5, linestyle="--")
-    ax.axhline(y=0.2, color="red", linestyle=":", alpha=0.5)
-    ax.axhline(y=-0.2, color="red", linestyle=":", alpha=0.5)
+    ax.axhline(y=0.2, color="black", linestyle=":", alpha=0.3)
+    ax.axhline(y=-0.2, color="black", linestyle=":", alpha=0.3)
 
     lag_dir = os.path.join(output_dir, "lag_correlation")
     os.makedirs(lag_dir, exist_ok=True)
@@ -474,8 +474,8 @@ def plot_swvl1_hf_lag_correlation(sm, hf, max_lag_hours, track_id, hf_name, outp
         fontweight="bold"
     )
     ax.grid(True, alpha=0.5, linestyle="--")
-    ax.axhline(y=0.2, color="red", linestyle=":", alpha=0.5)
-    ax.axhline(y=-0.2, color="red", linestyle=":", alpha=0.5)
+    ax.axhline(y=0.2, color="black", linestyle=":", alpha=0.5)
+    ax.axhline(y=-0.2, color="black", linestyle=":", alpha=0.5)
 
     lag_dir = os.path.join(output_dir, "lag_correlation")
     os.makedirs(lag_dir, exist_ok=True)
@@ -554,8 +554,8 @@ def plot_tp_hf_lag_correlation(flux, tp, max_lag_hours, track_id, flux_name, out
         fontweight="bold"
     )
     ax.grid(True, alpha=0.5, linestyle="--")
-    ax.axhline(y=0.2, color="red", linestyle=":", alpha=0.5)
-    ax.axhline(y=-0.2, color="red", linestyle=":", alpha=0.5)
+    ax.axhline(y=0.2, color="black", linestyle=":", alpha=0.3)
+    ax.axhline(y=-0.2, color="black", linestyle=":", alpha=0.3)
 
     lag_dir = os.path.join(output_dir, "lag_correlation")
     os.makedirs(lag_dir, exist_ok=True)

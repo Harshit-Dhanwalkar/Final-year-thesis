@@ -65,7 +65,7 @@
 #    diagnostic_report = generate_diagnostic_report(all_data, output_dir)
 
 
-# NOTE: For 2020, 2021, 2022, 2023, 2024, 2025 expect ->  (FSI > 0.4 long; clay > 30%, ACF > 0.35).
+# NOTE: For 2020, 2021, 2022, 2023, 2024, 2025 expect -> (FSI > 0.4 long; clay > 30%, ACF > 0.35)
 
 import os
 import sys
@@ -2577,15 +2577,8 @@ if __name__ == "__main__":
                 for var in plot_vars:
                     if var in hov_avg:
                       plot_hovmoller_azimuthal_average(
-                          hov_avg[var],
-                          track_times_arr,
-                          radii_km,
-                          var,
-                          track_df,
-                          track_id,
-                          output_dir,
-                          landfall_index,
-                          per_radius_lf
+                          track_df, track_id, hov_avg[var], track_times_arr,
+                          radii_km, var, output_dir, landfall_index,  per_radius_lf
                       )
             except Exception as e:
                 std_print("ERROR", "md", "Hovmöller computation failed", str(e))
@@ -2809,16 +2802,14 @@ if __name__ == "__main__":
             else pd.DataFrame()
         )
         duration_df = (pd.DataFrame(all_classifications) if all_classifications else pd.DataFrame())
-        coupling_metrics_dir = os.path.join(output_dir, "coupling_metrics")
+        coupling_metrics_dir = os.path.join(output_dir, "Global_coupling_metrics")
         os.makedirs(coupling_metrics_dir, exist_ok=True)
+
         if all_flux_results:
             flux_results_df = pd.DataFrame(all_flux_results)
         else:
             flux_results_df = pd.DataFrame()
         try:
-            coupling_metrics_dir = os.path.join(output_dir, "coupling_metrics")
-            os.makedirs(coupling_metrics_dir, exist_ok=True)
-
             # Compute FSI
             if not correlation_df.empty and track_dict:
                 std_print("INFO", "md", "Computing Feedback Strength Index (FSI)")

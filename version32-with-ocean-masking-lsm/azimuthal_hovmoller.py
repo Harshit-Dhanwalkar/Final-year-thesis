@@ -87,8 +87,8 @@ VARIABLE_NAMES = {
 
 
 def plot_hovmoller_azimuthal_average(
-    hov_arr, track_times, radii_km, var_name, track_df, track_id, output_dir,
-    levels, per_radius_landfall_index, landfall_index=-1
+    track_df, track_id, hov_arr, track_times, radii_km, var_name,
+    output_dir, levels, per_radius_landfall_index, landfall_index=-1
 ):
     track_id = int(track_id)
     plot_dir = os.path.join(output_dir, f"track_{track_id}", "hovmoller")
