@@ -4,6 +4,12 @@
 
 Documentation : https://confluence.ecmwf.int/display/CKB/ERA5%3A+data+documentation
 
+## Dataset bounds
+
+Latitude = [7, 30] degrees
+Longitude = [70, 95] degrees
+Time = [June, July, August, September]
+
 ### Variables:
 
 1. Mean Sea Level Pressure (`msl`)
@@ -47,12 +53,6 @@ Documentation : https://confluence.ecmwf.int/display/CKB/ERA5%3A+data+documentat
 6. 700
 7. 850
 
-## Dataset bounds
-
-Latitude = [7, 30] degrees
-Longitude = [70, 95] degrees
-Time = [June, July, August, September]
-
 ---
 
 ## Elevation data
@@ -60,6 +60,8 @@ Time = [June, July, August, September]
 [viewfinder](https://www.viewfinderpanoramas.org/Coverage%20map%20viewfinderpanoramas_org3.htm) for whole Indian Subcontinent
 
 ## HGT Tiles used = [`A43`,`B43`,`B46`,`C44`,`D43`,`D46`,`E44`,`E46`,`F43`,`F45`,`G41`,`G43`,`G45`,`H41`,`H43`,`H45`,`I41`,`I43`,`I45 A46`,`B44`,`C43`,`C46`,`D44`,`E43`,`E45`,`F42`,`F44`,`F46`,`G42`,`G44`,`G46`,`H42`,`H44`,`H46`,`I42`,`I44`,`I46`]
+
+---
 
 - [IMD](https://mausam.imd.gov.in/)
 - [IMD annual reports](https://metnet.imd.gov.in/phps/imdweb_imdarep.php)

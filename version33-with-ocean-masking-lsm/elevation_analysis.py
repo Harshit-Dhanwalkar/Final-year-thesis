@@ -3012,19 +3012,6 @@ def export_elevation_metrics(tsi_df, output_dir):
     std_print("SAVED", "ea", "Elevation summary report", report_path)
 
 
-def load_elevation_metrics(output_dir):
-    """Load TSI metrics computed from HGT elevation data for statistical analysis"""
-    path = os.path.join(output_dir, "Global_elevation_analysis", "elevation_metrics.csv")
-    try:
-        df = pd.read_csv(path)
-        std_print("INFO", "ea", "Loaded elevation metrics", path)
-        return df
-    except Exception as e:
-        std_print("ERROR", "ea", f"Failed to load {path}", str(e))
-
-    std_print("WARN", "ea", "Elevation metrics not found", "TSI analysis will be skipped")
-    return None
-
 def elev_norm():
     vmax = ELEV_VMAX if ELEV_VMAX is not None else 1000.0
     return plt.Normalize(ELEV_VMIN, vmax)

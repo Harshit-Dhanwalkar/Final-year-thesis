@@ -259,7 +259,9 @@ def classify_md_duration(track_df, short_threshold_hours=96):  # 96 hours = 4 da
         "duration_hours": duration_hours,
         "is_long_lived": duration_hours >= short_threshold_hours,
         "category": (
-            "Long-lived MD" if duration_hours >= short_threshold_hours else "Short MD"
+            "Long-lived MD"
+            if duration_hours >= short_threshold_hours
+            else "Short-lived MD"
         ),
         "start_time": track_times.min(),
         "end_time": track_times.max(),
