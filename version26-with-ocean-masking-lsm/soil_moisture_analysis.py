@@ -8,8 +8,8 @@ Key Questions:
 - Spatial patterns of both variables during passage?
 """
 
-# TODO: add shade region for land (like in latent heat flux transiton and in speed plots)
-# FIX: use buffer_km instaed of buffer_deg
+# TODO: Add shade region for land (like in latent heat flux transiton and in speed plots)
+# FIX: Use buffer_km instaed of buffer_deg
 # FIX: ACF lag selection : Requires>=48 points (24h lag + buffer)
 
 import os

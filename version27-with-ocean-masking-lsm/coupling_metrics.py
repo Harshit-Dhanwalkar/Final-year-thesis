@@ -36,7 +36,7 @@ def compute_soil_water_capacity_index(swvl1_values):
 def compute_feedback_strength_index(
     correlation_value, swvl1_values, p_value, significance_threshold=0.05
 ):
-    """Feedback Strength Index (FSI) = |correlation(TP, SWVL1)| × Soil Water Capacity Index x Significance Factor
+    """Feedback Strength Index (FSI) = |correlation(TP, SWVL1)| x Soil Water Capacity Index x Significance Factor
     - Correlation strength: How tightly linked is precipitation to soil moisture?
     - Capacity: How much can the soil respond (saturation potential)?
     - Significance: Is this feedback statistically robust?

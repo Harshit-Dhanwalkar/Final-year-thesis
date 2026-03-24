@@ -29,7 +29,7 @@ from utils import (
 
 def analyze_single_track(ds, track_df, track_id, buffer_km, max_lag_hours, output_dir):
     """Analyze a single track with all correlation analyses"""
-    std_print("INFO", "ca", " --- Processing Correlation Analysis ---")
+    # std_print("DEBUG", "ca", "--- Processing Correlation Analysis ---")
     # Filter to single track
     if len(track_df["track_id"].unique()) == 1:
         current_track = track_df.sort_values("time").copy()
@@ -235,7 +235,7 @@ def analyze_all_tracks(ds, full_track_df, buffer_km, output_dir):
 def compute_single_track_correlation(ds, track_df, track_id, buffer_km=100):
     """Compute Pearson and Spearman correlation between TP and SWVL1 (land only)"""
     track_id = int(track_id)
-    std_print("INFO", "ca", " --- Computing correlation (land only) ---")
+    std_print("INFO", "ca", "--- Computing correlation (land only) ---")
     if "is_land" not in track_df.columns:
         track_df["is_land"] = track_df.apply(lambda row: is_point_land(row["latitude"], row["longitude"]), axis=1)
 
@@ -428,7 +428,7 @@ def plot_tp_swvl1_correlation(ds, track_df, track_id, buffer_km, output_dir):
 
 def plot_swvl1_hf_correlation(swvl1, latent_hf, sensible_hf, valid_times, landfall_index, track_id, output_dir, originates_over_land=True):
     track_id = int(track_id)
-    # std_print("INFO", "ca", f" --- SWVL1-HF Correlation scatter plot ---")
+    # std_print("INFO", "ca", f"--- SWVL1-HF Correlation scatter plot ---")
     total_hf = latent_hf + sensible_hf
     valid_mask = ~(np.isnan(swvl1) | np.isnan(latent_hf) | np.isnan(sensible_hf) | np.isnan(total_hf))
     if np.sum(valid_mask) < 5:
@@ -527,7 +527,7 @@ def plot_swvl1_hf_correlation(swvl1, latent_hf, sensible_hf, valid_times, landfa
 
 def plot_tp_hf_correlation(tp, latent_hf, sensible_hf, valid_times, landfall_index, track_id, output_dir, originates_over_land=True,):
     track_id = int(track_id)
-    # std_print("INFO", "ca", " --- TP-HF Correlation scatter plot ---")
+    # std_print("INFO", "ca", "--- TP-HF Correlation scatter plot ---")
     total_hf = latent_hf + sensible_hf
     valid_mask = ~(np.isnan(tp) | np.isnan(latent_hf) | np.isnan(sensible_hf) | np.isnan(total_hf))
     if np.sum(valid_mask) < 5:
@@ -626,7 +626,7 @@ def plot_tp_swvl1_lag_correlation(tp, sm, max_lag_hours, track_id, output_dir):
      - Positive lag: SWVL1 leads TP (antecedent moisture)
     """
     track_id = int(track_id)
-    # std_print("INFO", "ca", f" --- Track {track_id} TP-SWVL1 Lag-Correlation plot ---")
+    # std_print("INFO", "ca", f"--- TP-SWVL1 Lag-Correlation plot ---")
     lags, correlations_lag = lag_correlation(tp, sm, max_lag=max_lag_hours)
     if len(lags) != len(correlations_lag):
         min_len = min(len(lags), len(correlations_lag))
@@ -696,7 +696,7 @@ def plot_swvl1_hf_lag_correlation(sm, hf, max_lag_hours, track_id, hf_name, outp
      - Positive lag: HF leads SM (Surface Drying)
     """
     track_id = int(track_id)
-    # std_print("INFO", "ca", f" --- Track {track_id} SWVL1-{hf_name} Lag-Correlation plot ---")
+    # std_print("INFO", "ca", f"--- SWVL1-{hf_name} Lag-Correlation plot ---")
     lags, correlations_lag = lag_correlation(sm, hf, max_lag=max_lag_hours)
     valid_indices = [i for i, val in enumerate(correlations_lag) if not np.isnan(val)]
     if not valid_indices:
@@ -771,7 +771,7 @@ def plot_tp_hf_lag_correlation(flux, tp, max_lag_hours, track_id, flux_name, out
      - Positive lag: TP leads Flux (rainfall affects energy flux)
     """
     track_id = int(track_id)
-    # std_print("INFO", "ca", f" --- Track {track_id} {flux_name}-TP Lag-Correlation plot ---")
+    # std_print("INFO", "ca", f"--- {flux_name}-TP Lag-Correlation plot ---")
     lags, correlations_lag = lag_correlation(flux, tp, max_lag=max_lag_hours)
     valid_indices = [i for i, val in enumerate(correlations_lag) if not np.isnan(val)]
     if not valid_indices:

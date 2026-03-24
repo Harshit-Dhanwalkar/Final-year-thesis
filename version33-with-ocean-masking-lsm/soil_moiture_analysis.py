@@ -1,6 +1,4 @@
 """
-Analyzes the relationship between TP and SWVL1 during entire MD track passage.
-
 Key Questions:
   - Is there a correlation between TP and SWVL1?
   - Does more precipitation lead to higher soil moisture?
@@ -8,13 +6,47 @@ Key Questions:
   - Spatial patterns of both variables during passage?
 """
 
+# NOTE:
+# Soil moisture analysis - tp, swvl1, sm deficit, lead-lag, spatial maps
+# Analyzes the relationship between Total Precipitation (TP) and Volumetric Soil Water Layer-1 (SWVL1, 0–7 cm) along and around MD tracks.
+# 1. plot_spatial_tp_swvl1  [plot_spatial_tp_swvl1]
+#     Two separate spatial maps over the MD track domain:
+#     a) Total TP accumulated during passage (mm), with white/cyan track overlay.
+#     b) Mean SWVL1 with a near-saturation contour overlay (red dashed = 90% of SWVL1_SAT).
+#     - Low deficit -> soil near saturation -> LHF peaks -> Brown Ocean.
+#     - High deficit -> soil absorbs rain -> no BOE
+#     Reference: seneviratne2010investigating:  deficit = SWVL1_sat - SWVL1
+# 2. SM Deficit Timeseries  [plot_sm_deficit_timeseries]
+#     Single-panel SWVL1 timeseries with:
+#       - Saturation line (SWVL1_SAT = 0.45 m³/m³) - saturation = deficit
+#       - Dry threshold (0.20 m³/m³) - sienna fill below = definitely no BOE
+#       - Land/ocean shading + landfall marker
+#     Physical basis (Seneviratne et al. 2010):
+#       - Low deficit (<0.05 m³/m³) -> near-saturated -> LHF peaks -> BOE conditions
+#       - High deficit (>0.15 m³/m³) -> soil absorbs rain -> no BOE, faster decay
+#     SWVL1_SAT = 0.45 m³/m³ (ERA5 approximate saturation for loamy/clay soils over India)
+# 3. Soil Moisture Memory  [analyze_soil_memory_by_track, compute_soil_moisture_memory]
+#     Autocorrelation of SWVL1 at 24-hour lag using statsmodels ACF.
+#     Higher autocorrelation = longer memory = more sustained land-atmosphere feedback.
+#     Minimum 48 data points required (= 48 hours of hourly ERA5).
+#     Exports per-track memory index to soil_memory_analysis.csv.
+# 4. SM Deficit Helper  [compute_sm_deficit]
+#     deficit = clip(SWVL1_sat − SWVL1, 0)  [m³/m³]
+#     Used internally for diagnostics and threshold checking.
+# 5. SWVL1–TP Lead-Lag Cross-Correlation  [compute_swvl1_tp_lead_lag]
+#     Cross-correlation (CCF) between SWVL1 and TP at lags (−max_lag, +max_lag) hours,
+#     stratified by elevation band (plains <200m, rolling 200–600m, elevated >600m).
+#     Positive lag CCF peak at 6–24 h = SWVL1 leads TP = BOE pre-moistening feedback.
+#     Disrupted feedback over elevated terrain = orographic drainage effect.
+#     Requires 'elevation_m' column in track_df.
+#     Global plot: plot_swvl1_tp_lead_lag_all_tracks
+# References:
+#  - Seneviratne et al. (2010) - soil moisture–climate feedback, deficit definition
+#  - Eltahir & Bras (1996) - precipitation recycling, BOE land-atmosphere coupling
+
 # TODO:
-# 1. seneviratne2010investigating:  deficit = SWVL1_sat - SWVL1
-#     - Low deficit -> soil near saturation -> LHF peaks -> Brown Ocean. High deficit -> soil absorbs rain -> no BOE
-# 2. add shade region for land (like in latent heat flux transiton and in speed plots)
-# The research report does not contain information about Clapp-Hornberger soil hydraulic parameters, beta exponents, saturated conductivity values, or specific analyses of Indian pedological zones like the Gangetic Plains, Deccan Plateau, or Coastal Alluvium.
-# Limited Soil Information in the Report
-# 3. The studies used “regional SM and ST fields at four soil layers (0-10 cm, 10-40cm, 40-100 cm and 100-200 cm)” and incorporated “surface static fields such as land use and soil type”, but did not analyze specific hydraulic parameters or regional pedological characteristics.
+# 1. add shade region for land (like in latent heat flux transiton and in speed plots)
+# 2. The studies used “regional SM and ST fields at four soil layers (0-10 cm, 10-40cm, 40-100 cm and 100-200 cm)” and incorporated “surface static fields such as land use and soil type”, but did not analyze specific hydraulic parameters or regional pedological characteristics.
 # + Clapp-Hornberger Parameters and Soil Moisture Memory
 #   - Clapp-Hornberger soil hydraulic parameters significantly control soil moisture memory timescales through their influence on water retention and conductivity:
 # - Beta Exponent (β): This parameter controls the shape of the soil water retention curve and hydraulic conductivity function. Higher β values (typical of clay-rich soils) create:
@@ -322,7 +354,7 @@ def compute_soil_moisture_memory(swvl1_series, lag_hours=24):
             "WARN",
             "sm",
             f"ACF lag={lag_hours}h needs ≥{min_required} pts",
-            f"have {len(swvl1_clean)} — returning NaN",
+            f"have {len(swvl1_clean)} - returning NaN",
         )
         return np.nan
 

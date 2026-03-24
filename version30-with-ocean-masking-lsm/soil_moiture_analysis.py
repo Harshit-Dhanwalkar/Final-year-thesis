@@ -10,10 +10,9 @@ Key Questions:
 
 # TODO:
 # 1. seneviratne2010investigating:  deficit = SWVL1_sat - SWVL1
-#     - Low deficit -> soil near saturation -> LHF peaks -> Brown Ocean. High deficit -> soil absorbs rain -> no BOE
-# 2. add shade region for land (like in latent heat flux transiton and in speed plots)
-# The research report does not contain information about Clapp-Hornberger soil hydraulic parameters, beta exponents, saturated conductivity values, or specific analyses of Indian pedological zones like the Gangetic Plains, Deccan Plateau, or Coastal Alluvium.
-# Limited Soil Information in the Report
+#     - Low deficit -> soil near saturation -> LHF peaks -> Brown Ocean.
+#     - High deficit -> soil absorbs rain -> no BOE
+# 2. Add shade region for land (like in latent heat flux transiton and in speed plots)
 # 3. The studies used “regional SM and ST fields at four soil layers (0-10 cm, 10-40cm, 40-100 cm and 100-200 cm)” and incorporated “surface static fields such as land use and soil type”, but did not analyze specific hydraulic parameters or regional pedological characteristics.
 # + Clapp-Hornberger Parameters and Soil Moisture Memory
 #   - Clapp-Hornberger soil hydraulic parameters significantly control soil moisture memory timescales through their influence on water retention and conductivity:
@@ -322,7 +321,7 @@ def compute_soil_moisture_memory(swvl1_series, lag_hours=24):
             "WARN",
             "sm",
             f"ACF lag={lag_hours}h needs ≥{min_required} pts",
-            f"have {len(swvl1_clean)} — returning NaN",
+            f"have {len(swvl1_clean)} - returning NaN",
         )
         return np.nan
 

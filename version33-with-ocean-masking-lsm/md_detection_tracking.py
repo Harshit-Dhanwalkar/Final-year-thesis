@@ -2801,16 +2801,15 @@ if __name__ == "__main__":
             print(f"\n----------------------------------------- Vortex Analysis for Track {track_id} ------------------------------------------")
             try:
                 vortex_track_dir = os.path.join(track_dir, "vortex_analysis")
-                tilt_df, therm_df = run_track_vortex_analysis(
+                vortex_results = run_track_vortex_analysis(
                     track_df, track_id,
                     pl_dir=PL_DIR,
                     year=MONSOON_YEAR,
                     output_dir=vortex_track_dir,
                 )
-                if tilt_df is not None:
-                   vortex_tilt_results[track_id]  = tilt_df
-                if therm_df is not None:
-                   vortex_therm_results[track_id] = therm_df
+                # Accumulate tilt and thermal results for global all-tracks comparison
+                if vortex_results.get("tilt")    is not None: vortex_tilt_results[track_id]  = vortex_results["tilt"]
+                if vortex_results.get("thermal") is not None: vortex_therm_results[track_id] = vortex_results["thermal"]
             except Exception as e:
                 std_print("ERROR", "md", "Vortex analysis failed", str(e))
                 traceback.print_exc()

@@ -15,10 +15,8 @@
 #    The negative sign follows ERA5 sign convention (negative = away from the surface). The ratio
 #    LHF/SHF (Bowen ratio) is the key BOE diagnostic: a low Bowen ratio (LHF >> SHF) over land signals
 #    ocean-like surface energy partitioning - the Brown Ocean Effect.
-#
 # 3. Equivalent Potential Temperature  [theta_e_timeseries]
 #    Plots θ_e, T2m, and D2m (in K)
-#
 #    Derived quantity: θ_e (Bolton 1980 approximation):
 #      Step 1: Saturation vapour pressure at dew point (Magnus formula)
 #              e_s = 611.2 * exp( 17.67 * (T_d − 273.15) / (T_d − 29.65) )   [Pa]
@@ -31,7 +29,6 @@
 #      Pressure used: SP (surface pressure, Pa) preferred; MSL used as fallback
 #      if SP is absent from the dataset (see extract_theta_e_timeseries).
 #
-#    PHYSICAL INTERPRETATION:
 #    - θ_e is conserved under both dry and moist adiabatic ascent, making it
 #      the best single variable to track the thermodynamic "fuel" available
 #      for deep convection along the MD track.

@@ -1683,7 +1683,7 @@ def plot_barrier_encounter_profile(track_df, track_id, output_dir,threshold_m_pe
     )
 
     if not encounters:
-        std_print("INFO", "ea", "No barrier encounters detected",
+        std_print("WARN", "ea", "No barrier encounters detected",
                   f"(threshold={threshold_m_per_h} m/h, min_steps={min_steps})")
 
     # Figure
@@ -2802,7 +2802,7 @@ def compute_tsi(track_df, track_coupling=None):
     # 1. Elevation effect
     elev_range = valid_elev.max() - valid_elev.min()
     # INFO: total elevation change along a track rarely exceeds 3000 m
-    # TODO: would it be better to use max_elevation along track instead of hardcoded 3000m?
+    # TODO: would be better to use max_elevation along track instead of hardcoded 3000m
     elev_eff = min(1.0, elev_range / 3000.0)
 
     # 2. Slope effect
