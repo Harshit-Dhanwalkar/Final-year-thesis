@@ -10,13 +10,15 @@ geopandas
 xarray
 dask[distributed]
 numba
+store
 regionmask
 netCDF4
+h5py
+h5netcdf
 statsmodels
 contextily
 pygam
 rasterio
-glob
 # folium
 # xrft
 # Dataset
