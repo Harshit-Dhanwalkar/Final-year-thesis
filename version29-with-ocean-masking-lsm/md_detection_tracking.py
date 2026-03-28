@@ -2993,14 +2993,14 @@ if __name__ == "__main__":
            # Only run statistical analyses if both coupling and ASM data exist
            coupling_metrics_FSI_CSV = os.path.join(coupling_metrics_dir, "coupling_metrics_FSI.csv")
            if not asm_df.empty and os.path.exists(coupling_metrics_FSI_CSV):
-               std_print("INFO", "sa", "--- Starting Statistical Analyses ---")
+               std_print("INFO", "md", "--- Starting Statistical Analyses ---")
                fsi_df_stats = pd.read_csv(coupling_metrics_FSI_CSV)
-               std_print("INFO", "sa", "Loaded coupling data", coupling_metrics_FSI_CSV)
-               std_print("DEBUG", "sa", "Columns available", str(list(fsi_df_stats.columns)))
+               std_print("INFO", "md", "Loaded coupling data", coupling_metrics_FSI_CSV)
+               std_print("DEBUG", "md", "Columns available", str(list(fsi_df_stats.columns)))
                stats_results = {}
 
                # 1. ASM-FSI relationship
-               std_print("INFO", "sa", "--- Analyzing ASM-FSI relationship ---")
+               std_print("INFO", "md", "--- Analyzing ASM-FSI relationship ---")
                try:
                    stats_results["asm_fsi"] = analyze_asm_fsi_relationship(
                        fsi_df_stats, asm_df, output_dir
@@ -3010,7 +3010,7 @@ if __name__ == "__main__":
                    stats_results["asm_fsi"] = {}
 
                # 2. GAM nonlinearity (skip if < 10 tracks)
-               std_print("INFO", "sa", "--- Running GAM nonlinear analysis ---")
+               std_print("INFO", "md", "--- Running GAM nonlinear analysis ---")
                MIN_GAM_TRACKS = 10
                if len(fsi_df_stats) >= MIN_GAM_TRACKS:
                    try:
@@ -3019,7 +3019,7 @@ if __name__ == "__main__":
                        std_print("ERROR", "md", "GAM analysis failed", str(e))
                        stats_results["gam"] = {}
                else:
-                   std_print("WARN", "sa", "Skipping GAM",
+                   std_print("WARN", "md", "Skipping GAM",
                              f"Need ≥{MIN_GAM_TRACKS} tracks, have {len(fsi_df_stats)}")
                    stats_results["gam"] = {
                        "status": "skipped",
@@ -3027,7 +3027,7 @@ if __name__ == "__main__":
                    }
 
                # 3. Granger causality
-               std_print("INFO", "sa", "--- Testing Granger causality ---")
+               std_print("INFO", "md", "--- Testing Granger causality ---")
                try:
                    stats_results["granger"] = test_granger_causality(fsi_df_stats, output_dir)
                except Exception as e:
@@ -3035,7 +3035,7 @@ if __name__ == "__main__":
                    stats_results["granger"] = {}
 
                # 4. TSI from elevation data
-               std_print("INFO", "sa", "--- Analyzing TSI with elevation data ---")
+               std_print("INFO", "md", "--- Analyzing TSI with elevation data ---")
                try:
                    elevation_metrics_df = load_elevation_metrics(output_dir)
                    if elevation_metrics_df is not None and not elevation_metrics_df.empty:
@@ -3043,7 +3043,7 @@ if __name__ == "__main__":
                            elevation_metrics_df, fsi_df_stats, output_dir
                        )
                    else:
-                       std_print("WARN", "sa", "Skipping TSI analysis", "Elevation metrics not available")
+                       std_print("WARN", "md", "Skipping TSI analysis", "Elevation metrics not available")
                        stats_results["tsi"] = {
                            "status": "skipped",
                            "reason": "Elevation metrics file not found",

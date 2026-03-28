@@ -20,7 +20,7 @@ MAX_LAG = 1
 def load_elevation_metrics(output_dir):
     """Load TSI metrics computed from HGT elevation data"""
     paths_to_try = [
-        os.path.join(output_dir, "Global_elevation_analysis", "elevation_metrics.csv"),
+        os.path.join(output_dir, "elevation_metrics.csv"),
         # "output/elevation_analysis/elevation_metrics.csv",
     ]
     for path in paths_to_try:
@@ -30,8 +30,10 @@ def load_elevation_metrics(output_dir):
                 std_print("INFO", "sa", "Loaded elevation metrics", path)
                 return df
             except Exception as e:
-                std_print("WARN", "sa", f"Failed to load {path}", str(e)[:40])
-    std_print("WARN", "sa", "Elevation metrics not found", "TSI analysis will be skipped")
+                std_print("WARN", "sa", f"Failed to load {path}", str(e))
+    std_print(
+        "WARN", "sa", "Elevation metrics not found", "TSI analysis will be skipped"
+    )
     return None
 
 
@@ -57,10 +59,10 @@ def analyze_asm_fsi_relationship(fsi_df, asm_df, output_dir):
 
         if "ASM" not in asm_df.columns:
             asm_candidates = [
-                "asmi_24h",          # primary: from antecedent_analysis.py
-                "asmi_7d",           # secondary: 7-day window
-                "SWVL1_pre24h_mean", # legacy name
-                "antecedent_sm",     # alternative name
+                "asmi_24h",  # primary: from antecedent_analysis.py
+                "asmi_7d",  # secondary: 7-day window
+                "SWVL1_pre24h_mean",  # legacy name
+                "antecedent_sm",  # alternative name
             ]
             for cand in asm_candidates:
                 if cand in asm_df.columns:
@@ -75,9 +77,16 @@ def analyze_asm_fsi_relationship(fsi_df, asm_df, output_dir):
                 if numeric:
                     asm_df = asm_df.copy()
                     asm_df["ASM"] = asm_df[numeric[0]]
-                    std_print("WARN", "sa", f"ASM fallback to numeric column '{numeric[0]}'")
+                    std_print(
+                        "WARN", "sa", f"ASM fallback to numeric column '{numeric[0]}'"
+                    )
                 else:
-                    std_print("ERROR", "sa", "Could not find any numeric ASM column", str(list(asm_df.columns)))
+                    std_print(
+                        "ERROR",
+                        "sa",
+                        "Could not find any numeric ASM column",
+                        str(list(asm_df.columns)),
+                    )
                     return {}
 
         # Check for FSI column in fsi_df
@@ -85,7 +94,12 @@ def analyze_asm_fsi_relationship(fsi_df, asm_df, output_dir):
             if "feedback_strength_index" in fsi_df.columns:
                 fsi_df["FSI"] = fsi_df["feedback_strength_index"]
             else:
-                std_print("ERROR", "sa", "FSI column not found", "Available: " + str(fsi_df.columns.tolist()))
+                std_print(
+                    "ERROR",
+                    "sa",
+                    "FSI column not found",
+                    "Available: " + str(fsi_df.columns.tolist()),
+                )
                 return {}
 
         # Merge data
@@ -93,7 +107,7 @@ def analyze_asm_fsi_relationship(fsi_df, asm_df, output_dir):
             fsi_df[["track_id", "FSI"]],
             asm_df[["track_id", "ASM"]],
             on="track_id",
-            how="inner"
+            how="inner",
         )
         if merged_df.empty:
             std_print(
@@ -204,13 +218,20 @@ def analyze_tsi(elevation_metrics_df, coupling_df, output_dir):
       - ASM: Soil moisture interaction (optional)
     """
     if elevation_metrics_df is None or elevation_metrics_df.empty:
-        std_print("ERROR", "sa", "Elevation metrics not available", "Skipping TSI analysis")
+        std_print(
+            "ERROR", "sa", "Elevation metrics not available", "Skipping TSI analysis"
+        )
         # return {'status': 'skipped', 'reason': 'Elevation metrics not found (NoneType)'}
         return None
     try:
         # Check available data
         valid_tsi = elevation_metrics_df[elevation_metrics_df["TSI"].notna()]
-        std_print("DEBUG", "sa", "Valid TSI records", f"{len(valid_tsi)}/{len(elevation_metrics_df)}")
+        std_print(
+            "DEBUG",
+            "sa",
+            "Valid TSI records",
+            f"{len(valid_tsi)}/{len(elevation_metrics_df)}",
+        )
 
         if "duration_h" in elevation_metrics_df.columns:
             valid_pairs = elevation_metrics_df.dropna(subset=["TSI", "duration_h"])
@@ -226,9 +247,11 @@ def analyze_tsi(elevation_metrics_df, coupling_df, output_dir):
                 scatter = ax.scatter(
                     valid_pairs["TSI"],
                     valid_pairs["duration_h"],
-                    c=valid_pairs["elevation_range"]
-                    if "elevation_range" in valid_pairs.columns
-                    else "steelblue",
+                    c=(
+                        valid_pairs["elevation_range"]
+                        if "elevation_range" in valid_pairs.columns
+                        else "steelblue"
+                    ),
                     s=100,
                     alpha=0.6,
                     cmap="viridis",
@@ -275,8 +298,12 @@ def analyze_tsi(elevation_metrics_df, coupling_df, output_dir):
                         linewidth=1.5,
                         alpha=0.7,
                     )
-                    ax.set_ylabel("Mean Component Value", fontsize=12, fontweight="bold")
-                    ax.set_title("TSI Component Contributions", fontsize=13, fontweight="bold")
+                    ax.set_ylabel(
+                        "Mean Component Value", fontsize=12, fontweight="bold"
+                    )
+                    ax.set_title(
+                        "TSI Component Contributions", fontsize=13, fontweight="bold"
+                    )
                     ax.set_ylim(0, 1.0)
                     ax.grid(True, alpha=0.3, axis="y")
 
@@ -291,11 +318,11 @@ def analyze_tsi(elevation_metrics_df, coupling_df, output_dir):
                 # Interpretation
                 interpretation = ""
                 if tsi_duration_corr < -0.5:
-                    interpretation = ("Strong negative correlation - higher TSI (terrain-sensitive) -> shorter duration")
+                    interpretation = "Strong negative correlation - higher TSI (terrain-sensitive) -> shorter duration"
                 elif tsi_duration_corr < -0.2:
-                    interpretation = ("Weak negative correlation - terrain sensitivity moderately reduces duration")
+                    interpretation = "Weak negative correlation - terrain sensitivity moderately reduces duration"
                 elif tsi_duration_corr > 0.3:
-                    interpretation = ("Positive correlation - terrain-sensitive areas sustain longer tracks")
+                    interpretation = "Positive correlation - terrain-sensitive areas sustain longer tracks"
                 else:
                     interpretation = "Weak or no significant correlation"
                 tsi_results = {
@@ -337,7 +364,12 @@ def analyze_gam_nonlinearity(coupling_df, output_dir):
             if "feedback_strength_index" in df.columns:
                 df["FSI"] = df["feedback_strength_index"]
             else:
-                std_print("WARN", "sa", "FSI column not found", f"Available {df.columns.tolist()}")
+                std_print(
+                    "WARN",
+                    "sa",
+                    "FSI column not found",
+                    f"Available {df.columns.tolist()}",
+                )
                 return {}
 
         # Find soil moisture column
@@ -347,7 +379,9 @@ def analyze_gam_nonlinearity(coupling_df, output_dir):
                 sm_col = col
                 break
         if not sm_col:
-            std_print("WARN", "sa", "SM column not found", f"Available: {df.columns.tolist()}")
+            std_print(
+                "WARN", "sa", "SM column not found", f"Available: {df.columns.tolist()}"
+            )
             return {}
 
         # Prepare data
@@ -364,7 +398,12 @@ def analyze_gam_nonlinearity(coupling_df, output_dir):
             gam.fit(X, y)
             r_squared = gam.statistics_["pseudo_r2"]
             n_samples = len(data)
-            std_print("INFO", "sa", "GAM plateau analysis", f"R²≈{r_squared:.3f}, n={n_samples}")
+            std_print(
+                "INFO",
+                "sa",
+                "GAM plateau analysis",
+                f"R²≈{r_squared:.3f}, n={n_samples}",
+            )
             return {
                 "r_squared": float(r_squared),
                 "n_samples": n_samples,
@@ -397,8 +436,15 @@ def test_granger_causality(coupling_df, output_dir):
                 break
 
         if not tp_col or not sm_col:
-            std_print("WARN", "sa", "Cannot find TP/SWVL1 columns", f"TP candidates: {tp_candidates}, SM candidates: {sm_candidates}")
-            std_print("DEBUG", "sa", "Available columns", str(list(coupling_df.columns)))
+            std_print(
+                "WARN",
+                "sa",
+                "Cannot find TP/SWVL1 columns",
+                f"TP candidates: {tp_candidates}, SM candidates: {sm_candidates}",
+            )
+            std_print(
+                "DEBUG", "sa", "Available columns", str(list(coupling_df.columns))
+            )
             return {
                 "status": "failed",
                 "reason": "Missing TP or SWVL1 columns",
@@ -414,7 +460,7 @@ def test_granger_causality(coupling_df, output_dir):
                 "reason": f"Insufficient data after cleaning: n={len(data)}",
                 "tp_column": tp_col,
                 "sm_column": sm_col,
-                "n_samples": len(data)
+                "n_samples": len(data),
             }
 
         # Run Granger test with maxlag=1 for small datasets
@@ -430,19 +476,25 @@ def test_granger_causality(coupling_df, output_dir):
                 "tp_column": tp_col,
                 "sm_column": sm_col,
                 "maxlag": maxlag,
-                "status": "success"
+                "status": "success",
             }
             if pearson_p < 0.05:
                 std_print("INFO", "sa", "Granger causality", f"p={pearson_p:.4f}")
             else:
-                std_print("INFO", "sa", "No significant causality", f"p={pearson_p:.4f}")
+                std_print(
+                    "INFO", "sa", "No significant causality", f"p={pearson_p:.4f}"
+                )
 
             # Save
             stats_dir = os.path.join(output_dir, "statistical_analysis")
             os.makedirs(stats_dir, exist_ok=True)
             granger_causality_CSV = os.path.join(stats_dir, "granger_causality.csv")
-            pd.DataFrame([result]).to_csv(os.path.join(stats_dir, "granger_causality.csv"), index=False)
-            std_print("EXPORT", "sa", "Granger causality results", granger_causality_CSV)
+            pd.DataFrame([result]).to_csv(
+                os.path.join(stats_dir, "granger_causality.csv"), index=False
+            )
+            std_print(
+                "EXPORT", "sa", "Granger causality results", granger_causality_CSV
+            )
             return result
         except Exception as e:
             std_print("WARN", "sa", "Granger test error", str(e))
@@ -461,26 +513,26 @@ def test_granger_causality(coupling_df, output_dir):
 # FIX: output_dir is not accessed
 def compute_proxy_tsi(coupling_df, output_dir):
     """Fallback: Proxy TSI when no elevation data"""
-    std_print('WARN', 'sa', 'Using proxy TSI (no elevation data)', '')
-    if 'FSI' in coupling_df.columns:
-        fsi = coupling_df['FSI'].values
+    std_print("WARN", "sa", "Using proxy TSI (no elevation data)", "")
+    if "FSI" in coupling_df.columns:
+        fsi = coupling_df["FSI"].values
     else:
-        return {'status': 'failed', 'reason': 'No FSI for proxy TSI'}
+        return {"status": "failed", "reason": "No FSI for proxy TSI"}
 
     # Simple proxy based on FSI and capacity
     tsi = fsi * 0.8  # Base on FSI
-    if 'capacity_index' in coupling_df.columns:
-        tsi = tsi * 0.7 + coupling_df['capacity_index'].values * 0.3
+    if "capacity_index" in coupling_df.columns:
+        tsi = tsi * 0.7 + coupling_df["capacity_index"].values * 0.3
 
     results = {
-        'TSI': tsi.tolist(),
-        'TSI_mean': float(np.nanmean(tsi)),
-        'TSI_std': float(np.nanstd(tsi)),
-        'TSI_min': float(np.nanmin(tsi)),
-        'TSI_max': float(np.nanmax(tsi)),
-        'n_tracks': len(coupling_df),
-        'source': 'proxy_fsi_based',
-        'status': 'proxy',
+        "TSI": tsi.tolist(),
+        "TSI_mean": float(np.nanmean(tsi)),
+        "TSI_std": float(np.nanstd(tsi)),
+        "TSI_min": float(np.nanmin(tsi)),
+        "TSI_max": float(np.nanmax(tsi)),
+        "n_tracks": len(coupling_df),
+        "source": "proxy_fsi_based",
+        "status": "proxy",
     }
     return results
 
@@ -500,9 +552,16 @@ def compute_tsi_index(coupling_df, elevation_results, output_dir):
             "track_id" in coupling_df.columns
             and "track_id" in elevation_results.columns
         ):
-            merged = pd.merge(coupling_df, elevation_results, on="track_id", how="inner")
+            merged = pd.merge(
+                coupling_df, elevation_results, on="track_id", how="inner"
+            )
         else:
-            std_print("ERROR", "sa", "Cannot merge coupling and elevation data", "Missing track_id")
+            std_print(
+                "ERROR",
+                "sa",
+                "Cannot merge coupling and elevation data",
+                "Missing track_id",
+            )
             return compute_proxy_tsi(coupling_df, output_dir)
         if merged.empty:
             std_print("WARN", "sa", "No matching tracks after merge", "Using proxy TSI")
@@ -519,7 +578,7 @@ def compute_tsi_index(coupling_df, elevation_results, output_dir):
                 "TSI_max": float(np.nanmax(tsi)),
                 "n_tracks": len(merged),
                 "source": "elevation_data",
-                "status": "success"
+                "status": "success",
             }
         else:
             # Calculate TSI from components
@@ -538,7 +597,7 @@ def compute_tsi_index(coupling_df, elevation_results, output_dir):
                     "TSI_max": float(tsi.max()),
                     "n_tracks": len(merged),
                     "source": "calculated_from_components",
-                    "status": "success"
+                    "status": "success",
                 }
             else:
                 std_print("WARN", "sa", "Missing TSI components", "Using proxy TSI")
@@ -548,22 +607,35 @@ def compute_tsi_index(coupling_df, elevation_results, output_dir):
         if "duration_h" in merged.columns:
             valid_mask = ~np.isnan(tsi) & ~np.isnan(merged["duration_h"])
             if valid_mask.sum() > 2:
-                corr = np.corrcoef(tsi[valid_mask], merged["duration_h"].values[valid_mask])[0, 1]
+                corr = np.corrcoef(
+                    tsi[valid_mask], merged["duration_h"].values[valid_mask]
+                )[0, 1]
                 results["tsi_duration_correlation"] = float(corr)
                 results["tsi_duration_n"] = int(valid_mask.sum())
 
                 # Interpretation
                 if corr < -0.5:
-                    results["interpretation"] = ("Strong negative: Higher TSI = Shorter duration")
+                    results["interpretation"] = (
+                        "Strong negative: Higher TSI = Shorter duration"
+                    )
                 elif corr < -0.3:
-                    results["interpretation"] = ("Moderate negative: Terrain sensitivity reduces duration")
+                    results["interpretation"] = (
+                        "Moderate negative: Terrain sensitivity reduces duration"
+                    )
                 elif corr > 0.5:
-                    results["interpretation"] = ("Strong positive: Higher TSI = Longer duration")
+                    results["interpretation"] = (
+                        "Strong positive: Higher TSI = Longer duration"
+                    )
                 elif corr > 0.3:
                     results["interpretation"] = "Moderate positive"
                 else:
                     results["interpretation"] = "Weak/no relationship"
-        std_print(None, None, "Mean" f"{results['TSI_mean']:.3f} ± {results['TSI_std']:.3f} (from {results['source']})")
+        std_print(
+            None,
+            None,
+            "Mean"
+            f"{results['TSI_mean']:.3f} ± {results['TSI_std']:.3f} (from {results['source']})",
+        )
         return results
     except Exception as e:
         std_print("ERROR", "sa", "TSI computation failed", str(e))
@@ -588,7 +660,9 @@ def write_statistical_summary(all_results, coupling_df, output_dir):
             if "track_id" in coupling_df.columns:
                 track_ids = sorted(coupling_df["track_id"].unique().tolist())
                 f.write(f"   Track IDs:                               {track_ids}\n")
-                f.write(f"   Number of tracks:                        {len(track_ids)}\n\n")
+                f.write(
+                    f"   Number of tracks:                        {len(track_ids)}\n\n"
+                )
 
             f.write("ASM-FSI Relationship\n\n")
             if asm_fsi_results and "correlation" in asm_fsi_results:
@@ -596,8 +670,12 @@ def write_statistical_summary(all_results, coupling_df, output_dir):
                 f.write(f"Correlation (r): {corr:.3f}\n")
                 if corr is not None:
                     if abs(corr) < 0.3:
-                        f.write("Interpretation: Supports (ASM fuels but FSI sustains)\n")
-                        f.write("                Weak correlation suggests independent mechanisms\n")
+                        f.write(
+                            "Interpretation: Supports (ASM fuels but FSI sustains)\n"
+                        )
+                        f.write(
+                            "                Weak correlation suggests independent mechanisms\n"
+                        )
                     elif corr > 0.7:
                         f.write("Interpretation: Strong positive correlation\n")
                         f.write("                ASM and FSI may be directly linked\n")
@@ -622,7 +700,7 @@ def write_statistical_summary(all_results, coupling_df, output_dir):
             f.write("Granger Causality (TP -> SWVL1)\n\n")
             if granger_results and "significant" in granger_results:
                 p_val = granger_results.get("pearson_p", "N/A")
-                sig   = granger_results.get("significant", False)
+                sig = granger_results.get("significant", False)
                 f.write(f"p-value: {p_val}\n")
                 f.write(f"Significant at α=0.05: {'YES' if sig else 'NO'}\n")
                 if isinstance(p_val, float):
@@ -642,24 +720,36 @@ def write_statistical_summary(all_results, coupling_df, output_dir):
             tsi_results = all_results.get("tsi", {})
             if tsi_results and "status" in tsi_results:
                 if tsi_results["status"] == "completed":
-                    f.write(f"TSI-Duration Correlation: {tsi_results.get('tsi_duration_correlation', 'N/A'):.3f}\n")
+                    f.write(
+                        f"TSI-Duration Correlation: {tsi_results.get('tsi_duration_correlation', 'N/A'):.3f}\n"
+                    )
                     f.write(f"Mean TSI: {tsi_results.get('mean_tsi', 'N/A'):.3f}\n")
                     f.write(f"Track count: {tsi_results.get('n_pairs', 'N/A')}\n")
-                    f.write(f"Interpretation: {tsi_results.get('interpretation', '')}\n")
+                    f.write(
+                        f"Interpretation: {tsi_results.get('interpretation', '')}\n"
+                    )
                 elif tsi_results["status"] == "skipped":
-                    f.write(f"Status: SKIPPED - {tsi_results.get('reason', 'Unknown')}\n")
+                    f.write(
+                        f"Status: SKIPPED - {tsi_results.get('reason', 'Unknown')}\n"
+                    )
                 elif tsi_results["status"] == "incomplete":
-                    f.write(f"Status: INCOMPLETE - {tsi_results.get('reason', 'Unknown')}\n")
+                    f.write(
+                        f"Status: INCOMPLETE - {tsi_results.get('reason', 'Unknown')}\n"
+                    )
                 else:
                     f.write("Analysis incomplete or failed\n")
             f.write("\n")
 
             f.write("Data quality:\n\n")
             if len(coupling_df) < 10:
-                f.write(f"  Only {len(coupling_df)} tracks - statistical power limited\n")
+                f.write(
+                    f"  Only {len(coupling_df)} tracks - statistical power limited\n"
+                )
                 f.write("  Consider relaxing detection thresholds to get more tracks\n")
             if "pearson_p" in coupling_df.columns:
-                nan_pct = (coupling_df["pearson_p"].isna().sum() / len(coupling_df)) * 100
+                nan_pct = (
+                    coupling_df["pearson_p"].isna().sum() / len(coupling_df)
+                ) * 100
                 if nan_pct > 20:
                     f.write(f"  {nan_pct:.1f}% of p-values are NaN\n")
 
