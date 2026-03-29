@@ -8,8 +8,7 @@
 #      rising SWVL1 unless runoff dominates.
 # 2. Surface Heat Fluxes  [hf_timeseries]
 #    - Latent Heat Flux  (LHF)  : W/m²  (ERA5: slhf J/m² accumulated, or avg_slhtf W/m² instantaneous avg)
-#    - Sensible Heat Flux (SHF) : W/m²  (ERA5: sshf J/m² accumulated, or
-#                                          avg_ishf W/m² instantaneous avg)
+#    - Sensible Heat Flux (SHF) : W/m²  (ERA5: sshf J/m² accumulated, or avg_ishf W/m² instantaneous avg)
 #    Accumulated fields are de-accumulated as:
 #        Flux [W/m²] = -(value_now − value_prev) / dt_seconds
 #    The negative sign follows ERA5 sign convention (negative = away from the surface). The ratio
@@ -28,7 +27,6 @@
 #                 P0=100000 Pa
 #      Pressure used: SP (surface pressure, Pa) preferred; MSL used as fallback
 #      if SP is absent from the dataset (see extract_theta_e_timeseries).
-#
 #    - θ_e is conserved under both dry and moist adiabatic ascent, making it
 #      the best single variable to track the thermodynamic "fuel" available
 #      for deep convection along the MD track.
@@ -43,6 +41,14 @@
 #    - D2m tracks the actual moisture content independently of temperature;
 #      a sustained high D2m over land after landfall is the atmospheric
 #      fingerprint of the Brown Ocean Effect.
+# 4. Precipitation Recycling Ratio  [compute_recycling_ratio]
+#     ρ = E / P  where E = LHF/(Lv x ρ_w)  [mm hr⁻¹] and P = TP  [mm hr⁻¹]
+#     ρ -> 1 = rainfall mostly from local evaporation (BOE signature).
+#     ρ -> 0 = rainfall from advected oceanic moisture.
+#     Simplified Budyko single-column formulation (not full 2-D recycling ratio).
+
+# References:
+#  - Eltahir & Bras (1996) - precipitation recycling ratio definition
 
 import os
 import numpy as np
@@ -53,12 +59,12 @@ import traceback
 
 from utils import (
     std_print,
-    is_point_land,
-    add_land_ocean_shading,
     calculate_buffer_deg,
     get_time_coord,
     common_bbox,
     legend_style,
+    is_point_land,
+    add_land_ocean_shading,
 )
 
 
@@ -67,7 +73,6 @@ def tp_swvl1_timeseries(
     track_id,
     tp,
     swvl1,
-    valid_times,
     landfall_index,
     output_dir,
     originates_over_land=True,
@@ -78,35 +83,22 @@ def tp_swvl1_timeseries(
             tp = np.array(tp)
         if not isinstance(swvl1, np.ndarray):
             swvl1 = np.array(swvl1)
-        if not isinstance(valid_times, (list, np.ndarray, pd.DatetimeIndex)):
-            raise ValueError("valid_times must be datetime-like")
 
         # Create a copy of swvl1
         swvl1_land = swvl1.copy()
-
-        # Get land array for shading and for zeroing ocean values
-        if track_df is not None and "is_land" in track_df.columns:
-            is_land_array = track_df["is_land"].values
-
-            # Set SWVL1 to 0 for ocean points (not land)
-            swvl1_land[~is_land_array] = 0
-        else:
-            is_land_array = np.zeros(len(valid_times), dtype=bool)
-            if originates_over_land:
-                is_land_array[:] = True
-            elif landfall_index > 0:
-                is_land_array[landfall_index:] = True
-                swvl1_land[:landfall_index] = 0
+        times = pd.to_datetime(track_df["time"])
+        is_land_arr = track_df["is_land"].values.astype(bool)
+        # Detect landfall
+        landfall_time = None
+        for i in range(1, len(track_df)):
+            if not is_land_arr[i - 1] and is_land_arr[i]:
+                landfall_time = times.iloc[i]
+                break
 
         valid_data_mask = ~(np.isnan(tp) | np.isnan(swvl1_land))
         valid_count = np.sum(valid_data_mask)
         if valid_count < 2:
-            std_print(
-                "WARN", "ts", "Insufficient valid data", f"{valid_count} < 2 points"
-            )
-            return False
-        if len(tp) != len(swvl1_land) or len(tp) != len(valid_times):
-            std_print("WARN", "ts", "Data length mismatch", "swvl1_land != tp != times")
+            std_print("WARN", "ts", "Insufficient valid data", f"{valid_count} < 2 points")
             return False
 
         # std_print("DEBUG", "ts", "Extracted TP-SWVL1", len(valid_times))
@@ -114,16 +106,16 @@ def tp_swvl1_timeseries(
         # Figure
         fig, ax1 = plt.subplots(figsize=(18, 6))
 
-        # Determine landfall status
-        if originates_over_land:
-            status_text = "Originates over land"
-            status_color = "blue"
-        elif landfall_index == -1:
-            status_text = "No Landfall"
-            status_color = "gray"
-        else:
-            status_text = "Landfall"
-            status_color = "red"
+        # # Determine landfall status
+        # if originates_over_land:
+        #     status_text = "Originates over land"
+        #     status_color = "blue"
+        # elif landfall_index == -1:
+        #     status_text = "No Landfall"
+        #     status_color = "gray"
+        # else:
+        #     status_text = "Landfall"
+        #     status_color = "red"
 
         # Plot TP on primary axis
         color_tp = "tab:blue"
@@ -135,7 +127,7 @@ def tp_swvl1_timeseries(
             fontweight="bold",
         )
         line1 = ax1.plot(
-            valid_times,
+            times,
             tp,
             "-o",
             color=color_tp,
@@ -147,28 +139,35 @@ def tp_swvl1_timeseries(
         )
         ax1.tick_params(axis="y", labelcolor=color_tp)
         ax1.grid(True, alpha=0.5, linestyle="--", zorder=0)
-        add_land_ocean_shading(
-            ax1,
-            pd.to_datetime(valid_times),
-            is_land_array,
-            land_color="wheat",
-            ocean_color="lightblue",
-        )
-        if (
-            landfall_index != -1
-            and landfall_index < len(valid_times)
-            and not originates_over_land
-        ):
-            landfall_time = valid_times[landfall_index]
+
+        # Land / ocean background shading
+        add_land_ocean_shading(ax1, times, is_land_arr, land_color="wheat", ocean_color="lightblue")
+        # Landfall line
+        if landfall_time is not None:
             ax1.axvline(
-                x=landfall_time,
-                color=status_color,
+                landfall_time,
+                color="red",
                 linestyle="--",
-                linewidth=2.5,
-                alpha=0.8,
-                label=status_text,
+                linewidth=1.8,
+                label="Landfall",
                 zorder=5,
             )
+
+        # if (
+        #     landfall_index != -1
+        #     and landfall_index < len(times)
+        #     and not originates_over_land
+        # ):
+        #     landfall_time = times[landfall_index]
+        #     ax1.axvline(
+        #         landfall_time,
+        #         color=status_color,
+        #         linestyle="--",
+        #         linewidth=2.5,
+        #         alpha=0.8,
+        #         label=status_text,
+        #         zorder=5,
+        #     )
 
         # Plot SWVL1 on secondary axis (using swvl1_land with ocean=0)
         ax2 = ax1.twinx()
@@ -180,7 +179,7 @@ def tp_swvl1_timeseries(
             fontweight="bold",
         )
         line2 = ax2.plot(
-            valid_times,
+            times,
             swvl1_land,
             "s-",
             color=color_swvl1,
@@ -215,15 +214,19 @@ def tp_swvl1_timeseries(
         handles.extend(line1 + line2)
         labels.extend([l.get_label() for l in line1 + line2])
 
-        if (
-            landfall_index != -1
-            and landfall_index < len(valid_times)
-            and not originates_over_land
-        ):
-            handles.append(
-                plt.Line2D([0], [0], color=status_color, linestyle="--", linewidth=2.5)
-            )
-            labels.append(status_text)
+        # if (
+        #     landfall_index != -1
+        #     and landfall_index < len(times)
+        #     and not originates_over_land
+        # ):
+        #     handles.append(plt.Line2D(
+        #         [0],
+        #         [0],
+        #         color=status_color,
+        #         linestyle="--",
+        #         linewidth=2.5
+        #     ))
+        #     labels.append(status_text)
 
         handles.append(Patch(facecolor="lightblue", alpha=0.5))
         labels.append("Ocean Phase")
@@ -250,9 +253,7 @@ def tp_swvl1_timeseries(
         # Save
         os.makedirs(output_dir, exist_ok=True)
         tp_swvl1_timeseries_plot = f"track_{track_id}_TP-SWVL1_time_series.png"
-        tp_swvl1_timeseries_plot_path = os.path.join(
-            output_dir, tp_swvl1_timeseries_plot
-        )
+        tp_swvl1_timeseries_plot_path = os.path.join(output_dir, tp_swvl1_timeseries_plot)
         plt.savefig(tp_swvl1_timeseries_plot_path, dpi=300, bbox_inches="tight")
         plt.close(fig)
         std_print("SAVED", "ts", "TP-SWVL1 time series", tp_swvl1_timeseries_plot_path)
@@ -309,7 +310,7 @@ def hf_timeseries(flux_df, track_id, output_dir):
             std_print("ERROR", "ts", "Time conversion failed", str(e))
             return False
 
-        is_land_array = flux_df["is_land"].values
+        is_land_arr = flux_df["is_land"].values
 
         # Figure
         fig, axes = plt.subplots(2, 1, figsize=(16, 10), sharex=True)
@@ -326,10 +327,8 @@ def hf_timeseries(flux_df, track_id, output_dir):
             alpha=0.8,
             zorder=3,
         )
-        add_land_ocean_shading(
-            ax1, times, is_land_array, land_color="wheat", ocean_color="lightblue"
-        )
-
+        # Land / ocean background shading
+        add_land_ocean_shading(ax1, times, is_land_arr, land_color="wheat", ocean_color="lightblue")
         # Landfall line
         if landfall_time is not None:
             ax1.axvline(
@@ -362,10 +361,8 @@ def hf_timeseries(flux_df, track_id, output_dir):
             alpha=0.8,
             zorder=3,
         )
-        add_land_ocean_shading(
-            ax2, times, is_land_array, land_color="wheat", ocean_color="lightblue"
-        )
-
+        # Land / ocean background shading
+        add_land_ocean_shading(ax2, times, is_land_arr, land_color="wheat", ocean_color="lightblue")
         # Landfall line
         if landfall_time is not None:
             ax2.axvline(
@@ -480,12 +477,8 @@ def theta_e_timeseries(theta_df, track_id, output_dir):
             label="D2m (K)",
             zorder=4,
         )
-
         # Land / ocean background shading
-        add_land_ocean_shading(
-            ax, times, is_land_arr, land_color="wheat", ocean_color="lightblue"
-        )
-
+        add_land_ocean_shading(ax, times, is_land_arr, land_color="wheat", ocean_color="lightblue")
         # Landfall line
         if landfall_time is not None:
             ax.axvline(
@@ -553,6 +546,103 @@ def theta_e_timeseries(theta_df, track_id, output_dir):
         std_print("ERROR", "ts", "theta_e timeseries plot failed", str(e))
         traceback.print_exc()
         return False
+
+
+def recycling_ratio_timeseries(result, track_id, output_dir):
+    """Plot recycling ratio using precomputed arrays"""
+    times = pd.Series(pd.to_datetime(result["time"])).reset_index(drop=True)
+    is_land_arr = np.array(result["is_land"])
+    rho_df = result["rho"]
+    E = result["E_mm_h"]
+    P = result["P_mm_h"]
+
+    # Detect landfall
+    landfall_time = None
+    for i in range(1, len(rho_df)):
+        if not is_land_arr[i - 1] and is_land_arr[i]:
+            landfall_time = times.iloc[i]
+            break
+
+    # Figure
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 10), sharex=True)
+
+    for ax in (ax1, ax2):
+        # Land / ocean background shading
+        add_land_ocean_shading(ax, times, is_land_arr, land_color="wheat", ocean_color="lightblue")
+        # Landfall line
+        if landfall_time is not None:
+            ax.axvline(
+                landfall_time,
+                color="red",
+                linestyle="--",
+                linewidth=1.8,
+                label="Landfall",
+                zorder=5,
+            )
+        # for i in range(1, len(is_land_arr)):
+        #     if not is_land_arr[i-1] and is_land_arr[i]:
+        #         ax.axvline(
+        #             times.iloc[i],
+        #             color="black",
+        #             linestyle="--",
+        #             linewidth=1.5,
+        #             label="Landfall",
+        #             zorder=5
+        #         )
+        #         break
+
+    ax1.plot(
+      times,
+      rho_df,
+      "-o",
+      color="teal",
+      linewidth=2,
+      markersize=4,
+      label="Recycling ratio ρ = E / P"
+    )
+    ax1.axhline(
+      0.25,
+      color="darkorange",
+      linestyle="--",
+      label="ρ = 0.25 (significant local recycling)"
+    )
+    ax1.set_ylim(-0.05, 1.05)
+    ax1.set_ylabel("Recycling ratio ρ", fontsize=12)
+    ax1.set_title(f"Track {track_id}: Precipitation Recycling Ratio", fontsize=13)
+    ax1.grid(True, alpha=0.3)
+    ax1.legend(loc="upper right", **legend_style())
+
+    ax2.plot(
+        times,
+        P,
+        "-o",
+        color="royalblue",
+        label="Precipitation P (mm h⁻¹)"
+    )
+    ax2.plot(
+        times,
+        E,
+        "-o",
+        color="tomato",
+        label="Evaporation E (mm h⁻¹)"
+    )
+    ax2.set_ylabel("Flux (mm h⁻¹)", fontsize=12)
+    ax2.set_xlabel("Time", fontsize=12)
+    ax2.grid(True, alpha=0.3)
+    ax2.legend(loc="upper right", **legend_style())
+
+    plt.setp(ax2.xaxis.get_majorticklabels(), rotation=30, ha="right")
+    ax2.xaxis.set_major_formatter(
+        plt.matplotlib.dates.DateFormatter("%d/%m/%Y %H:%M")
+    )
+    plt.tight_layout()
+
+    # Save
+    rr_path = os.path.join(output_dir, f"track_{track_id}_recycling_ratio.png")
+    plt.savefig(rr_path, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+    std_print("SAVED", "ts", "Recycling ratio timeseries", rr_path)
+
 
 
 # Helper / extraction functions

@@ -21,6 +21,13 @@ Reference: Kirshbaum (2018) JGR-Atmos.
 
 # TODO:
 # 1. Mean elevation along track vs. speed anomaly (speed relative to pre-landfall baseline) - not implemented yet.
+# FIX:
+# 1. Replace manual fill_between blocks with:
+#     add_land_ocean_shading(ax, times, is_land, land_color="wheat", ocean_color="lightblue")
+#    -  plot_track_elevation_profile
+#    -  plot_barrier_encounter_profile
+#    -  compute_effective_blocking_factor
+#    -  decompose_terrain_motion
 
 import os
 import re
@@ -43,12 +50,13 @@ import traceback
 
 from utils import (
     std_print,
-    common_bbox,
-    legend_style,
     haversine_distance,
     get_landfall_index,
     pearsonr_corrected,
+    common_bbox,
+    legend_style,
     is_land,
+    add_land_ocean_shading,
 )
 
 hgt_dir = ""

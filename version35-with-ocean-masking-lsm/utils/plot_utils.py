@@ -83,6 +83,20 @@ def add_land_ocean_shading(
         zorder=0,
     )
 
+    # TODO: incoperate landfall line with shading
+    # Landfall line
+    # for i in range(1, len(is_land_data)):
+    #     if not is_land_data[i - 1] and is_land_data[i]:
+    #         ax.axvline(
+    #             times.iloc[i],
+    #             color="black",
+    #             linestyle="--",
+    #             linewidth=1.5,
+    #             label="Landfall",
+    #             zorder=5,
+    #         )
+    #         break
+
 
 def common_bbox(custom_params=None):
     """Plot Text annotations"""

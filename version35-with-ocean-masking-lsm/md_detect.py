@@ -85,10 +85,16 @@ from utils import (
 from speed_analysis import compute_track_speeds
 
 # Year
-MONSOON_YEAR = 2024
+MONSOON_YEAR = 2025
 MONSOON_SEASONS = {
+    2018: ["June-2018", "July-2018", "August-2018", "September-2018"],
+    2019: ["June-2019", "July-2019", "August-2019", "September-2019"],
+    2020: ["June-2020", "July-2020", "August-2020", "September-2020"],
+    2021: ["June-2021", "July-2021", "August-2021", "September-2021"],
+    2022: ["June-2022", "July-2022", "August-2022", "September-2022"],
+    2023: ["June-2023", "July-2023", "August-2023", "September-2023"],
     2024: ["June-2024", "July-2024", "August-2024", "September-2024"],
-    # 2025: ["June-2025", "July-2025", "August-2025", "September-2025"],
+    2025: ["June-2025", "July-2025", "August-2025", "September-2025"],
 }
 MONTH_DIRS = MONSOON_SEASONS.get(MONSOON_YEAR, [])
 output_dir = f"output_{MONSOON_YEAR}"
@@ -1405,53 +1411,6 @@ def process_files(ds):
 
 
 # Plotting
-# def plot_and_export_tracks(track_df, output_dir):
-#     """All-tracks combined map (no CSV export here — master CSV written in __main__)."""
-#     fig  = plt.figure(figsize=(14, 11))
-#     ax: GeoAxes = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
-#     ax.set_extent(FULL_EXTENT, crs=ccrs.PlateCarree())
-#     ax.add_feature(cfeature.LAND,      facecolor="lightgray", edgecolor="black", linewidth=0.5)
-#     ax.add_feature(cfeature.OCEAN,     facecolor="lightblue")
-#     ax.add_feature(cfeature.COASTLINE, linewidth=1.2, zorder=6)
-#     ax.add_feature(cfeature.BORDERS,   linestyle=":", alpha=0.5, zorder=6)
-#     ax.add_feature(cfeature.STATES,    linewidth=0.5, linestyle="--", alpha=0.7)
-#     gl = ax.gridlines(draw_labels=True, linewidth=0.5, color="gray", alpha=0.6, linestyle="--")
-#     gl.top_labels = False; gl.right_labels = False
-#     gl.xformatter = LongitudeFormatter(); gl.yformatter = LatitudeFormatter()
-#
-#     seen_months = set()
-#     for track_id, grp in track_df.groupby("track_id"):
-#         grp   = grp.sort_values("time")
-#         month = grp["month"].iloc[0]
-#         color = month_colors.get(month, "black")
-#         label = f"MD Track ({month})" if month not in seen_months else None
-#         seen_months.add(month)
-#         ax.plot(grp["longitude"], grp["latitude"], "-o",
-#                 color=color, markersize=1.5, linewidth=1.5,
-#                 label=label, transform=ccrs.PlateCarree(), zorder=3,
-#                 solid_capstyle="round")
-#         # Mark landfall
-#         if "is_land" in grp.columns:
-#             trans = np.diff(grp["is_land"].astype(int).values)
-#             lf    = np.where(trans == 1)[0]
-#             if len(lf):
-#                 pt = grp.iloc[lf[0] + 1]
-#                 ax.plot(pt["longitude"], pt["latitude"], "s", color="yellow",
-#                         markersize=5, transform=ccrs.PlateCarree(), zorder=7)
-#         # Track-ID label
-#         ax.text(grp.iloc[-1]["longitude"] + 0.2, grp.iloc[-1]["latitude"] + 0.2,
-#                 f"T{track_id}", fontsize=7, fontweight="bold",
-#                 transform=ccrs.PlateCarree(), color=color, zorder=8)
-#
-#     legend_handles, labels = ax.get_legend_handles_labels()
-#     if legend_handles:
-#         ax.legend(handles=legend_handles, loc="lower left", **legend_style())
-#     ax.set_title(f"Detected MD Tracks  {MONSOON_YEAR}", fontsize=13, fontweight="bold")
-#     plt.tight_layout()
-#     out = os.path.join(output_dir, f"MD_track_{MONSOON_YEAR}.png")
-#     plt.savefig(out, dpi=150, bbox_inches="tight")
-#     plt.close(fig)
-#     std_print("SAVED", "md", "Combined track map", out)
 def plot_and_export_tracks(track_df, output_dir):
     std_print("INFO", "md", "--- MD track plots ---")
     track_data = track_df.sort_values("time")
@@ -1613,6 +1572,7 @@ def plot_and_export_tracks(track_df, output_dir):
     ax.grid(True, linestyle="--", alpha=0.5)
     plt.tight_layout()
 
+    # Save
     md_track_path = os.path.join(output_dir, f"MD_track_{MONSOON_YEAR}.png")
     plt.savefig(md_track_path)
     std_print("SAVED", "md", f"All Tracks for {MONSOON_YEAR} plot", md_track_path)
@@ -1703,7 +1663,7 @@ def plot_track_full_map(track_df_single, track_id, output_dir):
                 point["latitude"] + 0.1,
                 time_label,
                 transform=ccrs.PlateCarree(),
-                fontsize=5,
+                fontsize=7,
                 fontweight="bold",
                 color="black",
                 ha="left",
@@ -1762,7 +1722,7 @@ def plot_track_full_map(track_df_single, track_id, output_dir):
                     lf_lat + 0.2,
                     f"Landfall: {lf_time}",
                     transform=ccrs.PlateCarree(),
-                    fontsize=9,
+                    fontsize=10,
                     fontweight="bold",
                     color="black",
                     ha="left",
@@ -2072,6 +2032,7 @@ if __name__ == "__main__":
     # Only keep columns that actually exist (some may be absent if detection vars differ)
     export_cols = [c for c in export_cols if c in full_track_df.columns]
 
+    # Export
     master_df = full_track_df[export_cols].copy()
     master_df["time"] = pd.to_datetime(master_df["time"]).dt.strftime("%Y-%m-%d %H:%M:%S")
     master_df.to_csv(DETECTION_CSV, index=False)

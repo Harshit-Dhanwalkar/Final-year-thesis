@@ -22,7 +22,7 @@ from utils import (
     legend_style,
 )
 
-# -- Analysis modules -----------------------------------------------------------
+# Analysis modules
 from speed_analysis import (
     compute_track_speeds,
     plot_speed_analysis_kmh,
@@ -76,10 +76,14 @@ from timeseries import (
     tp_swvl1_timeseries,
     extract_heat_flux_timeseries,
     hf_timeseries,
+    recycling_ratio_timeseries,
     extract_theta_e_timeseries,
     theta_e_timeseries,
 )
-from vortex_analysis import run_track_vortex_analysis, global_vortex_analysis
+from vortex_analysis import (
+    run_track_vortex_analysis,
+    global_vortex_analysis
+)
 from statistics_analysis import (
     analyze_asm_fsi_relationship,
     analyze_gam_nonlinearity,
@@ -90,10 +94,16 @@ from statistics_analysis import (
 )
 
 # Configuration
-MONSOON_YEAR = 2024
+MONSOON_YEAR = 2025
 MONSOON_SEASONS = {
-    2024: ["June-20224", "July-2024", "August-2024", "September-2024"],
-    # 2025: ["June-20225", "July-2025", "August-2025", "September-2025"],
+    2018: ["June-2018", "July-2018", "August-2018", "September-2018"],
+    2019: ["June-2019", "July-2019", "August-2019", "September-2019"],
+    2020: ["June-2020", "July-2020", "August-2020", "September-2020"],
+    2021: ["June-2021", "July-2021", "August-2021", "September-2021"],
+    2022: ["June-2022", "July-2022", "August-2022", "September-2022"],
+    2023: ["June-2023", "July-2023", "August-2023", "September-2023"],
+    2024: ["June-2024", "July-2024", "August-2024", "September-2024"],
+    2025: ["June-2025", "July-2025", "August-2025", "September-2025"],
 }
 MONTH_DIRS = MONSOON_SEASONS.get(MONSOON_YEAR, [])
 DATA_DIR = os.path.join("..", "Data", "single-levels", "ncfiles", f"{MONSOON_YEAR}")
@@ -115,6 +125,11 @@ TRACK_LAT_PAD = 5.0  # degrees
 TRACK_LON_PAD = 5.0  # degrees
 TRACK_TIME_PRE_H = 48  # hours before track start
 TRACK_TIME_POST_H = 6  # hours after track end
+
+# Constants
+# LHF to evaporation (mm/h)
+L_v = 2.501e6   # J/kg
+RHO_W = 1000.0  # kg/m³
 
 
 # Load CSV
@@ -146,11 +161,7 @@ def load_csv(path):
     return df
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# Load ERA5 (lazy - only opened once, never fully computed)
-# ══════════════════════════════════════════════════════════════════════════════
-
-
+# Load ERA5
 def load_era5_lazy(month_dirs, data_dir):
     """Open ERA5 as a lazy Dask-backed dataset clipped to monsoon domain."""
     file_list = []
@@ -184,34 +195,23 @@ def load_era5_lazy(month_dirs, data_dir):
         ds = ds.rename({"valid_time": "time"})
     ds, _ = get_time_coord(ds)
     ds = ds.sortby("time")
+    print()
     std_print("INFO", "an", "ERA5 opened (lazy)", f"{len(file_list)} files")
     return ds
 
 
-# ══════════════════════════════════════════════════════════════════════════════
 # Per-track ERA5 window loader
-# ══════════════════════════════════════════════════════════════════════════════
-
-
 def load_track_window(ds, track_df, track_id):
     """
     Load a small eager ERA5 slice around this track.
     All analysis functions receive track_ds - never the full lazy ds.
     """
-    t_start = pd.to_datetime(track_df["time"].min()) - pd.Timedelta(
-        hours=TRACK_TIME_PRE_H
-    )
-    t_end = pd.to_datetime(track_df["time"].max()) + pd.Timedelta(
-        hours=TRACK_TIME_POST_H
-    )
+    t_start = pd.to_datetime(track_df["time"].min()) - pd.Timedelta(hours=TRACK_TIME_PRE_H)
+    t_end = pd.to_datetime(track_df["time"].max()) + pd.Timedelta(hours=TRACK_TIME_POST_H)
     lat_min = max(track_df["latitude"].min() - TRACK_LAT_PAD, float(ds.latitude.min()))
     lat_max = min(track_df["latitude"].max() + TRACK_LAT_PAD, float(ds.latitude.max()))
-    lon_min = max(
-        track_df["longitude"].min() - TRACK_LON_PAD, float(ds.longitude.min())
-    )
-    lon_max = min(
-        track_df["longitude"].max() + TRACK_LON_PAD, float(ds.longitude.max())
-    )
+    lon_min = max(track_df["longitude"].min() - TRACK_LON_PAD, float(ds.longitude.min()))
+    lon_max = min(track_df["longitude"].max() + TRACK_LON_PAD, float(ds.longitude.max()))
 
     t_start = max(t_start, pd.to_datetime(ds.time.values.min()))
     t_end = min(t_end, pd.to_datetime(ds.time.values.max()))
@@ -233,11 +233,7 @@ def load_track_window(ds, track_df, track_id):
     return track_ds
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# Global summary report  (unchanged logic from original md_detection_tracking.py)
-# ══════════════════════════════════════════════════════════════════════════════
-
-
+# Global summary report
 def generate_summary_report(
     all_correlation_results,
     all_flux_results,
@@ -324,12 +320,11 @@ def generate_summary_report(
 
 
 
-
 if __name__ == "__main__":
     t_start_all = time.time()
 
     # 1. Load CSV
-    print("\n-- Loading track CSV --")
+    print("-- Loading track CSV --")
     full_track_df = load_csv(DETECTION_CSV)
     unique_track_ids = sorted(full_track_df["track_id"].unique())
 
@@ -344,7 +339,7 @@ if __name__ == "__main__":
         full_track_df = pd.concat(frames, ignore_index=True)
 
     # 2. Open ERA5 (lazy)
-    print("\n-- Opening ERA5 (lazy) --")
+    print("-- Opening ERA5 (lazy) --")
     result = {"ds": None, "success": False, "error": None}
 
     def _load_era5():
@@ -360,7 +355,9 @@ if __name__ == "__main__":
     spinner = ProgressSpinner(len(MONTH_DIRS) * 31, f"Opening ERA5 {MONSOON_YEAR}")
     step = 0
     while load_thread.is_alive():
-        spinner.update(current=step); time.sleep(0.2); step += 1
+        spinner.update(current=step)
+        time.sleep(0.2)
+        step += 1
     spinner.finish()
 
     if not result["success"]:
@@ -394,15 +391,12 @@ if __name__ == "__main__":
     # 5. Per-track loop
     for track_id in unique_track_ids:
         track_id = int(track_id)
-        track_df = (
-            full_track_df[full_track_df["track_id"] == track_id]
-            .reset_index(drop=True).copy()
-        )
+        track_df = (full_track_df[full_track_df["track_id"] == track_id].reset_index(drop=True).copy())
         track_dict[track_id] = track_df.copy()
         track_dir = os.path.join(output_dir, f"track_{track_id}")
         os.makedirs(track_dir, exist_ok=True)
 
-        print(f"  MD Track {track_id}  |  {len(track_df)} pts  |  "
+        print(f"\n\n  MD Track {track_id}  |  {len(track_df)} pts  |  "
               f"{pd.to_datetime(track_df['time'].min()).strftime('%d/%m/%Y')} – "
               f"{pd.to_datetime(track_df['time'].max()).strftime('%d/%m/%Y')}")
 
@@ -411,7 +405,7 @@ if __name__ == "__main__":
         try:
             track_ds = load_track_window(ds, track_df, track_id)
         except Exception as e:
-            std_print("ERROR", "an", f"Track {track_id}: window load failed, using lazy ds", str(e))
+            std_print("ERROR", "an", "Window load failed, using lazy ds", str(e))
             track_ds = ds
 
         try:
@@ -424,7 +418,7 @@ if __name__ == "__main__":
             print(f"\n-- Speed plots (track {track_id}) --")
             speed_dir = os.path.join(track_dir, "translational-speed")
             os.makedirs(speed_dir, exist_ok=True)
-            # Export augmented CSV (needed by some analysis functions)
+            # Export augmented CSV
             aug_csv = os.path.join(speed_dir, f"track_{track_id}_detections_augmented.csv")
             track_df.to_csv(aug_csv, index=False)
             std_print("EXPORT", "an", "Augmented track CSV", aug_csv)
@@ -436,8 +430,8 @@ if __name__ == "__main__":
                           f"mean {spd.mean():.1f} km/h  |  "
                           f"dur {(track_df['time'].max()-track_df['time'].min()).total_seconds()/3600:.0f} h")
 
-            # 5.3 Correlation (use analyze_single_track - returns tp/swvl1 series)
-            print(f"\n-- Correlation (track {track_id}) --")
+            # 5.3 Correlation
+            print(f"\n-- Correlation analysis (track {track_id}) --")
             correlation_result = None
             try:
                 correlation_dir = os.path.join(track_dir, "correlation_analysis")
@@ -457,7 +451,6 @@ if __name__ == "__main__":
                         "n_samples":     correlation_result.get("n_samples"),
                         "landfall_time": correlation_result.get("landfall_time"),
                         "landfall_index":correlation_result.get("landfall_index"),
-                        # keep series for time series plots
                         "tp_series":     correlation_result.get("tp_series"),
                         "swvl1_series":  correlation_result.get("swvl1_series"),
                         "valid_times":   correlation_result.get("valid_times"),
@@ -468,7 +461,7 @@ if __name__ == "__main__":
                 traceback.print_exc()
 
             # 5.4 Heat flux
-            print(f"\n-- Heat flux (track {track_id}) --")
+            print(f"\n-- Heat flux analysis (track {track_id}) --")
             flux_df = None
             try:
                 classification = classify_md_duration(track_df, short_threshold_hours=96)
@@ -480,9 +473,7 @@ if __name__ == "__main__":
 
                 heatflux_dir = os.path.join(track_dir, "heat_flux_analysis")
                 os.makedirs(heatflux_dir, exist_ok=True)
-                flux_df = extract_heat_flux_timeseries(
-                    track_ds, track_df, track_id, buffer_km=100
-                )
+                flux_df = extract_heat_flux_timeseries(track_ds, track_df, track_id, buffer_km=100)
                 if flux_df is not None:
                     flux_dict[track_id] = flux_df.copy()
                     flux_analysis = analyze_heat_flux_evolution(flux_df, track_id)
@@ -494,20 +485,18 @@ if __name__ == "__main__":
                             "category":       classification["category"],
                             **flux_analysis,
                         })
-                        std_print("INFO", "an", "Mean total HF",
-                                  f"{flux_analysis['mean_total_hf']:.1f} W/m²")
+                        std_print("INFO", "an", "Mean total HF", f"{flux_analysis['mean_total_hf']:.1f} W/m²")
                     # Landfall transition
                     lf_result = analyze_flux_transition(
                         track_ds, track_df, track_id, hours_before=24, hours_after=24
                     )
                     if lf_result:
                         all_landfall_results.append(lf_result)
-                        lf_csv = os.path.join(heatflux_dir,
-                                              f"track_{track_id}_landfall_flux.csv")
+                        lf_csv = os.path.join(heatflux_dir, f"track_{track_id}_landfall_flux.csv")
                         pd.DataFrame([lf_result]).to_csv(lf_csv, index=False)
                         std_print("EXPORT", "an", "Landfall flux CSV", lf_csv)
                 else:
-                    std_print("WARN", "an", "No heat flux data for track", track_id)
+                    std_print("WARN", "an", "No heat flux data")
             except Exception as e:
                 std_print("ERROR", "an", "Heat flux failed", str(e))
                 traceback.print_exc()
@@ -525,26 +514,72 @@ if __name__ == "__main__":
                         track_df, track_id,
                         tp=correlation_result["tp_series"],
                         swvl1=correlation_result["swvl1_series"],
-                        valid_times=correlation_result["valid_times"],
                         landfall_index=correlation_result.get("landfall_index", -1),
                         output_dir=ts_dir,
                         originates_over_land=correlation_result.get("originates_over_land", True),
                     )
                 else:
-                    std_print("WARN", "an", "TP/SWVL1 time series skipped",
-                              "no correlation result with series data")
+                    std_print("WARN", "an", "TP/SWVL1 time series skipped", "no correlation result with series data")
                 if flux_df is not None:
                     hf_timeseries(flux_df, track_id, output_dir=ts_dir)
                 theta_df = extract_theta_e_timeseries(
                     track_ds, track_df, track_id, buffer_km=100
                 )
                 theta_e_timeseries(theta_df, track_id, output_dir=ts_dir)
+
+                rr_df = None
+                if flux_df is not None and correlation_result is not None:
+                    try:
+                        # TP series is in mm/hr
+                        tp_mmhr = np.array(correlation_result["tp_series"])
+                        # LHF series in W/m² from flux_df 
+                        lhf_w = flux_df["latent_heat_flux"].values
+
+                        times_flux = pd.to_datetime(flux_df["time"])
+                        times_tp = pd.to_datetime(correlation_result["valid_times"])
+                        common_times = np.intersect1d(times_flux, times_tp)
+                        if len(common_times) >= 5:
+                            idx_flux = pd.Index(times_flux).get_indexer(common_times)
+                            idx_tp = pd.Index(times_tp).get_indexer(common_times)
+                            valid = (idx_flux != -1) & (idx_tp != -1)
+                            idx_flux = idx_flux[valid]
+                            idx_tp = idx_tp[valid]
+                            if len(idx_flux) >= 5:
+                                lhf_aligned = lhf_w[idx_flux]
+                                tp_aligned = tp_mmhr[idx_tp]
+
+                                E_mmh = np.abs(lhf_aligned) / (L_v * RHO_W) * 3600.0 * 1000.0
+                                # Recycling ratio ρ = E / P
+                                with np.errstate(divide='ignore', invalid='ignore'):
+                                    rho = np.where(tp_aligned >= 0.01, np.clip(E_mmh / tp_aligned, 0, 1), np.nan)
+
+                                is_land_vals = []
+                                for t in common_times[valid]:
+                                    mask = pd.to_datetime(track_df["time"]) == t
+                                    if mask.any():
+                                        is_land_vals.append(bool(track_df.loc[mask, "is_land"].iloc[0]))
+                                    else:
+                                        is_land_vals.append(False)
+
+                                rr_df = {
+                                    "track_id": track_id,
+                                    "time": common_times[valid],
+                                    "rho": rho,
+                                    "E_mm_h": E_mmh,
+                                    "P_mm_h": tp_aligned,
+                                    "is_land": is_land_vals,
+                                }
+                                recycling_ratio_timeseries(rr_df, track_id, output_dir=ts_dir)
+                            else:
+                                std_print("WARN", "an", "Insufficient aligned data for recycling ratio")
+                    except Exception as e:
+                        std_print("ERROR", "an", "Recycling ratio failed", str(e))
             except Exception as e:
                 std_print("ERROR", "an", "Time series failed", str(e))
                 traceback.print_exc()
 
             # 5.6 Soil moisture
-            print(f"\n-- Soil moisture (track {track_id}) --")
+            print(f"\n-- Soil moisture analysis (track {track_id}) --")
             try:
                 sm_result = compute_single_track_correlation(
                     track_ds, track_df, track_id, buffer_km=100
@@ -590,14 +625,12 @@ if __name__ == "__main__":
                 traceback.print_exc()
 
             # 5.7 Elevation 
-            print(f"\n-- Elevation (track {track_id}) --")
+            print(f"\n-- Elevation analysis (track {track_id}) --")
             elev_dir = os.path.join(track_dir, "elevation_analysis")
             os.makedirs(elev_dir, exist_ok=True)
             try:
                 if vrt_path and os.path.exists(vrt_path):
-                    elev_plot_path = plot_tracks_elevation(
-                        track_df, track_id, vrt_path, output_dir
-                    )
+                    elev_plot_path = plot_tracks_elevation(track_df, track_id, vrt_path, output_dir)
                     if elev_plot_path:
                         std_print("SAVED", "an", "Elevation track plot", elev_plot_path)
                 track_df = run_track_elevation_analysis(track_df, track_id, elev_dir)
@@ -608,7 +641,7 @@ if __name__ == "__main__":
                 traceback.print_exc()
 
             # 5.8 Vortex
-            print(f"\n-- Vortex (track {track_id}) --")
+            print(f"\n-- Vortex analysis (track {track_id}) --")
             vortex_dir = os.path.join(track_dir, "vortex_analysis")
             os.makedirs(vortex_dir, exist_ok=True)
             try:
@@ -623,9 +656,8 @@ if __name__ == "__main__":
             except Exception as e:
                 std_print("ERROR", "an", "Vortex failed", str(e))
                 traceback.print_exc()
-
         finally:
-            # Always release per-track window
+            # Release per-track window
             if track_ds is not ds:
                 del track_ds
             gc.collect()
@@ -635,13 +667,13 @@ if __name__ == "__main__":
     # 6.1 All-tracks correlation
     std_print("INFO", "an", "--- Global Coupling Metrics ---")
     correlation_df = pd.DataFrame(all_correlation_results) if all_correlation_results else pd.DataFrame()
-    duration_df    = pd.DataFrame(all_classifications)      if all_classifications      else pd.DataFrame()
+    duration_df    = pd.DataFrame(all_classifications)     if all_classifications     else pd.DataFrame()
     coupling_metrics_dir = os.path.join(output_dir, "Global_coupling_metrics")
     os.makedirs(coupling_metrics_dir, exist_ok=True)
     flux_results_df = pd.DataFrame(all_flux_results) if all_flux_results else pd.DataFrame()
 
     try:
-        # FSI - signature: compute_fsi_all_tracks(ds, correlation_df, track_dict)
+        # FSI
         if not correlation_df.empty and track_dict:
             std_print("INFO", "an", "Computing FSI")
             fsi_df = compute_fsi_all_tracks(ds, correlation_df, track_dict)
@@ -659,7 +691,7 @@ if __name__ == "__main__":
             std_print("WARN", "an", "Insufficient data for FSI")
             fsi_df = pd.DataFrame()
 
-        # Diurnal amplitude - signature: compute_diurnal_amplitude_all_tracks(flux_dict, track_dict)
+        # Diurnal amplitude
         if flux_dict:
             std_print("INFO", "an", "Computing diurnal SHF amplitude")
             amplitude_df = compute_diurnal_amplitude_all_tracks(flux_dict, track_dict)
@@ -667,7 +699,7 @@ if __name__ == "__main__":
             std_print("WARN", "an", "No flux data for diurnal amplitude")
             amplitude_df = pd.DataFrame()
 
-        # Coupling efficiency - signature: compute_coupling_efficiency(fsi_df, correlation_df, amplitude_df, duration_df)
+        # Coupling efficiency
         if not fsi_df.empty and not amplitude_df.empty and not duration_df.empty:
             std_print("INFO", "an", "Computing coupling efficiency")
             coupling_efficiency_df = compute_coupling_efficiency(
@@ -719,7 +751,6 @@ if __name__ == "__main__":
     elevation_dir = os.path.join(output_dir, "Global_elevation_analysis")
     os.makedirs(elevation_dir, exist_ok=True)
     try:
-        # run_elevation_analysis signature: (tracks_df, coupling_df, hgt_dir, output_dir)
         elevation_metrics = run_elevation_analysis(
             tracks_df=full_track_df,
             coupling_df=fsi_df,
@@ -727,16 +758,12 @@ if __name__ == "__main__":
             output_dir=elevation_dir,
         )
         if elevation_metrics is not None and not elevation_metrics.empty:
-            std_print("INFO", "an", "Elevation analysis done",
-                      f"{len(elevation_metrics)} tracks")
-            # These take track_dict, not full_track_df+vrt_path
+            std_print("INFO", "an", "Elevation analysis done", f"{len(elevation_metrics)} tracks")
+            # Takes track_dict, not full_track_df+vrt_path
             plot_global_elevation_comparison(track_dict, output_dir=elevation_dir)
             plot_global_elevation_speed_map( track_dict, output_dir=elevation_dir)
         if vrt_path and os.path.exists(vrt_path):
-            plot_global_elevation(
-                full_track_df, vrt_path,
-                output_dir=elevation_dir, year=MONSOON_YEAR
-            )
+            plot_global_elevation(full_track_df, vrt_path, output_dir=elevation_dir, year=MONSOON_YEAR)
     except Exception as e:
         std_print("ERROR", "an", "Global elevation failed", str(e))
         traceback.print_exc()
@@ -765,17 +792,25 @@ if __name__ == "__main__":
         if not asm_df.empty and os.path.exists(fsi_csv_path):
             fsi_df_stats = pd.read_csv(fsi_csv_path)
             stats = {}
-            try:    stats["asm_fsi"] = analyze_asm_fsi_relationship(fsi_df_stats, asm_df, output_dir)
-            except Exception as e: std_print("ERROR", "an", "ASM-FSI failed", str(e))
+            try:
+                stats["asm_fsi"] = analyze_asm_fsi_relationship(fsi_df_stats, asm_df, output_dir)
+            except Exception as e:
+                std_print("ERROR", "an", "ASM-FSI failed", str(e))
             if len(fsi_df_stats) >= 10:
-                try:    stats["gam"] = analyze_gam_nonlinearity(fsi_df_stats, output_dir)
-                except Exception as e: std_print("ERROR", "an", "GAM failed", str(e))
-            try:    stats["granger"] = test_granger_causality(fsi_df_stats, output_dir)
-            except Exception as e: std_print("ERROR", "an", "Granger failed", str(e))
+                try:
+                    stats["gam"] = analyze_gam_nonlinearity(fsi_df_stats, output_dir)
+                except Exception as e:
+                    std_print("ERROR", "an", "GAM failed", str(e))
+            try:
+                stats["granger"] = test_granger_causality(fsi_df_stats, output_dir)
+            except Exception as e:
+                std_print("ERROR", "an", "Granger failed", str(e))
             elev_metrics = load_elevation_metrics(output_dir)
             if elev_metrics is not None and not elev_metrics.empty:
-                try:    stats["tsi"] = analyze_tsi(elev_metrics, fsi_df_stats, output_dir)
-                except Exception as e: std_print("ERROR", "an", "TSI failed", str(e))
+                try:
+                    stats["tsi"] = analyze_tsi(elev_metrics, fsi_df_stats, output_dir)
+                except Exception as e:
+                    std_print("ERROR", "an", "TSI failed", str(e))
             write_statistical_summary(stats, fsi_df_stats, output_dir)
         else:
             std_print("WARN", "an", "Skipping stats", "insufficient coupling or ASM data")
@@ -791,8 +826,7 @@ if __name__ == "__main__":
     generate_summary_report(
         all_correlation_results, all_flux_results, all_landfall_results,
         all_classifications, all_sm_results,
-        all_asm_results if not isinstance(all_asm_results, pd.DataFrame)
-        else all_asm_results.to_dict("records"),
+        all_asm_results if not isinstance(all_asm_results, pd.DataFrame) else all_asm_results.to_dict("records"),
         all_memory_results, output_dir,
     )
 

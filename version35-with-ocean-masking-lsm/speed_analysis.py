@@ -154,7 +154,7 @@ def plot_speed_analysis_ms(track_df, track_id, output_dir):
             std_print(
                 "WARN",
                 "sp",
-                f"Track {track_id} Insufficient data",
+                "Insufficient data (< 2)",
                 f"{len(track_df) if track_df is not None else 0} points",
             )
             return False
@@ -172,6 +172,7 @@ def plot_speed_analysis_ms(track_df, track_id, output_dir):
                 "computing speeds mannually",
             )
             track_df = compute_track_speeds(track_df)
+
         # Ensure is_land column exists
         if "is_land" not in track_df.columns:
             std_print("DEBUG", "sp", f"Track {track_id}: Creating is_land column")

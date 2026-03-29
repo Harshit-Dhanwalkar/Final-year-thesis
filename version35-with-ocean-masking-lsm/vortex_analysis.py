@@ -46,23 +46,16 @@
 #     700 hPa vertical velocity ω (Pa/s) along ±150 km perpendicular transect to track.
 #     Land phase only. Negative ω = ascent.
 #     Asymmetric ascent on upslope side = orographic forced lifting.
-# 10. Precipitation Recycling Ratio  [compute_recycling_ratio]
-#     ρ = E / P  where E = LHF/(Lv x ρ_w)  [mm hr⁻¹] and P = TP  [mm hr⁻¹]
-#     ρ -> 1 = rainfall mostly from local evaporation (BOE signature).
-#     ρ -> 0 = rainfall from advected oceanic moisture.
-#     Simplified Budyko single-column formulation (not full 2-D recycling ratio).
 # Global comparison  [global_vortex_analysis]:
 #     All-tracks vortex tilt evolution aligned to landfall (t=0).
 # Time–height section rendering notes:
 #     LEVELS = [850, 700, 600, 500, 400, 300, 200] (descending).
 #     Sorted ascending [200..850] before pcolormesh so pcolormesh places 200 at top.
+#
 # References:
 #  - Hunt & Turner (2016) MWR - MD 3D composite, 850 hPa vorticity centre definition
 #  - Rashid & Srinivasan (2005) MAP - vorticity budget, cold/warm-core characterisation
 #  - Mishra (2021) MWR - MD development and large-scale interaction
-#  - Eltahir & Bras (1996) - precipitation recycling ratio definition
-
-# FIX: no recycling_ratio plot output
 
 import os
 import warnings
@@ -73,7 +66,8 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib.collections import LineCollection
 from matplotlib.lines import Line2D
-from matplotlib.colors import PowerNorm
+from matplotlib.colors import PowerNorm, Normalize
+from matplotlib import colormaps as cm
 from scipy.ndimage import gaussian_filter
 import traceback
 
@@ -93,6 +87,11 @@ warnings.filterwarnings(
     module="cartopy",
 )
 
+LEVELS = [850, 700, 600, 500, 400, 300, 200]  # hPa
+SEARCH_RADIUS_DEG = 3.0  # degrees, vortex centre search radius around single-level track
+AMBIENT_RING_KM = 300.0  # km, radius for temperature anomaly background ring
+OMEGA_TRANSECT_KM = 150.0  # km, perpendicular transect half-width for omega cross-section
+
 # Constants
 G = 9.80665  # m s⁻²
 L_v = 2.501e6  # J kg⁻¹, latent heat of vaporisation
@@ -100,11 +99,6 @@ RHO_W = 1000.0  # kg m⁻³, water density
 Rd = 287.05
 cp = 1005.7
 P0 = 100000.0
-
-LEVELS = [850, 700, 600, 500, 400, 300, 200]  # hPa
-SEARCH_RADIUS_DEG = 3.0  # degrees, vortex centre search radius around single-level track
-AMBIENT_RING_KM = 300.0  # km, radius for temperature anomaly background ring
-OMEGA_TRANSECT_KM = 150.0  # km, perpendicular transect half-width for omega cross-section
 
 # Dataset cache
 DS_CACHE = {}
@@ -159,11 +153,30 @@ def plot_all_tracks_tilt_comparison(tilt_results, track_dict, output_dir):
                 break
 
         if landfall_idx is not None and landfall_idx < len(times):
-            hours = [(t - landfall_time).total_seconds() / 3600 for t in times]
+            hours = np.array([(t - landfall_time).total_seconds() / 3600 for t in times])
         else:
-            hours = [(t - times.iloc[0]).total_seconds() / 3600 for t in times]
+            hours = np.array([(t - times.iloc[0]).total_seconds() / 3600 for t in times])
 
-        add_land_ocean_shading(ax, track_df['time'], track_df['is_land'])
+        track_times_arr = pd.to_datetime(track_df.sort_values("time")["time"]).values
+        tilt_times_arr  = times.values
+        is_land_arr = np.zeros(len(tilt_times_arr), dtype=bool)
+        for k, tt in enumerate(tilt_times_arr):
+            nearest_idx = np.argmin(np.abs(track_times_arr - tt))
+            is_land_arr[k] = is_land[nearest_idx] if nearest_idx < len(is_land) else False
+
+        # Land / ocean background shading
+        add_land_ocean_shading(ax, times, is_land_arr, land_color="wheat", ocean_color="lightblue")
+        # Landfall line
+        if landfall_time is not None:
+            ax.axvline(
+                landfall_time,
+                color="red",
+                linestyle="--",
+                linewidth=1.8,
+                label="Landfall",
+                zorder=5,
+            )
+
         ax.plot(
             hours,
             tilt_km,
@@ -174,9 +187,9 @@ def plot_all_tracks_tilt_comparison(tilt_results, track_dict, output_dir):
             alpha=0.8,
             label=f"Track {track_id}",
         )
-        # Land phase
-        land_hours = np.array(hours)[is_land[: len(hours)]]
-        land_tilt = tilt_km[is_land[: len(tilt_km)]]
+        # Land-phase markers (diamonds)
+        land_hours = hours[is_land_arr[: len(hours)]]
+        land_tilt  = tilt_km[is_land_arr[: len(tilt_km)]]
         ax.scatter(
             land_hours,
             land_tilt,
@@ -184,7 +197,7 @@ def plot_all_tracks_tilt_comparison(tilt_results, track_dict, output_dir):
             s=60,
             marker="D",
             zorder=3,
-            alpha=0.6
+            alpha=0.6,
         )
     ax.axvline(0, color="black", linestyle="--", linewidth=1.5, label="Landfall (t = 0)")
     ax.axhline(0, color="black", linewidth=0.8)
@@ -204,7 +217,6 @@ def plot_all_tracks_tilt_comparison(tilt_results, track_dict, output_dir):
     std_print("SAVED", "va", "All-tracks tilt comparison", vortex_tilt_path)
 
 
-# Main
 # Run vortex analyese per track id
 def run_track_vortex_analysis(track_df, track_id, pl_dir, year, output_dir):
     """Run all vortex analyses for MD track
@@ -214,7 +226,6 @@ def run_track_vortex_analysis(track_df, track_id, pl_dir, year, output_dir):
       - Thermal structure    (cold-core 850 hPa + warm-core 400/200 hPa anomalies)
       - Vorticity column     (vo profile 850->200 hPa + Δvo coherence metric)
       - IVT                  (Integrated Vapour Transport 850->200 hPa)
-      - Recycling ratio      (ρ = E/P, BOE signature)
       - Omega cross-section  (Vertical velocity perpendicular to track, land phase)
     """
     os.makedirs(output_dir, exist_ok=True)
@@ -222,7 +233,6 @@ def run_track_vortex_analysis(track_df, track_id, pl_dir, year, output_dir):
     therm_df = None
     col_df = None
     ivt_df = None
-    recycling_df = None
     cmt_df = None
     mfc_df = None
     theta_e_df = None
@@ -256,20 +266,6 @@ def run_track_vortex_analysis(track_df, track_id, pl_dir, year, output_dir):
         std_print("ERROR", "va", "IVT failed", str(e))
         traceback.print_exc()
 
-    std_print("INFO", "va", "--- Recycling ratio ---")
-    try:
-        recycling_df = compute_recycling_ratio(track_df, track_id, output_dir)
-    except Exception as e:
-        std_print("ERROR", "va", "Recycling ratio failed", str(e))
-        traceback.print_exc()
-
-    std_print("INFO", "va", "--- Mixing ratio vertical profile ---")
-    try:
-        mixing_ratio_df = compute_vertical_mixing_ratio(track_df, pl_dir, year, output_dir)
-    except Exception as e:
-        std_print("ERROR", "va", "Mixing ratio profile failed", str(e))
-        traceback.print_exc()
-
     std_print("INFO", "va", "--- Moisture Flux Convergence at 850 hPa ---")
     try:
         mfc_df = compute_moisture_flux_convergence(track_df, pl_dir, year, output_dir)
@@ -282,6 +278,13 @@ def run_track_vortex_analysis(track_df, track_id, pl_dir, year, output_dir):
         cmt_df = compute_column_moisture_tendency(track_df, pl_dir, year, output_dir)
     except Exception as e:
         std_print("ERROR", "va", "Column moisture tendency failed", str(e))
+        traceback.print_exc()
+
+    std_print("INFO", "va", "--- Mixing ratio vertical profile ---")
+    try:
+        mixing_ratio_df = compute_vertical_mixing_ratio(track_df, pl_dir, year, output_dir)
+    except Exception as e:
+        std_print("ERROR", "va", "Mixing ratio profile failed", str(e))
         traceback.print_exc()
 
     std_print("INFO", "va", "--- θ_e vertical profile ---")
@@ -304,7 +307,6 @@ def run_track_vortex_analysis(track_df, track_id, pl_dir, year, output_dir):
         "thermal": therm_df,
         "vorticity_col": col_df,
         "ivt": ivt_df,
-        "recycling": recycling_df,
         "cmt": cmt_df,
         "mfc": mfc_df,
         "theta_e_profile": theta_e_df,
@@ -491,6 +493,10 @@ def compute_thermal_structure(track_df, pl_dir, year, output_dir):
         theraml_sturcture_records.append(rec)
     therm_df = pd.DataFrame(theraml_sturcture_records)
 
+    if therm_df["T850_anom"].isnull().all() and therm_df["T200_anom"].isnull().all():
+        std_print("WARN", "va", f"Track {track_id}: All thermal structure data are NaN - skipping plot")
+        return therm_df
+
     # Export
     os.makedirs(output_dir, exist_ok=True)
     thermal_structure_CSV = os.path.join(output_dir, f"Track_{track_id}_thermal_structure.csv")
@@ -623,90 +629,6 @@ def compute_ivt(track_df, pl_dir, year, output_dir):
 
     plot_ivt(ivt_df, track_df, track_id, output_dir)
     return ivt_df
-
-
-#  Precipitation Recycling Ratio
-# TODO: This is the simplified single-column Budyko formulation, not the full two-dimensional
-# recycling ratio which requires wind field integration across the domain.
-def compute_recycling_ratio(track_df, track_id, output_dir, buffer_km=100.0):
-    """
-    Precipitation recycling ratio along the MD track.
-
-    recycling_ratio (ρ) = local_evaporation / total_precipitation
-
-    Uses ERA5 single-level fields already loaded in track_df:
-      - LHF (avg_slhtf, W m⁻²) -> E (mm h⁻¹) via latent heat of vaporisation
-      - TP (tp, m h⁻¹)
-
-    ρ ≈ 0  => rainfall is almost entirely advected moisture (oceanic source)
-    ρ -> 1 => rainfall is mostly recycled from local land evaporation -> Brown Ocean Effect signature
-
-    Reference: Eltahir & Bras (1996) define ρ as the fraction of precipitation that originates
-    from within the region of interest.
-    For tropical land systems, ρ > 0.25 is considered significant local moisture recycling.
-    """
-    track_id = int(track_id)
-    df = track_df.sort_values("time").reset_index(drop=True)
-
-    # Require both LHF and TP columns
-    lhf_col = None
-    for candidate in ["avg_slhtf", "slhf", "lhf"]:
-        if candidate in df.columns:
-            lhf_col = candidate
-            break
-    tp_col = None
-    for candidate in ["tp", "total_precipitation"]:
-        if candidate in df.columns:
-            tp_col = candidate
-            break
-
-    if lhf_col is None or tp_col is None:
-        # std_print("WARN", "va","Recycling ratio requires LHF and TP columns", f"available: {list(df.columns)}")
-        return pd.DataFrame()
-
-    times = pd.to_datetime(df["time"])
-    is_land_arr = (
-        df["is_land"].values.astype(bool)
-        if "is_land" in df.columns
-        else np.ones(len(df), bool)
-    )
-
-    # ERA5 LHF is negative downward (convention: positive = upward = evaporation)
-    lhf_vals = df[lhf_col].values.astype(float)  # W m⁻²
-    tp_vals = df[tp_col].values.astype(float)  # m (accumulated per step)
-
-    # Convert LHF (W m⁻²) -> evaporation rate (mm h⁻¹)
-    # E = LHF / (L_v * rho_w) in m s⁻¹,
-    E_m_s = np.abs(lhf_vals) / (L_v * RHO_W)
-    E_mm_h = E_m_s * 3600.0 * 1000.0
-
-    # TP is hourly accumulated (m) -> mm h⁻¹
-    P_mm_h = tp_vals * 1000.0
-    P_mm_h = np.clip(P_mm_h, 0, None)  # negative TP is deaccumulation artefact
-
-    # Recycling ratio: ρ = E / P, clipped [0, 1]
-    with np.errstate(divide="ignore", invalid="ignore"):
-        rho = np.where(P_mm_h >= 0.01, np.clip(E_mm_h / P_mm_h, 0, 1), np.nan)
-
-    rr_records = pd.DataFrame(
-        {
-            "time": times,
-            "is_land": is_land_arr,
-            "LHF_Wm2": lhf_vals,
-            "E_mm_h": E_mm_h,
-            "P_mm_h": P_mm_h,
-            "rr": rho,
-        }
-    )
-
-    # Export
-    os.makedirs(output_dir, exist_ok=True)
-    rr_CSV = os.path.join(output_dir, f"track_{track_id}_recycling_ratio.csv")
-    rr_records.to_csv(rr_CSV, index=False)
-    std_print("EXPORT", "va", "Recycling ratio CSV", rr_CSV)
-
-    plot_recycling_ratio(rr_df=rr_records, track_id=track_id, output_dir=output_dir)
-    return rr_records
 
 
 def compute_vertical_mixing_ratio(track_df, pl_dir, year, output_dir):
@@ -914,7 +836,6 @@ def compute_column_moisture_tendency(track_df, pl_dir, year, output_dir):
     return cmt_df
 
 
-# FIX: the plot is not smooth, why?
 def compute_theta_e_profile(track_df, pl_dir, year, output_dir):
     """
     Equivalent Potential Temperature θ_e at each pressure level (850->200 hPa).
@@ -1070,7 +991,11 @@ def compute_omega_cross_section(track_df, pl_dir, year, output_dir):
 def plot_ivt(ivt_df, track_df, track_id, output_dir):
     """IVT time series with land shading and convection threshold line"""
     times = pd.to_datetime(ivt_df["time"])
-    is_land = (
+    ivt = ivt_df["IVT"].values
+    if np.isnan(ivt).all():
+        std_print("WARN", "va", f"Track {track_id}: No valid IVT data - skipping plot")
+        return
+    is_land_data = (
         track_df.sort_values("time")["is_land"].values.astype(bool)
         if "is_land" in track_df.columns
         else np.ones(len(ivt_df), bool)
@@ -1079,7 +1004,6 @@ def plot_ivt(ivt_df, track_df, track_id, output_dir):
     # Figure
     fig, ax = plt.subplots(figsize=(16, 7))
 
-    ivt = ivt_df["IVT"].values
     add_land_ocean_shading(ax, track_df['time'], track_df['is_land'])
     ax.plot(
         times,
@@ -1099,30 +1023,9 @@ def plot_ivt(ivt_df, track_df, track_id, output_dir):
     #     linewidth=1.5,
     #     label="Min. convection threshold",
     # )
-    ax.fill_between(
-        times,
-        0,
-        1,
-        where=is_land,
-        transform=ax.get_xaxis_transform(),
-        color="wheat",
-        alpha=0.3,
-        label="Land phase",
-        zorder=0,
-    )
-    ax.fill_between(
-        times,
-        0,
-        1,
-        where=~is_land,
-        transform=ax.get_xaxis_transform(),
-        color="lightblue",
-        alpha=0.3,
-        label="Ocean phase",
-        zorder=0,
-    )
-    for i in range(1, len(is_land)):
-        if not is_land[i - 1] and is_land[i]:
+    # Landfall line
+    for i in range(1, len(is_land_data)):
+        if not is_land_data[i - 1] and is_land_data[i]:
             ax.axvline(
                 times.iloc[i],
                 color="black",
@@ -1192,7 +1095,7 @@ def plot_vortex_tilt(tilt_df, track_df, track_id, output_dir):
     # Top: Tilt magnitude
     ax = axes[0]
     tilt_km = tilt_df["tilt_magnitude_km"].values
-    add_land_ocean_shading(ax, track_df['time'], track_df['is_land'])
+    # add_land_ocean_shading(ax, track_df['time'], track_df['is_land'])
     ax.plot(
         times,
         tilt_km,
@@ -1405,7 +1308,7 @@ def plot_thermal_structure(therm_df, track_df, track_id, output_dir):
         ),
     ]:
         vals = therm_df[col].values
-        add_land_ocean_shading(ax, track_df['time'], track_df['is_land'])
+        # add_land_ocean_shading(ax, track_df['time'], track_df['is_land'])
         ax.plot(
           times,
           vals,
@@ -1415,7 +1318,14 @@ def plot_thermal_structure(therm_df, track_df, track_id, output_dir):
           markersize=4,
           alpha=0.8
         )
-        ax.fill_between(times, vals, 0, where=~np.isnan(vals), color=color, alpha=0.15)
+        ax.fill_between(
+          times,
+          vals,
+          0,
+          where=~np.isnan(vals),
+          color=color,
+          alpha=0.15
+        )
         ax.axhline(
           ref_line,
           color="black",
@@ -1522,7 +1432,6 @@ def plot_vorticity_column(col_df, track_df, track_id, output_dir):
                 label=f"vo {labels[col]}",
             )
     ax1.axhline(0, color="black", linewidth=0.8)
-    add_land_ocean_shading(ax1, track_df['time'], track_df['is_land'])
     ax1.fill_between(
         times,
         0,
@@ -1534,6 +1443,18 @@ def plot_vorticity_column(col_df, track_df, track_id, output_dir):
         label="Land phase",
         zorder=0,
     )
+    ax1.fill_between(
+        times,
+        0,
+        1,
+        where=~is_land,
+        transform=ax1.get_xaxis_transform(),
+        color="lightblue",
+        alpha=0.3,
+        label="Ocean phase",
+        zorder=0,
+    )
+    # Landfall line
     for i in range(1, len(is_land)):
         if not is_land[i - 1] and is_land[i]:
             ax1.axvline(
@@ -1542,6 +1463,7 @@ def plot_vorticity_column(col_df, track_df, track_id, output_dir):
                 linestyle="--",
                 linewidth=1.5,
                 label="Landfall",
+                zorder=5,
             )
             break
     ax1.set_ylabel("Relative vorticity (x10⁻⁴ s⁻¹)", fontsize=12, fontweight="bold")
@@ -1555,7 +1477,6 @@ def plot_vorticity_column(col_df, track_df, track_id, output_dir):
 
     # Δvo(850-200)
     delta = col_df["delta_vo_850_200"].values * 1e4
-    add_land_ocean_shading(ax2, track_df['time'], track_df['is_land'])
     ax2.plot(
         times,
         delta,
@@ -1566,18 +1487,49 @@ def plot_vorticity_column(col_df, track_df, track_id, output_dir):
         alpha=0.8,
         label="Δvo = vo(850) − vo(200)",
     )
-    ax2.fill_between(times, delta, 0, where=~np.isnan(delta), color="purple", alpha=0.15)
+    ax2.fill_between(
+      times,
+      delta,
+      0,
+      where=~np.isnan(delta),
+      color="purple",
+      alpha=0.15
+    )
     ax2.axhline(0, color="black", linewidth=0.8)
     ax2.fill_between(
         times,
         0,
         1,
         where=is_land,
-        transform=ax2.get_xaxis_transform(),
+        transform=ax1.get_xaxis_transform(),
         color="wheat",
         alpha=0.3,
+        label="Land phase",
         zorder=0,
     )
+    ax2.fill_between(
+        times,
+        0,
+        1,
+        where=~is_land,
+        transform=ax1.get_xaxis_transform(),
+        color="lightblue",
+        alpha=0.3,
+        label="Ocean phase",
+        zorder=0,
+    )
+    # Landfall line
+    for i in range(1, len(is_land)):
+        if not is_land[i - 1] and is_land[i]:
+            ax2.axvline(
+                times.iloc[i],
+                color="black",
+                linestyle="--",
+                linewidth=1.5,
+                label="Landfall",
+                zorder=5,
+            )
+            break
     ax2.set_ylabel("Δvo (x10⁻⁴ s⁻¹)", fontsize=12, fontweight="bold")
     ax2.set_xlabel("Time", fontsize=12, fontweight="bold")
     ax2.set_title(
@@ -1596,118 +1548,6 @@ def plot_vorticity_column(col_df, track_df, track_id, output_dir):
     plt.savefig(vorticity_column_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
     std_print("SAVED", "va", "Vorticity column plot", vorticity_column_path)
-
-
-def plot_recycling_ratio(rr_df, track_id, output_dir):
-    """Plot recycling ratio and component fluxes alongside land/ocean phase"""
-    times = pd.to_datetime(rr_df["time"])
-    is_land = rr_df["is_land"].values.astype(bool)
-    rho = rr_df["recycling_ratio"].values
-    E = rr_df["E_mm_h"].values
-    P = rr_df["P_mm_h"].values
-
-    # Figure
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 10), sharex=True)
-
-    shade_kw = dict(transform=ax1.get_xaxis_transform(), zorder=0, alpha=0.3)
-    for ax in (ax1, ax2):
-        ax.fill_between(
-          times,
-          0,
-          1,
-          where=is_land,
-          color="wheat",
-          **shade_kw,
-          label="Land phase"
-        )
-        ax.fill_between(
-            times,
-            0,
-            1,
-            where=~is_land,
-            color="lightblue",
-            **shade_kw,
-            label="Ocean phase",
-        )
-        # Landfall line
-        for i in range(1, len(is_land)):
-            if not is_land[i - 1] and is_land[i]:
-                ax.axvline(
-                    times.iloc[i],
-                    color="black",
-                    linestyle="--",
-                    linewidth=1.5,
-                    label="Landfall",
-                    zorder=5,
-                )
-                break
-
-    # Panel 1: ρ (recycling ratio)
-    ax1.plot(
-        times,
-        rho,
-        "-o",
-        color="teal",
-        linewidth=2,
-        markersize=4,
-        alpha=0.8,
-        label="Recycling ratio ρ = E / P",
-    )
-    add_land_ocean_shading(ax1, rr_df['time'], rr_df['is_land'])
-    ax1.axhline(
-        0.25,
-        color="darkorange",
-        linestyle="--",
-        linewidth=1.5,
-        label="ρ = 0.25  (significant local recycling)",
-    )
-    ax1.axhline(0, color="black", linewidth=0.8)
-    ax1.set_ylim(-0.05, 1.05)
-    ax1.set_ylabel("Recycling ratio ρ", fontsize=12, fontweight="bold")
-    ax1.set_title(
-        f"Track {track_id}: Precipitation Recycling Ratio  ρ = E / P\n"
-        "ρ -> 1: rainfall is locally recycled (BOE signature)  |  "
-        "ρ -> 0: rainfall from advected oceanic moisture",
-        fontsize=12,
-        fontweight="bold",
-    )
-    ax1.grid(True, alpha=0.3, linestyle="--")
-    ax1.legend(loc="upper right", **legend_style({"fontsize": 10}))
-
-    # Panel 2: E and P fluxes
-    ax2.plot(
-        times,
-        P,
-        "-o",
-        color="royalblue",
-        linewidth=2,
-        markersize=4,
-        alpha=0.8,
-        label="Precipitation P (mm h⁻¹)",
-    )
-    ax2.plot(
-        times,
-        E,
-        "-o",
-        color="tomato",
-        linewidth=2,
-        markersize=4,
-        alpha=0.8,
-        label="Evaporation E from LHF (mm h⁻¹)",
-    )
-    add_land_ocean_shading(ax2, rr_df['time'], rr_df['is_land'])
-    ax2.set_ylabel("Flux (mm h⁻¹)", fontsize=12, fontweight="bold")
-    ax2.set_xlabel("Time", fontsize=12, fontweight="bold")
-    ax2.grid(True, alpha=0.3, linestyle="--")
-    ax2.legend(loc="upper right", **legend_style({"fontsize": 10}))
-    plt.setp(ax2.xaxis.get_majorticklabels(), rotation=45, ha="right")
-    plt.tight_layout()
-
-    # Save
-    rr_path = os.path.join(output_dir, f"track_{track_id}_recycling_ratio.png")
-    plt.savefig(rr_path, dpi=300, bbox_inches="tight")
-    plt.close(fig)
-    std_print("SAVED", "va", "Recycling ratio plot", rr_path)
 
 
 def plot_moisture_flux_convergence(mfc_df, track_id, output_dir):
@@ -1735,7 +1575,7 @@ def plot_moisture_flux_convergence(mfc_df, track_id, output_dir):
         alpha=0.85,
         label="MFC (mm hr⁻¹)",
     )
-    add_land_ocean_shading(ax, mfc_df['time'], mfc_df['is_land'])
+    # add_land_ocean_shading(ax, mfc_df['time'], mfc_df['is_land'])
     ax.fill_between(
         times,
         mfc,
@@ -1754,6 +1594,7 @@ def plot_moisture_flux_convergence(mfc_df, track_id, output_dir):
         alpha=0.15,
         label="Divergence (−)",
     )
+    ax.axhline(0, color="black", linewidth=0.8)
     ax.fill_between(
         times,
         0,
@@ -1776,7 +1617,6 @@ def plot_moisture_flux_convergence(mfc_df, track_id, output_dir):
         label="Ocean phase",
         zorder=0,
     )
-    ax.axhline(0, color="black", linewidth=0.8)
     # Landfall line
     if landfall_time is not None:
         ax.axvline(
@@ -1841,7 +1681,7 @@ def plot_column_moisture_tendency(cmt_df, track_id, output_dir):
           markersize=3,
           alpha=0.85
         )
-        add_land_ocean_shading(ax, cmt_df['time'], cmt_df['is_land'])
+        # add_land_ocean_shading(ax, cmt_df['time'], cmt_df['is_land'])
         ax.fill_between(
             times,
             0,
@@ -1903,7 +1743,7 @@ def plot_time_height_section(
     times   = pd.to_datetime(df["time"])
     is_land = df["is_land"].values.astype(bool)
 
-    # Sort pressure levels ascending so 200 hPa is at top, 850 at bottom
+    # Sort pressure levels ascending for 200 hPa at top, 850 at bottom
     levels_desc = list(LEVELS)                            # [850, 700, 600, 500, 400, 300, 200]
     levels_asc  = sorted(levels_desc)                     # [200, 300, 400, 500, 600, 700, 850]
     idx_asc = [levels_desc.index(l) for l in levels_asc]  # column mapping
@@ -1925,7 +1765,7 @@ def plot_time_height_section(
         return
 
     t_num  = np.arange(len(times))
-    L_asc  = np.array(levels_asc, dtype=float)   # [200, 300, ..., 850]
+    L_asc  = np.array(levels_asc, dtype=float)   # [200, 300, 400, 500, 600, 700, 850]
 
     # Figure
     fig, ax = plt.subplots(figsize=(16, 7))
@@ -1940,7 +1780,7 @@ def plot_time_height_section(
     # matrix_asc.T shape = (n_levels_asc, n_times) - matches pcolormesh (Y, x)
     # im = ax.pcolormesh(t_num, L_asc, matrix_asc.T, cmap=cmap, vmin=vmin, vmax=vmax, shading="auto")
     if norm is None:
-        norm = plt.Normalize(vmin=vmin, vmax=vmax)
+        norm = Normalize(vmin=vmin, vmax=vmax)
     im = ax.pcolormesh(t_num, L_asc, matrix_asc.T, cmap=cmap, norm=norm, shading="auto")
 
     # Contour lines for iso-value readability
@@ -1953,7 +1793,7 @@ def plot_time_height_section(
           levels=np.linspace(vmin, vmax, n_contours),
           colors="black",
           linewidths=0.5,
-          alpha=0.4
+          alpha=0.5
         )
         ax.clabel(cs, inline=True, fontsize=8, fmt="%.1f")
     except Exception:
@@ -1962,27 +1802,12 @@ def plot_time_height_section(
     cbar = plt.colorbar(im, ax=ax, pad=0.02)
     cbar.set_label(cbar_label, fontsize=12)
 
-    # Detect landfall (first ocean→land transition)
+    # Detect landfall
     landfall_t_num = None
     for i in range(1, len(is_land)):
         if not is_land[i - 1] and is_land[i]:
             landfall_t_num = t_num[i]
             break
-
-    # Land-phase
-    if landfall_t_num is None:
-        land_times = t_num[is_land]
-        if land_times.size > 0:
-            stripe_top = L_asc.min()
-            stripe_bot = L_asc.min() + (L_asc.max() - L_asc.min()) * 0.03
-            ax.fill_betweenx(
-              [stripe_top, stripe_bot],
-              land_times.min(),
-              land_times.max(),
-              color="saddlebrown",
-              alpha=0.7,
-              label="Land phase",
-            )
 
     # Landfall vertical line
     if landfall_t_num is not None:
@@ -2019,7 +1844,7 @@ def plot_time_height_section(
     time_height_path = os.path.join(output_dir, filename)
     plt.savefig(time_height_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
-    std_print("SAVED", "va", f"Time-height section: {filename}", time_height_path)
+    std_print("SAVED", "va", "Time-height section", time_height_path)
 
 
 def load_pl_level(pl_dir, month_str, level_hpa):
@@ -2131,12 +1956,7 @@ def theta_e(ds, tlat, tlon, level_hpa):
 
 # Vertical Moisture Profile (θ_e) and mixing ratio time-height sections
 def build_vertical_profile(track_df, pl_dir, year, extract_fn, col_prefix):
-    """
-    Generic column-profile extractor.
-
-    extract_fn(ds, tlat, tlon, level_hpa) -> float scalar for the variable at that level.
-    Returns a DataFrame with columns: time, is_land, {col_prefix}_{level} for each level in LEVELS.
-    """
+    """Generic column-profile extractor"""
     df = track_df.sort_values("time").reset_index(drop=True)
     times = pd.to_datetime(df["time"])
     is_land_arr = (
