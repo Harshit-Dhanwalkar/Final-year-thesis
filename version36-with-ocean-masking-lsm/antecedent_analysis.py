@@ -21,16 +21,20 @@ Andersen & Shepherd   (2013): J. Climate 26, 6629-6642.
 
 
 # TODO:
-# Wet/Dry classification and comparison
-# - Classify tracks by antecedent conditions
-#   median_asmi = asmi_values.median()
-#   wet_tracks  = results[results['asmi'] > median_asmi]
-#   dry_tracks  = results[results['asmi'] <= median_asmi]
-# - Compare:
-#   - inland penetration distance (km)
-#   - duration after landfall (hours)
-#   - speed change at landfall (km/h)
-#   - mean LHF during land phase (W/m²)
+# 1. Wet/Dry classification and comparison
+#    - Classify tracks by antecedent conditions
+#      median_asmi = asmi_values.median()
+#      wet_tracks  = results[results['asmi'] > median_asmi]
+#      dry_tracks  = results[results['asmi'] <= median_asmi]
+#    - Compare:
+#      + inland penetration distance (km)
+#      + duration after landfall (hours)
+#      + speed change at landfall (km/h)
+#      + mean LHF during land phase (W/m²)
+# 2. D2m as antecedent moisture proxy: Correlate the mean D2m in the 24 hours before landfall against inland duration.
+#    This is supported by osuri2020 and kishtawal2013enhancement references -> antecedent moisture predicts inland penetration.
+#    D2m gives atmospheric column moisture state, while SWVL1 gives the surface state.
+#    They should co-vary for BOE but can decouple when large-scale advection is the primary moisture source.
 
 import os
 import numpy as np

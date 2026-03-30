@@ -1,3 +1,31 @@
+# TODO:
+# 0. Add the recycling result to global analysis
+# 1. orographyconvection2005 (Kirshbaum & Durran) covers banded convection but doesn't specifically address the windward/leeward TP asymmetry.
+#   - Medina & Houze (2003, Quarterly Journal) for orographic precipitation structures over barriers comparable to the Eastern Ghats
+#   - Barros & Lang (2003) for the specific rain-shadow effect
+# 2. Something to visualize : On the windward slope, expect depression to drop (moistening from forced ascent).
+#    On the leeward side, it should spike as the dry Foehn-like descent warms and dries the descending air.
+#    This T2m−D2m jump on the leeward side is a direct observable signature of orographic deception hypothesis.
+# 2. Add land-surface-mask (Data/nc-files/lsm-soiltype-z.nc) for rest (used in azimuthal_hovmoller plot)
+# 3. H4 GAM: pip install pygam; SM ~ s(TP) -> Plateau fig
+# 4. H5 HWSD:
+#    ds = xr.open_dataset('SoilGrids250m_CLAY.nc')
+#    tracks['CLAY_%'] = ds.CLAY.isel(depth=0).interp(lon=tracks.lon,lat=tracks.lat)
+#    # FSI ~ CLAY_% (r>0.6 expected)
+# 5. H7 SRTM:
+#    !pip install richdem rioxarray
+#    dem = rioxarray.open_rasterio('SRTM_India.tif')
+#    tracks['MEAN_ELEV'] = dem.interp(...)  # r(dur,elev)<0.7
+# 6. Add duirnal HF (LHF, SHF and THF) amplitude time series plot -> \Delta(HF) = (HF_max -HF_min)_24h -> see veriation in this \Delta(HF)
+# 7. Implement: analyze_asm_fsi_relationship, analyze_gam_nonlinearity, test_granger_causality
+# 8. ding1994monsoon and rashid2005track: land-phase vorticity tendency from the Azimuthal Hovmöller data would tell whether the MD is spinning down due to surface friction or being maintained by convective stretching. This directly tests whether the terrain-braking is frictional or thermodynamic.
+# 9. Energy rates/factors
+#    - CAPE (Convective Available Potential Energy)
+#    - CIN or CINE (Convective Inhibition Energy)
+#    - LFC (Level of Free Convection)
+#    - LCL (Lifted Condensation Level)
+#    - EL (Equilibrium Level)
+
 import os
 import sys
 import gc
@@ -242,6 +270,7 @@ def generate_summary_report(
     all_sm_results,
     all_asm_results,
     all_memory_results,
+    all_recycling_results,
     output_dir,
 ):
     report_path = os.path.join(output_dir, "Analysis_summary_report.txt")
@@ -315,6 +344,10 @@ def generate_summary_report(
         else:
             f.write("   No memory data\n\n")
 
+        # TODO: add recycling ratio summary
+        # f.write("7. Recycling ratio\n")
+        # all_recycling_results
+
     std_print("SAVED", "an", "Summary report", report_path)
     return report_path
 
@@ -382,6 +415,7 @@ if __name__ == "__main__":
     all_sm_results          = []
     all_asm_results         = []
     all_memory_results      = []
+    all_recycling_results   = []
     track_dict              = {}
     flux_dict               = {}
     vortex_tilt_results     = {}
@@ -624,7 +658,7 @@ if __name__ == "__main__":
                 std_print("ERROR", "an", "Soil moisture failed", str(e))
                 traceback.print_exc()
 
-            # 5.7 Elevation 
+            # 5.7 Elevation
             print(f"\n-- Elevation analysis (track {track_id}) --")
             elev_dir = os.path.join(track_dir, "elevation_analysis")
             os.makedirs(elev_dir, exist_ok=True)

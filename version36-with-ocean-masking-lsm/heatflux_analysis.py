@@ -6,10 +6,6 @@
 5. Duration-dependent analysis of MD behavior
 """
 
-# NOTE:
-# 1. recycling_ratio = (local_evaporation) / (total_rainfall) computed via vortenx_analysis.py
-# TODO: Plot timeseries of recycling_ratio
-
 import os
 import numpy as np
 import pandas as pd
@@ -95,11 +91,19 @@ def analyze_flux_transition(ds, track_df, track_id, hours_before=24, hours_after
                 # std_print('DEBUG', 'hf', 'Using avg_slhtf and avg_ishf (Accumulated)')
             elif "slhf" in ds.data_vars and "ishf" in ds.data_vars:
                 # De-accumulate accumulated fluxes  J m-2  ->  W m-2  (ERA5 negative downward)
+                # FIX: same ishf_w and slhf_w
                 dt_seconds = 3600.0
                 subset_now = float(subset_now["slhf"].mean().values)
                 subset_prev = float(subset_prev["slhf"].mean().values)
                 slhf_w = -(subset_now - subset_prev) / dt_seconds
                 ishf_w = -(subset_now - subset_prev) / dt_seconds
+                # TODO:
+                # slhf_now  = float(ds.isel({time_coord: idx}).sel(...) ["slhf"].mean().values)
+                # slhf_prev = float(ds.isel({time_coord: idx_prev}).sel(...)["slhf"].mean().values)
+                # ishf_now  = float(ds.isel({time_coord: idx}).sel(...) ["ishf"].mean().values)
+                # ishf_prev = float(ds.isel({time_coord: idx_prev}).sel(...)["ishf"].mean().values)
+                # slhf_w = -(slhf_now - slhf_prev) / dt_seconds
+                # ishf_w = -(ishf_now - ishf_prev) / dt_seconds
                 # std_print('DEBUG', 'hf', 'Using avg_slhtf and avg_ishf (De-accumulated)')
             else:
                 std_print("WARN", "hf", f"No valid heat flux variables at {t}")

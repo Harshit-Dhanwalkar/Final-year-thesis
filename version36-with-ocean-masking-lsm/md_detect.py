@@ -4,39 +4,11 @@
 # 0.3. Exporting 2 seperate CSVs (MD-track-id-coordinates.csv and output_2024/track_id/track_id_detections.csv) which have difference of date format.
 # 1.  Relative humidity physically out of range (-11, 198)% due to ERA5 artifact from spectral-to-grid interpolation. Do not use raw r values in any threshold logic (e.g. "convection active if r > 70%") without clipping.
 # 2. Ocean-land shading to incorporate landfall line
-# 3. Inconsistent Landfall Detection
-#    Location: Multiple files (antecedent_analysis.py, correlation_analysis.py)
-#    Issue   : Different logic for detecting landfall in different functions
-#    antecedent_analysis.py: is_point_land()
-#    correlation_analysis.py: row.get('is_land', False)
-#    Fix     : Standardize to use pre-computed 'is_land' column
-# 4. Inconsistent Parameter Names
+# 3. Inconsistent Parameter Names
 #    Location: Multiple functions use buffer_km vs buffer_deg
 #    antecedent_analysis.py uses buffer_km=100
 #    plot_sm_tp_map() uses buffer_deg=5.0
-# 5. Rephase CE 0.5/0.3 vs 8.0/3.0" -> Standardize (use 8-15)
-
-# TODO:
-# 1. Add land-surface-mask (Data/nc-files/lsm-soiltype-z.nc) for rest (used in azimuthal_hovmoller plot)
-# 2. H4 GAM: pip install pygam; SM ~ s(TP) -> Plateau fig
-# 3. H5 HWSD:
-#    ds = xr.open_dataset('SoilGrids250m_CLAY.nc')
-#    tracks['CLAY_%'] = ds.CLAY.isel(depth=0).interp(lon=tracks.lon,lat=tracks.lat)
-#    # FSI ~ CLAY_% (r>0.6 expected)
-# 4. H7 SRTM:
-#    !pip install richdem rioxarray
-#    dem = rioxarray.open_rasterio('SRTM_India.tif')
-#    tracks['MEAN_ELEV'] = dem.interp(...)  # r(dur,elev)<0.7
-# 5. Add duirnal HF (LHF, SHF and THF) amplitude time series plot -> \Delta(HF) = (HF_max -HF_min)_24h -> see veriation in this \Delta(HF)
-# 6. Implement: analyze_asm_fsi_relationship, analyze_gam_nonlinearity, test_granger_causality
-# 7. ding1994monsoon and rashid2005track: land-phase vorticity tendency from the Azimuthal Hovmöller data would tell whether the MD is spinning down due to surface friction or being maintained by convective stretching. This directly tests whether the terrain-braking is frictional or thermodynamic.
-# 8. Energy rates/factors
-#    - CAPE (Convective Available Potential Energy)
-#    - CIN or CINE (Convective Inhibition Energy)
-#    - LFC (Level of Free Convection)
-#    - LCL (Lifted Condensation Level)
-#    - EL (Equilibrium Level)
-#
+# 4. Rephase CE 0.5/0.3 vs 8.0/3.0" -> Standardize (use 8-15)
 
 # TEST:
 # 1. For 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025 expect -> (FSI > 0.4 long; clay > 30%, ACF > 0.35)

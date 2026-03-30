@@ -134,7 +134,7 @@ def plot_all_tracks_tilt_comparison(tilt_results, track_dict, output_dir):
         track_df = track_dict.get(track_id)
         if track_df is None:
             continue
-        is_land = (
+        is_land_track = (
             track_df.sort_values("time")["is_land"].values.astype(bool)
             if "is_land" in track_df.columns
             else np.ones(len(tilt_df), bool)
@@ -143,39 +143,36 @@ def plot_all_tracks_tilt_comparison(tilt_results, track_dict, output_dir):
         times = pd.to_datetime(tilt_df["time"])
         tilt_km = tilt_df["tilt_magnitude_km"].values
 
-        # Find landfall index and time
-        landfall_idx  = None
+        # Find landfall time
         landfall_time = None
-        for i in range(1, len(is_land)):
-            if not is_land[i - 1] and is_land[i]:
-                landfall_idx  = i
+        for i in range(1, len(is_land_track)):
+            if not is_land_track[i - 1] and is_land_track[i]:
                 landfall_time = times.iloc[i]
                 break
 
-        if landfall_idx is not None and landfall_idx < len(times):
-            hours = np.array([(t - landfall_time).total_seconds() / 3600 for t in times])
-        else:
-            hours = np.array([(t - times.iloc[0]).total_seconds() / 3600 for t in times])
+        #  Convert ALL x values to relative hours
+        ref = landfall_time if landfall_time is not None else times.iloc[0]
+        hours = np.array([(t - ref).total_seconds() / 3600 for t in times])
 
         track_times_arr = pd.to_datetime(track_df.sort_values("time")["time"]).values
-        tilt_times_arr  = times.values
-        is_land_arr = np.zeros(len(tilt_times_arr), dtype=bool)
-        for k, tt in enumerate(tilt_times_arr):
+        is_land_arr = np.zeros(len(times), dtype=bool)
+        for k, tt in enumerate(times.values):
             nearest_idx = np.argmin(np.abs(track_times_arr - tt))
-            is_land_arr[k] = is_land[nearest_idx] if nearest_idx < len(is_land) else False
+            is_land_arr[k] = (is_land_track[nearest_idx] if nearest_idx < len(is_land_track) else False)
 
         # Land / ocean background shading
-        add_land_ocean_shading(ax, times, is_land_arr, land_color="wheat", ocean_color="lightblue")
-        # Landfall line
-        if landfall_time is not None:
-            ax.axvline(
-                landfall_time,
-                color="red",
-                linestyle="--",
-                linewidth=1.8,
-                label="Landfall",
-                zorder=5,
-            )
+        add_land_ocean_shading(ax, hours, is_land_arr, land_color="wheat", ocean_color="lightblue")
+        # NOTE: landfall_time is a Timestamp; on a numeric-hours axis this places the line at the Timestamp's matplotlib date number (~738000), not at hour 0. 
+        # # Landfall line 
+        # if landfall_time is not None:
+        #     ax.axvline(
+        #         landfall_time,
+        #         color="red",
+        #         linestyle="--",
+        #         linewidth=1.8,
+        #         label="Landfall",
+        #         zorder=5,
+        #     )
 
         ax.plot(
             hours,
@@ -199,6 +196,11 @@ def plot_all_tracks_tilt_comparison(tilt_results, track_dict, output_dir):
             zorder=3,
             alpha=0.6,
         )
+
+    # x-axis reference lines for \pm12h terrain window
+    ax.axvspan(-6, 18, alpha=0.08, color="orange", label="Terrain interaction window")
+    ax.axhline(150, color="gray", linestyle=":", linewidth=1, label="Tilt threshold (150 km)")
+
     ax.axvline(0, color="black", linestyle="--", linewidth=1.5, label="Landfall (t = 0)")
     ax.axhline(0, color="black", linewidth=0.8)
     ax.set_xlabel("Hours relative to landfall", fontsize=12, fontweight="bold")
@@ -1373,7 +1375,7 @@ def plot_thermal_structure(therm_df, track_df, track_id, output_dir):
     ax2.set_xlabel("Time", fontsize=12, fontweight="bold")
     plt.setp(ax2.xaxis.get_majorticklabels(), rotation=45, ha="right")
     fig.suptitle(
-        f"Track {track_id}: Thermal Structure\nCold-core 850 hPa, Warm-core 200 hPa",
+        f"Track {track_id}: Thermal Structure",
         fontsize=13,
         fontweight="bold",
         y=1,

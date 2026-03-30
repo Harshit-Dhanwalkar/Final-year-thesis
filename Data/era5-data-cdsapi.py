@@ -258,13 +258,13 @@ def download_pressure_level_month(
 def download_year(client: cdsapi.Client, year: int, skip_existing: bool):
     print(f"\n[INFO] --- Processing Year {year} ---")
     for month_name, month_num in MONSOON_MONTHS.items():
-        print(f"  --- {month_name} {year} ---")
+        print(f"\n  --- {month_name} {year} ---")
 
         # Single levels - now downloads 3 separate files (instant, avg, accum)
         download_single_level_month(client, year, month_name, month_num, skip_existing)
 
         # Pressure levels - one request per level
-        print(f"\n[INFO] Pressure levels for {month_name} {year}:")
+        print(f"[INFO] Pressure-levels for {month_name} {year}:")
         for level in PRESSURE_LEVELS:
             download_pressure_level_month(
                 client, year, month_name, month_num, level, skip_existing

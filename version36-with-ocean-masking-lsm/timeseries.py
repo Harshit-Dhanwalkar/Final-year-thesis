@@ -23,8 +23,8 @@
 #              q   = 0.622 * e_s / (P − e_s)                                  [kg/kg]
 #      Step 3: Equivalent potential temperature
 #              θ_e = T * (P0/P)^(Rd/cp) * exp(Lv * q / (cp * T))             [K]
-#      Constants: Lv=2.501*10⁶ J/kg, Rd=287.05 J/kg/K, cp=1005.7 J/kg/K,
-#                 P0=100000 Pa
+#      Constants: Lv = 2.501*10^6 J/kg, Rd = 287.05 J/kg/K,
+#                 cp = 1005.7 J/kg/K, P0=100000 Pa
 #      Pressure used: SP (surface pressure, Pa) preferred; MSL used as fallback
 #      if SP is absent from the dataset (see extract_theta_e_timeseries).
 #    - θ_e is conserved under both dry and moist adiabatic ascent, making it
@@ -36,12 +36,15 @@
 #    - The gap (T2m − D2m), i.e. dew-point depression, visible in the plot as
 #      the spread between the two lower lines, quantifies how far the boundary
 #      layer is from saturation:
-#        * Small gap (<2 K)  ->  near-saturated boundary layer, high CAPE
+#        * Small gap (<2 K)  ->  near-saturated boundary layer, high CAPE.
 #        * Large gap (>5 K)  ->  dry air entrainment, suppressed deep convection
+#        + On the windward slope, expect depression to drop (moistening from forced ascent)
+#        + On the leeward side, it should spike as the dry Foehn-like descent warms and dries the descending air.
 #    - D2m tracks the actual moisture content independently of temperature;
 #      a sustained high D2m over land after landfall is the atmospheric
 #      fingerprint of the Brown Ocean Effect.
-# 4. Precipitation Recycling Ratio  [compute_recycling_ratio]
+# 4. Precipitation Recycling Ratio  [recycling_ratio_timeseries]
+#     recycling_ratio = (local_evaporation) / (total_rainfall) 
 #     ρ = E / P  where E = LHF/(Lv x ρ_w)  [mm hr⁻¹] and P = TP  [mm hr⁻¹]
 #     ρ -> 1 = rainfall mostly from local evaporation (BOE signature).
 #     ρ -> 0 = rainfall from advected oceanic moisture.
@@ -49,6 +52,9 @@
 
 # References:
 #  - Eltahir & Bras (1996) - precipitation recycling ratio definition
+
+# TODO:
+# 1. Currently uses a simplified single-column Budyko formulation ρ = E/P. This is fine as a track-level diagnostic but this is not the Eltahir & Bras 2-D regional formulation. It will overestimate recycling when local TP is small (denominator near zero).
 
 import os
 import numpy as np
@@ -567,7 +573,7 @@ def recycling_ratio_timeseries(result, track_id, output_dir):
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 10), sharex=True)
 
     for ax in (ax1, ax2):
-        # Land / ocean background shading
+        # Land / ocean shading
         add_land_ocean_shading(ax, times, is_land_arr, land_color="wheat", ocean_color="lightblue")
         # Landfall line
         if landfall_time is not None:
@@ -642,7 +648,6 @@ def recycling_ratio_timeseries(result, track_id, output_dir):
     plt.savefig(rr_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
     std_print("SAVED", "ts", "Recycling ratio timeseries", rr_path)
-
 
 
 # Helper / extraction functions
