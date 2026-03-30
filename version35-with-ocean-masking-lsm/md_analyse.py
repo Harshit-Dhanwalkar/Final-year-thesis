@@ -94,7 +94,7 @@ from statistics_analysis import (
 )
 
 # Configuration
-MONSOON_YEAR = 2025
+MONSOON_YEAR = 2020
 MONSOON_SEASONS = {
     2018: ["June-2018", "July-2018", "August-2018", "September-2018"],
     2019: ["June-2019", "July-2019", "August-2019", "September-2019"],
