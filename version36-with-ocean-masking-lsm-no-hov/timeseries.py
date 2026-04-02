@@ -18,11 +18,11 @@
 #    Plots θ_e, T2m, and D2m (in K)
 #    Derived quantity: θ_e (Bolton 1980 approximation):
 #      Step 1: Saturation vapour pressure at dew point (Magnus formula)
-#              e_s = 611.2 * exp( 17.67 * (T_d − 273.15) / (T_d − 29.65) )   [Pa]
+#              e_s = 611.2 * exp(17.67 * (T_d − 273.15) / (T_d − 29.65)) [Pa]
 #      Step 2: Specific humidity from e_s and surface pressure
-#              q   = 0.622 * e_s / (P − e_s)                                  [kg/kg]
+#              q   = 0.622 * e_s / (P − e_s)                             [kg/kg]
 #      Step 3: Equivalent potential temperature
-#              θ_e = T * (P0/P)^(Rd/cp) * exp(Lv * q / (cp * T))             [K]
+#              θ_e = T * (P0/P)^(Rd/cp) * exp(Lv * q / (cp * T))         [K]
 #      Constants: Lv = 2.501*10^6 J/kg, Rd = 287.05 J/kg/K,
 #                 cp = 1005.7 J/kg/K, P0=100000 Pa
 #      Pressure used: SP (surface pressure, Pa) preferred; MSL used as fallback
@@ -38,20 +38,38 @@
 #      layer is from saturation:
 #        * Small gap (<2 K)  ->  near-saturated boundary layer, high CAPE.
 #        * Large gap (>5 K)  ->  dry air entrainment, suppressed deep convection
-#        + On the windward slope, expect depression to drop (moistening from forced ascent)
-#        + On the leeward side, it should spike as the dry Foehn-like descent warms and dries the descending air.
+#        + On the windward slope DPD drops (moistening from forced orographic ascent).
+#        + On the leeward side DPD spikes (Foehn-like descent warms and dries air).
 #    - D2m tracks the actual moisture content independently of temperature;
 #      a sustained high D2m over land after landfall is the atmospheric
 #      fingerprint of the Brown Ocean Effect.
 # 4. Precipitation Recycling Ratio  [recycling_ratio_timeseries]
-#     recycling_ratio = (local_evaporation) / (total_rainfall) 
+#     recycling_ratio = (local_evaporation) / (total_rainfall)
 #     ρ = E / P  where E = LHF/(Lv x ρ_w)  [mm hr⁻¹] and P = TP  [mm hr⁻¹]
 #     ρ -> 1 = rainfall mostly from local evaporation (BOE signature).
 #     ρ -> 0 = rainfall from advected oceanic moisture.
-#     Simplified Budyko single-column formulation (not full 2-D recycling ratio).
+#     Simplified Budyko single-column formulation (not the full 2-D Eltahir & Bras formulation).
+#     GUARD: ρ is set to NaN when P < 0.10 mm/hr to avoid division-noise inflation.
+#     This threshold is applied in md_analyse.py before calling this function.
+#     Note: over the Indian subcontinent during monsoon, regional recycling fractions
+#     of 10-40% are typical (Eltahir & Bras 1996); track-level ρ values above this range
+#     during the land phase constitute strong BOE evidence.
+# 5. Dew-Point Depression Windward/Leeward  [plot_dew_point_depression_windward_leeward]
+#     Isolates the orographic Foehn-drying signature of the Eastern Ghats.
+#     DPD = T2m − D2m  [K]
+#     - Windward  (BoB side, lon > ghats_lon): expect DPD decrease as ascending air cools
+#       moist-adiabatically and boundary layer approaches saturation.
+#     - Leeward   (Deccan side, lon < ghats_lon): expect DPD spike as descending air
+#       warms dry-adiabatically (Foehn effect) cutting off convective fuel.
+#     - The DPD jump across the Ghats crest is the observable signature of
+#       orographic moisture depletion driving the "deception" hypothesis.
+#     Reference: Medina & Houze (2003); Barros & Lang (2003).
 
 # References:
 #  - Eltahir & Bras (1996) - precipitation recycling ratio definition
+#  - Bolton (1980) - θ_e formulation
+#  - Medina & Houze (2003) - orographic precipitation, windward/leeward asymmetry
+#  - Barros & Lang (2003)  - rain-shadow effects in monsoon terrain
 
 # TODO:
 # 1. Currently uses a simplified single-column Budyko formulation ρ = E/P. This is fine as a track-level diagnostic but this is not the Eltahir & Bras 2-D regional formulation. It will overestimate recycling when local TP is small (denominator near zero).
@@ -112,17 +130,6 @@ def tp_swvl1_timeseries(
         # Figure
         fig, ax1 = plt.subplots(figsize=(18, 6))
 
-        # # Determine landfall status
-        # if originates_over_land:
-        #     status_text = "Originates over land"
-        #     status_color = "blue"
-        # elif landfall_index == -1:
-        #     status_text = "No Landfall"
-        #     status_color = "gray"
-        # else:
-        #     status_text = "Landfall"
-        #     status_color = "red"
-
         # Plot TP on primary axis
         color_tp = "tab:blue"
         ax1.set_xlabel("Time", fontsize=12, fontweight="bold")
@@ -158,22 +165,6 @@ def tp_swvl1_timeseries(
                 label="Landfall",
                 zorder=5,
             )
-
-        # if (
-        #     landfall_index != -1
-        #     and landfall_index < len(times)
-        #     and not originates_over_land
-        # ):
-        #     landfall_time = times[landfall_index]
-        #     ax1.axvline(
-        #         landfall_time,
-        #         color=status_color,
-        #         linestyle="--",
-        #         linewidth=2.5,
-        #         alpha=0.8,
-        #         label=status_text,
-        #         zorder=5,
-        #     )
 
         # Plot SWVL1 on secondary axis (using swvl1_land with ocean=0)
         ax2 = ax1.twinx()
@@ -219,21 +210,6 @@ def tp_swvl1_timeseries(
         labels = []
         handles.extend(line1 + line2)
         labels.extend([l.get_label() for l in line1 + line2])
-
-        # if (
-        #     landfall_index != -1
-        #     and landfall_index < len(times)
-        #     and not originates_over_land
-        # ):
-        #     handles.append(plt.Line2D(
-        #         [0],
-        #         [0],
-        #         color=status_color,
-        #         linestyle="--",
-        #         linewidth=2.5
-        #     ))
-        #     labels.append(status_text)
-
         handles.append(Patch(facecolor="lightblue", alpha=0.5))
         labels.append("Ocean Phase")
         handles.append(Patch(facecolor="wheat", alpha=0.5))
@@ -252,9 +228,7 @@ def tp_swvl1_timeseries(
         ax1.set_title(title, fontsize=13, fontweight="bold", pad=12)
 
         plt.setp(ax1.xaxis.get_majorticklabels(), rotation=30, ha="right")
-        ax1.xaxis.set_major_formatter(
-            plt.matplotlib.dates.DateFormatter("%d/%m/%Y %H:%M")
-        )
+        ax1.xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter("%d/%m/%Y %H:%M"))
 
         # Save
         os.makedirs(output_dir, exist_ok=True)
@@ -385,9 +359,7 @@ def hf_timeseries(flux_df, track_id, output_dir):
 
         for ax in axes:
             plt.setp(ax.xaxis.get_majorticklabels(), rotation=30, ha="right")
-            ax.xaxis.set_major_formatter(
-                plt.matplotlib.dates.DateFormatter("%d/%m/%Y %H:%M")
-            )
+            ax.xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter("%d/%m/%Y %H:%M"))
         plt.tight_layout()
 
         # Save
@@ -534,9 +506,7 @@ def theta_e_timeseries(theta_df, track_id, output_dir):
         ax.legend(loc="upper left", **legend_style())
 
         plt.setp(ax.xaxis.get_majorticklabels(), rotation=30, ha="right")
-        ax.xaxis.set_major_formatter(
-            plt.matplotlib.dates.DateFormatter("%d/%m/%Y %H:%M")
-        )
+        ax.xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter("%d/%m/%Y %H:%M"))
         plt.tight_layout()
 
         # Save
@@ -585,17 +555,6 @@ def recycling_ratio_timeseries(result, track_id, output_dir):
                 label="Landfall",
                 zorder=5,
             )
-        # for i in range(1, len(is_land_arr)):
-        #     if not is_land_arr[i-1] and is_land_arr[i]:
-        #         ax.axvline(
-        #             times.iloc[i],
-        #             color="black",
-        #             linestyle="--",
-        #             linewidth=1.5,
-        #             label="Landfall",
-        #             zorder=5
-        #         )
-        #         break
 
     ax1.plot(
       times,
@@ -638,9 +597,7 @@ def recycling_ratio_timeseries(result, track_id, output_dir):
     ax2.legend(loc="upper right", **legend_style())
 
     plt.setp(ax2.xaxis.get_majorticklabels(), rotation=30, ha="right")
-    ax2.xaxis.set_major_formatter(
-        plt.matplotlib.dates.DateFormatter("%d/%m/%Y %H:%M")
-    )
+    ax2.xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter("%d/%m/%Y %H:%M"))
     plt.tight_layout()
 
     # Save
@@ -648,6 +605,280 @@ def recycling_ratio_timeseries(result, track_id, output_dir):
     plt.savefig(rr_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
     std_print("SAVED", "ts", "Recycling ratio timeseries", rr_path)
+
+
+# Dew-Point Depression: Windward vs Leeward (orographic deception signature)
+def dew_point_depression_windward_leeward_timeseries(
+    theta_df,
+    track_df,
+    track_id,
+    output_dir,
+    ghats_lon=80.5,   # approx Eastern Ghats main crest longitude
+):
+    """
+    Visualise the Dew-Point Depression (DPD = T2m − D2m) to isolate the
+    orographic Foehn-drying signature as the MD crosses the Eastern Ghats.
+
+    Windward (BoB-facing) slope -> forced moist ascent -> DPD drops -> near-saturation
+    Leeward  (Deccan-facing) side -> dry adiabatic descent (Foehn) -> DPD spikes
+
+    The DPD jump across the Ghats crest is the observable signature of orographic
+    moisture depletion that drives the "deception" hypothesis (Medina & Houze 2003;
+    Barros & Lang 2003).
+    """
+    try:
+        track_id = int(track_id)
+        if theta_df is None or len(theta_df) < 3:
+            std_print("WARN", "ts", f"Track {track_id}: insufficient theta_e data for DPD plot")
+            return False
+
+        required = {"time", "t2m_K", "d2m_K", "is_land"}
+        missing = required - set(theta_df.columns)
+        if missing:
+            std_print("WARN", "ts", f"Track {track_id}: DPD plot skipped - missing cols", str(missing))
+            return False
+
+        df = theta_df.copy().sort_values("time").reset_index(drop=True)
+        df["dpd_K"] = df["t2m_K"] - df["d2m_K"]   # always >= 0 physically
+
+        times = pd.to_datetime(df["time"])
+        is_land_arr = df["is_land"].values.astype(bool)
+
+        # Classify each land-point as windward / leeward / ocean
+        # Windward = land AND lon > ghats_lon  (BoB side, approaching crest)
+        # Leeward  = land AND lon <= ghats_lon (Deccan side, past crest)
+        if "longitude" in df.columns:
+            lons = df["longitude"].values
+        else:
+            # Fall back to track_df
+            merged = df.merge(track_df[["time", "longitude"]].drop_duplicates("time"), on="time", how="left")
+            lons = merged["longitude"].values
+
+        is_windward = is_land_arr & (lons >  ghats_lon)
+        is_leeward  = is_land_arr & (lons <= ghats_lon)
+
+        # Terrain crossing time (first point where lon crosses ghats_lon)
+        crest_time = None
+        for i in range(1, len(df)):
+            if is_land_arr[i]:
+                if lons[i - 1] > ghats_lon >= lons[i]:    # moving westward (typical MD)
+                    crest_time = times.iloc[i]
+                    break
+                elif lons[i - 1] < ghats_lon <= lons[i]:  # moving eastward
+                    crest_time = times.iloc[i]
+                    break
+
+        # Landfall time
+        landfall_time = None
+        for i in range(1, len(df)):
+            if not is_land_arr[i - 1] and is_land_arr[i]:
+                landfall_time = times.iloc[i]
+                break
+
+        # DPD values
+        dpd = df["dpd_K"].values
+        ocean_vals    = dpd[~is_land_arr]
+        windward_vals = dpd[is_windward]
+        leeward_vals  = dpd[is_leeward]
+
+        # Compute phase means and errors for bar chart
+        phase_means  = []
+        phase_labels = []
+        phase_colors = []
+        phase_errs   = []
+        phase_counts = []
+
+        for vals, lbl, col in [
+            (ocean_vals, "Ocean", "steelblue"),
+            (windward_vals, "Windward\n(BoB side)", "seagreen"),
+            (leeward_vals, "Leeward\n(Deccan side)", "firebrick"),
+        ]:
+            vals_clean = vals[~np.isnan(vals)]
+            if len(vals_clean) > 0:
+                phase_means.append(float(np.nanmean(vals_clean)))
+                phase_errs.append(float(np.nanstd(vals_clean)) if len(vals_clean) > 1 else 0.0)
+                phase_labels.append(lbl)
+                phase_colors.append(col)
+                phase_counts.append(len(vals_clean))
+
+        # Determine valid y‑axis limit for the bar chart
+        valid_means = [m for m in phase_means if not np.isnan(m)]
+        if valid_means:
+            y_max = max(valid_means) * 1.2
+            y_max = max(y_max, 6.0)   # ensure at least 6 K
+        else:
+            y_max = 6.0
+
+        # Figure
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 7), gridspec_kw={"width_ratios": [3, 1]})
+
+        # Panel 1: DPD timeseries
+        add_land_ocean_shading(ax1, times, is_land_arr, land_color="wheat", ocean_color="lightblue")
+
+        # Ocean segment
+        ax1.scatter(
+            times[~is_land_arr],
+            dpd[~is_land_arr],
+            c="steelblue",
+            s=30,
+            alpha=0.6,
+            label="Ocean",
+            zorder=3,
+        )
+        # Windward segment
+        ax1.scatter(
+            times[is_windward],
+            dpd[is_windward],
+            c="seagreen",
+            s=50,
+            marker="^",
+            alpha=0.9,
+            label=f"Windward (lon > {ghats_lon}°E)",
+            zorder=4,
+        )
+        # Leeward segment
+        ax1.scatter(
+            times[is_leeward],
+            dpd[is_leeward],
+            c="firebrick",
+            s=50,
+            marker="v",
+            alpha=0.9,
+            label=f"Leeward (lon ≤ {ghats_lon}°E)",
+            zorder=4,
+        )
+        # Connect all points as a line
+        ax1.plot(
+            times,
+            dpd,
+            "-",
+            color="gray",
+            linewidth=1.0,
+            alpha=0.4,
+            zorder=2
+        )
+
+        # Reference thresholds
+        ax1.axhline(
+            2.0,
+            color="seagreen",
+            linestyle="--",
+            linewidth=1.2,
+            label="DPD = 2 K (near-saturated)",
+            zorder=3
+        )
+        ax1.axhline(
+            5.0,
+            color="firebrick",
+            linestyle="--",
+            linewidth=1.2,
+            label="DPD = 5 K (dry air entrained)",
+            zorder=3
+        )
+
+        # Marker lines
+        if landfall_time is not None:
+            ax1.axvline(
+                landfall_time,
+                color="black",
+                linestyle="--",
+                linewidth=1.5,
+                label="Landfall",
+                zorder=5
+            )
+        if crest_time is not None:
+            ax1.axvline(
+                crest_time,
+                color="darkorange",
+                linestyle="-.",
+                linewidth=1.8,
+                label=f"Ghats crest (~{ghats_lon}°E)",
+                zorder=5
+            )
+
+        ax1.set_xlabel("Time", fontsize=12, fontweight="bold")
+        ax1.set_ylabel("Dew-Point Depression  T2m − D2m  (K)", fontsize=12, fontweight="bold")
+        ax1.set_title(
+            f"Track {track_id}: Dew-Point Depression - Orographic Foehn Signal\n"
+            "↓ Windward DPD = moistening (forced ascent)  |  "
+            "↑ Leeward DPD = Foehn drying (orographic deception)",
+            fontsize=12, fontweight="bold",
+        )
+        ax1.legend(loc="upper left", **legend_style())
+        ax1.grid(True, alpha=0.35, linestyle="--", zorder=0)
+        plt.setp(ax1.xaxis.get_majorticklabels(), rotation=30, ha="right")
+        ax1.xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter("%d/%m %H:%M"))
+
+        # Panel 2: Phase-mean bar chart
+        if phase_means:
+            x = np.arange(len(phase_means))
+            bars = ax2.bar(
+                x,
+                phase_means,
+                color=phase_colors,
+                alpha=0.75,
+                edgecolor="black",
+                linewidth=0.8,
+                width=0.55
+            )
+            ax2.errorbar(
+                x,
+                phase_means,
+                yerr=phase_errs,
+                fmt="none",
+                ecolor="black",
+                elinewidth=1.5,
+                capsize=6,
+                zorder=5
+            )
+            ax2.set_xticks(x)
+            ax2.set_xticklabels(phase_labels, fontsize=10)
+            # Annotate bars with values and counts
+            for bar, val, err, cnt in zip(bars, phase_means, phase_errs, phase_counts):
+                ax2.text(
+                    bar.get_x() + bar.get_width() / 2,
+                    val + err + 0.1,
+                    f"{val:.1f} K\n(n={cnt})",
+                    ha="center",
+                    va="bottom",
+                    fontsize=8,
+                    fontweight="bold",
+                )
+        else:
+            # No data - placeholder
+            ax2.text(
+                0.5, 0.5, "No valid DPD data\nfor any phase",
+                ha="center", va="center", transform=ax2.transAxes,
+                fontsize=10, color="gray", style="italic"
+            )
+            ax2.set_xticks([])
+            ax2.set_yticks([])
+
+        ax2.set_ylabel("Mean DPD (K)", fontsize=11, fontweight="bold")
+        ax2.set_title("Phase-mean DPD\n(±1σ, n shown)", fontsize=11, fontweight="bold")
+        ax2.set_ylim(0, y_max)
+        ax2.grid(True, alpha=0.3, linestyle="--", axis="y")
+
+        plt.tight_layout()
+        os.makedirs(output_dir, exist_ok=True)
+        dpd_path = os.path.join(output_dir, f"track_{track_id}_dpd_windward_leeward.png")
+        plt.savefig(dpd_path, dpi=300, bbox_inches="tight")
+        plt.close(fig)
+        std_print("SAVED", "ts", "DPD windward/leeward plot", dpd_path)
+
+        return {
+            "track_id":          track_id,
+            "mean_dpd_ocean":    float(np.nanmean(ocean_vals))    if len(ocean_vals) > 0    else np.nan,
+            "mean_dpd_windward": float(np.nanmean(windward_vals)) if len(windward_vals) > 0 else np.nan,
+            "mean_dpd_leeward":  float(np.nanmean(leeward_vals))  if len(leeward_vals) > 0  else np.nan,
+            "dpd_jump_K":        (float(np.nanmean(leeward_vals)) - float(np.nanmean(windward_vals)))
+                                 if len(windward_vals) > 0 and len(leeward_vals) > 0 else np.nan,
+            "ghats_crest_time":  str(crest_time) if crest_time else None,
+        }
+    except Exception as e:
+        std_print("ERROR", "ts", f"Track {track_id}: DPD windward/leeward plot failed", str(e))
+        traceback.print_exc()
+        return None
 
 
 # Helper / extraction functions

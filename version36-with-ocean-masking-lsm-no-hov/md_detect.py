@@ -11,7 +11,7 @@
 # 4. Rephase CE 0.5/0.3 vs 8.0/3.0" -> Standardize (use 8-15)
 
 # TEST:
-# 1. For 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025 expect -> (FSI > 0.4 long; clay > 30%, ACF > 0.35)
+# 1. For 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025 expect -> (FSI > 0.4 long; clay > 30%, ACF > 0.35)
 # 2. For 2024:
 #     Mechanical Drag (TSI): If Track 4 has a high TSI but low FSI, it means it hit "rough" ground with no "fuel," leading to immediate decay.
 #     Moisture Fuel (FSI): Look at the mean_swvl1 in your FSI data. Track 5 likely shows a sustained soil moisture level above 0.35 m³/m³ during its land phase.
@@ -57,8 +57,9 @@ from utils import (
 from speed_analysis import compute_track_speeds
 
 # Year
-MONSOON_YEAR = 2025
+MONSOON_YEAR = 2024
 MONSOON_SEASONS = {
+    2017: ["June-2017", "July-2017", "August-2017", "September-2017"],
     2018: ["June-2018", "July-2018", "August-2018", "September-2018"],
     2019: ["June-2019", "July-2019", "August-2019", "September-2019"],
     2020: ["June-2020", "July-2020", "August-2020", "September-2020"],

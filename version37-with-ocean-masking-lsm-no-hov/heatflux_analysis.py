@@ -1,10 +1,10 @@
-"""
-1. Surface Heat Flux Analysis (Latent, Sensible, Total)
-2. Landfall Flux Transitions
-3. Flux-Precipitation-Soil Moisture Correlations
-4. Short vs Long-lived MD Classification
-5. Duration-dependent analysis of MD behavior
-"""
+# NOTE:
+#  - Surface Heat Flux Analysis (Latent, Sensible, Total)
+#  - Landfall Flux Transitions
+#  - Flux-Precipitation-Soil Moisture Correlations
+#  - Short vs Long-lived MD Classification
+#  - Duration-dependent analysis of MD behavior
+#  - BOE Candidate Classifier (andersen2013)
 
 import os
 import numpy as np
@@ -18,24 +18,23 @@ from utils import (
     calculate_buffer_deg,
     get_time_coord,
     export_results_to_csv,
-    common_bbox,
 )
 
 
+# Landfall flux transition
 def analyze_flux_transition(ds, track_df, track_id, hours_before=24, hours_after=24):
     """
     ERA5 Heat Flux Sign Convention:
-    - avg_slhtf, avg_ishf: W/m² (instantaneous, positive = away from surface)
-    - slhf, ishf: J/m² (accumulated, ERA5 convention: negative downward)
+    - avg_slhtf, avg_ishf : W/m^2  (instantaneous average, positive = away from surface)
+    - slhf, ishf          : J/m^2  (accumulated, ERA5 convention: negative downward)
 
-    Conversion: W/m² = -dJ/m² / dt_seconds
-    (Negative sign flips downward -> upward convention)
+    Conversion: W/m^2 = -dJ/m^2 / dt_seconds
+    (Negative sign flips ERA5 downward-positive -> upward-positive)
     """
     track_id = int(track_id)
     ds, time_coord = get_time_coord(ds)
     track_df = track_df.sort_values("time")
-    # Find first landfall
-    # Ensure is_land column exists
+
     if "is_land" not in track_df.columns:
         track_df["is_land"] = track_df.apply(
             lambda row: is_point_land(row["latitude"], row["longitude"]), axis=1
@@ -48,12 +47,10 @@ def analyze_flux_transition(ds, track_df, track_id, hours_before=24, hours_after
         midpoint_idx = len(track_df) // 2
         landfall_time = pd.to_datetime(track_df.iloc[midpoint_idx]["time"])
 
-    # Time windows
     t_start = landfall_time - pd.Timedelta(hours=hours_before)
     t_end = landfall_time + pd.Timedelta(hours=hours_after)
     ds_times = pd.to_datetime(ds[time_coord].values)
 
-    # Containers
     before = {"latent": [], "sensible": [], "total": []}
     after = {"latent": [], "sensible": [], "total": []}
     before_is_land = []
@@ -67,47 +64,43 @@ def analyze_flux_transition(ds, track_df, track_id, hours_before=24, hours_after
         lat_c = row["latitude"]
         lon_c = row["longitude"]
         is_land = row.get("is_land", False)
-        lat_buf, lon_buf = calculate_buffer_deg(row["latitude"], buffer_km=100)
+        lat_buf, lon_buf = calculate_buffer_deg(lat_c, buffer_km=100)
 
-        # Nearest ERA5 time
         idx = np.argmin(np.abs(ds_times - t))
-        t_nearest = ds_times[idx]
-        t_prev = t_nearest - pd.Timedelta(hours=1)
+        t_prev = ds_times[idx] - pd.Timedelta(hours=1)
         idx_prev = np.argmin(np.abs(ds_times - t_prev))
+
         try:
-            lat_slice = slice(lat_c + lat_buf, lat_c - lat_buf)
+            lat_slice = slice(lat_c + lat_buf, lat_c - lat_buf)  # ERA5 descending
             lon_slice = slice(lon_c - lon_buf, lon_c + lon_buf)
-            subset_now = ds.isel({time_coord: idx}).sel(
+
+            sn = ds.isel({time_coord: idx}).sel(latitude=lat_slice, longitude=lon_slice)
+            sp = ds.isel({time_coord: idx_prev}).sel(
                 latitude=lat_slice, longitude=lon_slice
             )
-            subset_prev = ds.isel({time_coord: idx_prev}).sel(
-                latitude=lat_slice, longitude=lon_slice
-            )
-            # Check which flux variables are available
+
             if "avg_slhtf" in ds.data_vars and "avg_ishf" in ds.data_vars:
-                # Use average fluxes directly (already in W/m²)
-                slhf_w = float(subset_now["avg_slhtf"].mean().values)
-                ishf_w = float(subset_now["avg_ishf"].mean().values)
-                # std_print('DEBUG', 'hf', 'Using avg_slhtf and avg_ishf (Accumulated)')
+                # Instantaneous averages – already W/m^2, no de-accumulation needed
+                slhf_w = float(sn["avg_slhtf"].mean().values)
+                ishf_w = float(sn["avg_ishf"].mean().values)
             elif "slhf" in ds.data_vars and "ishf" in ds.data_vars:
-                # De-accumulate accumulated fluxes  J m-2  ->  W m-2  (ERA5 negative downward)
-                # FIX: same ishf_w and slhf_w
                 dt_seconds = 3600.0
-                subset_now = float(subset_now["slhf"].mean().values)
-                subset_prev = float(subset_prev["slhf"].mean().values)
-                slhf_w = -(subset_now - subset_prev) / dt_seconds
-                ishf_w = -(subset_now - subset_prev) / dt_seconds
-                # TODO:
-                # slhf_now  = float(ds.isel({time_coord: idx}).sel(...) ["slhf"].mean().values)
-                # slhf_prev = float(ds.isel({time_coord: idx_prev}).sel(...)["slhf"].mean().values)
-                # ishf_now  = float(ds.isel({time_coord: idx}).sel(...) ["ishf"].mean().values)
-                # ishf_prev = float(ds.isel({time_coord: idx_prev}).sel(...)["ishf"].mean().values)
-                # slhf_w = -(slhf_now - slhf_prev) / dt_seconds
-                # ishf_w = -(ishf_now - ishf_prev) / dt_seconds
-                # std_print('DEBUG', 'hf', 'Using avg_slhtf and avg_ishf (De-accumulated)')
+                slhf_now = float(sn["slhf"].mean().values)
+                slhf_prev = float(sp["slhf"].mean().values)
+                ishf_now = float(sn["ishf"].mean().values)
+                ishf_prev = float(sp["ishf"].mean().values)
+                # FIX: Check sign convention. -(subset_now - subset_prev).
+                #      Because ERA5 stores slhf and sshf as negative values for upward fluxes (energy leaving the surface),
+                #      this double-negative correctly results in a positive value for plots.
+                #      If fluxes are plotting as negative, remove the minus sign.
+                # NOTE: ERA5 sign: negative = downward (into surface).
+                # Negating gives upward flux (away from surface = energy into atmosphere).
+                slhf_w = -(slhf_now - slhf_prev) / dt_seconds
+                ishf_w = -(ishf_now - ishf_prev) / dt_seconds
             else:
                 std_print("WARN", "hf", f"No valid heat flux variables at {t}")
                 continue
+
             if np.isnan(slhf_w) or np.isnan(ishf_w):
                 continue
 
@@ -117,17 +110,14 @@ def analyze_flux_transition(ds, track_df, track_id, hours_before=24, hours_after
             bucket["sensible"].append(ishf_w)
             bucket["total"].append(total)
 
-            # Track land/ocean status
             status_bucket = after_is_land if t >= landfall_time else before_is_land
             status_bucket.append(is_land)
         except Exception as e:
             std_print("ERROR", "hf", f"Error at {t}", str(e))
             continue
 
-    # Determine if this was an actual landfall transition
     has_actual_landfall = False
-    if len(before["latent"]) > 0 and len(after["latent"]) > 0:
-        # Check if we transitioned from ocean to land
+    if before["latent"] and after["latent"]:
         has_actual_landfall = (
             get_environment(before_is_land) == "Ocean"
             and get_environment(after_is_land) == "Land"
@@ -158,16 +148,19 @@ def analyze_flux_transition(ds, track_df, track_id, hours_before=24, hours_after
         },
     }
 
-    if has_actual_landfall:
-        std_print("INFO", "hf", "Landfall flux transition")
-    else:
-        std_print("INFO", "hf", "Heat flux transition", "No landfall")
-    std_print(None, None, "Before Total HF", f"{results['before']['total']:.1f} W/m²")
-    std_print(None, None, "After Total HF", f"{results['after']['total']:.1f} W/m²")
-    std_print(None, None, "Total HF Change", f"{results['change']['total']:.1f} W/m²")
+    label = (
+        "Landfall flux transition"
+        if has_actual_landfall
+        else "Heat flux transition (no landfall)"
+    )
+    std_print("INFO", "hf", label)
+    std_print(None, None, "Before Total HF", f"{results['before']['total']:.1f} W/m^2")
+    std_print(None, None, "After  Total HF", f"{results['after']['total']:.1f} W/m^2")
+    std_print(None, None, "Change Total HF", f"{results['change']['total']:.1f} W/m^2")
     return results
 
 
+# Heat flux evolution (per track)
 def analyze_heat_flux_evolution(flux_df, track_id):
     """Analyze heat flux statistics and ocean/land phase differences"""
     track_id = int(track_id)
@@ -179,6 +172,7 @@ def analyze_heat_flux_evolution(flux_df, track_id):
             len(flux_df) if flux_df is not None else 0,
         )
         return None
+
     results = {
         "track_id": track_id,
         "n_samples": len(flux_df),
@@ -190,11 +184,9 @@ def analyze_heat_flux_evolution(flux_df, track_id):
         "std_total_hf": flux_df["total_heat_flux"].std(),
     }
 
-    # Ocean vs Land phase analysis
     if "is_land" in flux_df.columns:
-        # FIX:  Equalilty comparison
-        ocean_phase = flux_df[flux_df["is_land"] == False]
-        land_phase = flux_df[flux_df["is_land"] == True]
+        ocean_phase = flux_df[~flux_df["is_land"]]
+        land_phase = flux_df[flux_df["is_land"]]
         if len(ocean_phase) > 0:
             results["ocean_mean_latent_hf"] = ocean_phase["latent_heat_flux"].mean()
             results["ocean_mean_sensible_hf"] = ocean_phase["sensible_heat_flux"].mean()
@@ -205,7 +197,6 @@ def analyze_heat_flux_evolution(flux_df, track_id):
             results["land_mean_sensible_hf"] = land_phase["sensible_heat_flux"].mean()
             results["land_mean_total_hf"] = land_phase["total_heat_flux"].mean()
             results["land_n_samples"] = len(land_phase)
-            # Calculate changes only if both phases exist
             if len(ocean_phase) > 0:
                 results["latent_hf_change"] = (
                     results["land_mean_latent_hf"] - results["ocean_mean_latent_hf"]
@@ -219,14 +210,86 @@ def analyze_heat_flux_evolution(flux_df, track_id):
     return results
 
 
+# BOE candidate classifier  (andersen2013)
+def classify_boe_candidate(flux_df, lhf_threshold=70.0, min_hours=18):
+    """Andersen & Shepherd (2013) BOE criterion:
+    inland LHF >= 70 W/m^2 sustained for >= 18 consecutive hours.
+    """
+    if flux_df is None or len(flux_df) < 5:
+        return {
+            "is_boe_candidate": False,
+            "max_consecutive_h": 0,
+            "total_above_h": 0,
+            "peak_lhf_land": np.nan,
+            "mean_lhf_land": np.nan,
+            "boe_start_time": None,
+        }
+
+    df = flux_df.copy().sort_values("time")
+    if "is_land" not in df.columns:
+        df["is_land"] = False
+
+    land = df[df["is_land"]].reset_index(drop=True)
+    if land.empty:
+        return {
+            "is_boe_candidate": False,
+            "max_consecutive_h": 0,
+            "total_above_h": 0,
+            "peak_lhf_land": np.nan,
+            "mean_lhf_land": np.nan,
+            "boe_start_time": None,
+        }
+
+    above = land["latent_heat_flux"] >= lhf_threshold
+    total_above = int(above.sum())
+    peak_lhf = float(land["latent_heat_flux"].max())
+    mean_lhf = float(land["latent_heat_flux"].mean())
+
+    # Longest consecutive run above threshold
+    max_run = 0
+    boe_start = None
+    run = 0
+    run_start_idx = None
+    for i, val in enumerate(above):
+        if val:
+            if run == 0:
+                run_start_idx = i
+            run += 1
+            if run > max_run:
+                max_run = run
+                boe_start = pd.to_datetime(land.iloc[run_start_idx]["time"])
+        else:
+            run = 0
+
+    is_boe = max_run >= min_hours
+
+    result = {
+        "is_boe_candidate": is_boe,
+        "max_consecutive_h": max_run,
+        "total_above_h": total_above,
+        "peak_lhf_land": peak_lhf,
+        "mean_lhf_land": mean_lhf,
+        "boe_start_time": boe_start if is_boe else None,
+    }
+
+    label = "BOE CANDIDATE" if is_boe else "Not BOE candidate"
+    std_print(
+        "INFO",
+        "hf",
+        label,
+        f"max consecutive {max_run}h ≥ {lhf_threshold} W/m^2  "
+        f"(need ≥ {min_hours}h)",
+    )
+    return result
+
+
 def compute_flux_tp_correlation(flux_df, track_df):
     if flux_df is None or len(flux_df) < 5:
         std_print(
             "WARN",
             "hf",
             "Insufficient flux data for correlation (< 5)",
-            len(flux_df),
-            # f"{len(flux_df) if flux_df is not None else 0}",
+            len(flux_df) if flux_df is not None else 0,
         )
         return None
 
@@ -245,37 +308,25 @@ def compute_flux_tp_correlation(flux_df, track_df):
     flux_aligned = flux_df[flux_df["time"].isin(common_times)]["total_heat_flux"].values
     track_aligned = track_df[track_df["time"].isin(common_times)]
     if "tp" in track_aligned.columns:
-        tp_vals = track_aligned["tp"].values * 1000  # Convert to mm/hr
+        tp_vals = track_aligned["tp"].values * 1000  # m/hr -> mm/hr
         if len(flux_aligned) == len(tp_vals):
             try:
                 r, p = pearsonr(flux_aligned, tp_vals)
                 return {"r": r, "p": p, "n": len(flux_aligned)}
             except Exception as e:
-                std_print("WARN", "hf", "Pearson is not computed, set to None", str(e))
-                return None
+                std_print("WARN", "hf", "Pearson not computed", str(e))
     return None
 
 
-def classify_md_duration(track_df, short_threshold_hours=96):  # 96 hours = 4 days
-    track_times = pd.to_datetime(track_df["time"])
-    duration_hours = (track_times.max() - track_times.min()).total_seconds() / 3600
-    classification = {
-        "duration_hours": duration_hours,
-        "is_long_lived": duration_hours >= short_threshold_hours,
-        "category": (
-            "Long-lived MD"
-            if duration_hours >= short_threshold_hours
-            else "Short-lived MD"
-        ),
-        "start_time": track_times.min(),
-        "end_time": track_times.max(),
-        "num_points": len(track_df),
-    }
-    return classification
+def export_heat_flux_results(all_flux_results, output_dir="output"):
+    if not all_flux_results:
+        std_print("WARN", "hf", "No flux results to export")
+        return
+    results_df = pd.DataFrame(all_flux_results)
+    export_results_to_csv(results_df, "hf", output_dir, "heat_flux_analysis_summary")
 
 
 def export_landfall_flux_results(all_landfall_results, output_dir):
-    """Export landfall flux transition results to CSV"""
     if not all_landfall_results:
         std_print("WARN", "hf", "No landfall flux results to export")
         return
@@ -283,37 +334,37 @@ def export_landfall_flux_results(all_landfall_results, output_dir):
     results_list = []
     seen_tracks = set()
     for result in all_landfall_results:
-        if result is not None:
-            track_id = result["track_id"]
-            # Skip duplicate results for same track
-            if track_id in seen_tracks:
-                continue
-            seen_tracks.add(track_id)
-            results_list.append(
-                {
-                    "track_id": result["track_id"],
-                    "reference_time": result["landfall_time"],
-                    "has_actual_landfall": result["has_actual_landfall"],
-                    "before_environment": result.get("before_environment", "Unknown"),
-                    "after_environment": result.get("after_environment", "Unknown"),
-                    "before_latent_hf": result["before"]["latent"],
-                    "before_sensible_hf": result["before"]["sensible"],
-                    "before_total_hf": result["before"]["total"],
-                    "before_n_samples": result["before"]["n_samples"],
-                    "after_latent_hf": result["after"]["latent"],
-                    "after_sensible_hf": result["after"]["sensible"],
-                    "after_total_hf": result["after"]["total"],
-                    "after_n_samples": result["after"]["n_samples"],
-                    "change_latent_hf": result["change"]["latent"],
-                    "change_sensible_hf": result["change"]["sensible"],
-                    "change_total_hf": result["change"]["total"],
-                }
-            )
+        if result is None:
+            continue
+        track_id = result["track_id"]
+        if track_id in seen_tracks:
+            continue
+        seen_tracks.add(track_id)
+        results_list.append(
+            {
+                "track_id": track_id,
+                "reference_time": result["landfall_time"],
+                "has_actual_landfall": result["has_actual_landfall"],
+                "before_environment": result.get("before_environment", "Unknown"),
+                "after_environment": result.get("after_environment", "Unknown"),
+                "before_latent_hf": result["before"]["latent"],
+                "before_sensible_hf": result["before"]["sensible"],
+                "before_total_hf": result["before"]["total"],
+                "before_n_samples": result["before"]["n_samples"],
+                "after_latent_hf": result["after"]["latent"],
+                "after_sensible_hf": result["after"]["sensible"],
+                "after_total_hf": result["after"]["total"],
+                "after_n_samples": result["after"]["n_samples"],
+                "change_latent_hf": result["change"]["latent"],
+                "change_sensible_hf": result["change"]["sensible"],
+                "change_total_hf": result["change"]["total"],
+            }
+        )
 
     if results_list:
         results_df = pd.DataFrame(results_list)
         export_results_to_csv(results_df, "hf", output_dir, "heat_flux_transitions")
-        std_print(None, None, "Using Landfall", results_df["has_actual_landfall"].sum())
+        std_print(None, None, "Using landfall", results_df["has_actual_landfall"].sum())
         std_print(
             None, None, "Using midpoint", (~results_df["has_actual_landfall"]).sum()
         )
@@ -323,92 +374,62 @@ def print_md_classification_summary(classifications, output_dir="output"):
     df = pd.DataFrame(classifications)
     short_mds = df[~df["is_long_lived"]]
     long_mds = df[df["is_long_lived"]]
-    std_print("INFO", "hf", "Total MDs detected tracks", len(df))
+    std_print("INFO", "hf", "Total MDs", len(df))
     std_print(
         None,
         None,
-        "Short-lived MDs (< 96h)",
-        f"{len(short_mds)} ({100 * len(short_mds) / len(df):.1f}%)",
+        "Short-lived (<96h)",
+        f"{len(short_mds)} ({100*len(short_mds)/len(df):.1f}%)",
     )
     std_print(
         None,
         None,
-        "Long-lived MDs (≥ 96h)",
-        f"{len(long_mds)} ({100 * len(long_mds) / len(df):.1f}%)",
+        "Long-lived (≥96h)",
+        f"{len(long_mds)} ({100*len(long_mds)/len(df):.1f}%)",
     )
     if len(short_mds) > 0:
         std_print(
             None,
             None,
-            "Short-lived MD mean duration",
-            f"{short_mds['duration_hours'].mean():.1f} ± {short_mds['duration_hours'].std():.1f} hours",
-        )
-        std_print(
-            None,
-            None,
-            "Short-lived MD range",
-            f"{short_mds['duration_hours'].min():.1f} - {short_mds['duration_hours'].max():.1f} hours",
+            "Short-lived mean duration",
+            f"{short_mds['duration_hours'].mean():.1f} ± {short_mds['duration_hours'].std():.1f} h",
         )
     if len(long_mds) > 0:
         std_print(
             None,
             None,
-            "Long-lived MD mean duration",
-            f"{long_mds['duration_hours'].mean():.1f} ± {long_mds['duration_hours'].std():.1f} hours",
-        )
-        std_print(
-            None,
-            None,
-            "Long-lived MD range",
-            f"{long_mds['duration_hours'].min():.1f} - {long_mds['duration_hours'].max():.1f} hours",
+            "Long-lived mean duration",
+            f"{long_mds['duration_hours'].mean():.1f} ± {long_mds['duration_hours'].std():.1f} h",
         )
 
     classification_summary_path = os.path.join(output_dir, "classification_summary.txt")
-    std_print("SAVED", "hf", "Classification Summary", classification_summary_path)
-
-
-# TODO: trenberth2009earth, bowen ration \beta = SHF / LHF
-# plot_bowen_ratio_evolution(flux_df, track_df, track_id, output_dir):
-
-# TODO: andersen2013 : defines BOE as inland LHF >= 70 W/m² sustained for >= 18 h.
-# classify_boe_candidate(flux_df, lhf_threshold=70, min_hours=18)
+    std_print("SAVED", "hf", "Classification summary", classification_summary_path)
 
 
 # Helper functions
 def deaccumulate(ds, var, t_now, t_prev):
-    """Convert accumulated J m-2 to W m-2."""
+    """Convert accumulated J m-2 to W m-2.  ERA5 sign: negative downward."""
     dt = (pd.to_datetime(t_now) - pd.to_datetime(t_prev)).total_seconds()
     if dt <= 0:
         return np.nan
-    # ERA5 sign convention: negative downward -> positive upward
-    subset_now = float(ds[var].sel(time=t_now).values)
-    subset_prev = float(ds[var].sel(time=t_prev).values)
-    return -(subset_now - subset_prev) / dt
+    v_now = float(ds[var].sel(time=t_now).values)
+    v_prev = float(ds[var].sel(time=t_prev).values)
+    return -(v_now - v_prev) / dt
 
 
 def mean(lst):
-    return np.nanmean(lst) if lst else np.nan
+    return float(np.nanmean(lst)) if lst else np.nan
 
 
 def get_environment(is_land_list):
-    """Determine dominant environment (ocean or land)"""
     if not is_land_list:
         return "Unknown"
     land_count = sum(is_land_list)
     ocean_count = len(is_land_list) - land_count
-    if land_count == 0 and ocean_count == 0:
-        return "Unknown"
     if land_count > ocean_count:
         return "Land"
-    elif ocean_count > land_count:
+    if ocean_count > land_count:
         return "Ocean"
-    else:
-        return "Mixed"  # Equal land and ocean points
-
-
-def export_heat_flux_results(all_flux_results, output_dir="output"):
-    if not all_flux_results:
-        std_print("WARN", "hf", "No flux results to export")
-        return
-    results_df = pd.DataFrame(all_flux_results)
-    export_results_to_csv(results_df, "hf", output_dir, "heat_flux_analysis_summary")
+    if land_count == ocean_count == 0:
+        return "Unknown"
+    return "Mixed"

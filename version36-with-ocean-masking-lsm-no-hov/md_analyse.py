@@ -37,6 +37,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
 
 from utils.progress_utils import ProgressSpinner
 from utils import (
@@ -94,8 +95,11 @@ from soil_moiture_analysis import (
 )
 from heatflux_analysis import (
     classify_md_duration,
-    analyze_heat_flux_evolution,
     analyze_flux_transition,
+    analyze_heat_flux_evolution,
+    plot_bowen_ratio_evolution,
+    classify_boe_candidate,
+    compute_flux_tp_correlation,
     export_heat_flux_results,
     export_landfall_flux_results,
     print_md_classification_summary,
@@ -107,6 +111,7 @@ from timeseries import (
     recycling_ratio_timeseries,
     extract_theta_e_timeseries,
     theta_e_timeseries,
+    dew_point_depression_windward_leeward_timeseries,
 )
 from vortex_analysis import (
     run_track_vortex_analysis,
@@ -122,8 +127,9 @@ from statistics_analysis import (
 )
 
 # Configuration
-MONSOON_YEAR = 2020
+MONSOON_YEAR = 2024
 MONSOON_SEASONS = {
+    2017: ["June-2017", "July-2017", "August-2017", "September-2017"],
     2018: ["June-2018", "July-2018", "August-2018", "September-2018"],
     2019: ["June-2019", "July-2019", "August-2019", "September-2019"],
     2020: ["June-2020", "July-2020", "August-2020", "September-2020"],
@@ -344,10 +350,21 @@ def generate_summary_report(
         else:
             f.write("   No memory data\n\n")
 
-        # TODO: add recycling ratio summary
-        # f.write("7. Recycling ratio\n")
-        # all_recycling_results
-
+        f.write("7. Precipitation recycling ratio  (Eltahir & Bras 1996)\n")
+        if all_recycling_results:
+            df_rr = pd.DataFrame(all_recycling_results)
+            mean_land    = df_rr["mean_rho_land"].mean()
+            high_rr      = (df_rr["mean_rho_land"] > 0.25).sum()
+            long_rr_mean = df_rr.loc[df_rr["is_long_lived"],  "mean_rho_land"].mean()
+            short_rr_mean= df_rr.loc[~df_rr["is_long_lived"], "mean_rho_land"].mean()
+            f.write(f"   Tracks with recycling data: {len(df_rr)}\n")
+            f.write(f"   Mean land-phase ρ (all):    {mean_land:.3f}\n")
+            f.write(f"   Tracks with ρ_land > 0.25:  {high_rr}/{len(df_rr)}\n")
+            f.write(f"   Mean ρ_land long-lived:     {long_rr_mean:.3f}\n")
+            f.write(f"   Mean ρ_land short-lived:    {short_rr_mean:.3f}\n")
+            f.write("   Note: Single-column Budyko formulation; values valid only when P ≥ 0.10 mm/hr.\n\n")
+        else:
+            f.write("   No recycling data\n\n")
     std_print("SAVED", "an", "Summary report", report_path)
     return report_path
 
@@ -497,16 +514,17 @@ if __name__ == "__main__":
             # 5.4 Heat flux
             print(f"\n-- Heat flux analysis (track {track_id}) --")
             flux_df = None
-            try:
-                classification = classify_md_duration(track_df, short_threshold_hours=96)
-                classification["track_id"] = track_id
-                all_classifications.append(classification)
-                std_print("INFO", "an", "Duration",
-                          f"{classification['duration_hours']:.1f} h  "
-                          f"({classification['num_points']} pts)")
+            heatflux_dir = os.path.join(track_dir, "heat_flux_analysis")
+            os.makedirs(heatflux_dir, exist_ok=True)
 
-                heatflux_dir = os.path.join(track_dir, "heat_flux_analysis")
-                os.makedirs(heatflux_dir, exist_ok=True)
+            classification = classify_md_duration(track_df, short_threshold_hours=96)
+            classification["track_id"] = track_id
+            all_classifications.append(classification)
+            std_print("INFO", "an", "Duration",
+                      f"{classification['duration_hours']:.1f} h  "
+                      f"({classification['num_points']} pts)")
+
+            try:
                 flux_df = extract_heat_flux_timeseries(track_ds, track_df, track_id, buffer_km=100)
                 if flux_df is not None:
                     flux_dict[track_id] = flux_df.copy()
@@ -556,10 +574,38 @@ if __name__ == "__main__":
                     std_print("WARN", "an", "TP/SWVL1 time series skipped", "no correlation result with series data")
                 if flux_df is not None:
                     hf_timeseries(flux_df, track_id, output_dir=ts_dir)
+                    # Bowen ratio  (trenberth2009earth)
+                    try:
+                        bowen_summary = plot_bowen_ratio_evolution(flux_df, track_id, output_dir=ts_dir)
+                        if bowen_summary:
+                            std_print("INFO", "an", "Bowen ratio mean (land)",
+                                      f"{bowen_summary.get('mean_bowen_land', np.nan):.2f}")
+                    except Exception as e:
+                        std_print("ERROR", "an", "Bowen ratio plot failed", str(e))
+                    # BOE candidate classification  (andersen2013)
+                    try:
+                        boe_result = classify_boe_candidate(flux_df, lhf_threshold=70.0, min_hours=18)
+                        if boe_result:
+                            boe_csv = os.path.join(heatflux_dir, f"track_{track_id}_boe_classification.csv")
+                            pd.DataFrame([{**boe_result, "track_id": track_id}]).to_csv(boe_csv, index=False)
+                            std_print("EXPORT", "an", "BOE classification CSV", boe_csv)
+                    except Exception as e:
+                        std_print("ERROR", "an", "BOE classification failed", str(e))
                 theta_df = extract_theta_e_timeseries(
                     track_ds, track_df, track_id, buffer_km=100
                 )
                 theta_e_timeseries(theta_df, track_id, output_dir=ts_dir)
+                # DPD Windward/Leeward (orographic deception signature)
+                try:
+                    if theta_df is not None:
+                        dpd_summary = dew_point_depression_windward_leeward_timeseries(
+                            theta_df, track_df, track_id, output_dir=ts_dir,
+                        )
+                        if dpd_summary and not np.isnan(dpd_summary.get("dpd_jump_K", np.nan)):
+                            std_print("INFO", "an", "DPD jump (leeward − windward)",
+                                      f"{dpd_summary['dpd_jump_K']:.2f} K")
+                except Exception as e:
+                    std_print("ERROR", "an", "DPD windward/leeward plot failed", str(e))
 
                 rr_df = None
                 if flux_df is not None and correlation_result is not None:
@@ -585,7 +631,7 @@ if __name__ == "__main__":
                                 E_mmh = np.abs(lhf_aligned) / (L_v * RHO_W) * 3600.0 * 1000.0
                                 # Recycling ratio ρ = E / P
                                 with np.errstate(divide='ignore', invalid='ignore'):
-                                    rho = np.where(tp_aligned >= 0.01, np.clip(E_mmh / tp_aligned, 0, 1), np.nan)
+                                    rho = np.where(tp_aligned >= 0.10, np.clip(E_mmh / tp_aligned, 0, 1), np.nan)
 
                                 is_land_vals = []
                                 for t in common_times[valid]:
@@ -604,6 +650,21 @@ if __name__ == "__main__":
                                     "is_land": is_land_vals,
                                 }
                                 recycling_ratio_timeseries(rr_df, track_id, output_dir=ts_dir)
+
+                                rho_arr      = np.array(rho)
+                                land_arr     = np.array(is_land_vals, dtype=bool)
+                                valid_mask   = ~np.isnan(rho_arr)
+                                land_valid   = valid_mask & land_arr
+                                all_recycling_results.append({
+                                    "track_id":        track_id,
+                                    "mean_rho":        float(np.nanmean(rho_arr[valid_mask]))  if valid_mask.any()  else np.nan,
+                                    "mean_rho_land":   float(np.nanmean(rho_arr[land_valid]))  if land_valid.any()  else np.nan,
+                                    "max_rho_land":    float(np.nanmax(rho_arr[land_valid]))   if land_valid.any()  else np.nan,
+                                    "n_valid":         int(valid_mask.sum()),
+                                    "n_valid_land":    int(land_valid.sum()),
+                                    "duration_hours":  classification.get("duration_hours", np.nan),
+                                    "is_long_lived":   classification.get("is_long_lived",  False),
+                                })
                             else:
                                 std_print("WARN", "an", "Insufficient aligned data for recycling ratio")
                     except Exception as e:
@@ -668,7 +729,6 @@ if __name__ == "__main__":
                     if elev_plot_path:
                         std_print("SAVED", "an", "Elevation track plot", elev_plot_path)
                 track_df = run_track_elevation_analysis(track_df, track_id, elev_dir)
-                # Update track_dict so elevation cols are available to global analyses
                 track_dict[track_id] = track_df.copy()
             except Exception as e:
                 std_print("ERROR", "an", "Elevation failed", str(e))
@@ -793,7 +853,6 @@ if __name__ == "__main__":
         )
         if elevation_metrics is not None and not elevation_metrics.empty:
             std_print("INFO", "an", "Elevation analysis done", f"{len(elevation_metrics)} tracks")
-            # Takes track_dict, not full_track_df+vrt_path
             plot_global_elevation_comparison(track_dict, output_dir=elevation_dir)
             plot_global_elevation_speed_map( track_dict, output_dir=elevation_dir)
         if vrt_path and os.path.exists(vrt_path):
@@ -813,7 +872,140 @@ if __name__ == "__main__":
         std_print("ERROR", "an", "Global vortex failed", str(e))
         traceback.print_exc()
 
-    # 6.6 Statistical analyses
+    # 6.6 Global recycling ratio
+    std_print("INFO", "an", "--- Global Recycling Ratio ---")
+    recycling_dir = os.path.join(output_dir, "Global_recycling_analysis")
+    os.makedirs(recycling_dir, exist_ok=True)
+    try:
+        if all_recycling_results:
+            rr_global_df = pd.DataFrame(all_recycling_results)
+            rr_csv = os.path.join(recycling_dir, "all_tracks_recycling_ratio.csv")
+            rr_global_df.to_csv(rr_csv, index=False)
+            std_print("EXPORT", "an", "Global recycling CSV", rr_csv)
+
+            # Print summary stats
+            std_print(None, None, "Mean ρ (all, land-phase)", f"{rr_global_df['mean_rho_land'].mean():.3f}")
+            std_print(None, None, "Tracks with ρ_land > 0.25", f"{(rr_global_df['mean_rho_land'] > 0.25).sum()}/{len(rr_global_df)}")
+
+            # TODO: move this into module dunction and just call it here
+            # Plot 1: ρ_land vs duration scatter
+            try:
+                fig, ax = plt.subplots(figsize=(10, 7))
+                colors = ["tomato" if b else "steelblue"
+                          for b in rr_global_df["is_long_lived"]]
+                sc = ax.scatter(
+                    rr_global_df["duration_hours"],
+                    rr_global_df["mean_rho_land"],
+                    c=colors,
+                    s=90,
+                    edgecolors="black",
+                    linewidth=0.7,
+                    alpha=0.85,
+                    zorder=3,
+                )
+                ax.axhline(
+                    0.25,
+                    color="darkorange",
+                    linestyle="--",
+                    linewidth=1.4,
+                    label="ρ = 0.25 (significant local recycling)"
+                )
+                ax.axhline(
+                    0.10,
+                    color="gray",
+                    linestyle=":",
+                    linewidth=1.0,
+                    label="ρ = 0.10 (oceanic baseline)"
+                )
+                # Annotate each point with track_id
+                for _, row in rr_global_df.iterrows():
+                    ax.annotate(
+                        str(int(row["track_id"])),
+                        (row["duration_hours"], row["mean_rho_land"]),
+                        fontsize=10,
+                        xytext=(4, 4),
+                        textcoords="offset points",
+                    )
+                ax.legend(
+                    handles=[
+                        Patch(facecolor="tomato",   edgecolor="black", label="Long-lived (≥96 h)"),
+                        Patch(facecolor="steelblue", edgecolor="black", label="Short-lived (<96 h)"),
+                        plt.Line2D(
+                            [0],
+                            [0],
+                            color="darkorange",
+                            linestyle="--",
+                            label="ρ = 0.25 threshold"
+                        ),
+                    ],
+                    loc="upper left", fontsize=10,
+                )
+                ax.set_xlabel("Track duration (hours)", fontsize=12, fontweight="bold")
+                ax.set_ylabel("Mean land-phase recycling ratio ρ", fontsize=12, fontweight="bold")
+                ax.set_title(
+                    "Global: Precipitation Recycling Ratio vs MD Duration\n"
+                    "Higher ρ during land phase → stronger BOE moisture feedback "
+                    "(Eltahir & Bras 1996)",
+                    fontsize=13, fontweight="bold",
+                )
+                ax.grid(True, alpha=0.3, linestyle="--")
+                plt.tight_layout()
+                scatter_path = os.path.join(recycling_dir, "global_recycling_vs_duration.png")
+                plt.savefig(scatter_path, dpi=250, bbox_inches="tight")
+                plt.close(fig)
+                std_print("SAVED", "an", "Global recycling scatter", scatter_path)
+            except Exception as e:
+                std_print("ERROR", "an", "Recycling scatter plot failed", str(e))
+
+            # Plot 2: box-plot short vs long-lived
+            try:
+                short_rho = rr_global_df.loc[~rr_global_df["is_long_lived"], "mean_rho_land"].dropna()
+                long_rho  = rr_global_df.loc[ rr_global_df["is_long_lived"],  "mean_rho_land"].dropna()
+                if len(short_rho) > 0 or len(long_rho) > 0:
+                    fig, ax = plt.subplots(figsize=(8, 6))
+                    data_bp  = [short_rho.values, long_rho.values]
+                    labels_bp = [f"Short-lived\n(<96 h)\nn={len(short_rho)}",
+                                 f"Long-lived\n(≥96 h)\nn={len(long_rho)}"]
+                    bp = ax.boxplot(
+                        data_bp,
+                        labels=labels_bp,
+                        patch_artist=True,
+                        widths=0.45,
+                        notch=False
+                    )
+                    bp["boxes"][0].set_facecolor("steelblue")
+                    bp["boxes"][1].set_facecolor("tomato")
+                    for box in bp["boxes"]:
+                        box.set_alpha(0.6)
+                    ax.axhline(
+                        0.25,
+                        color="darkorange",
+                        linestyle="--",
+                        linewidth=1.4,
+                        label="ρ = 0.25 threshold"
+                    )
+                    ax.set_ylabel("Mean land-phase recycling ratio ρ", fontsize=12, fontweight="bold")
+                    ax.set_title(
+                        "Recycling Ratio: Short vs Long-lived MDs",
+                        # "BOE prediction: long-lived MDs should show higher ρ",
+                        fontsize=12, fontweight="bold",
+                    )
+                    ax.legend(fontsize=10)
+                    ax.grid(True, alpha=0.35, linestyle="--", axis="y")
+                    plt.tight_layout()
+                    box_path = os.path.join(recycling_dir, "global_recycling_boxplot.png")
+                    plt.savefig(box_path, dpi=250, bbox_inches="tight")
+                    plt.close(fig)
+                    std_print("SAVED", "an", "Global recycling boxplot", box_path)
+            except Exception as e:
+                std_print("ERROR", "an", "Recycling boxplot failed", str(e))
+        else:
+            std_print("WARN", "an", "No recycling results for global export")
+    except Exception as e:
+        std_print("ERROR", "an", "Global recycling failed", str(e))
+        traceback.print_exc()
+
+    # 6.7 Statistical analyses
     std_print("INFO", "an", "--- Statistical Analyses ---")
     try:
         fsi_csv_path = os.path.join(coupling_metrics_dir, "coupling_metrics_FSI.csv")
@@ -852,16 +1044,21 @@ if __name__ == "__main__":
         std_print("ERROR", "an", "Statistical analyses failed", str(e))
         traceback.print_exc()
 
-    # 6.7 MD classification summary
+    # 6.8 MD classification summary
     if all_classifications:
         print_md_classification_summary(all_classifications, output_dir)
 
-    # 6.8 Overall summary report
+    # 6.9 Overall summary report
     generate_summary_report(
-        all_correlation_results, all_flux_results, all_landfall_results,
-        all_classifications, all_sm_results,
+        all_correlation_results,
+        all_flux_results,
+        all_landfall_results,
+        all_classifications,
+        all_sm_results,
         all_asm_results if not isinstance(all_asm_results, pd.DataFrame) else all_asm_results.to_dict("records"),
-        all_memory_results, output_dir,
+        all_memory_results,
+        all_recycling_results,
+        output_dir,
     )
 
     elapsed = time.time() - t_start_all
