@@ -23,7 +23,7 @@
 #    - 2015–2016: A very strong, "super" El Niño
 
 # TEST:
-# 1. For 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025 expect -> (FSI > 0.4 long; clay > 30%, ACF > 0.35)
+# 1. For 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025 expect -> (FSI > 0.4 long; clay > 30%, ACF > 0.35)
 # 2. For 2024:
 #     Mechanical Drag (TSI): If Track 4 has a high TSI but low FSI, it means it hit "rough" ground with no "fuel," leading to immediate decay.
 #     Moisture Fuel (FSI): Look at the mean_swvl1 in your FSI data. Track 5 likely shows a sustained soil moisture level above 0.35 m³/m³ during its land phase.

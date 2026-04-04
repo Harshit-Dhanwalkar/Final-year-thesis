@@ -2,6 +2,7 @@
 /venv/
 output*
 output*/
+output_*
 __pycache__/
 *.pyc
 

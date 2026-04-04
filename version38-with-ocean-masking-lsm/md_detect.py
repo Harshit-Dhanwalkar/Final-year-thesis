@@ -71,6 +71,8 @@ def detect_year_from_data():
 # Year
 # MONSOON_YEAR = 2024
 # MONSOON_SEASONS = {
+#     2008: ["June-2008", "July-2008", "August-2008", "September-2008"],
+#     2009: ["June-2009", "July-2009", "August-2009", "September-2009"],
 #     2010: ["June-2010", "July-2010", "August-2010", "September-2010"],
 #     2011: ["June-2011", "July-2011", "August-2011", "September-2011"],
 #     2012: ["June-2012", "July-2012", "August-2012", "September-2012"],
