@@ -1326,7 +1326,7 @@ def plot_global_elevation_comparison(track_dict, output_dir):
             None
         )
         speeds = df[speed_col].values.astype(float) if speed_col else np.full(len(df), 15.0)
-        speed_unit = "m/s" if speed_col == "speed_ms" else "km/h"
+        # speed_unit = "m/s" if speed_col == "speed_ms" else "km/h" # for legend
 
         # Track line - width mapped to speed (thin = slow, thick = fast)
         speed_norm = np.clip(
@@ -1334,7 +1334,7 @@ def plot_global_elevation_comparison(track_dict, output_dir):
             / (np.nanpercentile(speeds, 95) - np.nanpercentile(speeds, 5) + 1e-6),
             0, 1
         )
-        lw_arr = 2.0 + speed_norm * 4.0
+        lw_arr = 1.5 + speed_norm * 4.0
 
         points = np.array([lons, lats]).T.reshape(-1, 1, 2)
         segments = np.concatenate([points[:-1], points[1:]], axis=1)
@@ -1446,7 +1446,7 @@ def plot_global_elevation_comparison(track_dict, output_dir):
                   # f"speed:{mean_speed_land:.1f}{speed_unit}"
         ))
 
-    # 500 m threshold legend proxy
+    # 500m threshold legend proxy
     ax.plot(
         [],
         [],
@@ -1478,9 +1478,9 @@ def plot_global_elevation_comparison(track_dict, output_dir):
     # Export
     if summary_rows:
         summary_df = pd.DataFrame(summary_rows)
-        csv_path = os.path.join(output_dir, "track_terrain_summary.csv")
-        summary_df.to_csv(csv_path, index=False)
-        std_print("EXPORT", "ea", "Track terrain summary", csv_path)
+        track_terrain_summary_CSV = os.path.join(output_dir, "track_terrain_summary.csv")
+        summary_df.to_csv(track_terrain_summary_CSV, index=False)
+        std_print("EXPORT", "ea", "Track terrain summary", track_terrain_summary_CSV)
     return summary_rows
 
 
@@ -1675,11 +1675,11 @@ def plot_global_elevation_speed_map(track_dict, output_dir):
 
     # Save
     os.makedirs(output_dir, exist_ok=True)
-    outpath = os.path.join(output_dir, "Elevation_with_speed_map.png")
-    plt.savefig(outpath, dpi=300, bbox_inches="tight")
+    elv_spped_map = os.path.join(output_dir, "Elevation_with_speed_map.png")
+    plt.savefig(elv_spped_map, dpi=300, bbox_inches="tight")
     plt.close(fig)
-    std_print("SAVED", "ea", "Global elevation-speed map", outpath)
-    return outpath
+    std_print("SAVED", "ea", "Global elevation-speed map", elv_spped_map)
+    return elv_spped_map
 
 
 def plot_barrier_encounter_profile(track_df, track_id, output_dir,threshold_m_per_h=15.0, min_steps=3):
@@ -1843,10 +1843,10 @@ def plot_barrier_encounter_profile(track_df, track_id, output_dir,threshold_m_pe
  
     # Save
     os.makedirs(output_dir, exist_ok=True)
-    outpath = os.path.join(output_dir, f"track_{track_id}_barrier_encounters.png")
-    plt.savefig(outpath, dpi=300, bbox_inches="tight")
+    barr_encounter = os.path.join(output_dir, f"track_{track_id}_barrier_encounters.png")
+    plt.savefig(barr_encounter, dpi=300, bbox_inches="tight")
     plt.close(fig)
-    std_print("SAVED", "ea", "Barrier encounter profile", outpath)
+    std_print("SAVED", "ea", "Barrier encounter profile", barr_encounter)
  
     # Export encounter table
     if response_lines:
@@ -2263,12 +2263,13 @@ def plot_bearing_change_at_terrain(track_df, track_id, output_dir):
         std_print("EXPORT", "ea", "Terrain crossing table", terrain_crossings_CSV)
     return bearing_terrain_path
 
+
 def compute_terrain_corridor_width(track_df, track_id, output_dir, transect_km=200.0, elev_threshold_m=200.0, n_transect_pts=41):
     """
     Corridor width analysis: at each land-phase track point, extract a
     perpendicular elevation transect ±transect_km across the track bearing
     and measure the continuous width of terrain below elev_threshold_m.
- 
+
     A wide low-elevation corridor means the MD can propagate without
     hitting blocking terrain on its flanks. The long-lived track should
     show a consistently wide corridor; terminating tracks should show the
@@ -2279,11 +2280,11 @@ def compute_terrain_corridor_width(track_df, track_id, output_dir, transect_km=2
     is_land_arr = df["is_land"].values.astype(bool) \
         if "is_land" in df.columns else np.ones(len(df), bool)
     land_df = df[is_land_arr].reset_index(drop=True)
- 
+
     if len(land_df) < 3:
-        std_print("WARN", "ea", "Too few land-phase points for corridor analysis")
+        std_print("WARN", "ea", "Insufficient land-phase points for corridor analysis (< 3)")
         return pd.DataFrame()
- 
+
     times = pd.to_datetime(land_df["time"])
  
     # Perpendicular distances to sample
@@ -2344,7 +2345,6 @@ def compute_terrain_corridor_width(track_df, track_id, output_dir, transect_km=2
             "min_transect_elev": float(np.nanmin(elev_arr[elev_arr < 9999])),
             "max_transect_elev": float(np.nanmax(elev_arr[elev_arr < 9999])),
         })
- 
     result_df = pd.DataFrame(records)
  
     # Export
@@ -2412,10 +2412,10 @@ def compute_terrain_corridor_width(track_df, track_id, output_dir, transect_km=2
     ax2.legend(loc="upper right", **legend_style())
  
     plt.tight_layout()
-    outpath = os.path.join(output_dir, f"track_{track_id}_corridor_width.png")
-    plt.savefig(outpath, dpi=300, bbox_inches="tight")
+    corridor_width = os.path.join(output_dir, f"track_{track_id}_corridor_width.png")
+    plt.savefig(corridor_width, dpi=300, bbox_inches="tight")
     plt.close(fig)
-    std_print("SAVED", "ea", "Corridor width plot", outpath)
+    std_print("SAVED", "ea", "Corridor width plot", corridor_width)
     return result_df
  
  
@@ -2431,9 +2431,6 @@ def compute_effective_blocking_factor(track_df, track_id, output_dir, ahead_km=5
     A rising BF means the MD is approaching higher terrain - a mechanistically
     cleaner indicator than raw elevation because it captures the *gradient*
     the system is about to experience.
- 
-    Plotted alongside translation speed to show the lead/lag relationship
-    between the terrain gradient signal and speed response.
     """
     track_id = int(track_id)
     df = track_df.sort_values("time").reset_index(drop=True)
@@ -2492,6 +2489,7 @@ def compute_effective_blocking_factor(track_df, track_id, output_dir, ahead_km=5
     bf_df.to_csv(blocking_factor_CSV, index=False)
     std_print("EXPORT", "ea", "Blocking factor results", blocking_factor_CSV)
  
+    # Figure
     # Plot: dual-axis - BF and speed on same time axis
     fig, ax1 = plt.subplots(figsize=(16, 7))
     bbox = common_bbox()

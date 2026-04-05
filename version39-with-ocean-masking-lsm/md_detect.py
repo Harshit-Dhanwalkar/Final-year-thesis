@@ -71,6 +71,9 @@ def detect_year_from_data():
 # Year
 # MONSOON_YEAR = 2024
 # MONSOON_SEASONS = {
+#     2005: ["June-2005", "July-2005", "August-2005", "September-2005"],
+#     2006: ["June-2006", "July-2006", "August-2006", "September-2006"],
+#     2007: ["June-2007", "July-2007", "August-2007", "September-2007"],
 #     2008: ["June-2008", "July-2008", "August-2008", "September-2008"],
 #     2009: ["June-2009", "July-2009", "August-2009", "September-2009"],
 #     2010: ["June-2010", "July-2010", "August-2010", "September-2010"],
@@ -1553,7 +1556,7 @@ def plot_and_export_tracks(track_df, output_dir):
     plt.tight_layout()
 
     # Save
-    md_track_path = os.path.join(output_dir, f"MD_track_{MONSOON_YEAR}.png")
+    md_track_path = os.path.join(output_dir, f"MD_tracks_{MONSOON_YEAR}.png")
     plt.savefig(md_track_path)
     std_print("SAVED", "md", f"All Tracks for {MONSOON_YEAR} plot", md_track_path)
     plt.close(fig)

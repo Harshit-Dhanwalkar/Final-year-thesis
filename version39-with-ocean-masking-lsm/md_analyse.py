@@ -9,28 +9,35 @@
 #    dem = rioxarray.open_rasterio('SRTM_India.tif')
 #    tracks['MEAN_ELEV'] = dem.interp(...)  # r(dur,elev)<0.7
 # 4. Implement: analyze_asm_fsi_relationship, analyze_gam_nonlinearity, test_granger_causality
-# 5. ding1994monsoon and rashid2005track: land-phase vorticity tendency from the Azimuthal Hovmöller data would tell whether the MD is spinning
-#    down due to surface friction or being maintained by convective stretching. This directly tests whether the terrain-braking is frictional or thermodynamic.
+# 5. ding1994monsoon and rashid2005track: land-phase vorticity tendency from the Azimuthal Hovmöller data would tell whether the MD is spinning down
+#    due to surface friction or being maintained by convective stretching. This directly tests whether the terrain-braking is frictional or thermodynamic.
 # 6. Energy rates/factors
 #    - CAPE (Convective Available Potential Energy)
 #    - CIN or CINE (Convective Inhibition Energy)
 #    - LFC (Level of Free Convection)
 #    - LCL (Lifted Condensation Level)
 #    - EL (Equilibrium Level)
-# 7. El Niño years:
-#    - 2023–2024: Recorded as one of the strongest on record
-#    - 2018–2019: A moderate, central-Pacific focused event
-#    - 2015–2016: A very strong, "super" El Niño
+# 7. +  El Niño years:
+#      - 2023–2024: Recorded as one of the strongest on record
+#      - 2018–2019: A moderate, central-Pacific focused event
+#      - 2015–2016: A very strong, "super" El Niño
+#      - 2009–2010: Known as a strong "Central Pacific" El Niño
+#    + La Nina years:
+#      - 2020–2023: A rare "triple-dip" La Niña, lasting for three consecutive years
+#      - 2010–2011: A strong event
+#      - 2007–2008: A significant cold-phase event
 
 # TEST:
-# 1. For 2008, 2009,2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025 expect -> (FSI > 0.4 long; clay > 30%, ACF > 0.35)
+# 1. For 2003, 2004, 2005, 2006, 2007, 2008, 2009,2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025
+#    expect -> (FSI > 0.4 long; clay > 30%, ACF > 0.35)
 # 2. For 2024:
 #     Mechanical Drag (TSI): If Track 4 has a high TSI but low FSI, it means it hit "rough" ground with no "fuel," leading to immediate decay.
 #     Moisture Fuel (FSI): Look at the mean_swvl1 in your FSI data. Track 5 likely shows a sustained soil moisture level above 0.35 m³/m³ during its land phase.
 #     The "Barrier" Timing: Check elevation_summary.txt. "First Barrier Encounter Time"
 #     - Longevity Hypothesis: If Track 5 encountered its first major elevation barrier after it had already established a "Brown Ocean" feedback (high FSI),
 #       the momentum of the vortex was likely strong enough to overcome the terrain.
-#     - Death Hypothesis: If Tracks 1 or 4 hit a barrier immediately upon landfall (within 6-12 hours), the vortex would have been disrupted before the land-surface feedback could kick in.
+#     - Death Hypothesis: If Tracks 1 or 4 hit a barrier immediately upon landfall (within 6-12 hours), the vortex would have been disrupted before the
+#       land-surface feedback could kick in.
 
 
 import os
