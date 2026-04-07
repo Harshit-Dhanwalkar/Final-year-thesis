@@ -31,7 +31,7 @@ warnings.filterwarnings("ignore", message="Mean of empty slice")
 EARTH_R = 6371000.0
 EARTH_OMEGA = 7.2921159e-5
 
-LEVLES = 36
+LEVELS = 36
 
 VARIABLE_UNITS = {
     "tp": "mm/hr",
@@ -95,7 +95,7 @@ def plot_hovmoller_azimuthal_average(
     if not os.path.exists(plot_dir):
         os.makedirs(plot_dir)
 
-    levels=LEVLES
+    levels=LEVELS
     var_label = VARIABLE_NAMES.get(var_name, var_name)
     var_unit = VARIABLE_UNITS.get(var_name, "")
 

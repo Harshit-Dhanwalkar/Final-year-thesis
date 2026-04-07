@@ -52,7 +52,6 @@ from utils import (
     get_time_coord,
     common_bbox,
     legend_style,
-    clamp_to_domain,
     calculate_buffer_deg,
     pearsonr_corrected,
 )
@@ -891,7 +890,7 @@ def future_track_bbox(track_df, buffer_km=100):
 def classify_antecedent_conditions(asmi_series):
     """
     Classify tracks as Wet / Dry based on median ASMI split.
-    Returns a boolean Series: True = Wet.
+    Returns True for Wet.
     """
     valid = asmi_series.dropna()
     if len(valid) < 4:
@@ -901,14 +900,7 @@ def classify_antecedent_conditions(asmi_series):
 
 
 def compute_antecedent_for_track(ds, track_df, track_id, output_dir):
-    """
-    Compute all antecedent SM metrics for a single track.
-
-    Returns a dict with:
-      - asmi_{lag} for each lag window
-      - origin_type, duration_hours, has_landfall
-      - landfall_time (pd.Timestamp or None)
-    """
+    """Compute all antecedent SM metrics for a single track"""
     track_id = int(track_id)
     track = (
         track_df[track_df["track_id"] == track_id].sort_values("time")
@@ -938,7 +930,9 @@ def compute_antecedent_for_track(ds, track_df, track_id, output_dir):
     # Shift forward by 6h so the earliest inland points are included in the antecedent window.
     origin = find_origin_type(track)
     if landfall_time is None and origin == "land_originated":
-        ref_time = times.min() + pd.Timedelta(hours=6)
+        ref_time = pd.to_datetime(track_df["time"].min())
+        if find_origin_type(track_df) == "land":
+            ref_time = ref_time + pd.Timedelta(hours=6)
 
     # Multi-lag ASMI
     asmi_dict = compute_asmi_multi_lag(ds, track, ref_time, buffer_km=100)

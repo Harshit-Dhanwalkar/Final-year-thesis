@@ -89,11 +89,9 @@ def analyze_flux_transition(ds, track_df, track_id, hours_before=24, hours_after
                 slhf_prev = float(sp["slhf"].mean().values)
                 ishf_now = float(sn["ishf"].mean().values)
                 ishf_prev = float(sp["ishf"].mean().values)
-                # FIX: Check sign convention. -(subset_now - subset_prev).
-                # NOTE: ERA5 sign: negative = upward (away from surface = energy into atmosphere)
-                # Positive gives upward flux (into surface = energy into land surface).
-                slhf_w = (slhf_now - slhf_prev) / dt_seconds
-                ishf_w = (ishf_now - ishf_prev) / dt_seconds
+                #  ERA5 accumulated fluxes are negative-downward and positive-upwards
+                slhf_w = -(slhf_now - slhf_prev) / dt_seconds
+                ishf_w = -(ishf_now - ishf_prev) / dt_seconds
             else:
                 std_print("WARN", "hf", f"No valid heat flux variables at {t}")
                 continue

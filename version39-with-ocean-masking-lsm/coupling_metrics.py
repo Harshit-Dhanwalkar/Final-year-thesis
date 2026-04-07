@@ -320,19 +320,23 @@ def validate_coupling_data(df):
     missing_pct = df.isnull().mean() * 100
     if any(missing_pct > 20):
         return False, "Too many missing values"
+
     required_columns = ["track_id", "FSI", "correlation_strength"]
     missing = [col for col in required_columns if col not in df.columns]
     if missing:
         issues.append(f"Missing columns: {missing}")
+
     # Check for NaN values
     nan_counts = df[required_columns].isna().sum()
     if nan_counts.any():
         issues.append(f"NaN values: {nan_counts.to_dict()}")
+
     # Check data ranges
     if "FSI" in df.columns:
         fsi_range = (df["FSI"].min(), df["FSI"].max())
         if fsi_range[0] < 0 or fsi_range[1] > 1:
             issues.append(f"FSI out of expected range [0,1]: {fsi_range}")
+
     if "correlation_strength" in df.columns:
         corr_range = (
             df["correlation_strength"].min(),

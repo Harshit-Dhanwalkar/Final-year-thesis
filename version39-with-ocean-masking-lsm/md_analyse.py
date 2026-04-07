@@ -1,4 +1,5 @@
 # TODO:
+# 0. Use GPM data for TP : https://github.com/aus-ref-clim-data-nci/GPM
 # 1. H4 GAM: pip install pygam; SM ~ s(TP) -> Plateau fig
 # 2. H5 HWSD:
 #    ds = xr.open_dataset('SoilGrids250m_CLAY.nc')
@@ -28,7 +29,7 @@
 #      - 2007–2008: A significant cold-phase event
 
 # TEST:
-# 1. For 2003, 2004, 2005, 2006, 2007, 2008, 2009,2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025
+# 1. For 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025
 #    expect -> (FSI > 0.4 long; clay > 30%, ACF > 0.35)
 # 2. For 2024:
 #     Mechanical Drag (TSI): If Track 4 has a high TSI but low FSI, it means it hit "rough" ground with no "fuel," leading to immediate decay.

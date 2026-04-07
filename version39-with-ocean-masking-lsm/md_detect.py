@@ -68,33 +68,6 @@ def detect_year_from_data():
         return max(years)
     return None
 
-# Year
-# MONSOON_YEAR = 2024
-# MONSOON_SEASONS = {
-#     2005: ["June-2005", "July-2005", "August-2005", "September-2005"],
-#     2006: ["June-2006", "July-2006", "August-2006", "September-2006"],
-#     2007: ["June-2007", "July-2007", "August-2007", "September-2007"],
-#     2008: ["June-2008", "July-2008", "August-2008", "September-2008"],
-#     2009: ["June-2009", "July-2009", "August-2009", "September-2009"],
-#     2010: ["June-2010", "July-2010", "August-2010", "September-2010"],
-#     2011: ["June-2011", "July-2011", "August-2011", "September-2011"],
-#     2012: ["June-2012", "July-2012", "August-2012", "September-2012"],
-#     2013: ["June-2013", "July-2013", "August-2013", "September-2013"],
-#     2014: ["June-2014", "July-2014", "August-2014", "September-2014"],
-#     2015: ["June-2015", "July-2015", "August-2015", "September-2015"],
-#     2016: ["June-2016", "July-2016", "August-2016", "September-2016"],
-#     2017: ["June-2017", "July-2017", "August-2017", "September-2017"],
-#     2018: ["June-2018", "July-2018", "August-2018", "September-2018"],
-#     2019: ["June-2019", "July-2019", "August-2019", "September-2019"],
-#     2020: ["June-2020", "July-2020", "August-2020", "September-2020"],
-#     2021: ["June-2021", "July-2021", "August-2021", "September-2021"],
-#     2022: ["June-2022", "July-2022", "August-2022", "September-2022"],
-#     2023: ["June-2023", "July-2023", "August-2023", "September-2023"],
-#     2024: ["June-2024", "July-2024", "August-2024", "September-2024"],
-#     2025: ["June-2025", "July-2025", "August-2025", "September-2025"],
-# }
-# MONTH_DIRS = MONSOON_SEASONS.get(MONSOON_YEAR, [])
-
 # Clipped monsoon domain
 clipped_min_lat = 7.0
 clipped_max_lat = 30.0
