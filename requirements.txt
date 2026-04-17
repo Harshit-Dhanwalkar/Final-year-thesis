@@ -8,6 +8,7 @@ shapely
 pandas
 geopandas
 xarray
+scikit-image
 dask[distributed]
 numba
 store
