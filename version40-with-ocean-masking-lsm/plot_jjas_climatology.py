@@ -280,8 +280,8 @@ def plot_jjas_climatology(mean_mm, years, vrt_path, tracks_df, output_path):
         lats,
         data_c,
         levels=[200, 500, 1000, 1500, 2000, 3000],
-        colors=["white"],
-        linewidths=[0.4],
+        colors=["black"],
+        linewidths=[0.5],
         alpha=0.55,
         transform=ccrs.PlateCarree(),
         zorder=2,
@@ -301,26 +301,26 @@ def plot_jjas_climatology(mean_mm, years, vrt_path, tracks_df, output_path):
     cbar.set_label("Mean JJAS precipitation (mm season⁻¹)", fontsize=11)
     cbar.ax.tick_params(labelsize=9)
 
-    # Eastern Ghats 600 m contour
-    if vrt_path and os.path.exists(vrt_path):
-        std_print("INFO", "pc", "Extracting Eastern Ghats 600 m contour from SRTM VRT")
-        cont_lons, cont_lats = get_elevation_contour_from_vrt(vrt_path, 600)
-        if cont_lons is not None:
-            for cl, la in zip(cont_lons, cont_lats):
-                # only draw segments in the Eastern Ghats longitude band
-                in_band = (cl >= 78) & (cl <= 88) & (la >= 11) & (la <= 24)
-                if np.sum(in_band) > 5:
-                    ax.plot(
-                        cl[in_band],
-                        la[in_band],
-                        color="saddlebrown",
-                        linewidth=1.4,
-                        alpha=0.85,
-                        transform=ccrs.PlateCarree(),
-                        zorder=6,
-                        label="_nolegend_",
-                    )
-            std_print("INFO", "pc", "Eastern Ghats 600 m contour drawn.")
+    # # Eastern Ghats 600 m contour
+    # if vrt_path and os.path.exists(vrt_path):
+    #     std_print("INFO", "pc", "Extracting Eastern Ghats 600 m contour from SRTM VRT")
+    #     cont_lons, cont_lats = get_elevation_contour_from_vrt(vrt_path, 600)
+    #     if cont_lons is not None:
+    #         for cl, la in zip(cont_lons, cont_lats):
+    #             # only draw segments in the Eastern Ghats longitude band
+    #             in_band = (cl >= 78) & (cl <= 88) & (la >= 11) & (la <= 24)
+    #             if np.sum(in_band) > 5:
+    #                 ax.plot(
+    #                     cl[in_band],
+    #                     la[in_band],
+    #                     color="saddlebrown",
+    #                     linewidth=1.4,
+    #                     alpha=0.85,
+    #                     transform=ccrs.PlateCarree(),
+    #                     zorder=6,
+    #                     label="_nolegend_",
+    #                 )
+    #         std_print("INFO", "pc", "Eastern Ghats 600 m contour drawn.")
 
     # MD track density
     if tracks_df is not None and len(tracks_df) > 0:
@@ -371,40 +371,40 @@ def plot_jjas_climatology(mean_mm, years, vrt_path, tracks_df, output_path):
         zorder=8,
         path_effects=[pe.withStroke(linewidth=2, foreground="white")],
     )
-    # ax.text(
-    #     66.5,
-    #     20.0,
-    #     "Arabian\nSea",
-    #     transform=ccrs.PlateCarree(),
-    #     fontsize=9.5,
-    #     color="#1a6696",
-    #     ha="center",
-    #     style="italic",
-    #     zorder=8,
-    #     path_effects=[pe.withStroke(linewidth=2, foreground="white")],
-    # )
+    ax.text(
+        71.5,
+        10.0,
+        "Arabian\nSea",
+        transform=ccrs.PlateCarree(),
+        fontsize=9.5,
+        color="#1a6696",
+        ha="center",
+        style="italic",
+        zorder=8,
+        path_effects=[pe.withStroke(linewidth=2, foreground="white")],
+    )
 
     # Eastern Ghats label
-    ax.text(
-        82.8,
-        17.0,
-        "Eastern\nGhats",
-        transform=ccrs.PlateCarree(),
-        fontsize=8.0,
-        color="saddlebrown",
-        ha="center",
-        rotation=55,
-        path_effects=[pe.withStroke(linewidth=2, foreground="white")],
-        zorder=9,
-    )
+    # ax.text(
+    #     82.8,
+    #     17.0,
+    #     "Eastern\nGhats",
+    #     transform=ccrs.PlateCarree(),
+    #     fontsize=8.0,
+    #     color="saddlebrown",
+    #     ha="center",
+    #     rotation=55,
+    #     path_effects=[pe.withStroke(linewidth=2, foreground="white")],
+    #     zorder=9,
+    # )
 
     # Gridlines
     gl = ax.gridlines(
         crs=ccrs.PlateCarree(),
         draw_labels=True,
-        linewidth=0.4,
+        linewidth=0.3,
         color="gray",
-        alpha=0.45,
+        alpha=0.5,
         linestyle=":",
         zorder=4,
     )
@@ -418,49 +418,28 @@ def plot_jjas_climatology(mean_mm, years, vrt_path, tracks_df, output_path):
     gl.ylabel_style = {"size": 9}
 
     # Legend
-    legend_elements = [
-        Line2D(
-            [0],
-            [0],
-            color="#990000",
-            lw=1.8,
-            ls="--",
-            dashes=(8, 4),
-            label="Monsoon trough axis (mean Jul–Aug; Sikka 1977)",
-        ),
-        Line2D(
-            [0],
-            [0],
-            color="saddlebrown",
-            lw=1.6,
-            label="Eastern Ghats 600 m contour (SRTM)",
-        ),
-        Line2D(
-            [0],
-            [0],
-            color="darkorange",
-            lw=2.5,
-            label="Preferred MD landfall zone (Odisha–Bengal coast)",
-        ),
-    ]
-    if tracks_df is not None and len(tracks_df) > 0:
-        legend_elements.append(
-            Patch(facecolor="red", alpha=0.2, label="MD track density (2001–2025)")
-        )
-    ax.legend(
-        handles=legend_elements,
-        loc="lower left",
-        fontsize=8,
-        framealpha=0.88,
-        edgecolor="0.4",
-        facecolor="white",
-    )
+    # legend_elements = [
+    #     Line2D(
+    #         [0],
+    #         [0],
+    #         color="saddlebrown",
+    #         lw=1.6,
+    #         label="Eastern Ghats 600 m contour (SRTM)",
+    #     ),
+    # ]
+    # ax.legend(
+    #     handles=legend_elements,
+    #     loc="lower left",
+    #     fontsize=8,
+    #     framealpha=0.88,
+    #     edgecolor="0.4",
+    #     facecolor="white",
+    # )
 
     # Title
     yr_str = f"{years[0]}–{years[-1]}" if years else "2001–2025"
     ax.set_title(
-        f"ERA5 Mean JJAS Precipitation ({yr_str})\n"
-        r"$\overline{P}_{\rm JJAS}$ [mm season$^{-1}$] (June–September)",
+        f"ERA5 Mean JJAS Precipitation (June-September {yr_str})",
         fontsize=13,
         fontweight="bold",
         pad=10,
