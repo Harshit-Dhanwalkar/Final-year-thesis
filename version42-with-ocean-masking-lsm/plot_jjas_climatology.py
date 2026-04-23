@@ -457,13 +457,13 @@ def plot_jjas_climatology(
             linewidth=1.8,
             label="Eastern Ghats 800m contour (SRTM)",
         ),
-        Line2D(
-            [0],
-            [0],
-            color="darkorange",
-            linewidth=3.0,
-            label="Preferred MD landfall zone (Odisha–Bengal coast)",
-        ),
+        # Line2D(
+        #     [0],
+        #     [0],
+        #     color="darkorange",
+        #     linewidth=3.0,
+        #     label="Preferred MD landfall zone (Odisha–Bengal coast)",
+        # ),
     ]
     # if has_density:
     #     legend_handles.append(

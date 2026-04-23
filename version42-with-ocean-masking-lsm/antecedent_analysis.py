@@ -1,20 +1,19 @@
-"""
-Antecedent Soil Moisture Analysis for Monsoon Depressions.
-
-Implements the Kishtawal et al. (2013a) methodology:
-  - ASMI computed over the future inland track corridor
-  - Exponential temporal decay: recent SM weighted more than older SM
-  - Multiple lag windows before landfall (24 h -> 2 weeks)
-  - Wet / Dry track classification and comparative statistics
-
-Dry antecedent conditions -> Soil can absorb a lot of the incoming rain -> lower immediate flood risk (more infiltration) but also lower LHF -> less Brown Ocean feedback -> faster storm decay inland.
-Wet antecedent conditions -> Soil is already near saturation -> much more of the MD's heavy rainfall becomes surface runoff -> higher flood potential even if the total rainfall amount is not extreme but also sustained LHF to storm -> longer inland persistence (Brown Ocean Effect).
-
-References :
-Kishtawal et al. (2013a): Water Resour. Res. 49, 3573-3589.
-Andersen & Shepherd (2013): J. Climate 26, 6629-6642.
-"""
-
+# NOTE:
+# Antecedent Soil Moisture Analysis for Monsoon Depressions.
+# 
+# Implements the Kishtawal et al. (2013a) methodology:
+#   - ASMI computed over the future inland track corridor
+#   - Exponential temporal decay: recent SM weighted more than older SM
+#   - Multiple lag windows before landfall (24 h -> 2 weeks)
+#   - Wet / Dry track classification and comparative statistics
+# 
+# Dry antecedent conditions -> Soil can absorb a lot of the incoming rain -> lower immediate flood risk (more infiltration) but also lower LHF -> less Brown Ocean feedback -> faster storm decay inland.
+# Wet antecedent conditions -> Soil is already near saturation -> much more of the MD's heavy rainfall becomes surface runoff -> higher flood potential even if the total rainfall amount is not extreme but also sustained LHF to storm -> longer inland persistence (Brown Ocean Effect).
+# 
+# References :
+# Kishtawal et al. (2013a): Water Resour. Res. 49, 3573-3589.
+# Andersen & Shepherd (2013): J. Climate 26, 6629-6642.
+ 
 # FIX:
 # 1. Currently computes a single spatial mean of SWVL1 in the 24h before system formation. This is not antecedent soil moisture analysis -> it's a snapshot
 # 2. The future_track_bbox function extracts the bounding box of the inland portion (after landfall). This is correct for measuring pre-storm soil state along the future track. However, compute_asmi_multi_lag is called with ref_time = landfall_time if available else times.min(). For ocean-originated tracks with a clear landfall, this is correct. But for land-originated tracks (no landfall), it uses times.min() - the very start of the track - which means the 24h window extends before the track even exists, potentially reading data from an ocean region. Add a guard: if origin is land_originated and no landfall, use times.min() + timedelta(hours=6) as ref_time so at least the early inland points are covered.

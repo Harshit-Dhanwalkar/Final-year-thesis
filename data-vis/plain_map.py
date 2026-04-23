@@ -1,4 +1,3 @@
-import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import cartopy.crs as ccrs
@@ -12,6 +11,13 @@ clipped_max_lat = 30.0  # N
 clipped_min_lon = 70.0  # E
 clipped_max_lon = 95.0  # E
 full_extent = [clipped_min_lon, clipped_max_lon, clipped_min_lat, clipped_max_lat]
+
+# Font sizes
+FS_TITLE = 14
+FS_LABEL = 11
+FS_TICK = 10
+FS_LEGEND = 10
+FS_ANNOT = 9
 
 # Major Indian states to label
 STATE_LABELS = {
@@ -64,7 +70,7 @@ COUNTRY_LABELS = {
 def plot_study_domain_with_features(output_filename):
     """Detailed version with all labels"""
     # Figure with PlateCarree projection
-    fig = plt.figure(figsize=(14, 12))
+    fig = plt.figure(figsize=(14, 11))
     ax: GeoAxes = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())  # type: ignore[assignment]
     ax.set_extent(full_extent, crs=ccrs.PlateCarree())
 
@@ -112,7 +118,7 @@ def plot_study_domain_with_features(output_filename):
         0.02,
         text,
         transform=ax.transAxes,
-        fontsize=15,
+        fontsize=FS_ANNOT,
         ha="center",
         bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8),
     )
@@ -130,7 +136,7 @@ def plot_study_domain_with_features(output_filename):
                 lat,
                 state,
                 transform=ccrs.PlateCarree(),
-                fontsize=11,
+                fontsize=FS_LABEL,
                 fontweight="bold",
                 ha="center",
                 va="center",
@@ -156,7 +162,7 @@ def plot_study_domain_with_features(output_filename):
                 lat,
                 feature,
                 transform=ccrs.PlateCarree(),
-                fontsize=11,
+                fontsize=FS_LABEL,
                 fontstyle="italic",
                 ha="center",
                 va="center",
@@ -183,7 +189,7 @@ def plot_study_domain_with_features(output_filename):
                 lat,
                 country,
                 transform=ccrs.PlateCarree(),
-                fontsize=11,
+                fontsize=FS_LABEL,
                 fontweight="normal",
                 ha="center",
                 va="center",
@@ -225,7 +231,7 @@ def plot_study_domain_with_features(output_filename):
                 lat + 0.3,
                 city,
                 transform=ccrs.PlateCarree(),
-                fontsize=9,
+                fontsize=FS_TICK,
                 ha="left",
                 va="bottom",
                 color="black",
@@ -261,7 +267,7 @@ def plot_study_domain_with_features(output_filename):
     ax.legend(
         handles=legend_elements,
         loc="upper right",
-        fontsize=11,
+        fontsize=FS_LABEL,
         framealpha=0.9,
         frameon=True,
     )
@@ -269,9 +275,9 @@ def plot_study_domain_with_features(output_filename):
     # Title
     ax.set_title(
         "Indian Subcontinent and Bay of Bengal",
-        fontsize=20,
-        pad=20,
+        fontsize=FS_TITLE,
         fontweight="bold",
+        pad=10,
     )
 
     # Save
@@ -287,7 +293,7 @@ def plot_study_domain_with_features(output_filename):
 
 def plot_study_domain_minimal_labels(output_filename):
     """Version with minimal labels - just water bodies and major geographic features"""
-    fig = plt.figure(figsize=(12, 10))
+    fig = plt.figure(figsize=(14, 11))
     ax: GeoAxes = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())  # type: ignore[assignment]
     ax.set_extent(full_extent, crs=ccrs.PlateCarree())
 
@@ -329,7 +335,7 @@ def plot_study_domain_minimal_labels(output_filename):
                 lat,
                 feature,
                 transform=ccrs.PlateCarree(),
-                fontsize=12,
+                fontsize=FS_LABEL,
                 fontstyle="italic",
                 fontweight="bold",
                 ha="center",
@@ -345,7 +351,12 @@ def plot_study_domain_minimal_labels(output_filename):
                 zorder=4,
             )
 
-    ax.set_title("Study Domain with Major Geographic Features", fontsize=20, pad=20)
+    ax.set_title(
+        "Study Domain with Major Geographic Features",
+        fontsize=FS_TITLE,
+        fontweight="bold",
+        pad=10,
+    )
 
     # Save
     plt.tight_layout()
@@ -355,9 +366,7 @@ def plot_study_domain_minimal_labels(output_filename):
 
 
 if __name__ == "__main__":
-    print("Generating study domain maps with geographic features...")
     # Generate detailed version with all labels
-    plot_study_domain_with_features("study-domain-detailed-labels.png")
+    plot_study_domain_with_features("study_domain_detailed_labels.png")
     # Generate minimal version
-    plot_study_domain_minimal_labels("study-domain-minimal.png")
-    print("Maps created successfully!")
+    plot_study_domain_minimal_labels("study_domain_minimal.png")

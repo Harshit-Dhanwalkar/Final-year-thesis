@@ -11,7 +11,6 @@ import os
 import io
 import glob
 import argparse
-import xarray as xr
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -22,7 +21,6 @@ import rasterio
 from matplotlib.colors import LogNorm
 from PIL import Image as PIL
 import cartopy.crs as ccrs
-from cartopy.mpl.gridliner import mticker
 import cartopy.feature as cfeature
 from cartopy.mpl.geoaxes import GeoAxes
 from cartopy.mpl.ticker import LatitudeFormatter, LongitudeFormatter
@@ -134,9 +132,7 @@ def load_all_tracks(output_root):
             )
             continue
 
-        df["time"] = pd.to_datetime(
-            df["time"], format="%Y-%m-%d %H:%M:%S", errors="coerce"
-        )
+        df["time"] = pd.to_datetime(df["time"], format="%Y-%m-%d %H:%M:%S", errors="coerce")
         df["year"] = year
         df["month"] = df["time"].dt.strftime("%B")
         df["track_uid"] = df["year"].astype(str) + "_" + df["track_id"].astype(str)
@@ -159,7 +155,7 @@ def plot_tracks_map(all_df, output_path, cmap_name="inferno"):
 
     # Figure
     fig = plt.figure(figsize=(16, 11))
-    ax: GeoAxes = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
+    ax: GeoAxes = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())  # type: ignore[assignment]
     ax.set_extent(FULL_EXTENT, crs=ccrs.PlateCarree())
 
     ax.add_feature(cfeature.LAND, facecolor="#F0EDE5", zorder=0)
@@ -273,14 +269,16 @@ def plot_tracks_elevation(all_df, vrt_path, output_path, cmap_name="inferno"):
         scale = 0.05
         shape = (int(src.height * scale), int(src.width * scale))
         elev = src.read(
-            1, out_shape=shape, resampling=rasterio.enums.Resampling.bilinear
+            1,
+            out_shape=shape,
+            resampling=rasterio.enums.Resampling.bilinear
         ).astype(float)
         elev[elev < -50] = 0  # fill voids
         bounds = src.bounds
 
     # Figure
     fig = plt.figure(figsize=(16, 11))
-    ax: GeoAxes = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
+    ax: GeoAxes = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())  # type: ignore[assignment]
     ax.set_extent(FULL_EXTENT, crs=ccrs.PlateCarree())
     ax.set_facecolor("#D6EAF8")
     # Mask out ocean (elevation <= 0) so it becomes transparent

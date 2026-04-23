@@ -1,37 +1,40 @@
-"""
-Generates every figure needed for the thesis that are not already produced by
-existing analysis pipeline.
-
-    python plot_thesis_figures.py --output_root . --year 2024 --track 1
-
-1. coriolis_md_rotation.png           -> Chapter 1
-2. # boe_feedback_loop.png              -> Chapter 1
-3. jet_streams_schematic.png          -> Chapter 2,  After Findlater (1969) and Mishra (2021)
-4. ## ghats_blocking_schematic.png      -> Chapter 2  [cross-section schematic]
-5. hovmoller_geometry.png             -> Chapter 3  [polar grid]
-6. ## detection_flowchart.png           -> Chapter 3  [flowchart]
-7. annual_md_count_boe.png            -> Chapter 4  [bar + line from CSVs]
-8. duration_histogram.png             -> Chapter 4  [histogram from CSVs]
-9. boe_vs_nonboe_hf_comparison.png    -> Chapter 4  [2-panel comparison]
-10. bowen_regime_diagram.png           -> Chapter 4  [conceptual \\beta diagram]
-"""
+# NOTE:
+# Generates every figure needed for the thesis that are not already produced by
+# existing analysis pipeline.
+# 
+#     python plot_thesis_figures.py --output_root . --year 2024 --track 1
+# 
+# 1. coriolis_md_rotation.png           -> Chapter 1
+# 2. # boe_feedback_loop.png              -> Chapter 1
+# 3. jet_streams_schematic.png          -> Chapter 2,  After Findlater (1969) and Mishra (2021)
+# 4. ## ghats_blocking_schematic.png      -> Chapter 2  [cross-section schematic]
+# 5. hovmoller_geometry.png             -> Chapter 3  [polar grid]
+# 6. ## detection_flowchart.png           -> Chapter 3  [flowchart]
+# 7. annual_md_count_boe.png            -> Chapter 4  [bar + line from CSVs]
+# 8. duration_histogram.png             -> Chapter 4  [histogram from CSVs]
+# 9. boe_vs_nonboe_hf_comparison.png    -> Chapter 4  [2-panel comparison]
+# 10. bowen_regime_diagram.png           -> Chapter 4  [conceptual \\beta diagram]
 
 import argparse
 import glob
 import os
 import warnings
 
+
+import numpy as np
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
-import matplotlib as mpl
-import matplotlib.patheffects as pe
+from cartopy.mpl.geoaxes import GeoAxes
+from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
+import matplotlib.patheffects as pe
+import matplotlib.patches as mpatches
+from matplotlib.patches import Circle, Patch, FancyBboxPatch, FancyArrowPatch
 from matplotlib.lines import Line2D
-from matplotlib.patches import Circle, Patch
+import matplotlib.ticker as mticker
+import pandas as pd
 
-from utils import std_print
+from utils import std_print, common_bbox
 
 warnings.filterwarnings("ignore")
 
@@ -47,6 +50,14 @@ FS_LABEL = 12
 FS_TICK = 10
 FS_LEGEND = 10
 FS_ANNOT = 9
+
+# Constants for LHF curve (soil moisture regime)
+# Piecewise LHF curve
+LHF_MAX    = 120.0  # energy-limited max (W/m2, monsoon conditions)
+LHF_BOE    = 70.0   # BOE threshold
+THETA_WILT = 0.08   # wilting point (m³/m³)
+THETA_CRIT = 0.32   # critical soil moisture (transition point)
+THETA_FC   = 0.46   # field capacity (clay loam)
 
 
 # Helper functions
@@ -82,6 +93,68 @@ def beta_nonboe(t):
         ),
     )
     return b
+
+def arr(ax, x0, y0, x1, y1, color, lw=2.8, ms=18):
+    """Draw a single arrow segment."""
+    ax.annotate(
+        "",
+        xy=(x1, y1),
+        xytext=(x0, y0),
+        arrowprops=dict(arrowstyle="-|>", color=color, lw=lw, mutation_scale=ms),
+        transform=ccrs.PlateCarree(),
+        zorder=7
+    )
+
+_pe = [pe.withStroke(linewidth=2.5, foreground="white")]
+ 
+def hpa_label(ax, x, y, symbol, label1, label2, fsize=FS_LABEL, color="#333333"):
+    ax.text(
+        x,
+        y,
+        symbol,
+        ha="center",
+        va="center",
+        fontsize=fsize+4,
+        fontweight="bold",
+        color=color,
+        transform=ccrs.PlateCarree(),
+        zorder=8
+    )
+    ax.text(
+        x,
+        y-2.2,
+        label1,
+        ha="center",
+        fontsize=fsize,
+        color=color,
+        fontweight="bold",
+        transform=ccrs.PlateCarree(),
+        zorder=8,
+        path_effects=_pe
+    )
+    if label2:
+        ax.text(
+            x,
+            y-3.6,
+            label2,
+            ha="center",
+            fontsize=fsize-0.5,
+            color=color,
+            style="italic",
+            transform=ccrs.PlateCarree(),
+            zorder=8,
+            path_effects=_pe
+        )
+ 
+
+def lhf_curve(sm):
+    lhf = np.where(sm < THETA_WILT, 0,
+          np.where(
+              sm < THETA_CRIT,
+              LHF_MAX * (sm - THETA_WILT) / (THETA_CRIT - THETA_WILT),
+              LHF_MAX
+          ))
+    return lhf
 
 # def box(x, y, w, h, text, color="#2166ac", textcolor="white"):
 #     rect = FancyBboxPatch(
@@ -129,7 +202,7 @@ def beta_nonboe(t):
 #         )
 
 def load_all_track_csvs(output_root):
-    """Aggregate MD_tracks_YYYY.csv across all output_YYYY dirs."""
+    """Aggregate MD_tracks_YYYY.csv across all output_YYYY dirs"""
     frames = []
     for d in sorted(glob.glob(os.path.join(output_root, "output_*"))):
         try:
@@ -146,8 +219,8 @@ def load_all_track_csvs(output_root):
                 break
     return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
 
-## Main ##
 
+## Main ##
 # Schematic figures
 def fig_coriolis_schematic():
     """Coriolis force -> anti-clockwise cyclonic rotation schematic"""
@@ -164,10 +237,10 @@ def fig_coriolis_schematic():
     ax.text(
         0,
         0,
-        "L",
+        "LPA",
         ha="center",
         va="center",
-        fontsize=18,
+        fontsize=FS_ANNOT,
         fontweight="bold",
         color="white",
         zorder=6,
@@ -178,7 +251,7 @@ def fig_coriolis_schematic():
     arrow_colors = ["#2166ac", "#2166ac", "#2166ac", "#2166ac"]
     for i, (ts, ac) in enumerate(zip(theta_starts, arrow_colors)):
         # Inward straight arrow
-        ang_r = np.radians(ts + 45)
+        # ang_r = np.radians(ts + 45)
         x0 = 2.0 * np.cos(np.radians(ts))
         y0 = 2.0 * np.sin(np.radians(ts))
         dx = -0.9 * np.cos(np.radians(ts))
@@ -190,12 +263,12 @@ def fig_coriolis_schematic():
             arrowprops=dict(arrowstyle="-|>", color=ac, lw=2.0, mutation_scale=18),
             zorder=4,
         )
-        # Label "inflow"
+        # Label
         if i == 0:
             ax.text(
                 x0 + 0.1,
-                y0 + 0.15,
-                "Inflow ->",
+                y0,
+                "Inflow",
                 fontsize=9.5,
                 color=ac,
                 ha="left",
@@ -213,7 +286,7 @@ def fig_coriolis_schematic():
         linestyle="-",
         zorder=3,
     )
-    # Arrowhead at end of curve (CCW -> arrowhead slightly before 2π)
+    # Arrowhead at end of curve
     ah_angle = 2 * np.pi - 0.30
     ax.annotate(
         "",
@@ -223,7 +296,7 @@ def fig_coriolis_schematic():
         zorder=4,
     )
 
-    # Coriolis deflection arrows (rightward deflection shown)
+    # Coriolis deflection arrows
     for ang_deg in [45, 135, 225, 315]:
         ang = np.radians(ang_deg)
         x_start = 1.6 * np.cos(ang)
@@ -236,9 +309,7 @@ def fig_coriolis_schematic():
             "",
             xy=(x_start + dx, y_start + dy),
             xytext=(x_start, y_start),
-            arrowprops=dict(
-                arrowstyle="-|>", color="#c51b7d", lw=1.5, mutation_scale=14
-            ),
+            arrowprops=dict(arrowstyle="-|>", color="#c51b7d", lw=1.5, mutation_scale=14),
             zorder=5,
         )
 
@@ -246,27 +317,25 @@ def fig_coriolis_schematic():
     ax.text(
         0,
         -2.3,
-        "Anti-clockwise (cyclonic) rotation\n"
-        r"Coriolis: $f = 2\Omega\sin\phi$",
+        "Anti-clockwise (cyclonic) rotation in Northern Hemishpere\n"
+        r"Coriolis force: $f = 2\Omega\sin\phi$",
         ha="center",
-        fontsize=11.5,
+        fontsize=FS_LABEL,
         color="#333333",
     )
     ax.text(
-        1.85,
-        0.55,
-        "Coriolis\ndeflection\n(rightward)",
+        1.43,
+        0.85,
+        "Coriolis deflection\n(rightward)",
         ha="left",
-        fontsize=9.5,
+        fontsize=FS_ANNOT,
         color="#c51b7d",
         path_effects=[pe.withStroke(linewidth=2, foreground="white")],
     )
     ax.set_title(
-        "Coriolis Force: Why Monsoon Depressions Rotate Anti-Clockwise\n"
-        "(Northern Hemisphere)",
+        "Coriolis Force acting on Monsoon Depressions",
         fontsize=FS_TITLE,
         fontweight="bold",
-        pad=10,
     )
     return save(fig, "coriolis_md_rotation.png")
 
@@ -401,58 +470,119 @@ def fig_coriolis_schematic():
 #         fontweight="bold",
 #         pad=10,
 #     )
-#     ax.text(
-#         5.0,
-#         0.05,
-#         "After Andersen & Shepherd (2013) and Kishtawal et al. (2013)",
-#         ha="center",
-#         fontsize=FS_TITLE,
-#         style="italic",
-#         color="#555555",
-#     )
 #     return save(fig, "boe_feedback_loop.png")
 
 
+# NOTE:
+# UPPER LEVEL (200 hPa):
+#   - Tibetan High (warm-core anticyclone) centred ~30N 90E - a large H symbol
+#   - Arabian High / subtropical anticyclone ~25N 50E
+#   - STJ flows EASTWARD as a wavy jet at ~30-35N, poleward of the Himalayan barrier
+# LOWER LEVEL (850-925 hPa):
+#   - Arabian Sea (Mascarene) High south of equator ~25S 80E - drives cross-equatorial flow
+#   - Somali coast: cross-equatorial flow turns NE along Somalia (Findlater Jet), then
+#     curves into the BoB as SW flow at ~850 hPa
+#   - Indo-Gangetic Low (heat low) over northwest India ~28N 72E - draws the LLJ northward
+#   - Monsoon trough: LPA axis from ~NW India to BoB head
+#   - ITCZ at ~5-8N across the Indian Ocean / South India
+# RESULT: NW-propagating MD steered by LLJ + trough toward Odisha coast.
 def fig_jet_streams_schematic():
-    """Somali LLJ + STJ retreat + monsoon trough -> NW MD steering"""
-    fig = plt.figure(figsize=(12, 9))
-    ax = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
-    ax.set_extent([45, 100, 0, 40], crs=ccrs.PlateCarree())
+    fig = plt.figure(figsize=(14, 10))
+    ax: GeoAxes = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())  # type: ignore[assignment]
+    ax.set_extent([35, 105, -15, 45], crs=ccrs.PlateCarree())
 
-    ax.add_feature(cfeature.OCEAN.with_scale("50m"), facecolor="#C8E8F5", zorder=0)
-    ax.add_feature(cfeature.LAND.with_scale("50m"), facecolor="#F5F0E8", zorder=0)
+    # Background
+    ax.add_feature(cfeature.OCEAN.with_scale("50m"), facecolor="#d1e5f0", zorder=0)
+    ax.add_feature(cfeature.LAND.with_scale("50m"),  facecolor="#f5f0e8", zorder=0)
     ax.add_feature(cfeature.COASTLINE.with_scale("50m"), linewidth=0.7, zorder=3)
-    ax.add_feature(cfeature.BORDERS.with_scale("50m"), linewidth=0.5, zorder=3)
-
-    # Somali LLJ (850 hPa southwesterly)
-    llj_lons = [48, 55, 63, 70, 77, 80, 84, 87]
-    llj_lats = [2, 6, 11, 16, 20, 22, 22, 21]
-    for i in range(len(llj_lons) - 1):
-        ax.annotate(
-            "",
-            xy=(llj_lons[i + 1], llj_lats[i + 1]),
-            xytext=(llj_lons[i], llj_lats[i]),
-            arrowprops=dict(
-                arrowstyle="-|>", color="#2166ac", lw=3.5, mutation_scale=20
-            ),
-            transform=ccrs.PlateCarree(),
-            zorder=6,
-        )
+    ax.add_feature(cfeature.BORDERS.with_scale("50m"),   linewidth=0.4, zorder=3, alpha=0.6)
+ 
+    # pressure centres
+    # Mascarene High (south of equator, drives cross-equatorial LLJ)
+    hpa_label(ax, 75, -10, "H", "Mascarene\nHigh", "(850 hPa)", fsize=9.5, color="#2166ac")
+    # Arabian Anticyclone (Middle East/Arabia, subtropical high)
+    hpa_label(ax, 50, 25, "H", "Arabian\nSubtropical High", "(850/500 hPa)", fsize=9.5, color="#2166ac")
+    # Indo-Gangetic Heat Low (surface low over northwest India)
+    hpa_label(ax, 70, 29, "L", "Indo-Gangetic\nHeat Low", "(Surface)", fsize=9.5, color="#d6604d")
+    # Tibetan High (upper level anticyclone, 200 hPa, over Tibet)
+    hpa_label(ax, 90, 33, "H", "Tibetan\nAnticyclone", "(200 hPa)", fsize=9.5, color="#8b4513")
+    # BoB monsoon low / trough head
+    hpa_label(ax, 87, 20, "L", "Monsoon\nTrough head", "(850 hPa)", fsize=8.5, color="#d6604d")
+ 
+    # ITCZ
+    itcz_lon = np.linspace(40, 100, 60)
+    itcz_lat = 6.5 + 1.5 * np.sin(np.radians((itcz_lon - 40) * 3))
+    ax.plot(
+        itcz_lon,
+        itcz_lat,
+        color="#e41a1c",
+        linewidth=2.2,
+        linestyle="-.",
+        dashes=(4, 3, 1, 3),
+        transform=ccrs.PlateCarree(),
+        zorder=5,
+        alpha=0.85
+    )
     ax.text(
-        58,
-        9,
-        "Somali Low-Level Jet\n(Findlater Jet, 850 hPa)",
-        fontsize=FS_ANNOT,
+        55,
+        4.5,
+        "ITCZ",
+        fontsize=9.5,
+        color="#e41a1c",
+        fontweight="bold",
+        transform=ccrs.PlateCarree(),
+        path_effects=_pe
+    )
+ 
+    # Somali / Findlater jet (850-925 hpa)
+    # Cross-equatorial flow: comes from south (Mascarene High), up Somali coast,
+    # then curves NE into India/BoB
+    llj_seg = [
+        (75, -8), (72, -3), (68,  3), (65,  8),   # south: Mascarene -> equator -> Somalia
+        (63, 12), (62, 17), (65, 20), (70, 22),    # turns NE along Somali coast
+        (75, 22), (80, 21), (84, 20), (87, 19),    # enters India/BoB
+    ]
+    # Draw in two colours: south of equator = light blue, north = dark blue
+    eq_idx = 4
+    for i in range(len(llj_seg) - 1):
+        color = "#6baed6" if i < eq_idx else "#2166ac"
+        lw    = 3.0 if i < eq_idx else 4.0
+        arr(
+            ax,
+            llj_seg[i][0],
+            llj_seg[i][1],
+            llj_seg[i+1][0],
+            llj_seg[i+1][1],
+            color=color,
+            lw=lw,
+            ms=16
+        )
+ 
+    ax.text(
+        62,
+        13,
+        "Findlater Jet\n(Somali LLJ, 850 hPa)",
+        fontsize=9.5,
         color="#2166ac",
         fontweight="bold",
         transform=ccrs.PlateCarree(),
-        ha="center",
-        path_effects=[pe.withStroke(linewidth=2.5, foreground="white")],
+        ha="right",
+        path_effects=_pe
     )
-
-    # Monsoon trough (dashed)
-    tr_lon = [67, 72, 77, 82, 86, 88]
-    tr_lat = [28, 27, 25, 24, 22, 20]
+    ax.text(
+        65,
+        -5,
+        "Cross-equatorial\nflow",
+        fontsize=8.5,
+        color="#6baed6",
+        transform=ccrs.PlateCarree(),
+        ha="center",
+        path_effects=_pe
+    )
+ 
+    # Monsoon trough axis
+    tr_lon = [67, 71, 75, 79, 83, 87]
+    tr_lat = [29, 28, 27, 25, 23, 20]
     ax.plot(
         tr_lon,
         tr_lat,
@@ -461,152 +591,206 @@ def fig_jet_streams_schematic():
         linestyle="--",
         dashes=(8, 4),
         transform=ccrs.PlateCarree(),
-        zorder=5,
+        zorder=5
     )
     ax.text(
-        76,
-        26.5,
-        "Monsoon Trough",
-        fontsize=FS_ANNOT,
+        74,
+        29.5,
+        "Monsoon Trough (surface)",
+        fontsize=8.5,
         color="#7f0000",
         style="italic",
         transform=ccrs.PlateCarree(),
-        path_effects=[pe.withStroke(linewidth=2, foreground="white")],
+        path_effects=_pe
     )
-
-    # MD symbol + NW track arrow
+ 
+    # md symbol and nw track
     ax.plot(
         87,
-        19.5,
-        "o",
-        ms=18,
+        19,
+        marker="o",
+        ms=20,
         color="#d6604d",
         alpha=0.9,
         transform=ccrs.PlateCarree(),
-        zorder=7,
+        zorder=9
     )
     ax.text(
         87,
-        19.5,
+        19,
         "MD",
         ha="center",
         va="center",
-        fontsize=FS_ANNOT,
+        fontsize=9,
         fontweight="bold",
         color="white",
         transform=ccrs.PlateCarree(),
-        zorder=8,
+        zorder=10
     )
-    ax.annotate(
-        "",
-        xy=(79, 24),
-        xytext=(87, 19.5),
-        arrowprops=dict(arrowstyle="-|>", color="#d6604d", lw=2.5, mutation_scale=20),
-        transform=ccrs.PlateCarree(),
-        zorder=7,
+    # NW track arrow
+    arr(
+        ax,
+        87,
+        19,
+        80,
+        24,
+        color="#d6604d",
+        lw=2.5,
+        ms=18
     )
     ax.text(
-        82,
-        23.5,
-        "NW track",
-        fontsize=FS_ANNOT,
+        83.5,
+        22.5,
+        "NW\ntrack",
+        fontsize=9,
         color="#d6604d",
         transform=ccrs.PlateCarree(),
-        path_effects=[pe.withStroke(linewidth=2, foreground="white")],
+        path_effects=_pe
     )
-
-    # STJ (retreated poleward of Himalayas at 200 hPa)
-    stj_lon = np.linspace(50, 100, 50)
-    stj_lat = np.full_like(stj_lon, 37) + 2 * np.sin(np.radians(stj_lon) * 3)
+ 
+    # STJ AT 200 hPa
+    stj_lon = np.linspace(40, 104, 80)
+    # Main STJ wavy around 30-33N
+    stj_lat_main = 31 + 2.5 * np.sin(np.radians(stj_lon * 4 + 20))
     ax.plot(
         stj_lon,
-        stj_lat,
-        color="#f4a582",
+        stj_lat_main,
+        color="#e08214",
         linewidth=2.8,
-        linestyle="-",
-        transform=ccrs.PlateCarree(),
         zorder=5,
-    )
-    ax.annotate(
-        "",
-        xy=(stj_lon[-1], stj_lat[-1]),
-        xytext=(stj_lon[-3], stj_lat[-3]),
-        arrowprops=dict(arrowstyle="-|>", color="#f4a582", lw=2.0, mutation_scale=16),
         transform=ccrs.PlateCarree(),
+        alpha=0.9
     )
+    arr(
+        ax,
+        stj_lon[-3],
+        stj_lat_main[-3],
+        stj_lon[-1],
+        stj_lat_main[-1],
+        color="#e08214",
+        lw=2.5,
+        ms=16
+    )
+ 
+    # Second (shallower) STJ branch around 35-37N
+    stj_lat_n = 36 + 1.5 * np.sin(np.radians(stj_lon * 4 + 10))
+    ax.plot(
+        stj_lon,
+        stj_lat_n,
+        color="#e08214",
+        linewidth=1.8,
+        linestyle="--",
+        dashes=(6, 3),
+        zorder=5,
+        transform=ccrs.PlateCarree(),
+        alpha=0.7
+    )
+ 
     ax.text(
-        72,
-        38.5,
-        "Sub-Tropical Westerly Jet (200 hPa) -> retreated poleward (low shear over BoB)",
-        fontsize=FS_ANNOT,
-        color="#c47a3a",
+        55,
+        39,
+        "Sub-Tropical Westerly Jet (200 hPa)\n""(poleward of Himalayas: low shear over BoB)",
+        fontsize=9,
+        color="#7f3b08",
         transform=ccrs.PlateCarree(),
-        path_effects=[pe.withStroke(linewidth=2.5, foreground="white")],
+        path_effects=_pe
     )
-
-    # Himalayan arc
-    him_lon = np.linspace(73, 97, 50)
-    him_lat = 28 + 4 * np.sin(np.pi * (him_lon - 73) / 24)
+ 
+    # himalayan barrier
+    him_lon = np.linspace(72, 97, 60)
+    him_lat = 28.5 + 3.5 * np.sin(np.pi * (him_lon - 72) / 25)
+    ax.fill_between(
+        him_lon,
+        him_lat,
+        him_lat + 1.5,
+        color="#6a3d9a",
+        alpha=0.35,
+        transform=ccrs.PlateCarree(),
+        zorder=4
+    )
     ax.plot(
         him_lon,
         him_lat,
         color="#6a3d9a",
-        linewidth=2.5,
-        linestyle="-",
+        linewidth=2.2,
         transform=ccrs.PlateCarree(),
-        zorder=4,
-        alpha=0.7,
+        zorder=5,
+        alpha=0.8
     )
     ax.text(
-        82,
-        31,
+        83,
+        32.8,
         "Himalayas",
-        fontsize=FS_ANNOT,
+        fontsize=8.5,
         color="#6a3d9a",
-        transform=ccrs.PlateCarree(),
         style="italic",
-        path_effects=[pe.withStroke(linewidth=2, foreground="white")],
+        transform=ccrs.PlateCarree(),
+        path_effects=_pe
     )
-
-    # Gridlines
+ 
+    # LEVEL DIVIDER TEXT
+    ax.text(
+        37,
+        42,
+        "UPPER LEVEL (200 hPa)",
+        fontsize=9,
+        color="#7f3b08",
+        transform=ccrs.PlateCarree(),
+        fontweight="bold"
+    )
+    ax.text(
+        37,
+        40,
+        "LOWER LEVEL (850-925 hPa)",
+        fontsize=9,
+        color="#2166ac",
+        transform=ccrs.PlateCarree(),
+        fontweight="bold"
+    )
+ 
+    # gridlines
     gl = ax.gridlines(
-        draw_labels=True, linewidth=0.3, color="gray", alpha=0.4, linestyle=":"
+        crs=ccrs.PlateCarree(),
+        draw_labels=True,
+        linewidth=0.35,
+        color="gray",
+        alpha=0.45,
+        linestyle=":"
     )
-    gl.top_labels = False
+    gl.top_labels   = False
     gl.right_labels = False
-    gl.xlabel_style = {"size": 10}
-    gl.ylabel_style = {"size": 10}
-
-    # Legend
+    gl.xlocator  = mticker.FixedLocator(range(40, 106, 10))
+    gl.ylocator  = mticker.FixedLocator(range(-10, 46, 10))
+    gl.xformatter = LONGITUDE_FORMATTER
+    gl.yformatter = LATITUDE_FORMATTER
+    gl.xlabel_style = {"size": 9}
+    gl.ylabel_style = {"size": 9}
+ 
+    # LEGEND
     handles = [
-        Line2D([0], [0], color="#2166ac", lw=3.5, label="Somali LLJ (850 hPa)"),
-        Line2D(
-            [0],
-            [0],
-            color="#f4a582",
-            lw=2.8,
-            label="Sub-Tropical Jet (200 hPa, retreated N)",
-        ),
-        Line2D(
-            [0],
-            [0],
-            color="#7f0000",
-            lw=2.0,
-            ls="--",
-            dashes=(8, 4),
-            label="Monsoon trough axis",
-        ),
-        Line2D([0], [0], color="#d6604d", lw=2.5, label="MD NW track direction"),
+        Line2D([0], [0], color="#2166ac", lw=3.5, label="Somali/Findlater Jet (850 hPa, NE flow)"),
+        Line2D([0], [0], color="#6baed6", lw=2.5, label="Cross-equatorial flow (below equator)"),
+        Line2D([0], [0], color="#e08214", lw=2.8, label="Sub-Tropical Westerly Jet (200 hPa, eastward)"),
+        Line2D([0], [0], color="#7f0000", lw=2.0, ls="--", dashes=(8, 4), label="Monsoon trough axis (surface low)"),
+        Line2D([0], [0], color="#e41a1c", lw=2.0, ls="-.", label="ITCZ (~5-8 N)"),
+        Line2D([0], [0], color="#d6604d", lw=2.5, label="MD NW track"),
+        mpatches.Patch(facecolor="#6a3d9a", alpha=0.5, label="Himalayan barrier"),
     ]
     ax.legend(
-        handles=handles, loc="lower left", fontsize=FS_LEGEND, framealpha=0.9, edgecolor="0.4"
+        handles=handles,
+        loc="lower left",
+        fontsize=8.5,
+        framealpha=0.92,
+        edgecolor="0.4",
+        ncol=1
     )
-
-    ax.set_title(
-        "Monsoon Jet Streams Controlling MD Development and North-Westward Track",
-        fontsize=FS_TITLE,
-        fontweight="bold",
-        pad=10,
+ 
+    ax.set_title("Large-Scale Monsoon Circulation: Jet Streams, Pressure Centres,\n"
+                 "and North-Westward Steering of Monsoon Depressions",
+                 ## "After Findlater (1969), Sikka (1977), Mishra (2021)",
+                 fontsize=FS_TITLE,
+                 fontweight="bold",
+                 pad=10
     )
     return save(fig, "jet_streams_schematic.png")
 
@@ -825,8 +1009,8 @@ def fig_jet_streams_schematic():
 #     )
 #
 #     ax.set_title(
-#         "Eastern Ghats: Four Mechanisms of MD Orographic Modulation\n"
-#         "After Houze (1994), Kirshbaum & Durran (2005)",
+#         "Eastern Ghats: Four Mechanisms of MD Orographic Modulation",
+#         # "After Houze (1994), Kirshbaum & Durran (2005)",
 #         fontsize=FS_TITLE,
 #         fontweight="bold",
 #         pad=10,
@@ -846,11 +1030,23 @@ def fig_hovmoller_geometry():
     # Radial rings
     theta_full = np.linspace(0, 2 * np.pi, 360)
     for r in radii[1:]:
-        ax.plot(theta_full, [r] * 360, color="#aaaaaa", linewidth=0.5, alpha=0.6)
+        ax.plot(
+            theta_full,
+            [r] * 360,
+            color="#aaaaaa",
+            linewidth=0.5,
+            alpha=0.6
+        )
 
     # Sector dividers
     for sa in sector_angles:
-        ax.plot([sa, sa], [0, 400], color="#aaaaaa", linewidth=0.5, alpha=0.6)
+        ax.plot(
+            [sa, sa],
+            [0, 400],
+            color="#aaaaaa",
+            linewidth=0.5,
+            alpha=0.6
+        )
 
     # Highlight 2 example sectors at r=100 km
     for s_i in [2, 3]:
@@ -859,10 +1055,23 @@ def fig_hovmoller_geometry():
         outer_r = 125
         th_fill = np.concatenate([th, th[::-1]])
         r_fill = np.concatenate([[outer_r] * 50, [inner_r] * 50])
-        ax.fill(th_fill, r_fill, color="#2166ac", alpha=0.35, zorder=3)
+        ax.fill(
+            th_fill,
+            r_fill,
+            color="#2166ac",
+            alpha=0.35,
+            zorder=3
+        )
 
     # Storm centre
-    ax.plot([0], [0], marker="o", ms=18, color="#d6604d", zorder=8)
+    ax.plot(
+        [0],
+        [0],
+        marker="o",
+        ms=18,
+        color="#d6604d",
+        zorder=8
+    )
 
     # Radius labels
     for r in [100, 200, 300, 400]:
@@ -941,56 +1150,6 @@ def fig_hovmoller_geometry():
 #     ax.set_xlim(0, 9)
 #     ax.set_ylim(0, 12)
 #     ax.axis("off")
-#
-#     def box(
-#         x,
-#         y,
-#         w,
-#         h,
-#         text,
-#         color="#2166ac",
-#         tcolor="white",
-#         fs=10.5,
-#         style="round,pad=0.2",
-#     ):
-#         r = FancyBboxPatch(
-#             (x, y),
-#             w,
-#             h,
-#             boxstyle=style,
-#             facecolor=color,
-#             edgecolor="white",
-#             linewidth=1.5,
-#             zorder=3,
-#         )
-#         ax.add_patch(r)
-#         ax.text(
-#             x + w / 2,
-#             y + h / 2,
-#             text,
-#             ha="center",
-#             va="center",
-#             fontsize=FS_ANNOT,
-#             fontweight="bold",
-#             color=tcolor,
-#             zorder=4,
-#             multialignment="center",
-#         )
-#
-#     def arr(x0, y0, x1, y1, label=""):
-#         ax.annotate(
-#             "",
-#             xy=(x1, y1),
-#             xytext=(x0, y0),
-#             arrowprops=dict(
-#                 arrowstyle="-|>", color="#444444", lw=1.8, mutation_scale=16
-#             ),
-#             zorder=5,
-#         )
-#         if label:
-#             ax.text(
-#                 (x0 + x1) / 2 + 0.15, (y0 + y1) / 2, label, fontsize=FS_LABEL, color="#444444"
-#             )
 #
 #     # Boxes (y positions from bottom)
 #     box(2.5, 10.5, 4, 0.9, "ERA5 850 hPa\nRelative Vorticity (hourly)", color="#4393c3")
@@ -1136,7 +1295,11 @@ def fig_annual_count(output_root):
     lines1, labs1 = ax1.get_legend_handles_labels()
     lines2, labs2 = ax2.get_legend_handles_labels()
     ax1.legend(
-        lines1 + lines2, labs1 + labs2, loc="upper left", fontsize=FS_LEGEND, framealpha=0.9
+        lines1 + lines2,
+        labs1 + labs2,
+        loc="upper left",
+        fontsize=FS_LEGEND,
+        framealpha=0.9
     )
     plt.tight_layout()
     return save(fig, "annual_md_count_boe.png")
@@ -1175,9 +1338,16 @@ def fig_duration_histogram(output_root):
     # Assign colors per bin: blue for bins <96, red for >=96
     colors = ["#4393c3" if b < 96 else "#d6604d" for b in bin_edges[:-1]]
     # Draw bars manually to allow per‑bar coloring
-    ax.bar(bin_edges[:-1], counts, width=np.diff(bin_edges),
-           align="edge", color=colors, edgecolor="white",
-           linewidth=0.6, alpha=0.85)
+    ax.bar(
+        bin_edges[:-1],
+        counts,
+        width=np.diff(bin_edges),
+        align="edge",
+        color=colors,
+        edgecolor="white",
+        linewidth=0.6,
+        alpha=0.85
+    )
 
     ax.axvline(
         96,
@@ -1286,14 +1456,174 @@ def fig_bowen_regime_diagram():
     ax.set_ylim(0, 2.0)
     ax.set_xlim(-48, 72)
     ax.set_title(
-        "Bowen Ratio Trajectory: BOE vs Conventional Post-Landfall Decay\n"
-        "After Seneviratne et al. (2010)",
+        "Bowen Ratio Trajectory: BOE vs Conventional Post-Landfall Decay",
+        # "After Seneviratne et al. (2010)",
         fontsize=FS_TITLE,
         fontweight="bold",
+        pad=10,
     )
     ax.legend(fontsize=FS_LEGEND, loc="upper left", framealpha=0.9)
     plt.tight_layout()
     return save(fig, "bowen_regime_diagram.png")
+
+
+def fig_sm_lhf_regime():
+    """
+    Soil moisture vs LHF regime diagram.
+    Shows: water-limited regime (linear), energy-limited regime (plateau),
+    the critical THETA_CRIT transition, and the BOE threshold at 70 W/m2.
+    """ 
+    fig, ax = plt.subplots(figsize=(9, 6))
+    bbox_style = common_bbox()
+ 
+    # Soil moisture axis: 0 to 0.5 m3/m3 (field capacity of clay loam)
+    sm = np.linspace(0, 0.50, 300)
+ 
+    lhf = lhf_curve(sm)
+ 
+    # Filled regions
+    sm_wl = sm[sm < THETA_CRIT]
+    ax.fill_between(
+        sm_wl,
+        0,
+        lhf_curve(sm_wl),
+        color="#fee8d0",
+        alpha=0.7,
+        label="_wl"
+    )
+    sm_el = sm[sm >= THETA_CRIT]
+    ax.fill_between(
+        sm_el,
+        0,
+        lhf_curve(sm_el),
+        color="#d1e5f0",
+        alpha=0.7,
+        label="_el"
+    )
+ 
+    # Main curve
+    ax.plot(
+        sm,
+        lhf,
+        color="#333333",
+        linewidth=2.8,
+        zorder=4
+    )
+ 
+    # BOE threshold line
+    ax.axhline(
+        LHF_BOE,
+        color="#7f0000",
+        linewidth=2.0,
+        linestyle="--",
+        dashes=(7, 3),
+        zorder=5,
+        label="BOE threshold (70 W m$^{-2}$)"
+    )
+ 
+    # Critical SM line
+    ax.axvline(
+        THETA_CRIT,
+        color="#555555",
+        linewidth=1.5,
+        linestyle="--",
+        dashes=(5, 3),
+        zorder=5,
+        label=r"$\theta_\mathrm{crit}$ (regime transition $\approx$ 0.32 m$^3$m$^{-3}$)"
+    )
+ 
+    # ASMI threshold line
+    ax.axvline(
+        0.35,
+        color="#4dac26",
+        linewidth=2.0,
+        linestyle=":",
+        zorder=5,
+        label="ASMI threshold (0.35 m$^3$m$^{-3}$)"
+    )
+ 
+    # Annotations
+    ax.text(
+        0.18,
+        30,
+        "Water-limited regime\n"r"LHF $\propto$ $\theta / \theta_\mathrm{crit}$" "\n(soil water controls evaporation)",
+        ha="center",
+        fontsize=10,
+        color="#c67a30",
+        bbox=bbox_style
+    )
+ 
+    ax.text(
+        0.40,
+        55,
+        "Energy-limited regime\n"r"LHF $\approx$ LHF$_\mathrm{max}$" "\n(radiation controls evaporation)\n" "BOE can operate here",
+        ha="center",
+        fontsize=FS_ANNOT,
+        color="#2166ac",
+        bbox=bbox_style
+    )
+ 
+    ax.text(
+        0.35 + 0.005,
+        5,
+        "ASMI > 0.35",
+        fontsize=FS_ANNOT,
+        color="#4dac26",
+        rotation=90,
+        va="bottom"
+    )
+ 
+    ax.text(
+        THETA_CRIT + 0.005,
+        LHF_BOE + 3,
+        "BOE threshold",
+        fontsize=FS_ANNOT,
+        color="#7f0000"
+    )
+ 
+    # Field capacity marker
+    ax.axvline(
+        THETA_FC,
+        color="#8c510a",
+        linewidth=1.0,
+        linestyle=":",
+        alpha=0.6,
+        zorder=4
+    )
+    ax.text(
+        THETA_FC - 0.005,
+        2,
+        "Field capacity\n(clay loam)",
+        fontsize=FS_ANNOT-1,
+        color="#8c510a",
+        ha="right"
+    )
+ 
+    ax.set_xlabel(
+        r"Near-surface soil moisture $\theta$ (m$^3$ m$^{-3}$)",
+        fontsize=FS_LABEL
+    )
+    ax.set_ylabel(
+        r"Surface latent heat flux LHF (W m$^{-2}$)",
+        fontsize=FS_LABEL
+    )
+    ax.set_xlim(0, 0.50)
+    ax.set_ylim(0, LHF_MAX * 1.05)
+    ax.tick_params(labelsize=11)
+    ax.legend(fontsize=10, loc="upper left", framealpha=0.9)
+    ax.set_title(
+        "Soil Moisture Evaporation Regime Transition",
+        # "After Seneviratne et al. (2010) and Clapp & Hornberger (1978)",
+        fontsize=FS_TITLE,
+        fontweight="bold",
+        pad=10,
+    )
+    ax.grid(True, alpha=0.35, linestyle="--")
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+ 
+    plt.tight_layout()
+    return save(fig, "sm_lhf_regime_diagram.png")
 
 
 #  CLI
@@ -1315,32 +1645,35 @@ def parse_args():
 def main():
     args = parse_args()
     # Schematics (no data)
-    std_print("INFO", "tf", "[1/7] Coriolis schematic")
+    std_print("INFO", "tf", "[1/8] Coriolis schematic")
     fig_coriolis_schematic()
 
     # std_print("INFO", "tf", "[2/7] BOE feedback loop")
     # fig_boe_feedback_loop()
 
-    std_print("INFO", "tf", "[3/7] Jet streams schematic")
+    std_print("INFO", "tf", "[3/8] Jet streams schematic")
     fig_jet_streams_schematic()
 
     # std_print("INFO", "tf", "[4/7] Eastern Ghats cross-section")
     # fig_ghats_cross_section()
 
-    std_print("INFO", "tf", "[5/7] Hovmöller polar grid")
+    std_print("INFO", "tf", "[5/8] Hovmöller polar grid")
     fig_hovmoller_geometry()
 
-    # std_print("INFO", "tf", "[6/7] Detection flowchart")
+    # std_print("INFO", "tf", "[6/8] Detection flowchart")
     # fig_detection_flowchart()
 
-    std_print("INFO", "tf", "[7/7] Bowen ratio regime diagram")
+    std_print("INFO", "tf", "[7/8] Bowen ratio regime diagram")
     fig_bowen_regime_diagram()
 
+    std_print("INFO", "tf", "[8/8] SM-LHF regime diagram ...")
+    fig_sm_lhf_regime()
+
     if not args.schematics_only:
-        std_print("INFO", "tf", "[8] Annual count")
+        std_print("INFO", "tf", "[9] Annual count")
         fig_annual_count(args.output_root)
 
-        std_print("INFO", "tf", "[9] Duration histogram")
+        std_print("INFO", "tf", "[10] Duration histogram")
         fig_duration_histogram(args.output_root)
 
     std_print("INFO", "tf", f"All figures saved to ./{OUTPUT_DIR}/")

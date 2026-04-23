@@ -1,4 +1,5 @@
-"""MD Tracks on SRTM Elevation Mosaic"""
+# NOTE:
+# MD Tracks on SRTM Elevation Mosaic
 
 import os
 import glob

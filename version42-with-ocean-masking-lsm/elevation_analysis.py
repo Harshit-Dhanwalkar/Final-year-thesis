@@ -1,23 +1,22 @@
-"""
-Elevation Analysis for MD Tracks using SRTM HGT Data
-
-  1. Orographic speed reduction      - terrain slows MDs (barrier effect)
-  2. Orographic precipitation ratio  - windward vs flat TP amplification
-  3. Elevation vs penetration scatter - terrain controls inland reach
-  4. Landfall elevation classification - low-coast vs terrain-facing MDs
-  5. Soil texture map (Clapp & Hornberger 1978) - SM memory interpretation
-
-TSI combines three terrain-dependent factors:
-  TSI = elevation_effect x slope_effect x roughness_effect
-  - elevation_effect: normalized elevation contrast
-  - slope_effect: mean slope magnitude
-  - roughness_effect: terrain variability (std of elevation)
-  Each component normalised to [0, 1].
-
-Dependencies: sudo apt install gdal-bin
-
-Reference: Kirshbaum (2018) JGR-Atmos.
-"""
+# NOTE:
+# Elevation Analysis for MD Tracks using SRTM HGT Data
+# 
+#   1. Orographic speed reduction      - terrain slows MDs (barrier effect)
+#   2. Orographic precipitation ratio  - windward vs flat TP amplification
+#   3. Elevation vs penetration scatter - terrain controls inland reach
+#   4. Landfall elevation classification - low-coast vs terrain-facing MDs
+#   5. Soil texture map (Clapp & Hornberger 1978) - SM memory interpretation
+# 
+# TSI combines three terrain-dependent factors:
+#   TSI = elevation_effect x slope_effect x roughness_effect
+#   - elevation_effect: normalized elevation contrast
+#   - slope_effect: mean slope magnitude
+#   - roughness_effect: terrain variability (std of elevation)
+#   Each component normalised to [0, 1].
+# 
+# Dependencies: sudo apt install gdal-bin
+# 
+# Reference: Kirshbaum (2018) JGR-Atmos.
 
 # TODO:
 # 1. Mean elevation along track vs. speed anomaly (speed relative to pre-landfall baseline) - not implemented yet.

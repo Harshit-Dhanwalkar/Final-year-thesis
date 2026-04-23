@@ -1,6 +1,5 @@
-"""
-The average translational velocity of a monsoon depression is approx 2-6 m/s, to roughly 7-22 km/h.
-"""
+# NOTE:
+# The average translational velocity of a monsoon depression is approx 2-6 m/s, to roughly 7-22 km/h.
 
 import os
 import numpy as np
