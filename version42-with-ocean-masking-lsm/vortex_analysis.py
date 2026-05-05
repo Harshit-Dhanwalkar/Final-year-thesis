@@ -55,21 +55,21 @@
 #  - Mishra (2021) MWR - MD development and large-scale interaction
 
 import os
+import traceback
 import warnings
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import xarray as xr
-import matplotlib.pyplot as plt
-from matplotlib.colors import PowerNorm, Normalize
-import traceback
+from matplotlib.colors import Normalize, PowerNorm
 
 from utils import (
-    std_print,
-    haversine_distance,
-    common_bbox,
-    legend_style,
-    # find_landfall_time,
     add_land_ocean_shading,
+    common_bbox,  # find_landfall_time,
+    haversine_distance,
+    legend_style,
+    std_print,
 )
 
 warnings.filterwarnings(
@@ -80,9 +80,13 @@ warnings.filterwarnings(
 )
 
 LEVELS = [850, 700, 600, 500, 400, 300, 200]  # hPa
-SEARCH_RADIUS_DEG = 3.0  # degrees, vortex centre search radius around single-level track
+SEARCH_RADIUS_DEG = (
+    3.0  # degrees, vortex centre search radius around single-level track
+)
 AMBIENT_RING_KM = 300.0  # km, radius for temperature anomaly background ring
-OMEGA_TRANSECT_KM = 150.0  # km, perpendicular transect half-width for omega cross-section
+OMEGA_TRANSECT_KM = (
+    150.0  # km, perpendicular transect half-width for omega cross-section
+)
 
 # Constants
 G = 9.80665  # m/s^2
@@ -161,10 +165,16 @@ def plot_all_tracks_tilt_comparison(tilt_results, track_dict, output_dir):
         is_land_arr = np.zeros(len(times), dtype=bool)
         for k, tt in enumerate(times.values):
             nearest_idx = np.argmin(np.abs(track_times_arr - tt))
-            is_land_arr[k] = (is_land_track[nearest_idx] if nearest_idx < len(is_land_track) else False)
+            is_land_arr[k] = (
+                is_land_track[nearest_idx]
+                if nearest_idx < len(is_land_track)
+                else False
+            )
 
         # Land / ocean background shading
-        add_land_ocean_shading(ax, hours, is_land_arr, land_color="wheat", ocean_color="lightblue")
+        add_land_ocean_shading(
+            ax, hours, is_land_arr, land_color="wheat", ocean_color="lightblue"
+        )
         # # Landfall line
         # if landfall_time is not None:
         #     ax.axvline(
@@ -188,7 +198,7 @@ def plot_all_tracks_tilt_comparison(tilt_results, track_dict, output_dir):
         )
         # Land-phase markers (diamonds)
         land_hours = hours[is_land_arr[: len(hours)]]
-        land_tilt  = tilt_km[is_land_arr[: len(tilt_km)]]
+        land_tilt = tilt_km[is_land_arr[: len(tilt_km)]]
         ax.scatter(
             land_hours,
             land_tilt,
@@ -201,14 +211,22 @@ def plot_all_tracks_tilt_comparison(tilt_results, track_dict, output_dir):
 
     # x-axis reference lines for \pm12h terrain window
     ax.axvspan(-6, 18, alpha=0.08, color="orange", label="Terrain interaction window")
-    ax.axhline(150, color="gray", linestyle=":", linewidth=1, label="Tilt threshold (150 km)")
+    ax.axhline(
+        150, color="gray", linestyle=":", linewidth=1, label="Tilt threshold (150 km)"
+    )
 
-    ax.axvline(0, color="black", linestyle="--", linewidth=1.5, label="Landfall (t = 0)")
+    ax.axvline(
+        0, color="black", linestyle="--", linewidth=1.5, label="Landfall (t = 0)"
+    )
     ax.axhline(0, color="black", linewidth=0.8)
     ax.set_xlabel("Hours relative to landfall", fontsize=FS_LABEL, fontweight="bold")
-    ax.set_ylabel("Vortex tilt 850 -> 200 hPa (km)", fontsize=FS_LABEL, fontweight="bold")
+    ax.set_ylabel(
+        "Vortex tilt 850 -> 200 hPa (km)", fontsize=FS_LABEL, fontweight="bold"
+    )
     # "Diamonds = land-phase points.  Rising tilt after landfall = terrain-induced decoupling",
-    ax.set_title("All Tracks: Vortex Tilt Evolution", fontsize=FS_TITLE, fontweight="bold")
+    ax.set_title(
+        "All Tracks: Vortex Tilt Evolution", fontsize=FS_TITLE, fontweight="bold"
+    )
     ax.grid(True, alpha=0.3, linestyle="--")
     ax.legend(loc="upper left", **legend_style())
     plt.tight_layout()
@@ -252,10 +270,10 @@ def run_track_vortex_analysis(track_df, track_id, pl_dir, year, output_dir):
     std_print("INFO", "va", "--- Thermal structure ---")
     try:
         therm_df = compute_thermal_structure(track_df, pl_dir, year, output_dir)
-
     except Exception as e:
         std_print("ERROR", "va", "Thermal failed", str(e))
         traceback.print_exc()
+
     std_print("INFO", "va", "--- Vorticity column ---")
     try:
         col_df = compute_vorticity_column(track_df, pl_dir, year, output_dir)
@@ -286,7 +304,9 @@ def run_track_vortex_analysis(track_df, track_id, pl_dir, year, output_dir):
 
     std_print("INFO", "va", "--- Mixing ratio vertical profile ---")
     try:
-        mixing_ratio_df = compute_vertical_mixing_ratio(track_df, pl_dir, year, output_dir)
+        mixing_ratio_df = compute_vertical_mixing_ratio(
+            track_df, pl_dir, year, output_dir
+        )
     except Exception as e:
         std_print("ERROR", "va", "Mixing ratio profile failed", str(e))
         traceback.print_exc()
@@ -349,7 +369,9 @@ def compute_vortex_tilt(track_df, pl_dir, year, output_dir):
     an anomalous increase in tilt magnitude during the land phase - particularly  collocated with terrain
     - indicates low-level frictional decoupling.
     """
-    track_id = (int(track_df["track_id"].iloc[0]) if "track_id" in track_df.columns else 0)
+    track_id = (
+        int(track_df["track_id"].iloc[0]) if "track_id" in track_df.columns else 0
+    )
     df = track_df.sort_values("time").reset_index(drop=True)
     times = pd.to_datetime(df["time"])
 
@@ -479,7 +501,9 @@ def compute_thermal_structure(track_df, pl_dir, year, output_dir):
     When the cold core warms (anomaly -> 0) the system is weakening
     When it warms faster over terrain than over flat land -> terrain-induced dissipation
     """
-    track_id = (int(track_df["track_id"].iloc[0]) if "track_id" in track_df.columns else 0)
+    track_id = (
+        int(track_df["track_id"].iloc[0]) if "track_id" in track_df.columns else 0
+    )
     df = track_df.sort_values("time").reset_index(drop=True)
     times = pd.to_datetime(df["time"])
 
@@ -501,7 +525,9 @@ def compute_thermal_structure(track_df, pl_dir, year, output_dir):
 
             try:
                 # Vortex centre temperature (interpolate to track position)
-                t_centre = float(t_slice.sel(latitude=tlat, longitude=tlon, method="nearest").values)
+                t_centre = float(
+                    t_slice.sel(latitude=tlat, longitude=tlon, method="nearest").values
+                )
             except Exception:
                 t_centre = np.nan
             t_amb = ambient_temperature(t_slice, tlat, tlon)
@@ -512,12 +538,18 @@ def compute_thermal_structure(track_df, pl_dir, year, output_dir):
     therm_df = pd.DataFrame(theraml_sturcture_records)
 
     if therm_df["T850_anom"].isnull().all() and therm_df["T200_anom"].isnull().all():
-        std_print("WARN", "va", f"Track {track_id}: All thermal structure data are NaN - skipping plot")
+        std_print(
+            "WARN",
+            "va",
+            f"Track {track_id}: All thermal structure data are NaN - skipping plot",
+        )
         return therm_df
 
     # Export
     os.makedirs(output_dir, exist_ok=True)
-    thermal_structure_CSV = os.path.join(output_dir, f"Track_{track_id}_thermal_structure.csv")
+    thermal_structure_CSV = os.path.join(
+        output_dir, f"Track_{track_id}_thermal_structure.csv"
+    )
     therm_df.to_csv(thermal_structure_CSV, index=False)
     std_print("EXPORT", "va", "Thermal structure CSV", thermal_structure_CSV)
 
@@ -539,7 +571,9 @@ def compute_vorticity_column(track_df, pl_dir, year, output_dir):
     Rashid & Srinivasan (2005) showed that positive vorticity at 850+700+500 hPa
     with negative vorticity at 200 hPa characterises a mature MD.
     """
-    track_id = (int(track_df["track_id"].iloc[0]) if "track_id" in track_df.columns else 0)
+    track_id = (
+        int(track_df["track_id"].iloc[0]) if "track_id" in track_df.columns else 0
+    )
     df = track_df.sort_values("time").reset_index(drop=True)
     times = pd.to_datetime(df["time"])
 
@@ -563,7 +597,11 @@ def compute_vorticity_column(track_df, pl_dir, year, output_dir):
             vo_slice = ds["vo"].squeeze()
 
             try:
-                vo_val = float(vo_slice.sel(latitude=lat_at_t, longitude=lon_at_t, method="nearest").values)
+                vo_val = float(
+                    vo_slice.sel(
+                        latitude=lat_at_t, longitude=lon_at_t, method="nearest"
+                    ).values
+                )
             except Exception:
                 vo_val = np.nan
             rec[f"vo_{level}"] = vo_val
@@ -574,7 +612,9 @@ def compute_vorticity_column(track_df, pl_dir, year, output_dir):
 
     # Export
     os.makedirs(output_dir, exist_ok=True)
-    vorticity_column_csv = os.path.join(output_dir, f"track_{track_id}_vorticity_column.csv")
+    vorticity_column_csv = os.path.join(
+        output_dir, f"track_{track_id}_vorticity_column.csv"
+    )
     col_df.to_csv(vorticity_column_csv, index=False)
     std_print("EXPORT", "va", "Vorticity column", vorticity_column_csv)
 
@@ -594,7 +634,9 @@ def compute_ivt(track_df, pl_dir, year, output_dir):
     Reference threshold: IVT < 250 kg/ms is considered below the threshold for sustained
     deep convection in tropical systems (high-end estimates for intense monsoon systems are 200-800)
     """
-    track_id = (int(track_df["track_id"].iloc[0]) if "track_id" in track_df.columns else 0)
+    track_id = (
+        int(track_df["track_id"].iloc[0]) if "track_id" in track_df.columns else 0
+    )
     df = track_df.sort_values("time").reset_index(drop=True)
     times = pd.to_datetime(df["time"])
 
@@ -623,9 +665,24 @@ def compute_ivt(track_df, pl_dir, year, output_dir):
                 valid = False
                 break
             try:
-                q = float(ds["q"].squeeze().sel(latitude=tlat, longitude=tlon, method="nearest").values)
-                u = float(ds["u"].squeeze().sel(latitude=tlat, longitude=tlon, method="nearest").values)
-                v = float(ds["v"].squeeze().sel(latitude=tlat, longitude=tlon, method="nearest").values)
+                q = float(
+                    ds["q"]
+                    .squeeze()
+                    .sel(latitude=tlat, longitude=tlon, method="nearest")
+                    .values
+                )
+                u = float(
+                    ds["u"]
+                    .squeeze()
+                    .sel(latitude=tlat, longitude=tlon, method="nearest")
+                    .values
+                )
+                v = float(
+                    ds["v"]
+                    .squeeze()
+                    .sel(latitude=tlat, longitude=tlon, method="nearest")
+                    .values
+                )
                 q = max(q, 0)  # clip spectral artefact
                 sum_qu += q * u * dpj
                 sum_qv += q * v * dpj
@@ -662,12 +719,16 @@ def compute_vertical_mixing_ratio(track_df, pl_dir, year, output_dir):
     Sharp drop in 850 hPa w after crossing terrain -> orographic blocking of low-level easterly moisture inflow (Eastern Ghats / Chhota Nagpur signature)
     Characteristic timing: w drops at 850 hPa ~6–12 h after landfall over elevated regions
     """
-    track_id = (int(track_df["track_id"].iloc[0]) if "track_id" in track_df.columns else 0)
+    track_id = (
+        int(track_df["track_id"].iloc[0]) if "track_id" in track_df.columns else 0
+    )
     profile_df = build_vertical_profile(track_df, pl_dir, year, mixing_ratio, "w")
 
     # Export
     os.makedirs(output_dir, exist_ok=True)
-    mr_profile_CSV = os.path.join(output_dir, f"track_{track_id}_mixing_ratio_profile.csv")
+    mr_profile_CSV = os.path.join(
+        output_dir, f"track_{track_id}_mixing_ratio_profile.csv"
+    )
     profile_df.to_csv(mr_profile_CSV, index=False)
     std_print("EXPORT", "va", "Mixing ratio vertical profile CSV", mr_profile_CSV)
 
@@ -705,7 +766,9 @@ def compute_moisture_flux_convergence(track_df, pl_dir, year, output_dir):
       Collapse over terrain -> orographic wind deflection cutting off low-level inflow
     """
     BOX_DEG = 3.0
-    track_id = (int(track_df["track_id"].iloc[0]) if "track_id" in track_df.columns else 0)
+    track_id = (
+        int(track_df["track_id"].iloc[0]) if "track_id" in track_df.columns else 0
+    )
     df = track_df.sort_values("time").reset_index(drop=True)
     times = pd.to_datetime(df["time"])
     is_land_arr = (
@@ -732,9 +795,26 @@ def compute_moisture_flux_convergence(track_df, pl_dir, year, output_dir):
             # Spatial box (ERA5 lats descending -> slice reversed)
             lat_slice = slice(tlat + BOX_DEG, tlat - BOX_DEG)
             lon_slice = slice(tlon - BOX_DEG, tlon + BOX_DEG)
-            q2d = np.clip(ds850["q"].squeeze().sel(latitude=lat_slice, longitude=lon_slice).values.astype(float), 0, None)
-            u2d = (ds850["u"].squeeze().sel(latitude=lat_slice, longitude=lon_slice).values.astype(float))
-            v2d = (ds850["v"].squeeze().sel(latitude=lat_slice, longitude=lon_slice).values.astype(float))
+            q2d = np.clip(
+                ds850["q"]
+                .squeeze()
+                .sel(latitude=lat_slice, longitude=lon_slice)
+                .values.astype(float),
+                0,
+                None,
+            )
+            u2d = (
+                ds850["u"]
+                .squeeze()
+                .sel(latitude=lat_slice, longitude=lon_slice)
+                .values.astype(float)
+            )
+            v2d = (
+                ds850["v"]
+                .squeeze()
+                .sel(latitude=lat_slice, longitude=lon_slice)
+                .values.astype(float)
+            )
             lats = ds850["latitude"].sel(latitude=lat_slice).values
             lons = ds850["longitude"].sel(longitude=lon_slice).values
 
@@ -759,10 +839,14 @@ def compute_moisture_flux_convergence(track_df, pl_dir, year, output_dir):
 
             # MFC = -div x Δp / g  [kg m⁻^2 s^(-1)]  -> mm hr^(-1)
             mfc_mm_hr = -div_ctr * dp_850 / G * 3600.0
-            mfc_records.append({"time": t, "MFC_mm_hr": mfc_mm_hr, "is_land": bool(is_land_arr[i])})
+            mfc_records.append(
+                {"time": t, "MFC_mm_hr": mfc_mm_hr, "is_land": bool(is_land_arr[i])}
+            )
         except Exception as e:
             std_print("WARN", "va", f"Track {track_id}: MFC failed at {t}", str(e))
-            mfc_records.append({"time": t, "MFC_mm_hr": np.nan, "is_land": bool(is_land_arr[i])})
+            mfc_records.append(
+                {"time": t, "MFC_mm_hr": np.nan, "is_land": bool(is_land_arr[i])}
+            )
 
     mfc_df = pd.DataFrame(mfc_records)
     mfc_df["time"] = pd.to_datetime(mfc_df["time"])
@@ -787,7 +871,9 @@ def compute_column_moisture_tendency(track_df, pl_dir, year, output_dir):
 
     Uses the same trapezoidal Δp weights as compute_ivt (LEVELS = [850,700,600,500,400,300,200]).
     """
-    track_id = (int(track_df["track_id"].iloc[0]) if "track_id" in track_df.columns else 0)
+    track_id = (
+        int(track_df["track_id"].iloc[0]) if "track_id" in track_df.columns else 0
+    )
     df = track_df.sort_values("time").reset_index(drop=True)
     times = pd.to_datetime(df["time"])
     is_land_arr = (
@@ -855,7 +941,9 @@ def compute_column_moisture_tendency(track_df, pl_dir, year, output_dir):
     cmt_df.to_csv(cmt_csv, index=False)
     std_print("EXPORT", "va", "Column moisture tendency CSV", cmt_csv)
 
-    plot_column_moisture_tendency(cmt_df=cmt_df, track_id=track_id, output_dir=output_dir)
+    plot_column_moisture_tendency(
+        cmt_df=cmt_df, track_id=track_id, output_dir=output_dir
+    )
     return cmt_df
 
 
@@ -870,7 +958,9 @@ def compute_theta_e_profile(track_df, pl_dir, year, output_dir):
     Upper-level θ_e (300–200 hPa) collapses before surface θ_e -> terrain-induced
     upper stabilisation (hallmark of BOE breakdown over elevated terrain
     """
-    track_id = (int(track_df["track_id"].iloc[0]) if "track_id" in track_df.columns else 0)
+    track_id = (
+        int(track_df["track_id"].iloc[0]) if "track_id" in track_df.columns else 0
+    )
     profile_df = build_vertical_profile(track_df, pl_dir, year, theta_e, "theta_e")
 
     os.makedirs(output_dir, exist_ok=True)
@@ -911,7 +1001,9 @@ def compute_omega_cross_section(track_df, pl_dir, year, output_dir):
     the upslope side of terrain indicates forced orographic lifting - which
     enhances precipitation but also drains moisture faster from the system
     """
-    track_id = (int(track_df["track_id"].iloc[0]) if "track_id" in track_df.columns else 0)
+    track_id = (
+        int(track_df["track_id"].iloc[0]) if "track_id" in track_df.columns else 0
+    )
     df = track_df.sort_values("time").reset_index(drop=True)
 
     # Only land phase
@@ -922,7 +1014,9 @@ def compute_omega_cross_section(track_df, pl_dir, year, output_dir):
     )
     land_df = df[is_land].reset_index(drop=True)
     if len(land_df) < 3:
-        std_print("WARN", "va", "Insufficient land-phase points for omega cross-section")
+        std_print(
+            "WARN", "va", "Insufficient land-phase points for omega cross-section"
+        )
         return
 
     times = pd.to_datetime(land_df["time"])
@@ -936,7 +1030,9 @@ def compute_omega_cross_section(track_df, pl_dir, year, output_dir):
         t = times.iloc[i]
         c_lat = float(land_df["latitude"].iloc[i])
         c_lon = float(land_df["longitude"].iloc[i])
-        bear = (float(land_df["bearing"].iloc[i]) if "bearing" in land_df.columns else 270.0)
+        bear = (
+            float(land_df["bearing"].iloc[i]) if "bearing" in land_df.columns else 270.0
+        )
         perp = (bear + 90) % 360  # perpendicular direction
 
         ds700 = load_level_at_time(pl_dir, t, 700, year)
@@ -951,7 +1047,11 @@ def compute_omega_cross_section(track_df, pl_dir, year, output_dir):
             p_lat = c_lat + np.cos(np.radians(perp)) * np.degrees(dlat_rad)
             p_lon = c_lon + np.sin(np.radians(perp)) * np.degrees(dlon_rad)
             try:
-                val = float(w_slice.sel(latitude=p_lat, longitude=p_lon, method="nearest").values)
+                val = float(
+                    w_slice.sel(
+                        latitude=p_lat, longitude=p_lon, method="nearest"
+                    ).values
+                )
                 omega_matrix[i, j] = val
             except Exception:
                 pass
@@ -1027,7 +1127,13 @@ def plot_ivt(ivt_df, track_df, track_id, output_dir):
     # Figure
     fig, ax = plt.subplots(figsize=(16, 7))
 
-    add_land_ocean_shading(ax, times, is_land_data[:len(times)] if len(is_land_data) >= len(times) else np.pad(is_land_data, (0, len(times)-len(is_land_data))))
+    add_land_ocean_shading(
+        ax,
+        times,
+        is_land_data[: len(times)]
+        if len(is_land_data) >= len(times)
+        else np.pad(is_land_data, (0, len(times) - len(is_land_data))),
+    )
     ax.plot(
         times,
         ivt,
@@ -1129,7 +1235,7 @@ def plot_vortex_tilt(tilt_df, track_df, track_id, output_dir):
         label="Tilt magnitude (km)",
     )
     # Land/ocean shading
-    add_land_ocean_shading(ax, track_df['time'], track_df['is_land'])
+    add_land_ocean_shading(ax, track_df["time"], track_df["is_land"])
     # Landfall line
     for i in range(1, len(is_land)):
         if not is_land[i - 1] and is_land[i]:
@@ -1294,7 +1400,7 @@ def plot_thermal_structure(therm_df, track_df, track_id, output_dir):
     ]:
         vals = therm_df[col].values
         # Land/ocean shading
-        add_land_ocean_shading(ax, track_df['time'], track_df['is_land'])
+        add_land_ocean_shading(ax, track_df["time"], track_df["is_land"])
         # Landfall line
         for i in range(1, len(is_land)):
             if not is_land[i - 1] and is_land[i]:
@@ -1307,29 +1413,9 @@ def plot_thermal_structure(therm_df, track_df, track_id, output_dir):
                     zorder=5,
                 )
                 break
-        ax.plot(
-          times,
-          vals,
-          "-o",
-          color=color,
-          linewidth=2,
-          markersize=4,
-          alpha=0.8
-        )
-        ax.fill_between(
-          times,
-          vals,
-          0,
-          where=~np.isnan(vals),
-          color=color,
-          alpha=0.15
-        )
-        ax.axhline(
-          ref_line,
-          color="black",
-          linewidth=0.8,
-          label=ref_label
-        )
+        ax.plot(times, vals, "-o", color=color, linewidth=2, markersize=4, alpha=0.8)
+        ax.fill_between(times, vals, 0, where=~np.isnan(vals), color=color, alpha=0.15)
+        ax.axhline(ref_line, color="black", linewidth=0.8, label=ref_label)
         ax.set_ylabel("ΔT (K)", fontsize=FS_LABEL, fontweight="bold")
         ax.set_title(title, fontsize=FS_TITLE, fontweight="bold")
         ax.grid(True, alpha=0.3, linestyle="--")
@@ -1346,7 +1432,9 @@ def plot_thermal_structure(therm_df, track_df, track_id, output_dir):
     plt.tight_layout()
 
     # Save
-    theraml_sturcture_path = os.path.join(output_dir, f"track_{track_id}_thermal_structure.png")
+    theraml_sturcture_path = os.path.join(
+        output_dir, f"track_{track_id}_thermal_structure.png"
+    )
     plt.savefig(theraml_sturcture_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
     std_print("SAVED", "va", "Thermal structure plot", theraml_sturcture_path)
@@ -1433,12 +1521,7 @@ def plot_vorticity_column(col_df, track_df, track_id, output_dir):
         label="Δvo = vo(850) − vo(200)",
     )
     ax2.fill_between(
-      times,
-      delta,
-      0,
-      where=~np.isnan(delta),
-      color="purple",
-      alpha=0.15
+        times, delta, 0, where=~np.isnan(delta), color="purple", alpha=0.15
     )
     ax2.axhline(0, color="black", linewidth=0.8)
     # Land/ocean shading
@@ -1469,7 +1552,9 @@ def plot_vorticity_column(col_df, track_df, track_id, output_dir):
     plt.tight_layout()
 
     # Save
-    vorticity_column_path = os.path.join(output_dir, f"Track_{track_id}_vorticity_column.png")
+    vorticity_column_path = os.path.join(
+        output_dir, f"Track_{track_id}_vorticity_column.png"
+    )
     plt.savefig(vorticity_column_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
     std_print("SAVED", "va", "Vorticity column plot", vorticity_column_path)
@@ -1501,7 +1586,7 @@ def plot_moisture_flux_convergence(mfc_df, track_id, output_dir):
         label="MFC (mm/hr)",
     )
     # Land/ocean shading
-    add_land_ocean_shading(ax, mfc_df['time'], mfc_df['is_land'])
+    add_land_ocean_shading(ax, mfc_df["time"], mfc_df["is_land"])
     # Landfall line
     for i in range(1, len(is_land)):
         if not is_land[i - 1] and is_land[i]:
@@ -1577,17 +1662,9 @@ def plot_column_moisture_tendency(cmt_df, track_id, output_dir):
         (ax1, W, "steelblue", "Precipitable Water W (mm)"),
         (ax2, dWdt, "tomato", "∂W/∂t  (mm/hr)"),
     ]:
-        ax.plot(
-          times,
-          vals,
-          "-o",
-          color=color,
-          linewidth=2,
-          markersize=3,
-          alpha=0.85
-        )
+        ax.plot(times, vals, "-o", color=color, linewidth=2, markersize=3, alpha=0.85)
         # Land/ocean shading
-        add_land_ocean_shading(ax, cmt_df['time'], cmt_df['is_land'])
+        add_land_ocean_shading(ax, cmt_df["time"], cmt_df["is_land"])
         # Landfall line
         for i in range(1, len(is_land)):
             if not is_land[i - 1] and is_land[i]:
@@ -1617,23 +1694,24 @@ def plot_column_moisture_tendency(cmt_df, track_id, output_dir):
     plt.tight_layout()
 
     # Save
-    cmt_path = os.path.join(output_dir, f"track_{track_id}_column_moisture_tendency.png")
+    cmt_path = os.path.join(
+        output_dir, f"track_{track_id}_column_moisture_tendency.png"
+    )
     plt.savefig(cmt_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
     std_print("SAVED", "va", "Column moisture tendency plot", cmt_path)
 
 
 def plot_time_height_section(
-  df, col_prefix, track_id, cbar_label, cmap,
-  title, filename, output_dir, norm=None
+    df, col_prefix, track_id, cbar_label, cmap, title, filename, output_dir, norm=None
 ):
     """Time–height (pressure) section plot"""
-    times   = pd.to_datetime(df["time"])
+    times = pd.to_datetime(df["time"])
     is_land = df["is_land"].values.astype(bool)
 
     # Sort pressure levels ascending for 200 hPa at top, 850 at bottom
-    levels_desc = list(LEVELS)                            # [850, 700, 600, 500, 400, 300, 200]
-    levels_asc  = sorted(levels_desc)                     # [200, 300, 400, 500, 600, 700, 850]
+    levels_desc = list(LEVELS)  # [850, 700, 600, 500, 400, 300, 200]
+    levels_asc = sorted(levels_desc)  # [200, 300, 400, 500, 600, 700, 850]
     idx_asc = [levels_desc.index(l) for l in levels_asc]  # column mapping
 
     # Build matrix: (n_times x n_levels_desc) - original order
@@ -1652,8 +1730,8 @@ def plot_time_height_section(
         std_print("WARN", "va", f"Time-height section all-NaN - skipping: {filename}")
         return
 
-    t_num  = np.arange(len(times))
-    L_asc  = np.array(levels_asc, dtype=float)   # [200, 300, 400, 500, 600, 700, 850]
+    t_num = np.arange(len(times))
+    L_asc = np.array(levels_asc, dtype=float)  # [200, 300, 400, 500, 600, 700, 850]
 
     # Figure
     fig, ax = plt.subplots(figsize=(16, 7))
@@ -1675,13 +1753,13 @@ def plot_time_height_section(
     n_contours = 8
     try:
         cs = ax.contour(
-          t_num,
-          L_asc,
-          matrix_asc.T,
-          levels=np.linspace(vmin, vmax, n_contours),
-          colors="black",
-          linewidths=0.5,
-          alpha=0.5
+            t_num,
+            L_asc,
+            matrix_asc.T,
+            levels=np.linspace(vmin, vmax, n_contours),
+            colors="black",
+            linewidths=0.5,
+            alpha=0.5,
         )
         ax.clabel(cs, inline=True, fontsize=FS_LABEL, fmt="%.1f")
     except Exception:
@@ -1700,12 +1778,12 @@ def plot_time_height_section(
     # Landfall vertical line
     if landfall_t_num is not None:
         ax.axvline(
-          landfall_t_num,
-          color="black",
-          linestyle="--",
-          linewidth=2.0,
-          label="Landfall",
-          zorder=6
+            landfall_t_num,
+            color="black",
+            linestyle="--",
+            linewidth=2.0,
+            label="Landfall",
+            zorder=6,
         )
 
     # x-axis: time labels
@@ -1719,7 +1797,7 @@ def plot_time_height_section(
     # y-axis: ascending pressure (200 at top, 850 at bottom) - invert so 850 is visual bottom
     ax.set_yticks(levels_asc)
     ax.set_yticklabels([f"{lv} hPa" for lv in levels_asc])
-    ax.invert_yaxis()   # now 200 hPa is visually at top, 850 at bottom - correct convention
+    ax.invert_yaxis()  # now 200 hPa is visually at top, 850 at bottom - correct convention
 
     ax.set_xlabel("Time", fontsize=FS_LABEL, fontweight="bold")
     ax.set_ylabel("Pressure Level", fontsize=FS_LABEL, fontweight="bold")
@@ -1780,7 +1858,9 @@ def select_time_nearest(ds, t):
     return ds.sel(time=t, method="nearest")
 
 
-def find_vortex_centre(vo_slice, track_lat, track_lon, search_radius_deg=SEARCH_RADIUS_DEG):
+def find_vortex_centre(
+    vo_slice, track_lat, track_lon, search_radius_deg=SEARCH_RADIUS_DEG
+):
     """
     Find the relative vorticity maximum within `search_radius_deg` of the  single-level track centre.
 
@@ -1825,7 +1905,15 @@ def ambient_temperature(t_slice, centre_lat, centre_lon, ring_km=AMBIENT_RING_KM
 
 def mixing_ratio(ds, tlat, tlon, level_hpa):
     """Water vapour mixing ratio w = q/(1-q) [g/kg]"""
-    q = max(float(ds["q"].squeeze().sel(latitude=tlat, longitude=tlon, method="nearest").values), 0.0)
+    q = max(
+        float(
+            ds["q"]
+            .squeeze()
+            .sel(latitude=tlat, longitude=tlon, method="nearest")
+            .values
+        ),
+        0.0,
+    )
     return (q / (1.0 - q)) * 1000.0  # g/kg
 
 
@@ -1836,8 +1924,18 @@ def theta_e(ds, tlat, tlon, level_hpa):
     q must be in kg/kg - reads specific humidity directly from dataset (not mixing ratio).
     """
     P_Pa = level_hpa * 100.0
-    T = float(ds["t"].squeeze().sel(latitude=tlat, longitude=tlon, method="nearest").values)
-    q_kg = max(float(ds["q"].squeeze().sel(latitude=tlat, longitude=tlon, method="nearest").values), 0.0)
+    T = float(
+        ds["t"].squeeze().sel(latitude=tlat, longitude=tlon, method="nearest").values
+    )
+    q_kg = max(
+        float(
+            ds["q"]
+            .squeeze()
+            .sel(latitude=tlat, longitude=tlon, method="nearest")
+            .values
+        ),
+        0.0,
+    )
     return T * (P0 / P_Pa) ** (Rd / cp) * np.exp(L_v * q_kg / (cp * T))
 
 
