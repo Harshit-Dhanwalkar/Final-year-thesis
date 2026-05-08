@@ -1095,7 +1095,7 @@ def fig_hovmoller_geometry():
     ax.text(
         np.radians(285),
         230,
-        r"16 sectors \times 17 annuli\n= 272 cells per time step",
+        r"16 sectors * 17 annul = 272 cells per time step",
         fontsize=FS_ANNOT,
         ha="center",
         va="center",

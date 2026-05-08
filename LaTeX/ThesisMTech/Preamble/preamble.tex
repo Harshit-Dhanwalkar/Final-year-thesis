@@ -3,29 +3,30 @@
 % Set {innerside margin / outerside margin / topmargin / bottom margin}  and
 % other page dimensions
 \ifsetCustomMargin
-	\RequirePackage[left=37mm,right=30mm,top=35mm,bottom=30mm]{geometry}
-	\setFancyHdr % To apply fancy header after geometry package is loaded
+\RequirePackage[left=37mm,right=30mm,top=35mm,bottom=30mm]{geometry}
+\setFancyHdr % To apply fancy header after geometry package is loaded
 \fi
 
 %  Fonts (like different typewriter fonts etc.)
 % Add `customfont' in the document class option to use this section
 \ifsetCustomFont
-	% Set your custom font here and use `customfont' in options. Leave empty to
-	% load computer modern font (default LaTeX font).
-	%\RequirePackage{helvet}
+% Set your custom font here and use `customfont' in options. Leave empty to
+% load computer modern font (default LaTeX font).
+%\RequirePackage{helvet}
 
-	% For use with XeLaTeX
-	%  \setmainfont[
-	%    Path              = ./libertine/opentype/,
-	%    Extension         = .otf,
-	%    UprightFont = LinLibertine_R,
-	%    BoldFont = LinLibertine_RZ, % Linux Libertine O Regular Semibold
-	%    ItalicFont = LinLibertine_RI,
-	%    BoldItalicFont = LinLibertine_RZI, % Linux Libertine O Regular Semibold Italic
-	%  ]
-	%  {libertine}
-	%  % load font from system font
-	%  \newfontfamily\libertinesystemfont{Linux Libertine O}
+% For use with XeLaTeX
+%  \setmainfont[
+%    Path              = ./libertine/opentype/,
+%    Extension         = .otf,
+%    UprightFont = LinLibertine_R,
+%    BoldFont = LinLibertine_RZ, % Linux Libertine O Regular Semibold
+%    ItalicFont = LinLibertine_RI,
+%    BoldItalicFont = LinLibertine_RZI, % Linux Libertine O Regular
+% Semibold Italic
+%  ]
+%  {libertine}
+%  % load font from system font
+%  \newfontfamily\libertinesystemfont{Linux Libertine O}
 \fi
 
 %  Custom Packages
@@ -54,12 +55,17 @@
 % Hyperreferencing / URL
 \usepackage{hyperref}
 \hypersetup{
-	colorlinks=true,
-	linkcolor=blue,      % Color for internal links (TOC, Figures)
-	citecolor=blue,      % Color for citations
-	urlcolor=cyan,       % Color for web URLs
-	pdftitle={Post-Landfall Sustainability of Monsoon Depressions},
+  colorlinks=true,
+  linkcolor=blue,      % Color for internal links (TOC, Figures)
+  citecolor=blue,      % Color for citations
+  urlcolor=cyan,       % Color for web URLs
+  pdftitle={Post-Landfall Sustainability of Monsoon Depressions},
 }
+
+% Title/heading spacing
+\usepackage{titlesec}
+\titlespacing*{\section}{0pt}{2.5ex plus 1ex minus .2ex}{1.3ex plus .2ex}
+\titlespacing*{\subsection}{0pt}{2ex plus 1ex minus .2ex}{1ex plus .2ex}
 
 %  Tables
 \usepackage{booktabs} % For professional looking tables
@@ -98,12 +104,18 @@
 %\usepackage{cleveref} %Referencing without need to explicitly state fig /table
 % Add `custombib' in the document class option to use this section
 \ifuseCustomBib
-	\RequirePackage[square, sort, numbers, authoryear]{natbib} % CustomBib
+\RequirePackage[square, sort, numbers, authoryear]{natbib} % CustomBib
 
-	% If you would like to use biblatex for your reference management, as opposed to the default `natbibpackage` pass the option `custombib` in the document class. Comment out the previous line to make sure you don't load the natbib package. Uncomment the following lines and specify the location of references.bib file
+% If you would like to use biblatex for your reference management, as
+% opposed to the default `natbibpackage` pass the option `custombib`
+% in the document class. Comment out the previous line to make sure
+% you don't load the natbib package. Uncomment the following lines
+% and specify the location of references.bib file
 
-	%\RequirePackage[backend=biber, style=numeric-comp, citestyle=numeric, sorting=nty, natbib=true]{biblatex}
-	%\bibliography{References/references} %Location of references.bib only for biblatex
+%\RequirePackage[backend=biber, style=numeric-comp,
+% citestyle=numeric, sorting=nty, natbib=true]{biblatex}
+%\bibliography{References/references} %Location of references.bib
+% only for biblatex
 \fi
 
 % changes the default name `Bibliography` -> `References'
@@ -115,12 +127,12 @@
 % page-numbering for the remainder of the dissertation (arabic, starting at 1).
 
 \newenvironment{romanpages}{
-	\setcounter{page}{1}
-	\renewcommand{\thepage}{\roman{page}}}
+  \setcounter{page}{1}
+\renewcommand{\thepage}{\roman{page}}}
 {\newpage\renewcommand{\thepage}{\arabic{page}}}
 
 %  User Defined Commands
-%  To change the name of Table of Contents / LOF and LOT 
+%  To change the name of Table of Contents / LOF and LOT
 %\renewcommand{\contentsname}{My Table of Contents}
 %\renewcommand{\listfigurename}{My List of Figures}
 %\renewcommand{\listtablename}{My List of Tables}
@@ -134,7 +146,8 @@
 %\renewcommand{\nomname}{Symbols}
 
 %  Appendix
-% The default value of both \appendixtocname and \appendixpagename is `Appendices'. These names can all be changed via:
+% The default value of both \appendixtocname and \appendixpagename is
+% `Appendices'. These names can all be changed via:
 %\renewcommand{\appendixtocname}{List of appendices}
 %\renewcommand{\appendixname}{Appndx}
 
@@ -156,14 +169,13 @@
 % Default value is 0.75
 %\SetDraftGrayScale{0.8}
 
-
 %  Todo Notes
 % \ifsetDraft
-% 	\usepackage[colorinlistoftodos]{todonotes}
-% 	\newcommand{\mynote}[1]{\todo[author=kks32,size=\small,inline,color=green!40]{#1}}
+%   \usepackage[colorinlistoftodos]{todonotes}
+%   \newcommand{\mynote}[1]{\todo[author=kks32,size=\small,inline,color=green!40]{#1}}
 % \else
-% 	\newcommand{\mynote}[1]{}
-% 	\newcommand{\listoftodos}{}
+%   \newcommand{\mynote}[1]{}
+%   \newcommand{\listoftodos}{}
 % \fi
 %
 % Example todo: \mynote{Hey! I have a note}
@@ -181,22 +193,23 @@
 \setlength{\yellownoteheight}{2.5cm}
 
 \newcommand{\yellownote}[1]{
-\marginpar{
+  \marginpar{
     \vspace{-0.5\yellownoteheight}
-        % \begin{center}
-        \begin{tikzpicture}
-			\draw[white,fill=gray!25,opacity=0.75]
-                (0,0) rectangle (\yellownotewidth,\yellownoteheight);
-            \draw[fill=yellow!35] (0,0) rectangle (\yellownotewidth,\yellownoteheight);
-            \draw[opacity=0.45,fill=gray!50] (0.7\yellownotewidth,0) -- 
-                (0.9\yellownotewidth,0.45) -- (\yellownotewidth,0.4) -- cycle;
-            \node[blue,below] at (0.5\yellownotewidth,\yellownoteheight) {
-                \begin{minipage}{\yellownotewidth-1em}
-                    \scriptsize\sf#1
-                \end{minipage}
-            };
-        \end{tikzpicture}
-        % \end{center}
-        \vspace{0.5\yellownoteheight}
-    }
+    % \begin{center}
+    \begin{tikzpicture}
+      \draw[white,fill=gray!25,opacity=0.75]
+      (0,0) rectangle (\yellownotewidth,\yellownoteheight);
+      \draw[fill=yellow!35] (0,0) rectangle
+      (\yellownotewidth,\yellownoteheight);
+      \draw[opacity=0.45,fill=gray!50] (0.7\yellownotewidth,0) --
+      (0.9\yellownotewidth,0.45) -- (\yellownotewidth,0.4) -- cycle;
+      \node[blue,below] at (0.5\yellownotewidth,\yellownoteheight) {
+        \begin{minipage}{\yellownotewidth-1em}
+          \scriptsize\sf#1
+        \end{minipage}
+      };
+    \end{tikzpicture}
+    % \end{center}
+    \vspace{0.5\yellownoteheight}
+  }
 }

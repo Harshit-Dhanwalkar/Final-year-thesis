@@ -83,7 +83,7 @@ around it in a counter-clockwise sense, sustaining the cyclonic circulation
 responsible for the rotation of tropical cyclones, and even large eddies
 in the ocean at sufficiently large scales.
 
-In the case of an MD, the surface pressure minimum at the storm centre
+In the case of an MD, the surface pressure minimum at the storm center
 drives convergent inflow in the boundary layer. The Coriolis force
 continuously deflects this inflow to the right, so that instead of
 moving directly toward the center, air spirals cyclonically around it.
@@ -176,12 +176,12 @@ along the Odisha, West Bengal, and northern Andhra Pradesh coastlines.
 %   \fbox{\rule{0pt}{6cm}\rule{0.7\textwidth}{0pt}}
 %   % \includegraphics[width=0.85\textwidth]{Chapter1/Figs/jet_streams_schematic}
 %   \caption[Jet streams and Monsoon Depression steering]{TODO}
-%   %   Schematic of the large-scale pressure centres and jet streams
+%   %   Schematic of the large-scale pressure centers and jet streams
 %   %   governing MD motion. The Somali Low-Level Jet (thick blue arrows,
 %   %   850\,hPa) steers disturbances north-westward. The Sub-Tropical
 %   %   Westerly Jet (amber line, 200\,hPa) has retreated poleward of the
 %   %   Himalayas, eliminating vertical shear over the BoB. H and L symbols
-%   %   denote high and low pressure centres; the monsoon trough axis
+%   %   denote high and low pressure centers; the monsoon trough axis
 %   %   (dashed red) marks the preferred propagation corridor. After
 %   % \citet{findlater1969} and \citet{mishra2021monsoon}.}
 %   \label{fig:llj_steering}
@@ -263,15 +263,6 @@ the MD vortex. Systems meeting this criterion are termed \emph{BOE candidates}.
 
 The BOE is particularly significant in the Indian context for two reasons:
 \begin{enumerate}
-  \item \textbf{The land surface is pre-conditioned.} By July and
-    August - peak MD months - the Gangetic plains and central India have
-    received several weeks of monsoon rainfall, and near-surface soil
-    moisture is frequently near field capacity. The land is
-    ``charged'' by antecedent rainfall before any MD arrives. This
-    \emph{antecedent soil moisture} effect - shown empirically by
-    \citet{kishtawal2013enhancement} to be a robust predictor of
-    inland penetration distance - is the critical enabling condition
-    for the BOE over India.
   \item \textbf{The BOE involves a self-reinforcing feedback loop.}
     The MD's own rainfall wets the soil beneath its track, which in
     turn sustains high LHF, which sustains subsequent convection and
@@ -280,6 +271,14 @@ The BOE is particularly significant in the Indian context for two reasons:
     response to antecedent conditions but an \emph{active} process
     that can maintain - and in some cases intensify - the surface
     energy supply during the land phase.
+  \item \textbf{The land surface is pre-conditioned.} By July and
+    August - peak MD months - the Gangetic plains and central India have
+    received several weeks of monsoon rainfall, and near-surface soil
+    moisture is frequently near field capacity. The land is ``charged''
+    by antecedent rainfall before any MD arrives. This  \emph{antecedent
+    soil moisture} effect - shown empirically by
+    \citet{kishtawal2013enhancement} to be predictor of inland penetration
+    distance - is the critical enabling condition for the BOE over India.
 \end{enumerate}
 
 Without the BOE, post-landfall decay is controlled by surface
@@ -304,16 +303,17 @@ Despite growing literature on the BOE in Atlantic and Gulf-coast
 systems, and despite modelling and proxy evidence linking antecedent
 soil moisture to Indian MD longevity \citep{kishtawal2013enhancement,
 osuri2020, hunt2017effect}, a systematic observational study of the
-BOE in Indian MDs using storm-centred diagnostics has not been
+BOE in Indian MDs using storm-centerd diagnostics has not been
 published. Previous Indian work relied on NWP experiments or
 fixed-grid climatological correlations, without characterising the
 azimuthal and radial evolution of LHF and soil moisture
-\emph{relative to the moving storm centre}. This storm-centred
+\emph{relative to the moving storm center}. This storm-centerd
 perspective is the primary methodological novelty of the present study.
 
 \section{Research Objectives}
 \label{sec:intro_objectives}
 
+\yellownote{Redefine RO}
 \begin{enumerate}
   \item Detect and characterise MD events from ERA5 over 2001-2025,
     validated against IMD reports, and classify them as short-lived
@@ -322,27 +322,28 @@ perspective is the primary methodological novelty of the present study.
     SHF, soil moisture (\texttt{SWVL1}), precipitation, and 2-m dew-point
     depression relative to the moving MD center via Azimuthal
     Hovm\"{o}ller analysis, comparing ocean and land phases.
-  \item Assess whether observed inland MDs satisfy the
-    Andersen-Shepherd BOE criterion and document the landfall
-    thermodynamic transitions distinguishing BOE candidates from
-    conventionally decaying systems.
-  \item Quantify the role of antecedent soil moisture (exponentially
-    weighted index over the future inland track corridor) in predicting
-    inland penetration distance and post-landfall duration.
-  \item Characterise Eastern Ghats terrain influence on MD
-    translational speed, precipitation asymmetry, and inland penetration
-    using SRTM elevation data, and identify how this terrain interaction
-    modulates the BOE.
+    % \item Assess whether observed inland MDs satisfy the
+    %   Andersen-Shepherd BOE criterion and document the landfall
+    %   thermodynamic transitions distinguishing BOE candidates from
+    %   conventionally decaying systems.
+    % \item Quantify the role of antecedent soil moisture (exponentially
+    %   weighted index over the future inland track corridor) in predicting
+    %   inland penetration distance and post-landfall duration.
+  \item Characterise Eastern Ghats terrain influence on MD translational
+    speed, precipitation asymmetry, and inland penetration using SRTM
+    elevation data, and identify how this terrain interaction modulates
+    the BOE.
 \end{enumerate}
 
-\section{Scope and Limitations}
-\label{sec:intro_scope}
-
-ERA5 reanalysis (0.25$^\circ$, hourly) is the primary dataset; IMD
-monsoon reports provide observational validation. The study covers
-June-September for 2001-2025. At ERA5 spatial resolution ($\approx
-28$\,km), mesoscale inner-core convective structure is not
-resolved, so results characterise synoptic-scale thermodynamic evolution.
+\yellownote{Move limitations before Conclusion}
+% \section{Scope and Limitations}
+% \label{sec:intro_scope}
+%
+% ERA5 reanalysis (0.25$^\circ$, hourly) is the primary dataset; IMD
+% monsoon reports provide observational validation. The study covers
+% June-September for 2001-2025. At ERA5 spatial resolution ($\approx
+% 28$\,km), mesoscale inner-core convective structure is not
+% resolved, so results characterise synoptic-scale thermodynamic evolution.
 
 % \section{Thesis Organisation}
 % \label{sec:intro_organisation}
