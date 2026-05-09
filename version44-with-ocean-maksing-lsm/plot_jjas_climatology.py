@@ -27,7 +27,6 @@ import rasterio
 import xarray as xr
 from cartopy.mpl.gridliner import LATITUDE_FORMATTER, LONGITUDE_FORMATTER
 from matplotlib.lines import Line2D
-from matplotlib.patches import Patch
 from rasterio.windows import from_bounds
 from rasterio.transform import from_bounds as transform_from_bounds
 from scipy.stats import gaussian_kde
@@ -505,7 +504,7 @@ def plot_jjas_climatology(
 # CLI
 def parse_args():
     p = argparse.ArgumentParser(
-        description="ERA5 JJAS precipitation climatology for thesis Figure 1.1"
+        description="ERA5 JJAS precipitation climatology"
     )
     p.add_argument(
         "--data_dir", default=os.path.join("..", "Data", "single-levels", "ncfiles")
@@ -534,7 +533,7 @@ def main():
         tracks_df = load_all_tracks(args.tracks_root)
         if tracks_df.empty:
             tracks_df = None
-            std_print("WARN", "pc", "No track data — skipping density overlay")
+            std_print("WARN", "pc", "No track data - skipping density overlay")
 
     plot_jjas_climatology(
         mean_mm, years, vrt_path=vrt, tracks_df=tracks_df, output_path=args.output

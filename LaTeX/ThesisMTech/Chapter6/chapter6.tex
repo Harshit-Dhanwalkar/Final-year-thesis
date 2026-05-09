@@ -63,26 +63,27 @@ objectives stated in Chapter~\ref{ch:introduction}.
     storm-centred diagnostic approach, which separates local surface
     feedback from background climatological gradients, is the primary
     methodological contribution of this study.
-  \item \textbf{Antecedent soil moisture is a robust predictor of
-    post-landfall longevity and inland penetration.}
-    \emph{(Objectives 1 and 4.)} The 7-day Antecedent Soil Moisture
-    Index (ASMI) is significantly positively correlated with both
-    post-landfall duration ($r = \textbf{[r$_1$]}$, $p < 0.05$) and
-    inland penetration distance ($r = \textbf{[r$_2$]}$, $p < 0.05$).
-    A threshold near ASMI $\approx 0.35$\,m$^3$\,m$^{-3}$ separates
-    predominantly BOE-candidate long-lived systems (above) from
-    predominantly short-lived systems (below), consistent with the
-    transition from the water-limited to the energy-limited evaporation regime.
-    The 7-day lag window is the most predictive, identifying the
-    mesoscale soil moisture memory of Gangetic clay loam as the key
-    pre-conditioning mechanism-immediate pre-storm rainfall is a
-    weaker predictor than the background moisture accumulated over
-    the preceding week. This corroborates and extends the proxy-based
-    climatology of \citet{kishtawal2013enhancement} using direct ERA5
-    soil moisture diagnostics over a 24-year record and provides the
-    missing mechanistic link-land-phase LHF above the BOE
-    threshold-between antecedent soil moisture and inland persistence
-    that prior proxy-based studies could not establish directly.
+    % \item \textbf{Antecedent soil moisture is a robust predictor of
+    %   post-landfall longevity and inland penetration.}
+    %   \emph{(Objectives 1 and 4.)} The 7-day Antecedent Soil Moisture
+    %   Index (ASMI) is significantly positively correlated with both
+    %   post-landfall duration ($r = \textbf{[r$_1$]}$, $p < 0.05$) and
+    %   inland penetration distance ($r = \textbf{[r$_2$]}$, $p < 0.05$).
+    % A threshold near ASMI $\approx 0.35$\,m$^3$\,m$^{-3}$ separates
+    % predominantly BOE-candidate long-lived systems (above) from
+    % predominantly short-lived systems (below), consistent with the
+    % transition from the water-limited to the energy-limited
+    % evaporation regime.
+    % The 7-day lag window is the most predictive, identifying the
+    % mesoscale soil moisture memory of Gangetic clay loam as the key
+    % pre-conditioning mechanism-immediate pre-storm rainfall is a
+    % weaker predictor than the background moisture accumulated over
+    % the preceding week. This corroborates and extends the proxy-based
+    % climatology of \citet{kishtawal2013enhancement} using direct ERA5
+    % soil moisture diagnostics over a 24-year record and provides the
+    % missing mechanistic link-land-phase LHF above the BOE
+    % threshold-between antecedent soil moisture and inland persistence
+    % that prior proxy-based studies could not establish directly.
   \item \textbf{The Eastern Ghats impose terrain-dependent
     deceleration, partially offset by the BOE in long-lived systems.}
     \emph{(Objective 5.)} The Terrain Sensitivity Index (TSI) is
@@ -121,72 +122,73 @@ objectives stated in Chapter~\ref{ch:introduction}.
     subsequent convection and rainfall.
 \end{enumerate}
 
-\section{Recommendation for Operational Forecasting}
-\label{sec:conclusions_operational}
-
-The results of this study have a direct operational implication for
-post-landfall guidance. The 7-day ASMI computed over the projected
-inland track at the time of landfall is proposed as an operationally
-predictor MD inland longevity. Specifically:
-
-A pre-landfall ASMI $> 0.35$\,m$^3$\,m$^{-3}$ (approximately 65\,\%
-of the soil holding capacity of Gangetic clay loam) should trigger an
-textbf{elevated inland alert} in post-landfall guidance, indicating
-elevated risk anomalous inland rainfall and flooding extending 4-7
-days beyond conventional window.
-
-This indicator can be derived from the near-real-time ERA5T soil
-product available with $\sim 5$-day latency) and requires no NWP
-model run. is therefore actionable for operational centres with ERA5T
-access. NWP guidance available, the evidence of
-\citet{lodh2022improving} and citet{osuri2020} further assimilation
-of satellite-derived soil moisture (e.g., or SMAP) to HTESSEL
-initialisation biases that affect the BOE representation.
+% \section{Operational Forecasting}
+% \label{sec:conclusions_operational}
+%
+% The results of this study have a direct operational implication for
+% post-landfall guidance. The 7-day ASMI computed over the projected
+% inland track at the time of landfall is proposed as an operationally
+% predictor MD inland longevity. Specifically:
+%
+% A pre-landfall ASMI $> 0.35$\,m$^3$\,m$^{-3}$ (approximately 65\,\%
+% of the soil holding capacity of Gangetic clay loam) should trigger an
+% textbf{elevated inland alert} in post-landfall guidance, indicating
+% elevated risk anomalous inland rainfall and flooding extending 4-7
+% days beyond conventional window.
+%
+% This indicator can be derived from the near-real-time ERA5T soil
+% product available with $\sim 5$-day latency) and requires no NWP
+% model run. is therefore actionable for operational centres with ERA5T
+% access. NWP guidance available, the evidence of
+% \citet{lodh2022improving} and citet{osuri2020} further assimilation
+% of satellite-derived soil moisture (e.g., or SMAP) to HTESSEL
+% initialisation biases that affect the BOE representation.
 
 \section{Directions for Future Research}
 \label{sec:conclusions_future}
 
 \begin{enumerate}
-\item \textbf{Vortex-scale three-dimensional diagnostics.}
-  Pressure-level analyses of warm/cold-core evolution, vorticity
-  column coherence, IVT, and vortex tilt (implemented in
-  \texttt{vortex\_analysis.py} but not presented here) would provide
-  a dynamical counterpart to the surface thermodynamic evidence,
-  completing the mechanistic picture of the BOE in three dimensions.
-\item \textbf{Multi-reanalysis cross-validation.} Repeating the
-  Hovm\"{o}ller and ASMI analyses with MERRA-2 and JRA-55 would
-  assess the sensitivity of the BOE signal to differences in land
-  surface parameterisation (HTESSEL vs CLSM vs the JMA scheme) and
-  quantify reanalysis uncertainty in the LHF and soil moisture signals.
-\item \textbf{Deeper soil moisture layers in the ASMI.} Extending the
-  ASMI to ERA5 \texttt{swvl2} (7-28\,cm) and \texttt{swvl3}
-  (28-100\,cm) would account for root-zone moisture that sustains
-  evapotranspiration over multi-day BOE events when the surface layer
-  has been dried by the first day of land transit.
-\item \textbf{Eastern Ghats gap-passage analysis.} A systematic
-  comparison of landfall longitudes relative to the Godavari,
-  Mahanadi, and Brahmani river-valley gaps would test whether
-  gap-aligned landfalls correlate with longer inland persistence by
-  preserving low-level moisture inflow channels through the terrain.
-\item \textbf{NWP sensitivity experiments.} Targeted WRF or Unified
-  Model experiments with perturbed soil moisture initialisation for
-  the specific BOE-candidate events identified in this observational
-  analysis would provide a controlled modelling counterpart,
-  isolating the causal role of the surface moisture state
-  \citep{hunt2017effect, osuri2020}.
-\item \textbf{CMIP6 climate change projections.} Applying the
-  Hovm\"{o}ller and ASMI framework to CMIP6 historical and future
-  scenario outputs would assess whether projected changes in monsoon
-  rainfall, soil moisture, and temperature are likely to intensify or
-  weaken the BOE contribution to MD inland persistence under
-  late-21st-century conditions.
-\item \textbf{Spatially heterogeneous ASMI incorporating soil
-  texture.} Weighting the ASMI by the Clapp-Hornberger $\beta$ values
-  of the underlying soil texture (HWSD database) would explicitly
-  account for the spatial variation in BOE potential across the
-  Indian interior: clay-loam Gangetic soils retain moisture far
-  longer than the sandy-clay laterite soils of the Eastern Ghats and Deccan
-  Plateau.
+  \item \textbf{Vortex-scale three-dimensional diagnostics.}
+    Pressure-level analyses of warm/cold-core evolution, vorticity
+    column coherence, IVT, and vortex tilt (implemented in
+    \texttt{vortex\_analysis.py} but not presented here) would provide
+    a dynamical counterpart to the surface thermodynamic evidence,
+    completing the mechanistic picture of the BOE in three dimensions.
+  \item \textbf{Multi-reanalysis cross-validation.} Repeating the
+    Hovm\"{o}ller analyses with MERRA-2 and JRA-55 would
+    assess the sensitivity of the BOE signal to differences in land
+    surface parameterisation (HTESSEL vs CLSM vs the JMA scheme) and
+    quantify reanalysis uncertainty in the LHF and soil moisture signals.
+  \item \textbf{Deeper soil moisture layers.} Extending the
+    ERA5 \texttt{swvl2} (7-28\,cm) and \texttt{swvl3} (28-100\,cm)
+    would account for root-zone moisture that sustains
+    evapotranspiration over multi-day BOE events when the surface layer
+    has been dried by the first day of land transit.
+  \item \textbf{Eastern Ghats gap-passage analysis.} A systematic
+    comparison of landfall longitudes relative to the Godavari,
+    Mahanadi, and Brahmani river-valley gaps would test whether
+    gap-aligned landfalls correlate with longer inland persistence by
+    preserving low-level moisture inflow channels through the terrain.
+  \item \textbf{NWP sensitivity experiments.} Targeted WRF or Unified
+    Model experiments with perturbed soil moisture initialisation for
+    the specific BOE-candidate events identified in this observational
+    analysis would provide a controlled modelling counterpart,
+    isolating the causal role of the surface moisture state
+    \citep{hunt2017effect, osuri2020}.
+    % \item \textbf{CMIP6 climate change projections.} Applying the
+    %   Hovm\"{o}ller and ASMI framework to CMIP6 historical and future
+    %   scenario outputs would assess whether projected changes in monsoon
+    %   rainfall, soil moisture, and temperature are likely to intensify or
+    %   weaken the BOE contribution to MD inland persistence under
+    %   late-21st-century conditions.
+    % \item \textbf{Spatially heterogeneous ASMI incorporating soil
+    %   texture.} Weighting the ASMI by the Clapp-Hornberger $\beta$ values
+    %   of the underlying soil texture (HWSD database) would explicitly
+    %   account for the spatial variation in BOE potential across the
+    %   Indian interior: clay-loam Gangetic soils retain moisture far
+    %   longer than the sandy-clay laterite soils of the Eastern
+    % Ghats and Deccan
+    %   Plateau.
 \end{enumerate}
 
 \section{Closing Remarks}
@@ -210,15 +212,15 @@ of -driven have reduced to a moderate barrier-can temporarily disrupt
 interaction cannot stop it when the BOE is active. The terrain acts
 as a , not a wall.
 
-Monsoon Depressions are simultaneously among the most beneficial and
-hazardous India's weather systems. They deliver critical seasonal
-rainfall water-stressed regions while also triggering catastrophic
-multi-day . The finding post-landfall longevity is predictable from a
-readily available, physically soil moisture index-the 7-day
-ASMI-offers a practical improvement to post-landfall guidance at no
-additional computational. It also frames scientifically urgent
-future question: as the Indian subcontinent, as monsoon patterns
-shift, and as agricultural irrigation intensifies, will the for the
-BOE change? The answer will determine whether India's most inland
-weather systems become more or less predictable-and more or
-dangerous-in the decades ahead.
+% Monsoon Depressions are simultaneously among the most beneficial and
+% hazardous India's weather systems. They deliver critical seasonal
+% rainfall water-stressed regions while also triggering catastrophic
+% multi-day. The finding post-landfall longevity is predictable from a
+% readily available, physically soil moisture index-the 7-day
+% ASMI-offers a practical improvement to post-landfall guidance at no
+% additional computational. It also frames scientifically urgent
+% future question: as the Indian subcontinent, as monsoon patterns
+% shift, and as agricultural irrigation intensifies, will the for the
+% BOE change? The answer will determine whether India's most inland
+% weather systems become more or less predictable-and more or
+% dangerous-in the decades ahead.

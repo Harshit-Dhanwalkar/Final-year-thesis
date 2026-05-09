@@ -153,29 +153,29 @@ series provides confidence that the model is capturing the physically
 relevant transition correctly at the synoptic scale, even if the
 absolute magnitudes are uncertain (Section~\ref{sec:disc_limitations}).
 
-\section{Implications for Operational Forecasting}
-\label{sec:disc_forecasting}
-
-\yellownote{FIX: refrences}
-The ASMI-duration relationship (Section~\ref{subsec:asmi_duration}) and the
-BOE LHF threshold behaviour (Section~\ref{subsec:boe_identified}) together
-suggest that a simple two-step operational indicator can be defined:
-
-\begin{enumerate}
-  \item \textbf{Pre-landfall ASMI flag}: if the 7-day ASMI over the expected
-    inland track corridor exceeds $0.35$\,m$^3$\,m$^{-3}$, issue an alert
-    for possible anomalous inland persistence.
-  \item \textbf{Post-landfall LHF monitoring}: if the ERA5T (near-real-time)
-    inner-core LHF remains $\geq 70$\,W\,m$^{-2}$ for $\geq 12$\,h during
-    the land phase, confirm BOE candidacy and revise the inland rainfall
-    forecast accordingly.
-\end{enumerate}
-
-This two-step procedure is consistent with the operational framework
-advocated by \citet{lodh2022improving}, who demonstrated that soil moisture
-assimilation improves NWP post-landfall MD prediction, and \citet{osuri2020},
-who showed that correct soil moisture initialisation is a primary determinant
-of MD simulation skill.
+% \section{Implications for Operational Forecasting}
+% \label{sec:disc_forecasting}
+%
+% \yellownote{FIX: refrences}
+% The ASMI-duration relationship (Section~\ref{subsec:asmi_duration}) and the
+% BOE LHF threshold behaviour (Section~\ref{subsec:boe_identified}) together
+% suggest that a simple two-step operational indicator can be defined:
+%
+% \begin{enumerate}
+%   \item \textbf{Pre-landfall ASMI flag}: if the 7-day ASMI over the expected
+%     inland track corridor exceeds $0.35$\,m$^3$\,m$^{-3}$, issue an alert
+%     for possible anomalous inland persistence.
+%   \item \textbf{Post-landfall LHF monitoring}: if the ERA5T (near-real-time)
+%     inner-core LHF remains $\geq 70$\,W\,m$^{-2}$ for $\geq 12$\,h during
+%     the land phase, confirm BOE candidacy and revise the inland rainfall
+%     forecast accordingly.
+% \end{enumerate}
+%
+% This two-step procedure is consistent with the operational framework
+% advocated by \citet{lodh2022improving}, who demonstrated that soil moisture
+% assimilation improves NWP post-landfall MD prediction, and \citet{osuri2020},
+% who showed that correct soil moisture initialisation is a primary determinant
+% of MD simulation skill.
 
 \section{Limitations and Sources of Uncertainty}
 \label{sec:disc_limitations}
@@ -207,7 +207,7 @@ July-August. The primary causes are:
 \textbf{Implications for this study.} If \texttt{swvl1} is
 systematically overestimated by $\Delta\theta \approx
 0.03$-$0.06$\,m$^3$\,m$^{-3}$ during July-August (consistent with the
-bias range reported by \citealt{osuri2020}), then the ASMI threshold
+bias range reported by \citealt{osuri2020}), then the soil moisture threshold
 of $0.35$\,m$^3$\,m$^{-3}$ identified in this study as a predictor of
 BOE candidacy may be biased high by a similar amount. The \emph{true}
 physical threshold for BOE-enabling soil moisture may therefore be
@@ -265,7 +265,7 @@ elevation has not changed materially since 2000, the SRTM elevation model
 includes the canopy height of forests in the original data, which can add
 10-20\,m to the ``terrain'' elevation in forested hill areas. For the bulk
 of the terrain analysis (identifying elevation zones of 200-1000\,m), this
-offset is negligible. However, for very precise TSI calculations involving
+offset is negligible. However, for very precise calculations involving
 slope and roughness, the canopy contribution introduces sub-grid uncertainty
 in the 30-m DEM that is smoothed out when interpolated to track-point
 resolution.
@@ -277,8 +277,9 @@ resolution.
 The 24-year record yields [N$_\text{total}$] confirmed MDs, of which
 [N$_\text{land}$] are land-falling and [N$_\text{BOE}$] qualify as
 BOE candidates. With a BOE-candidate sample of order 10-20 systems,
-the ASMI-duration correlation and TSI-duration correlation should be
-considered statistically suggestive rather than definitive:
+the antecedent soil moisture duration correlation and
+Topographic-induced mechanical blocking duration correlation should
+be considered statistically suggestive rather than definitive:
 correlations significant at $p < 0.05$ but not at $p < 0.01$ could
 arise by chance with this sample size. Extension to the full ERA5
 back-extension record (1940-present) or cross-validation with MERRA-2
@@ -444,9 +445,9 @@ clustering reflects the combined effect of the monsoon trough axis
 the BoB (which is wider in the south, giving systems forming farther
 south a longer ocean transit that brings them to the northern coast).
 Systems making landfall south of approximately 16$^\circ$N encounter
-the main Eastern Ghats range at higher TSI, while systems making
-landfall north of 20$^\circ$N may partially circumvent the Ghats by
-tracking through the Mahanadi river-valley gap.
+the main Eastern Ghats range at higher topographic sensitivity, while
+systems making landfall north of 20$^\circ$N may partially circumvent
+the Ghats by tracking through the Mahanadi river-valley gap.
 
 \yellownote{TODO: Discussions}
 % The Discussion on:
