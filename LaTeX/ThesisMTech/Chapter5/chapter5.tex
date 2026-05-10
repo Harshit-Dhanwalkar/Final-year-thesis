@@ -14,447 +14,516 @@
 
 The convergent lines of evidence assembled in
 Chapter~\ref{ch:results} support a coherent mechanistic narrative.
-Long-lived MDs maintain inner-core LHF at oceanic levels after
-landfall (Section~\ref{subsec:hovmoller_lhf}), their boundary layers
-remain near-saturated throughout the land phase
-(Section~\ref{subsec:hovmoller_dpd}), soil moisture increases
-progressively beneath the inner core
-(Section~\ref{subsec:hovmoller_swvl1}), and the Bowen ratio stays low
-(Section~\ref{subsec:ts_bowen}), all consistent with the BOE
-mechanism. These signals are absent or rapidly collapsing in
-short-lived systems.
+Long-lived MDs maintain inner-core LHF at levels comparable to the
+Bay of Bengal after landfall (Section~\ref{subsec:hovmoller_slhtf}),
+their boundary layers remain near-saturated, and soil moisture
+increases progressively beneath the inner core
+(Section~\ref{subsec:hovmoller_swvl1}).
 
-The LHF magnitudes observed in the Indian MD context (70 -
-120\,W\,m$^{-2}$ during the land phase) are lower than those reported
-for extreme Atlantic BOE cases ($>200$\,W\,m$^{-2}$;
-\citealt{andersen2014insights, wakefield2021}). This quantitative
-difference is physically expected. Atlantic BOE events typically
-occur in late summer (August - October) over the warm, irrigated, or
-recently flooded soils of the US South and Midwest, where soil
-surface temperatures can reach 30 - 35$^\circ$C. Indian MDs traverse
-soils that are cooler (owing to monsoon cloud shading reducing
-insolation) and where the available radiation for evapotranspiration
-is partly offset by the thick cloud layer. Nevertheless, the
-70\,W\,m$^{-2}$ BOE threshold derived by \citet{andersen2013} is
-shown here to be achievable and sustained in the Indian context,
-confirming that the BOE is not an exclusively Atlantic phenomenon but
-operates in the Indian monsoon environment under appropriate soil
-moisture conditions.
+\subsection{LHF Magnitude and Cloud Cover Limitations}
+The LHF magnitudes observed (70--120\,W\,m$^{-2}$) are lower than
+extreme Atlantic BOE cases ($>200$\,W\,m$^{-2}$) reported by
+\citet{andersen2014insights}. This quantitative difference is
+physically expected. In the Indian summer monsoon, persistent cloud
+cover reduces solar insolation at the surface compared to the clearer
+skies of the US Great Plains. However, because the Indian soil is
+often near-saturated (ASMI $> 0.35$), the Bowen ratio remains
+exceptionally low. This suggests that in the Indian context, the BOE
+is driven by the \emph{efficiency} of moisture transfer rather than
+high absolute energy input.
 
-\subsection{The Self-Wetting Feedback and Its Upper Bound}
-\label{subsec:disc_feedback}
+% \subsection{Soil Moisture Memory and ASMI Thresholds}
+% Our finding that a 7-day ASMI lag better predicts persistence than
+% a 14-day lag aligns with the soil moisture memory timescales of
+% clay-loam soils common in the Odisha and Chhattisgarh basins. The
+% threshold of 0.35\,m$^3$m$^{-3}$ identified in
+% Section~\ref{subsec:asmi_results} serves as a "hydrological
+% trigger" for the BOE, echoing the proxy findings of \citet{kishtawal2013}.
 
-The co-evolution of \texttt{swvl1} and precipitation in
-Section~\ref{subsec:ts_sm_tp} reveals that the BOE is not simply a
-response to antecedent conditions but involves an active
-self-reinforcing process during the land phase. This has an important
-implication: even a system making landfall with moderately low ASMI
-($\sim 0.28$ - $0.35$\,m$^3$\,m$^{-3}$) may approach BOE-sustaining
-soil moisture levels after 12-18\,h of its own heavy precipitation.
-The antecedent condition determines the \emph{initial} LHF level at
-landfall; whether a system can sustain LHF above the BOE threshold
-over the subsequent 18 hours is also determined by how rapidly the
-self-wetting feedback can drive \texttt{swvl1} to the energy-limited regime.
-
-This creates a practical implication for forecasting: a system making
-landfall over moderately moist soil may still qualify as a BOE
-candidate if its own initial precipitation is heavy enough to
-saturate the surface quickly. Conversely, an initially dry surface
-may prevent the self-wetting from occurring fast enough, even if
-large-scale atmospheric moisture advection is available.
-
-\subsection{Comparison with Prior Indian MD Studies}
-\label{subsec:disc_prior_india}
-
-The present study directly extends and observationally validates a
-sequence of prior works.
-\citet{kishtawal2013enhancement} demonstrated, using proxy
-precipitation as an antecedent moisture indicator, that BOB
-depression inland penetration correlates with pre-storm soil wetness.
-This study replaces the proxy with direct ERA5 \texttt{swvl1}
-diagnostics and confirms the relationship over a 24-year climatology.
-The mechanistic link which \citet{kishtawal2013enhancement} could not
-directly demonstrate from their proxy-based approach is established
-here through the Hovm\"{o}ller LHF signal and the Bowen ratio time series.
-
-\citet{hunt2017effect} and \citet{osuri2020} demonstrated through NWP
-sensitivity experiments that soil moisture initialisation affects MD
-simulation. The present observational evidence complements these
-modelling results by showing that the ERA5 soil moisture state
-without NWP forward integration is itself predictive of MD longevity,
-confirming that the signal is robustly present in the reanalysis record.
-
-\citet{chang2009} identified land surface feedback as a modulator of
-post-landfall MD precipitation structure in WRF simulations. The
-Hovm\"{o}ller precipitation patterns in
-Section~\ref{subsec:hovmoller_tp} provide the observational
-equivalent: the sustained inner-core and contracted outer rainband
-structure after landfall in BOE-candidate systems mirrors precisely
-the model-simulated precipitation
-structure that \citet{chang2009} attributed to land surface feedback.
-
-\citet{ankur2022} showed that irrigated land cover enhances soil
-moisture and modulates MD behaviour. This study implicitly captures
-this effect through the ASMI (which integrates all moisture inputs,
-including irrigation) but cannot separate irrigation-driven soil
-moisture from monsoon-rainfall-driven soil moisture. This remains a
-limitation and an opportunity for future work
-(Section~\ref{sec:disc_limitations}).
-
-The BOE framework applied by \citet{vijay2024boe} to the 1999 Odisha
-Super Cyclone demonstrated BOE-like inland maintenance of a
-post-landfall system in the Indian Ocean basin. The present
-climatological analysis shows that this mechanism is not confined to
-extreme events like the 1999 Super Cyclone but is a recurring process
-across the annual MD population.
-
-\section{The Role of the Eastern Ghats and Its Interaction with the BOE}
+\section{The Eastern Ghats as a Thermodynamic Filter}
 \label{sec:disc_ghats}
 
-The differential translational speed recovery documented in
-Section~\ref{subsec:ts_speed}
-provides the most direct evidence for a BOE-terrain interaction. Both
-long-lived and short-lived systems decelerate over the Ghats, but
-only long-lived (BOE-candidate) systems recover speed on the leeward
-side. This differential is interpreted as follows.
+As shown in Section~\ref{sec:results_elevation}, the Eastern Ghats do not
+act as a binary wall. Instead, they function as a filter. Non-BOE
+systems undergo structural collapse due to orographic moisture
+stripping on the windward slopes. Conversely, BOE-active systems
+exploit the high leeward soil moisture. The leeward speed recovery
+observed in the composite analysis (Section~\ref{subsec:ts_speed}) is
+a significant operational finding: it suggests that the land surface
+can re-energize a system after terrain-induced disruption, provided
+the land-atmosphere coupling is sufficiently strong.
 
-The BOE maintains the pressure gradient force of the MD vortex by
-sustaining deep convection on the leeward side through continuous LHF
-from the wet soil.
-In the absence of BOE, frictional decoupling during Ghats crossing
-increases vortex tilt and degrades the efficiency of the convective
-organisation.
-Without a local surface energy source to sustain convection on the
-leeward side, the vortex cannot recover its coherence and the system
-dissipates. With BOE, the leeward soil (which has been wetted by the
-windward-side precipitation that spilled over the terrain gaps)
-provides sufficient LHF to re-moisten the boundary layer, maintain
-CAPE, and re-organise convection around the re-emerging surface low.
-
-The windward-leeward DPD asymmetry (Section~\ref{subsec:ts_dpd_asymmetry})
-provides the boundary-layer moisture perspective on this process: BOE-candidate
-systems show smaller leeward DPD increase during terrain crossing, confirming
-that surface evapotranspiration is actively counteracting the orographic drying
-on the leeward side.
-
-\section{Surface Energy Partitioning and the Bowen Ratio}
-\label{sec:disc_bowen}
-
-The Bowen ratio trajectory (Section~\ref{subsec:ts_bowen}) is the
-most accessible single-variable summary of the post-landfall
-thermodynamic fate of an MD. The divergence between BOE-candidate and
-non-BOE systems is rapid and quantitatively large: a $\beta$
-difference of $\sim 0.6$-$0.8$ between the two populations after
-24\,h of land transit represents a fundamentally different surface
-energy regime. The ERA5 HTESSEL land surface model represents this
-regime transition through its soil hydraulic parameterisation, and
-the consistency between the LHF, SHF, \texttt{swvl1}, and DPD time
-series provides confidence that the model is capturing the physically
-relevant transition correctly at the synoptic scale, even if the
-absolute magnitudes are uncertain (Section~\ref{sec:disc_limitations}).
-
-% \section{Implications for Operational Forecasting}
-% \label{sec:disc_forecasting}
+% \chapter{Discussion}
+% \label{ch:discussion}
 %
-% \yellownote{FIX: refrences}
-% The ASMI-duration relationship (Section~\ref{subsec:asmi_duration}) and the
-% BOE LHF threshold behaviour (Section~\ref{subsec:boe_identified}) together
-% suggest that a simple two-step operational indicator can be defined:
+% \section{The BOE Mechanism in Indian Monsoon Depressions}
+% \label{sec:disc_boe}
 %
+% The convergent lines of evidence assembled in
+% Chapter~\ref{ch:results} support a coherent mechanistic narrative.
+% Long-lived MDs maintain inner-core LHF at oceanic levels after
+% landfall (Section~\ref{subsec:hovmoller_lhf}), their boundary layers
+% remain near-saturated throughout the land phase
+% (Section~\ref{subsec:hovmoller_dpd}), soil moisture increases
+% progressively beneath the inner core
+% (Section~\ref{subsec:hovmoller_swvl1}), and the Bowen ratio stays low
+% (Section~\ref{subsec:ts_bowen}), all consistent with the BOE
+% mechanism. These signals are absent or rapidly collapsing in
+% short-lived systems.
+%
+% The LHF magnitudes observed in the Indian MD context (70 -
+% 120\,W\,m$^{-2}$ during the land phase) are lower than those reported
+% for extreme Atlantic BOE cases ($>200$\,W\,m$^{-2}$;
+% \citealt{andersen2014insights, wakefield2021}). This quantitative
+% difference is physically expected. Atlantic BOE events typically
+% occur in late summer (August - October) over the warm, irrigated, or
+% recently flooded soils of the US South and Midwest, where soil
+% surface temperatures can reach 30 - 35$^\circ$C. Indian MDs traverse
+% soils that are cooler (owing to monsoon cloud shading reducing
+% insolation) and where the available radiation for evapotranspiration
+% is partly offset by the thick cloud layer. Nevertheless, the
+% 70\,W\,m$^{-2}$ BOE threshold derived by \citet{andersen2013} is
+% shown here to be achievable and sustained in the Indian context,
+% confirming that the BOE is not an exclusively Atlantic phenomenon but
+% operates in the Indian monsoon environment under appropriate soil
+% moisture conditions.
+%
+% \subsection{The Self-Wetting Feedback and Its Upper Bound}
+% \label{subsec:disc_feedback}
+%
+% The co-evolution of \texttt{swvl1} and precipitation in
+% Section~\ref{subsec:ts_sm_tp} reveals that the BOE is not simply a
+% response to antecedent conditions but involves an active
+% self-reinforcing process during the land phase. This has an important
+% implication: even a system making landfall with moderately low ASMI
+% ($\sim 0.28$ - $0.35$\,m$^3$\,m$^{-3}$) may approach BOE-sustaining
+% soil moisture levels after 12-18\,h of its own heavy precipitation.
+% The antecedent condition determines the \emph{initial} LHF level at
+% landfall; whether a system can sustain LHF above the BOE threshold
+% over the subsequent 18 hours is also determined by how rapidly the
+% self-wetting feedback can drive \texttt{swvl1} to the energy-limited regime.
+%
+% This creates a practical implication for forecasting: a system making
+% landfall over moderately moist soil may still qualify as a BOE
+% candidate if its own initial precipitation is heavy enough to
+% saturate the surface quickly. Conversely, an initially dry surface
+% may prevent the self-wetting from occurring fast enough, even if
+% large-scale atmospheric moisture advection is available.
+%
+% \subsection{Comparison with Prior Indian MD Studies}
+% \label{subsec:disc_prior_india}
+%
+% The present study directly extends and observationally validates a
+% sequence of prior works.
+% \citet{kishtawal2013enhancement} demonstrated, using proxy
+% precipitation as an antecedent moisture indicator, that BOB
+% depression inland penetration correlates with pre-storm soil wetness.
+% This study replaces the proxy with direct ERA5 \texttt{swvl1}
+% diagnostics and confirms the relationship over a 24-year climatology.
+% The mechanistic link which \citet{kishtawal2013enhancement} could not
+% directly demonstrate from their proxy-based approach is established
+% here through the Hovm\"{o}ller LHF signal and the Bowen ratio time series.
+%
+% \citet{hunt2017effect} and \citet{osuri2020} demonstrated through NWP
+% sensitivity experiments that soil moisture initialisation affects MD
+% simulation. The present observational evidence complements these
+% modelling results by showing that the ERA5 soil moisture state
+% without NWP forward integration is itself predictive of MD longevity,
+% confirming that the signal is robustly present in the reanalysis record.
+%
+% \citet{chang2009} identified land surface feedback as a modulator of
+% post-landfall MD precipitation structure in WRF simulations. The
+% Hovm\"{o}ller precipitation patterns in
+% Section~\ref{subsec:hovmoller_tp} provide the observational
+% equivalent: the sustained inner-core and contracted outer rainband
+% structure after landfall in BOE-candidate systems mirrors precisely
+% the model-simulated precipitation
+% structure that \citet{chang2009} attributed to land surface feedback.
+%
+% \citet{ankur2022} showed that irrigated land cover enhances soil
+% moisture and modulates MD behaviour. This study implicitly captures
+% this effect through the ASMI (which integrates all moisture inputs,
+% including irrigation) but cannot separate irrigation-driven soil
+% moisture from monsoon-rainfall-driven soil moisture. This remains a
+% limitation and an opportunity for future work
+% (Section~\ref{sec:disc_limitations}).
+%
+% The BOE framework applied by \citet{vijay2024boe} to the 1999 Odisha
+% Super Cyclone demonstrated BOE-like inland maintenance of a
+% post-landfall system in the Indian Ocean basin. The present
+% climatological analysis shows that this mechanism is not confined to
+% extreme events like the 1999 Super Cyclone but is a recurring process
+% across the annual MD population.
+%
+% \section{The Role of the Eastern Ghats and Its Interaction with the BOE}
+% \label{sec:disc_ghats}
+%
+% The differential translational speed recovery documented in
+% Section~\ref{subsec:ts_speed}
+% provides the most direct evidence for a BOE-terrain interaction. Both
+% long-lived and short-lived systems decelerate over the Ghats, but
+% only long-lived (BOE-candidate) systems recover speed on the leeward
+% side. This differential is interpreted as follows.
+%
+% The BOE maintains the pressure gradient force of the MD vortex by
+% sustaining deep convection on the leeward side through continuous LHF
+% from the wet soil.
+% In the absence of BOE, frictional decoupling during Ghats crossing
+% increases vortex tilt and degrades the efficiency of the convective
+% organisation.
+% Without a local surface energy source to sustain convection on the
+% leeward side, the vortex cannot recover its coherence and the system
+% dissipates. With BOE, the leeward soil (which has been wetted by the
+% windward-side precipitation that spilled over the terrain gaps)
+% provides sufficient LHF to re-moisten the boundary layer, maintain
+% CAPE, and re-organise convection around the re-emerging surface low.
+%
+% The windward-leeward DPD asymmetry (Section~\ref{subsec:ts_dpd_asymmetry})
+% provides the boundary-layer moisture perspective on this process:
+% BOE-candidate
+% systems show smaller leeward DPD increase during terrain crossing, confirming
+% that surface evapotranspiration is actively counteracting the
+% orographic drying
+% on the leeward side.
+%
+% \section{Surface Energy Partitioning and the Bowen Ratio}
+% \label{sec:disc_bowen}
+%
+% The Bowen ratio trajectory (Section~\ref{subsec:ts_bowen}) is the
+% most accessible single-variable summary of the post-landfall
+% thermodynamic fate of an MD. The divergence between BOE-candidate and
+% non-BOE systems is rapid and quantitatively large: a $\beta$
+% difference of $\sim 0.6$-$0.8$ between the two populations after
+% 24\,h of land transit represents a fundamentally different surface
+% energy regime. The ERA5 HTESSEL land surface model represents this
+% regime transition through its soil hydraulic parameterisation, and
+% the consistency between the LHF, SHF, \texttt{swvl1}, and DPD time
+% series provides confidence that the model is capturing the physically
+% relevant transition correctly at the synoptic scale, even if the
+% absolute magnitudes are uncertain (Section~\ref{sec:disc_limitations}).
+%
+% % \section{Implications for Operational Forecasting}
+% % \label{sec:disc_forecasting}
+% %
+% % \yellownote{FIX: refrences}
+% % The ASMI-duration relationship (Section~\ref{subsec:asmi_duration}) and the
+% % BOE LHF threshold behaviour (Section~\ref{subsec:boe_identified}) together
+% % suggest that a simple two-step operational indicator can be defined:
+% %
+% % \begin{enumerate}
+% %   \item \textbf{Pre-landfall ASMI flag}: if the 7-day ASMI over the expected
+% %     inland track corridor exceeds $0.35$\,m$^3$\,m$^{-3}$, issue an alert
+% %     for possible anomalous inland persistence.
+% %   \item \textbf{Post-landfall LHF monitoring}: if the ERA5T (near-real-time)
+% %     inner-core LHF remains $\geq 70$\,W\,m$^{-2}$ for $\geq 12$\,h during
+% %     the land phase, confirm BOE candidacy and revise the inland rainfall
+% %     forecast accordingly.
+% % \end{enumerate}
+% %
+% % This two-step procedure is consistent with the operational framework
+% % advocated by \citet{lodh2022improving}, who demonstrated that soil moisture
+% % assimilation improves NWP post-landfall MD prediction, and
+% \citet{osuri2020},
+% % who showed that correct soil moisture initialisation is a primary
+% determinant
+% % of MD simulation skill.
+%
+% % \section{Scope and Limitations}
+% % \label{sec:intro_scope}
+% %
+% % ERA5 reanalysis (0.25$^\circ$, hourly) is the primary dataset; IMD
+% % monsoon reports provide observational validation. The study covers
+% % June-September for 2001-2025. At ERA5 spatial resolution ($\approx
+% % 28$\,km), mesoscale inner-core convective structure is not
+% % resolved, so results characterise synoptic-scale thermodynamic evolution.
+%
+% \section{Limitations and Sources of Uncertainty}
+% \label{sec:disc_limitations}
+%
+% A systematic assessment of the uncertainties in this study is essential for
+% correctly interpreting the magnitude and generality of the results.
+%
+% \subsection{ERA5 Soil Moisture Overestimation over India}
+% \label{subsec:lim_swvl1_bias}
+%
+% The ERA5 land surface model (HTESSEL) has been shown to
+% systematically \emph{overestimate} near-surface soil moisture
+% (\texttt{swvl1}) over the Indian subcontinent during the monsoon
+% season. \citet{osuri2020} noted that ERA5 HTESSEL soil moisture over
+% the Gangetic plains and Odisha tends to be biased high relative to
+% in-situ measurements and SMAP satellite retrievals during
+% July-August. The primary causes are:
 % \begin{enumerate}
-%   \item \textbf{Pre-landfall ASMI flag}: if the 7-day ASMI over the expected
-%     inland track corridor exceeds $0.35$\,m$^3$\,m$^{-3}$, issue an alert
-%     for possible anomalous inland persistence.
-%   \item \textbf{Post-landfall LHF monitoring}: if the ERA5T (near-real-time)
-%     inner-core LHF remains $\geq 70$\,W\,m$^{-2}$ for $\geq 12$\,h during
-%     the land phase, confirm BOE candidacy and revise the inland rainfall
-%     forecast accordingly.
+%   \item Overestimation of monsoon precipitation in ERA5
+%     \citep{hersbach2020era5}, which directly wets the soil;
+%   \item Underestimation of drainage rates in the HTESSEL hydraulic
+%     scheme over clay-loam soils; and
+%   \item The absence of explicit irrigation in the model,
+%     paradoxically leading to a different type of bias the model does
+%     not represent irrigation-enhanced soil moisture but may partially
+%     compensate through precipitation overestimation.
 % \end{enumerate}
 %
-% This two-step procedure is consistent with the operational framework
-% advocated by \citet{lodh2022improving}, who demonstrated that soil moisture
-% assimilation improves NWP post-landfall MD prediction, and \citet{osuri2020},
-% who showed that correct soil moisture initialisation is a primary determinant
-% of MD simulation skill.
-
-\section{Limitations and Sources of Uncertainty}
-\label{sec:disc_limitations}
-
-A systematic assessment of the uncertainties in this study is essential for
-correctly interpreting the magnitude and generality of the results.
-
-\subsection{ERA5 Soil Moisture Overestimation over India}
-\label{subsec:lim_swvl1_bias}
-
-The ERA5 land surface model (HTESSEL) has been shown to
-systematically \emph{overestimate} near-surface soil moisture
-(\texttt{swvl1}) over the Indian subcontinent during the monsoon
-season. \citet{osuri2020} noted that ERA5 HTESSEL soil moisture over
-the Gangetic plains and Odisha tends to be biased high relative to
-in-situ measurements and SMAP satellite retrievals during
-July-August. The primary causes are:
-\begin{enumerate}
-  \item Overestimation of monsoon precipitation in ERA5
-    \citep{hersbach2020era5}, which directly wets the soil;
-  \item Underestimation of drainage rates in the HTESSEL hydraulic
-    scheme over clay-loam soils; and
-  \item The absence of explicit irrigation in the model,
-    paradoxically leading to a different type of bias the model does
-    not represent irrigation-enhanced soil moisture but may partially
-    compensate through precipitation overestimation.
-\end{enumerate}
-
-\textbf{Implications for this study.} If \texttt{swvl1} is
-systematically overestimated by $\Delta\theta \approx
-0.03$-$0.06$\,m$^3$\,m$^{-3}$ during July-August (consistent with the
-bias range reported by \citealt{osuri2020}), then the soil moisture threshold
-of $0.35$\,m$^3$\,m$^{-3}$ identified in this study as a predictor of
-BOE candidacy may be biased high by a similar amount. The \emph{true}
-physical threshold for BOE-enabling soil moisture may therefore be
-closer to $0.29$-$0.32$\,m$^3$\,m$^{-3}$ in terms of actual soil moisture.
-Similarly, the LHF values from ERA5 may be overestimated if the model
-is presenting unrealistically moist soils that evaporate at
-artificially high rates.
-The BOE LHF signal identified here should therefore be treated as an
-upper bound on the actual land-phase LHF, with the true signal
-potentially 10-20\,\% lower.
-
-\textbf{Mitigation.} The use of relative comparisons (BOE candidates
-vs non-BOE systems, ocean phase vs land phase) partially mitigates
-the impact of the absolute bias, as both populations are affected by
-the same systematic overestimation.
-The discrimination between long-lived and short-lived systems, and
-between BOE and non-BOE candidates, is based on differences in LHF
-and \texttt{swvl1} rather than their absolute values, making the
-classification methodology less sensitive to the bias than an
-approach that relies on absolute thresholds.
-
-\subsection{ERA5 Spatial Resolution and Inner-Core Representation}
-\label{subsec:lim_resolution}
-
-At $0.25^\circ$ ($\approx 28$\,km), ERA5 cannot resolve the mesoscale convective
-organisation of the MD inner core. The innermost radial bin of the Hovm\"{o}ller
-($r < 25$\,km) contains at most one ERA5 grid point at any time step, and the
-values at this bin are single-point interpolations rather than spatial averages.
-Results for $r < 50$\,km should be interpreted as indicative of inner-core scale
-behaviour rather than as precise spatial measurements. In particular, the
-precipitation values in the inner-core bin may underestimate peak convective
-rainfall by a factor of 2-3 relative to the actual rainfall intensity at those
-scales, based on comparisons between ERA5 and GPM IMERG in the Indian monsoon
-context \citep{hersbach2020era5}.
-
-\subsection{ERA5 Accumulated Flux De-Accumulation Errors}
-\label{subsec:lim_deaccum}
-
-The ERA5 LHF and SHF are provided as accumulated values in J\,m$^{-2}$, and
-instantaneous fluxes are derived by differencing consecutive accumulation steps
-(Equation~\ref{eq:deaccumulate}). This de-accumulation introduces noise at the
-hourly timescale because the assimilation system generates a new model run at
-each assimilation cycle (every 12\,h), and the accumulated flux is reset at the
-start of each run. Values in the first hour of each 12-h assimilation window
-may be affected by initialisation shock and should be treated with caution.
-This issue is most significant for the LHF values near the landfall transition,
-which may coincide with an assimilation cycle boundary.
-
-\subsection{SRTM Terrain Representation}
-\label{subsec:lim_srtm}
-
-The SRTM 1-arc-second DEM was acquired in February 2000 (northern winter) and
-represents a point-in-time surface elevation. While the Eastern Ghats bedrock
-elevation has not changed materially since 2000, the SRTM elevation model
-includes the canopy height of forests in the original data, which can add
-10-20\,m to the ``terrain'' elevation in forested hill areas. For the bulk
-of the terrain analysis (identifying elevation zones of 200-1000\,m), this
-offset is negligible. However, for very precise calculations involving
-slope and roughness, the canopy contribution introduces sub-grid uncertainty
-in the 30-m DEM that is smoothed out when interpolated to track-point
-resolution.
-
-\subsection{Sample Size and Statistical Power}
-\label{subsec:lim_sample}
-
-\yellownote{TODO: update values}
-The 24-year record yields [N$_\text{total}$] confirmed MDs, of which
-[N$_\text{land}$] are land-falling and [N$_\text{BOE}$] qualify as
-BOE candidates. With a BOE-candidate sample of order 10-20 systems,
-the antecedent soil moisture duration correlation and
-Topographic-induced mechanical blocking duration correlation should
-be considered statistically suggestive rather than definitive:
-correlations significant at $p < 0.05$ but not at $p < 0.01$ could
-arise by chance with this sample size. Extension to the full ERA5
-back-extension record (1940-present) or cross-validation with MERRA-2
-would substantially increase statistical power.
-
-\subsection{Land Use, Irrigation, and HTESSEL Representativeness}
-\label{subsec:lim_landuse}
-
-ERA5 HTESSEL does not include explicit representation of agricultural
-irrigation, which is a major contributor to soil moisture over the
-Gangetic plains during the monsoon season \citep{ankur2022}. In
-reality, irrigation may maintain \texttt{swvl1} at high levels even
-during break periods when natural monsoon rainfall is insufficient.
-The ASMI therefore underrepresents the contribution of irrigation to
-antecedent soil moisture in the most agriculturally active regions.
-Conversely, the absence of irrigation means that ERA5's
-\texttt{swvl1} may underestimate actual soil moisture in the Gangetic
-plains during break periods preceding MD landfall counteracting the
-overestimation bias discussed in Section~\ref{subsec:lim_swvl1_bias}
-and making the net bias direction uncertain in this specific context.
-
-\subsection{Shallow Soil Layer Representation}
-\label{subsec:lim_soil_depth}
-
-This study uses ERA5 \texttt{swvl1} (0-7\,cm), the uppermost soil
-layer, as the primary soil moisture variable. For the short-timescale
-(hourly) LHF diagnostics, \texttt{swvl1} is the most appropriate
-variable as it is most directly coupled to surface evaporation.
-However, for multi-day BOE events lasting $\geq 96$\,h, sustained
-evapotranspiration draws on deeper soil layers (\texttt{swvl2}:
-7-28\,cm; \texttt{swvl3}: 28-100\,cm). The \texttt{swvl1} layer can
-be dried substantially by the first day of a BOE event's
-precipitation and LHF, even if the deeper layers remain moist enough
-to sustain root-zone evapotranspiration through capillary rise. The
-ASMI using only \texttt{swvl1} may therefore underestimate the total
-moisture reservoir available to sustain BOE in systems lasting $\geq 4$ days.
-
-\subsection{Scope of the Vortex Analysis}
-\label{subsec:lim_vortex}
-
-The three-dimensional dynamical structure of the MD warm/cold core
-evolution, pressure-level vorticity budgets, vertical tilt, IVT, and
-$\theta_e$ vertical profiles was not examined in this thesis. These
-quantities provide a complementary dynamical perspective on the BOE
-and terrain interaction that would strengthen the mechanistic
-attribution. The diagnostic tools for these analyses
-(\texttt{vortex\_analysis.py}) have been implemented and tested as
-part of the codebase but the results are deferred to future work.
-
-\subsection{Fixed Spatial Buffer and Track-Centre Uncertainty}
-\label{subsec:lim_buffer}
-
-The 100\,km spatial buffer used for track-following time series is a
-fixed parameter.
-The optimal buffer scale depends on the size of the MD circulation at any given
-time, which varies during the life cycle (contracting as the system decays).
-A fixed buffer may include grid points outside the vortex circulation during the
-peak land phase, diluting the inner-core flux signal with background values.
-Sensitivity tests with 50\,km and 200\,km buffers (not shown) reveal that the
-qualitative conclusions are robust, but the quantitative LHF values change by
-$\pm 15$\,\% depending on the buffer choice.
-
-Furthermore, the ERA5 850\,hPa vorticity maximum used to define the track centre
-may be displaced 25-75\,km from the actual low-level pressure minimum owing to
-the coarse model resolution and the complex multi-scale structure of the MD
-circulation. This positional uncertainty propagates directly into the
-Hovm\"{o}ller radial coordinate and the time-series buffer extraction.
-
-% \section{Mechanistic Role of Soil Moisture Memory}
-% \label{sec:disc_memory}
+% \textbf{Implications for this study.} If \texttt{swvl1} is
+% systematically overestimated by $\Delta\theta \approx
+% 0.03$-$0.06$\,m$^3$\,m$^{-3}$ during July-August (consistent with the
+% bias range reported by \citealt{osuri2020}), then the soil moisture threshold
+% of $0.35$\,m$^3$\,m$^{-3}$ identified in this study as a predictor of
+% BOE candidacy may be biased high by a similar amount. The \emph{true}
+% physical threshold for BOE-enabling soil moisture may therefore be
+% closer to $0.29$-$0.32$\,m$^3$\,m$^{-3}$ in terms of actual soil moisture.
+% Similarly, the LHF values from ERA5 may be overestimated if the model
+% is presenting unrealistically moist soils that evaporate at
+% artificially high rates.
+% The BOE LHF signal identified here should therefore be treated as an
+% upper bound on the actual land-phase LHF, with the true signal
+% potentially 10-20\,\% lower.
 %
-% The persistence of LHF is tied to the soil moisture memory, as
-% evidenced by the coupling efficiency metrics.
+% \textbf{Mitigation.} The use of relative comparisons (BOE candidates
+% vs non-BOE systems, ocean phase vs land phase) partially mitigates
+% the impact of the absolute bias, as both populations are affected by
+% the same systematic overestimation.
+% The discrimination between long-lived and short-lived systems, and
+% between BOE and non-BOE candidates, is based on differences in LHF
+% and \texttt{swvl1} rather than their absolute values, making the
+% classification methodology less sensitive to the bias than an
+% approach that relies on absolute thresholds.
 %
-% \yellownote{TODO}
-% \begin{figure}[ht]
+% \subsection{ERA5 Spatial Resolution and Inner-Core Representation}
+% \label{subsec:lim_resolution}
+%
+% At $0.25^\circ$ ($\approx 28$\,km), ERA5 cannot resolve the
+% mesoscale convective
+% organisation of the MD inner core. The innermost radial bin of the
+% Hovm\"{o}ller
+% ($r < 25$\,km) contains at most one ERA5 grid point at any time step, and the
+% values at this bin are single-point interpolations rather than
+% spatial averages.
+% Results for $r < 50$\,km should be interpreted as indicative of
+% inner-core scale
+% behaviour rather than as precise spatial measurements. In particular, the
+% precipitation values in the inner-core bin may underestimate peak convective
+% rainfall by a factor of 2-3 relative to the actual rainfall intensity at those
+% scales, based on comparisons between ERA5 and GPM IMERG in the Indian monsoon
+% context \citep{hersbach2020era5}.
+%
+% \subsection{ERA5 Accumulated Flux De-Accumulation Errors}
+% \label{subsec:lim_deaccum}
+%
+% The ERA5 LHF and SHF are provided as accumulated values in J\,m$^{-2}$, and
+% instantaneous fluxes are derived by differencing consecutive
+% accumulation steps
+% (Equation~\ref{eq:deaccumulate}). This de-accumulation introduces noise at the
+% hourly timescale because the assimilation system generates a new model run at
+% each assimilation cycle (every 12\,h), and the accumulated flux is
+% reset at the
+% start of each run. Values in the first hour of each 12-h assimilation window
+% may be affected by initialisation shock and should be treated with caution.
+% This issue is most significant for the LHF values near the landfall
+% transition,
+% which may coincide with an assimilation cycle boundary.
+%
+% \subsection{SRTM Terrain Representation}
+% \label{subsec:lim_srtm}
+%
+% The SRTM 1-arc-second DEM was acquired in February 2000 (northern winter) and
+% represents a point-in-time surface elevation. While the Eastern Ghats bedrock
+% elevation has not changed materially since 2000, the SRTM elevation model
+% includes the canopy height of forests in the original data, which can add
+% 10-20\,m to the ``terrain'' elevation in forested hill areas. For the bulk
+% of the terrain analysis (identifying elevation zones of 200-1000\,m), this
+% offset is negligible. However, for very precise calculations involving
+% slope and roughness, the canopy contribution introduces sub-grid uncertainty
+% in the 30-m DEM that is smoothed out when interpolated to track-point
+% resolution.
+%
+% \subsection{Sample Size and Statistical Power}
+% \label{subsec:lim_sample}
+%
+% \yellownote{TODO: update values}
+% The 24-year record yields [N$_\text{total}$] confirmed MDs, of which
+% [N$_\text{land}$] are land-falling and [N$_\text{BOE}$] qualify as
+% BOE candidates. With a BOE-candidate sample of order 10-20 systems,
+% the antecedent soil moisture duration correlation and
+% Topographic-induced mechanical blocking duration correlation should
+% be considered statistically suggestive rather than definitive:
+% correlations significant at $p < 0.05$ but not at $p < 0.01$ could
+% arise by chance with this sample size. Extension to the full ERA5
+% back-extension record (1940-present) or cross-validation with MERRA-2
+% would substantially increase statistical power.
+%
+% \subsection{Land Use, Irrigation, and HTESSEL Representativeness}
+% \label{subsec:lim_landuse}
+%
+% ERA5 HTESSEL does not include explicit representation of agricultural
+% irrigation, which is a major contributor to soil moisture over the
+% Gangetic plains during the monsoon season \citep{ankur2022}. In
+% reality, irrigation may maintain \texttt{swvl1} at high levels even
+% during break periods when natural monsoon rainfall is insufficient.
+% The ASMI therefore underrepresents the contribution of irrigation to
+% antecedent soil moisture in the most agriculturally active regions.
+% Conversely, the absence of irrigation means that ERA5's
+% \texttt{swvl1} may underestimate actual soil moisture in the Gangetic
+% plains during break periods preceding MD landfall counteracting the
+% overestimation bias discussed in Section~\ref{subsec:lim_swvl1_bias}
+% and making the net bias direction uncertain in this specific context.
+%
+% \subsection{Shallow Soil Layer Representation}
+% \label{subsec:lim_soil_depth}
+%
+% This study uses ERA5 \texttt{swvl1} (0-7\,cm), the uppermost soil
+% layer, as the primary soil moisture variable. For the short-timescale
+% (hourly) LHF diagnostics, \texttt{swvl1} is the most appropriate
+% variable as it is most directly coupled to surface evaporation.
+% However, for multi-day BOE events lasting $\geq 96$\,h, sustained
+% evapotranspiration draws on deeper soil layers (\texttt{swvl2}:
+% 7-28\,cm; \texttt{swvl3}: 28-100\,cm). The \texttt{swvl1} layer can
+% be dried substantially by the first day of a BOE event's
+% precipitation and LHF, even if the deeper layers remain moist enough
+% to sustain root-zone evapotranspiration through capillary rise. The
+% ASMI using only \texttt{swvl1} may therefore underestimate the total
+% moisture reservoir available to sustain BOE in systems lasting $\geq 4$ days.
+%
+% \subsection{Scope of the Vortex Analysis}
+% \label{subsec:lim_vortex}
+%
+% The three-dimensional dynamical structure of the MD warm/cold core
+% evolution, pressure-level vorticity budgets, vertical tilt, IVT, and
+% $\theta_e$ vertical profiles was not examined in this thesis. These
+% quantities provide a complementary dynamical perspective on the BOE
+% and terrain interaction that would strengthen the mechanistic
+% attribution. The diagnostic tools for these analyses
+% (\texttt{vortex\_analysis.py}) have been implemented and tested as
+% part of the codebase but the results are deferred to future work.
+%
+% \subsection{Fixed Spatial Buffer and Track-Centre Uncertainty}
+% \label{subsec:lim_buffer}
+%
+% The 100\,km spatial buffer used for track-following time series is a
+% fixed parameter.
+% The optimal buffer scale depends on the size of the MD circulation
+% at any given
+% time, which varies during the life cycle (contracting as the system decays).
+% A fixed buffer may include grid points outside the vortex
+% circulation during the
+% peak land phase, diluting the inner-core flux signal with background values.
+% Sensitivity tests with 50\,km and 200\,km buffers (not shown) reveal that the
+% qualitative conclusions are robust, but the quantitative LHF values change by
+% $\pm 15$\,\% depending on the buffer choice.
+%
+% Furthermore, the ERA5 850\,hPa vorticity maximum used to define the
+% track centre
+% may be displaced 25-75\,km from the actual low-level pressure minimum owing to
+% the coarse model resolution and the complex multi-scale structure of the MD
+% circulation. This positional uncertainty propagates directly into the
+% Hovm\"{o}ller radial coordinate and the time-series buffer extraction.
+%
+% % \section{Mechanistic Role of Soil Moisture Memory}
+% % \label{sec:disc_memory}
+% %
+% % The persistence of LHF is tied to the soil moisture memory, as
+% % evidenced by the coupling efficiency metrics.
+% %
+% % \yellownote{TODO}
+% % \begin{figure}[ht]
+% %   \centering
+% %   % \includegraphics[width=0.8\textwidth]{output_2024/Global_soil_memory/all_tracks_soil_memory.csv}
+% %   % Create a bar or scatter plot from this CSV data
+% %   \fbox{\rule{0pt}{7cm}\rule{0.82\textwidth}{0pt}}
+% %   \caption{Soil moisture memory scales across the MD ensemble.}
+% %   \label{fig:soil_memory}
+% % \end{figure}
+%
+% \section{Historical Context and Prior Work on Indian MD Climatology}
+% \label{sec:md_climatology}
+%
+% \subsection{Comparison of This Study with Prior Methodology}
+% \label{subsec:methodology_comparison}
+%
+% Table~\ref{tab:prior_methods} summarises the methodological
+% approaches of prior Indian MD soil moisture studies and positions the
+% present study relative to them.
+%
+% \begin{table}[H]
 %   \centering
-%   % \includegraphics[width=0.8\textwidth]{output_2024/Global_soil_memory/all_tracks_soil_memory.csv}
-%   % Create a bar or scatter plot from this CSV data
-%   \fbox{\rule{0pt}{7cm}\rule{0.82\textwidth}{0pt}}
-%   \caption{Soil moisture memory scales across the MD ensemble.}
-%   \label{fig:soil_memory}
-% \end{figure}
-
-\yellownote{This should be moved to Limitations}
-\section{Historical Context and Prior Work on Indian MD Climatology}
-\label{sec:md_climatology}
-
-\subsection{Comparison of This Study with Prior Methodology}
-\label{subsec:methodology_comparison}
-
-Table~\ref{tab:prior_methods} summarises the methodological
-approaches of prior Indian MD soil moisture studies and positions the
-present study relative to them.
-
-\begin{table}[H]
-  \centering
-  \caption[Comparison of prior Indian MD soil moisture
-  studies]{Summary of prior Indian MD antecedent moisture and
-    post-landfall studies. ``Direct LHF'' indicates whether the study
-  measured surface latent heat flux directly rather than using a proxy.}
-  \label{tab:prior_methods}
-  \begin{tabular}{p{3cm}p{3cm}p{2.8cm}p{3.2cm}}
-    \toprule
-    \textbf{Study}                   & \textbf{Method}
-    & \textbf{Direct LHF?} & \textbf{Key Limitation} \\
-    \midrule
-    \citet{kishtawal2013enhancement} & Antecedent rainfall proxy
-    & No                   & Proxy, fixed grid       \\
-    \citet{chang2009}                & WRF NWP sensitivity
-    & No (model)           & Single event            \\
-    \citet{hunt2017effect}           & NWP SM perturbation
-    & No (model)           & Model, not obs          \\
-    \citet{osuri2020}                & NWP + ASCAT SM
-    & No (model)           & Model, not obs          \\
-    \citet{vijay2024boe}             & ERA5 case study
-    & Partial              & Single event, 1999      \\
-    \textbf{This study}              & \textbf{Azimuthal
-    Hovm\"{o}ller + ERA5} & \textbf{Yes}  & ERA5 resolution limits \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-The primary novelty of the present study-which
-Table~\ref{tab:prior_methods} makes explicit-is the combination of
-(i) \emph{direct} LHF measurement from ERA5 (not a proxy),
-(ii) a \emph{storm-centred} diagnostic (Azimuthal Hovm\"{o}ller) that
-removes the background climatological gradient, and
-(iii) a \emph{systematic} multi-year (2001-2025) climatology rather
-than single-event analysis.
-
-\subsection{Annual Frequency and Seasonal Distribution}
-\label{subsec:md_frequency}
-
-Historically, the Bay of Bengal generates approximately 5-7 Monsoon
-Depressions per JJAS season, with peak activity in July and August
-when the monsoon trough is at its most pronounced and BoB SSTs are at
-their seasonal maximum of 28-30$^\circ$C \citep{sikka1977,
-rashid2005track}. The annual count is modulated by large-scale climate modes:
-
-\begin{itemize}
-  \item \textbf{ENSO:} El Ni\~no years typically suppress Indian
-    monsoon rainfall and reduce BoB LPS frequency, as the Walker
-    circulation weakens moisture flux over the BoB. La Ni\~na years
-    enhance LPS genesis.
-  \item \textbf{Indian Ocean Dipole (IOD):} Positive IOD (warm
-    western, cool eastern Indian Ocean) suppresses BoB moisture flux
-    and MD genesis; negative IOD enhances it.
-  \item \textbf{Madden-Julian Oscillation (MJO):} During the active
-    (convective) phase of the MJO over the Indian Ocean, background
-    moisture and vorticity over the BoB are enhanced, increasing MD
-    genesis probability.
-\end{itemize}
-
-\subsection{Landfall Statistics and Preferential Track Corridors}
-\label{subsec:md_landfall_stats}
-
-The majority of BoB MDs make landfall along the northern Andhra
-Pradesh-Odisha-West Bengal coastline, between approximately
-82$^\circ$E and 88$^\circ$E longitude \citep{rashid2005track}. This
-clustering reflects the combined effect of the monsoon trough axis
-(which directs systems toward northern Odisha) and the geometry of
-the BoB (which is wider in the south, giving systems forming farther
-south a longer ocean transit that brings them to the northern coast).
-Systems making landfall south of approximately 16$^\circ$N encounter
-the main Eastern Ghats range at higher topographic sensitivity, while
-systems making landfall north of 20$^\circ$N may partially circumvent
-the Ghats by tracking through the Mahanadi river-valley gap.
-
-\yellownote{TODO: Discussions}
-% The Discussion on:
-% - Comparison of LHF values (70-120 W/m2) with Atlantic BOE cases
-% (>200 W/m2) and physical explanation (monsoon cloud cover reduces
-% available radiation)
-% - Comparison of ASMI threshold (0.35 m3/m3) with Kishtawal (2013) proxy
-% - Explanation of why the 7-day lag outperforms the 14-day lag (soil
-% moisture memory timescale; clay loam retains moisture 3-7 days)
-% - Implications for operational forecasting
+%   \caption[Comparison of prior Indian MD soil moisture
+%   studies]{Summary of prior Indian MD antecedent moisture and
+%     post-landfall studies. ``Direct LHF'' indicates whether the study
+%   measured surface latent heat flux directly rather than using a proxy.}
+%   \label{tab:prior_methods}
+%   \begin{tabular}{p{3cm}p{3cm}p{2.8cm}p{3.2cm}}
+%     \toprule
+%     \textbf{Study}                   & \textbf{Method}
+%     & \textbf{Direct LHF?} & \textbf{Key Limitation} \\
+%     \midrule
+%     \citet{kishtawal2013enhancement} & Antecedent rainfall proxy
+%     & No                   & Proxy, fixed grid       \\
+%     \citet{chang2009}                & WRF NWP sensitivity
+%     & No (model)           & Single event            \\
+%     \citet{hunt2017effect}           & NWP SM perturbation
+%     & No (model)           & Model, not obs          \\
+%     \citet{osuri2020}                & NWP + ASCAT SM
+%     & No (model)           & Model, not obs          \\
+%     \citet{vijay2024boe}             & ERA5 case study
+%     & Partial              & Single event, 1999      \\
+%     \textbf{This study}              & \textbf{Azimuthal
+%     Hovm\"{o}ller + ERA5} & \textbf{Yes}  & ERA5 resolution limits \\
+%     \bottomrule
+%   \end{tabular}
+% \end{table}
+%
+% The primary novelty of the present study-which
+% Table~\ref{tab:prior_methods} makes explicit-is the combination of
+% (i) \emph{direct} LHF measurement from ERA5 (not a proxy),
+% (ii) a \emph{storm-centred} diagnostic (Azimuthal Hovm\"{o}ller) that
+% removes the background climatological gradient, and
+% (iii) a \emph{systematic} multi-year (2001-2025) climatology rather
+% than single-event analysis.
+%
+% \subsection{Annual Frequency and Seasonal Distribution}
+% \label{subsec:md_frequency}
+%
+% Historically, the Bay of Bengal generates approximately 5-7 Monsoon
+% Depressions per JJAS season, with peak activity in July and August
+% when the monsoon trough is at its most pronounced and BoB SSTs are at
+% their seasonal maximum of 28-30$^\circ$C \citep{sikka1977,
+% rashid2005track}. The annual count is modulated by large-scale climate modes:
+%
+% \begin{itemize}
+%   \item \textbf{ENSO:} El Ni\~no years typically suppress Indian
+%     monsoon rainfall and reduce BoB LPS frequency, as the Walker
+%     circulation weakens moisture flux over the BoB. La Ni\~na years
+%     enhance LPS genesis.
+%   \item \textbf{Indian Ocean Dipole (IOD):} Positive IOD (warm
+%     western, cool eastern Indian Ocean) suppresses BoB moisture flux
+%     and MD genesis; negative IOD enhances it.
+%   \item \textbf{Madden-Julian Oscillation (MJO):} During the active
+%     (convective) phase of the MJO over the Indian Ocean, background
+%     moisture and vorticity over the BoB are enhanced, increasing MD
+%     genesis probability.
+% \end{itemize}
+%
+% \subsection{Landfall Statistics and Preferential Track Corridors}
+% \label{subsec:md_landfall_stats}
+%
+% The majority of BoB MDs make landfall along the northern Andhra
+% Pradesh-Odisha-West Bengal coastline, between approximately
+% 82$^\circ$E and 88$^\circ$E longitude \citep{rashid2005track}. This
+% clustering reflects the combined effect of the monsoon trough axis
+% (which directs systems toward northern Odisha) and the geometry of
+% the BoB (which is wider in the south, giving systems forming farther
+% south a longer ocean transit that brings them to the northern coast).
+% Systems making landfall south of approximately 16$^\circ$N encounter
+% the main Eastern Ghats range at higher topographic sensitivity, while
+% systems making landfall north of 20$^\circ$N may partially circumvent
+% the Ghats by tracking through the Mahanadi river-valley gap.
+%
+% % \yellownote{TODO: Discussions}
+% % The Discussion on:
+% % - Comparison of LHF values (70-120 W/m2) with BOE cases
+% % (>200 W/m2) and physical explanation (monsoon cloud cover reduces
+% % available radiation)
+% % - Comparison of ASMI threshold (0.35 m3/m3) with Kishtawal (2013) proxy
+% % - Explanation of why the 7-day lag outperforms the 14-day lag (soil
+% % moisture memory timescale; clay loam retains moisture 3-7 days)
+% % - Implications for operational forecasting

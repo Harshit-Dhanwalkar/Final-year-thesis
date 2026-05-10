@@ -195,7 +195,7 @@ the background gradient. Fixed-grid analyses of ERA5 latent heat flux
 soil moisture India superimpose several confounding signals
 simultaneously: seasonal north-south in soil moisture, the spatial
 gradient in net heat flux, and large-scale moisture advection. These
-signals are spatially coherent on comparable the MD itself, making it
+signals are spatially coherent and comparable the MD itself, making it
 impossible to isolate the storm-induced anomaly.
 
 The Azimuthal Hovm\"{o}ller approach addresses this problem by
@@ -286,6 +286,29 @@ surface LHF (W\,m$^{-2}$), surface SHF (W\,m$^{-2}$), near-surface
 soil moisture  (m$^3$\,m$^{-3}$), 2-m dew-point
 depression ($T_{2m} - T_{d,2m}$, K), and soil tendency
 m$^3$\,m$^{-3}$\,hr$^{-1}$.
+
+\section{Diagnostic Framework for BOE Identification}
+\label{sec:method_boe_framework}
+
+To distinguish between standard landfall decay and the Brown Ocean
+Effect (BOE), this study employs a multi-variate diagnostic framework,
+hypothesize that the BOE is not defined by a single variable, but by
+the synchronization of mechanical and thermodynamic signals:
+
+\begin{enumerate}
+  \item \textbf{Precipitation Structure:} Monitored via azimuthal
+    Hovm\"{o}ller plots to identify the transition from broad
+    maritime rainbands to a contracted, self-sustaining inner core.
+  \item \textbf{Surface Energy Partitioning:} Quantified through
+    Latent Heat Flux (LHF) and Sensible Heat Flux (SHF). The BOE is
+    characterized by the land surface mimicking the ocean (high LHF, low SHF).
+  \item \textbf{Boundary Layer Saturation:} Tracked via 2-m dew point
+    ($d2m$) to determine the timescale of continental desiccation and
+    the height of the Lifting Condensation Level (LCL).
+  \item \textbf{Orography vs. Energetics:} Elevation data from SRTM
+    is used to assess if the Eastern Ghats act as a terminal
+    mechanical barrier or a thermodynamic trigger for the self-wetting feedback.
+\end{enumerate}
 
 \section{Track-Following Time-Series Diagnostics}
 \label{sec:timeseries_method}

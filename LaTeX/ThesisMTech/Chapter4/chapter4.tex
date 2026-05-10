@@ -6,8 +6,18 @@
 %% Fill them in from your output CSV files:
 %%   output_YYYY/MD_tracks_YYYY.csv   -> counts, durations, speeds
 %%   output_YYYY/heat_flux_analysis_summary.csv  -> LHF values
-%%   output_YYYY/Global_elevation_analysis/elevation_metrics.csv -> TSI, speed
-%%   antecedent_analysis.py outputs -> ASMI correlations
+
+%% TODO: add
+% BOE mechanism determines which systems persist; show 4 signature"
+% version:
+% "Four independent observational signatures uniquely identify Brown
+% Ocean Effect: sustained inner-core latent heat flux, progressive
+% soil moisture wetting, dew-point depression suppression, and inward
+% precipitation contraction. These signatures appear in all
+% long-lived systems and absent in all short-lived systems,
+% demonstrating that the BOE is the dominant mechanism. Eastern Ghats
+% terrain cannot stop BOE-active systems, confirming that
+% land-atmosphere coupling, not topography, determines post-landfall longevity."
 
 \ifpdf
 \graphicspath{{Chapter4/Figs/Raster/}{Chapter4/Figs/PDF/}{Chapter4/Figs/}}
@@ -18,19 +28,279 @@
 \chapter{Results}
 \label{ch:results}
 
-\section{Climatological Overview}
-\label{sec:results_clim}
+\section{Multi-Year Climatological Patterns: 2001-2025}
+\label{sec:results_multiyear}
+
+% \subsection{Spatial Distribution of Track Termination: The Eastern
+% Ghats Filter}
+% \label{subsec:multiyear_spatial}
+%
+% Figure~\ref{fig:all_tracks_spatial} shows all confirmed MD tracks
+% from 2001 to 2025, colour-coded by duration (hours). The spatial
+% pattern of track termination points is the most direct visual
+% evidence for the Eastern Ghats acting as a selective filter rather
+% than an absolute barrier.
+%
+% % INSERT FIGURE - from Overall_years/ or plot_all_years.py
+% %   All-track map, coloured by duration. Add Eastern Ghats 600m contour.
+% %   Look for: Overall_years/all_tracks_2001_2025.png or similar.
+% \begin{figure}[H]
+%   \centering
+%   \fbox{\rule{0pt}{8cm}\rule{0.90\textwidth}{0pt}}
+%   % \includegraphics[width=0.90\textwidth]{Overall_years/all_tracks_2001_2025_by_duration}
+%   \caption[All MD tracks, 2001-2025, coloured by post-landfall duration]{All
+%     confirmed ERA5 Monsoon Depression tracks (2001-2025), colour-coded from
+%     blue (short-lived, $<48$\,h post-landfall) through red (long-lived,
+%     $\geq 96$\,h post-landfall). Eastern Ghats 600\,m elevation contour (bold
+%     grey line) overlaid. The spatial clustering of track termination points is
+%   a direct map of the terrain-filtering effect.}
+%   \label{fig:all_tracks_spatial}
+% \end{figure}
+%
+% From Figure~\ref{fig:all_tracks_spatial}, three spatial patterns are evident:
+%
+% \textbf{Pattern 1: Short-lived systems terminate east of the 600\,m
+% contour.} The majority of short-lived MDs (blue-green tracks)
+% dissipate within 200-400\,km of the coastline, with termination
+% points clustering east of or within the Eastern Ghats terrain zone
+% (600\,m contour). This clustering is consistent with Mechanism 4
+% (vortex tilt decoupling; Section~\ref{subsec:ghats_mechanisms}):
+% without BOE surface LHF to maintain boundary-layer convergence, the
+% terrain-induced tilt increase is sufficient to cause structural
+% collapse before or during the terrain crossing.
+%
+% \textbf{Pattern 2: Long-lived systems concentrate over the Gangetic
+% plain west of the Ghats.} Long-lived tracks (orange-red) extend well
+% west of the 600\,m contour into the Gangetic plain, eastern
+% Rajasthan, and Madhya Pradesh. These tracks correspond to systems
+% that successfully cleared the terrain and continued under BOE
+% maintenance for multiple days. The spatial clustering of these
+% long-lived tracks over the Gangetic plain is physically meaningful:
+% this region has the highest climatological July-August \texttt{SWVL1}
+% ($>0.35$\,m$^3$\,m$^{-3}$) in India due to its clay loam soils and
+% high annual monsoon rainfall, precisely the conditions that enable
+% and sustain the BOE.
+%
+% \textbf{Pattern 3: River-valley gap tracks achieve greater inland
+% penetration.} A subset of long-lived tracks shows notably greater
+% inland penetration distance than others with comparable ASMI values.
+% Examining the landfall longitude of these outlier tracks reveals that
+% they made landfall in alignment with the major river-valley gaps of
+% the Eastern Ghats (the Mahanadi corridor near 84-85$^\circ$E, the
+% Godavari corridor near 81-82$^\circ$E). Gap-aligned MDs experience
+% smaller TSI values (lower terrain obstacle), preserving low-level BoB
+% moisture inflow for longer through the terrain-crossing phase, and
+% thus allowing the BOE to activate more efficiently on the leeward side.
+%
+% \subsection{Duration Distribution and the 96-Hour Threshold}
+% \label{subsec:multiyear_duration}
+%
+% Figure~\ref{fig:duration_histogram} shows the frequency distribution
+% of MD post-landfall durations across the 2001-2025 climatology. The
+% distribution is strongly right-skewed, with a mode near 24-48 hours
+% (reflecting the most common conventional post-landfall decay) and a
+% pronounced tail extending beyond 96 hours. This bimodal character-a
+% dominant short-duration peak and a secondary long-duration tail-is
+% consistent with the BOE hypothesis imposing a threshold-type
+% separation between two regimes rather than a continuous spectrum of behaviour.
+%
+% The threshold at 96 hours used to classify short- versus long-lived
+% systems is not arbitrary: it corresponds approximately to the 85th
+% percentile of the duration distribution, separating the bulk
+% conventional decay population from the tail of anomalously persistent
+% systems. Systems in this tail account for a disproportionately large
+% fraction of total inland precipitation and flooding, despite
+% constituting a minority of events.
+%
+% % FIX: duplicate label. But i need differnt figures as well
+% % INSERT FIGURE - duration histogram
+% %   Overall_years/duration_histogram.png from plot_all_years.py
+% %   Show: bar chart with 24h bins, dashed line at 96h, label "96h threshold".
+% %   Colour bars blue for < 96h and orange for >= 96h.
+% \begin{figure}[H]
+%   \centering
+%   % \includegraphics[width=0.78\textwidth]{Overall_years/duration_histogram}
+%   \fbox{\rule{0pt}{6cm}\rule{0.78\textwidth}{0pt}}
+%   \caption[Frequency distribution of MD post-landfall duration, 2001-2025]{
+%     Frequency distribution of MD post-landfall duration (hours) for
+%     all 2001-2025
+%     events. The right-skewed distribution with a tail beyond 96 hours
+%     is consistent
+%     with the BOE imposing a threshold separation between two distinct
+%     decay regimes.
+%     Blue bars: conventional decay ($<96$\,h); orange bars: long-lived systems
+%   ($\geq 96$\,h, primary focus of this study).}
+%   % \label{fig:duration_histogram}
+% \end{figure}
+%
+% % \subsection{ASMI-Duration Relationship: 24-Year Statistical Evidence}
+% % \label{subsec:multiyear_asmi}
+% %
+% % Figure~\ref{fig:asmi_vs_duration_scatter} presents the scatter of
+% % 7-day ASMI against
+% % post-landfall duration for all confirmed land-falling MDs in the
+% % 2001-2025 dataset.
+% % Each point represents one MD event; colour denotes BOE classification.
+% %
+% % % INSERT FIGURE - compute from antecedent_analysis.py
+% % % outputs across all years
+% % %   Scatter: x = ASMI_7d (m3/m3), y = post-landfall duration (h)
+% % %   Colour: orange = BOE candidate, blue = non-BOE
+% % %   Add: vertical dashed line at ASMI = 0.35, horizontal dashed line at 96h
+% % %   Add: regression line + 95% CI band
+% % \begin{figure}[H]
+% %   \centering
+% %   % \includegraphics[width=0.82\textwidth]{Overall_years/asmi_7d_vs_duration_scatter}
+% %   \fbox{\rule{0pt}{7cm}\rule{0.82\textwidth}{0pt}}
+% %   \caption[ASMI (7-day) vs post-landfall duration, all 2001-2025
+% %   events]{7-day ASMI (m$^3$\,m$^{-3}$, horizontal axis) vs
+% %     post-landfall duration (h, vertical axis) for all 2001-2025
+% %     confirmed land-falling MDs. BOE candidates (orange); non-BOE
+% %     systems (blue). Vertical dashed line at ASMI $=
+% %     0.35$\,m$^3$\,m$^{-3}$ marks the approximate threshold above which
+% %   BOE candidacy dominates.}
+% %   \label{fig:asmi_vs_duration_scatter}
+% % \end{figure}
+% %
+% % \yellownote{Look into this}
+% % From Figure~\ref{fig:asmi_vs_duration_scatter}, the 25-year dataset
+% % reveals the following
+% % statistical regularities:
+% % \begin{enumerate}
+% %   \item \textbf{Positive ASMI-duration correlation:} Pearson $r =
+% %     [r_1]$, $p = [p_1]$ (effective sample size corrected following
+% %     \citealt{bretherton1999effective}). Higher antecedent soil
+% %     moisture is significantly associated with longer post-landfall
+% %     duration across the full climatological record, confirming the
+% %     ASMI as a statistically valid predictor.
+% %   \item \textbf{Threshold behaviour near 0.35\,m$^3$\,m$^{-3}$:}
+% %     Systems with ASMI$_{7d}$ $> 0.35$ are predominantly long-lived
+% %     and BOE-candidate. Below this threshold, the vast majority are
+% %     short-lived. This threshold corresponds to the critical soil
+% %     moisture level at which hydraulic conductivity drops steeply in
+% %     Gangetic clay loam \citep{clapp1978empirical,
+% %     seneviratne2010investigating}, marking the transition from
+% %     water-limited to energy-limited evaporation.
+% %   \item \textbf{Scatter within each ASMI class:} The scatter around
+% %     the regression line is substantial, indicating that ASMI alone
+% %     does not fully explain duration variability. The residual
+% %     variance is likely attributable to differences in terrain
+% %     exposure (TSI), track alignment with river-valley gaps, and the
+% %     intensity of the MD at landfall. This residual structure
+% %     motivates the combined ASMI + TSI predictor framework discussed
+% %     in Chapter~\ref{ch:discussion}.
+% % \end{enumerate}
+%
+% % \subsection{Terrain Sensitivity Index vs Duration: The Terrain Filter}
+% % \label{subsec:multiyear_tsi}
+% %
+% % Figure~\ref{fig:tsi_vs_duration} shows the relationship between
+% % track-mean Terrain
+% % Sensitivity Index (TSI) and post-landfall duration for the subset
+% of MDs that
+% % crossed the Eastern Ghats.
+% %
+% % \yellownote{TODO}
+% % % INSERT FIGURE - from elevation_metrics.csv (all years)
+% % %   Scatter: x = mean track TSI, y = post-landfall duration (h)
+% % %   Colour: orange = BOE candidate, blue = non-BOE
+% % \begin{figure}[H]
+% %   \centering
+% %   % \includegraphics[width=0.80\textwidth]{Overall_years/tsi_vs_duration_scatter}
+% %   \fbox{\rule{0pt}{6.5cm}\rule{0.80\textwidth}{0pt}}
+% %   \caption[Terrain Sensitivity Index vs post-landfall duration, all
+% %   Ghats-crossing MDs]{
+% %     Track-mean TSI vs post-landfall duration for all Ghats-crossing
+% %     MDs in 2001-2025. BOE candidates (orange) cluster in the low-TSI,
+% %     high-duration quadrant; non-BOE systems (blue) are distributed
+% %     across all TSI values, confirming that terrain sensitivity is a
+% %     decay-promoting factor but that BOE can overcome
+% %   moderate terrain barriers.}
+% %   \label{fig:tsi_vs_duration}
+% % \end{figure}
+% %
+% % The key observation from Figure~\ref{fig:tsi_vs_duration} is the in
+% % the distribution: BOE candidates cluster almost exclusively in the
+% % low-TSI, high-duration quadrant (lower-right), while non-BOE systems
+% % populate the full TSI range, including both low and high TSI values.
+% % This pattern supports the interpretation that:
+% %
+% % \begin{enumerate}
+% %   \item High TSI alone is sufficient to produce short duration
+% %     (upper-left quadrant), regardless of BOE status-the terrain is
+% %     too severe even for BOE to compensate.
+% %   \item Low TSI with high ASMI (BOE candidate) produces long duration
+% %     (lower-right).
+% %   \item Low TSI with low ASMI (non-BOE) can still produce short
+% %     duration, because the limiting factor is the surface moisture
+% %     state, not the terrain.
+% % \end{enumerate}
+% %
+% % This three-way interaction (ASMI, TSI, and their joint effect) is the
+% % most complete statistical summary of the terrain-BOE modulation of MD
+% % inland longevity that this dataset permits. A composite index
+% % combining ASMI$_{7d}$ and TSI$^{-1}$ as a product may provide
+% % improved predictive skill relative to either variable alone, and is
+% % identified as a recommendation for operational forecasting research
+% % (Section~\ref{sec:conclusions_operational}).
+% %
+% % \subsection{Orographic Blocking Factor and Speed Reduction}
+% % \label{subsec:ghats_blocking_results}
+% %
+% % \yellownote{FIX: reference}
+% % The translational speed profiles from \texttt{speed\_analysis.py}
+% % provide the most direct observational measure of terrain-induced
+% % blocking. Figure~\ref{fig:ts_speed_elev} shows that all
+% % Ghats-crossing MDs decelerate as terrain elevation increases through
+% % the 200-1000\,m zone, with mean speed reduction of approximately
+% % $\Delta v \approx$ [X]\,km\,h$^{-1}$ at the 600\,m contour relative
+% % to the pre-landfall ocean-phase speed. This deceleration is a direct
+% % consequence of increased surface roughness and mechanical flow
+% % blocking by the terrain - consistent with the Terrain Sensitivity
+% % Index formulation (Section~\ref{sec:terrain_method}).
+% %
+% % The blocking effect is not uniform across the Ghats. Systems making
+% % landfall between 84-87$^\circ$E (the Mahanadi corridor, near Odisha)
+% % encounter lower mean TSI values and show smaller speed reductions
+% % than those tracking through the southern Ghats (south of 16$^\circ$N,
+% % high TSI). This longitude-dependent blocking is visible in
+% % Figure~\ref{fig:elevation_comparison}: the scatter in per-track speed
+% % reduction correlates with the landfall longitude, with gap-aligned
+% % tracks showing shallower deceleration.
+% %
+% % The critical distinction between BOE-candidate and non-BOE systems is
+% % not in the deceleration magnitude during the terrain crossing - both
+% % categories slow at comparable rates within the 600-1000\,m elevation
+% % zone. The difference appears on the leeward side: BOE-candidate
+% % systems recover speed as terrain elevation drops below 200\,m, while
+% % non-BOE systems continue to slow. This leeward speed recovery is
+% % interpreted as evidence that sustained surface LHF (from the wet
+% % leeward soil) maintains the low-level pressure gradient that drives
+% % the system forward, whereas in non-BOE systems the pressure gradient
+% % weakens as convective organisation collapses after terrain crossing.
+%
+% % \yellownote{TODO: add subsection on  the precipitation recycling ratio}
+% % \subsection{Precipitation Recycling Ratio}
+% % \label{Precipitation Recycling Ratio}
+% %
+% % The precipitation recycling ratio $\rho = E/P$ (where $E$ is local
+% % evapotranspiration in mm\,h$^{-1}$ and $P$ is total precipitation) provides
+% % an independent measure of how much of the MD's rainfall is
+% sourced from local surface evaporation rather than large-scale
+% moisture advection.
+% Over the ocean  phase, $\rho \approx 0.05$-0.15, indicating that most
+% precipitation comes from advected oceanic moisture. After landfall
+% in BOE-candidate systems,
+% % Figure~\ref{fig:track1_recycling} shows $\rho$ rising to
+% 0.25-0.40, consistent with local surface evapotranspiration
+% contributing a growing fraction of the
+% % precipitation total. This elevated recycling ratio is a direct signature of
+% % the BOE: the soil is evaporating at the potential rate and that vapour is
+% % falling back as precipitation within the same 100-km buffer.
+% % % Source: output_2024/track_1/time_series/track_1_recycling_ratio.png
 
 \subsection{Track Database}
 \label{subsec:track_database}
-
-% The ERA5-based detection algorithm, cross-validated against IMD
-% monsoon seasonal reports, identified \textbf{128} confirmed Monsoon
-% Depression events over 2001-2025, of which \textbf{80} made
-% landfall over the Indian subcontinent.
-% The annual count ranged from \textbf{[min]} to \textbf{[max]} per
-% year (Table~\ref{tab:track_stats}), consistent with the IMD
-% climatology of 5-7 events per year \citep{kishtawal2013enhancement}.
 
 The ERA5-based detection algorithm, cross-validated against IMD
 monsoon seasonal reports, identified \textbf{128} confirmed Monsoon
@@ -180,7 +450,7 @@ secondary energy source required for inland survival.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.95\textwidth]{Chapter4/Figs/annual_count_trend}
+  \includegraphics[width=0.94\textwidth]{Chapter4/Figs/annual_count_trend}
   \caption[Annual total and long-lived MD counts
   (2001--2025)]{Comparison of total annual MD frequency and the count
     of long-lived systems. The convergence of the line toward the top
@@ -198,7 +468,7 @@ suggests that longevity is governed by the state of the land surface
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.8\textwidth]{Chapter4/Figs/duration_histogram}
+  \includegraphics[width=0.75\textwidth]{Chapter4/Figs/duration_histogram}
   \caption[MD duration frequency distribution]{Histogram of track
     durations in 24-hour bins. The threshold at 96\,h separates
     short-lived (blue) from long-lived (red) systems, highlighting the
@@ -221,16 +491,16 @@ the Gangetic plain corresponds closely to the region of highest
 climatological July-August \texttt{swvl1} ($>0.3$\,m$^3$\,m$^{-3}$),
 broadly consistent with the BOE hypothesis.
 
-\textbf{Ocean-originated vs. land-genesis tracks.} Of the
-\textbf{128} total events, \textbf{96.8\%} (124 events) originated
-over the Bay of Bengal and made landfall along the eastern coast,
-while only \textbf{3.2\%} (4 Land MDs) formed over the land surface
-directly. This highlights that the vast majority of the MD population
-relies on an initial oceanic moisture supply. Ocean-originated tracks
-show a distinctly different thermodynamic evolution: they arrive at
-the coast with well-organised vorticity, a sustained outer rainband,
-and inner-core LHF of 100--150\,W\,m$^{-2}$ built up over 1--3 days
-of oceanic energy supply.
+% \textbf{Ocean-originated vs. land-genesis tracks.} Of the
+% \textbf{128} total events, \textbf{96.8\%} (124 events) originated
+% over the Bay of Bengal and made landfall along the eastern coast,
+% while only \textbf{3.2\%} (4 Land MDs) formed over the land surface
+% directly. This highlights that the vast majority of the MD population
+% relies on an initial oceanic moisture supply. Ocean-originated tracks
+% show a distinctly different thermodynamic evolution: they arrive at
+% the coast with well-organised vorticity, a sustained outer rainband,
+% and inner-core LHF of 100-150\,W\,m$^{-2}$ built up over 1-3 days
+% of oceanic energy supply.
 
 This strong energetic initial condition means that even moderately
 moist antecedent soils ($\texttt{swvl1} \approx 0.28$--$0.32$
@@ -260,7 +530,6 @@ anomalously high soil moisture.
 % % shading (optional).
 % \begin{figure}[H]
 %   \centering
-%   %% >> INSERT FIGURE: Overall_years/all_tracks_2001_2025_coloured.png <<
 %   \fbox{\rule{0pt}{7cm}\rule{0.90\textwidth}{0pt}}
 %   % \includegraphics[width=0.90\textwidth]{Chapter4/Figs/all_md_tracks_coloured}
 %   \caption[Spatial distribution of MD tracks by duration
@@ -271,461 +540,605 @@ anomalously high soil moisture.
 %   \label{fig:all_md_tracks_results}
 % \end{figure}
 
+\subsection{Annual MD Count and BOE Frequency}
+\label{subsec:multiyear_count}
+
+% Figure~\ref{fig:annual_md_count_boe_fraction} displays the annual
+% frequency of MDs alongside the fraction of systems meeting the BOE
+% candidacy criteria ($\geq 70$,W,m$^{-2}$ LHF for $\geq 18$,h).
+
+Two primary observations emerge from the climatology:
+\begin{enumerate}
+  \item \textbf{Stability of Genesis:} The total annual MD count
+    shows no statistically significant monotonic trend ($p > 0.1$),
+    consistent with the findings of \citet{mishra2021monsoon} regarding
+    stable synoptic frequency.
+  \item \textbf{BOE Variability:} The BOE candidate fraction is
+    substantially more variable year-to-year than the total count. This
+    demonstrates that post-landfall persistence is not a simple
+    function of genesis frequency, but is controlled by a state
+    variable-land-surface moisture-that fluctuates independently of the
+    large-scale atmospheric triggers for genesis.
+\end{enumerate}
+
+% \begin{figure}[H]
+%   \centering
+%   \includegraphics[width=0.88\textwidth]{Overall_years/annual_md_count_boe_fraction}
+%   \caption{Annual MD count and BOE-candidate fraction over
+%     2001--2025. The high interannual variability of the BOE fraction
+%   suggests land-surface control over system longevity.}
+%   \label{fig:annual_md_count_boe_fraction}
+% \end{figure}
+
 \section{Azimuthal Hovm\"{o}ller Analysis}
 \label{sec:results_hovmoller}
 
-This section synthesizes the radial-temporal evolution of MDs across
-the 2001–2025 period. By comparing the composite behavior of
-long-lived (BOE-active) and short-lived (non-BOE) systems, we
-identify the physical "fingerprints" that govern inland sustainability.
+While the climatological overview established the frequency of inland
+penetration, this section identifies the physical mechanisms
+governing that sustainability through an azimuthal perspective. By
+transforming the MD into a storm-centered radial coordinate system,
+we can isolate the evolution of the inner-core thermodynamics, where
+the BOE feedback is most important, from the surrounding large-scale
+monsoon flow. Therefore we identifie the radial-temporal signature of the BOE by
+comparing the evolution of long-lived (BOE-active) and short-lived
+(Non-BOE) MDs across the 2001–2025 period govern inland
+sustainability. % By centering the analysis on landfall ($t=0$), we
+% isolate the transition from oceanic to terrestrial energy dependence.
 
-\subsection{Total Precipitation Dynamics}
-% Precipitation Dynamics: The Inward Contraction Fingerprint
-\label{subsec:hovmoller_tp}
-
-The azimuthal evolution of precipitation reveals a fundamental regime
-shift at landfall ($t=0$). In the ocean phase, both long-lived and
-short-lived MDs exhibit a broad precipitation footprint, with
-significant rainfall extending out to 300,km from the center. This
-reflects a dependence on large-scale moisture advection from the Bay
-of Bengal.Upon landfall, the behavior of the two populations diverges sharply:
-
+The analysis is centered on the moment of landfall ($t=0$) to capture
+the critical transition from oceanic to terrestrial energy
+dependence. To contrast the differing regimes, we examine two
+representative cases from the 2001–2025 database:
 \begin{itemize}
-  \item Long-lived (BOE) Systems: These systems exhibit an inward
-    contraction of the precipitation maximum. While the outer
-    rainbands (150–300,km) decay as they lose contact with the
-    oceanic moisture supply, the inner-core precipitation ($<100$,km)
-    is maintained or even intensified. This transition from a broad,
-    advection-driven footprint to a compact, locally-sustained core
-    is the primary Hovmüller fingerprint of the BOE. It indicates
-    that the system has successfully shifted its energy source from
-    the ocean to the moist land surface directly beneath the vortex.
-  \item Short-lived Systems: No such contraction occurs. Instead, a
-    uniform radial collapse is observed. Both the inner-core and
-    outer-band precipitation dissipate within 18–24 hours of
-    landfall. This suggests that without a high-flux land surface,
-    the MD remains entirely dependent on oceanic moisture; once that
-    "umbilical cord" is severed, the convective organization
-    collapses across all radii.
+  \item \textbf{BOE-Active (Long-lived):} Track 5 from September 2024
+    (6th to 12th September), which successfully navigated the Eastern
+    Ghats and penetrated deep into the Indian heartland.
+  \item \textbf{Non-BOE (Short-lived):} A June 2001 system (11th to
+    14th June) that underwent rapid structural collapse shortly after landfall.
 \end{itemize}
 
-% From Figure~\ref{fig:hovmoller_tp_long} (long-lived, BOE-candidate
-% system), the time-radius structure reveals a two-phase precipitation
-% evolution that is physically diagnostic of the BOE transition.
-% \emph{In the ocean phase} ($t < 0$), precipitation is organised as a
-% broad annular maximum at 100-250\,km radius, reflecting moisture
-% convergence and conditional instability operating at the full MD
-% circulation scale on BoB moisture. The inner core ($<50$\,km) shows
-% moderate precipitation above the low-level vortex, and the system
-% draws on oceanic moisture over a wide radial extent.
-%
-% At and after landfall ($t \geq 0$), two simultaneous processes are
-% apparent. First, inner-core precipitation ($<100$\,km) is maintained
-% or briefly enhanced in the first few hours-the orographic
-% precipitation response as the MD encounters the eastern Ghats slopes.
-% Second, the outer rainband (150-300\,km) begins to contract inward
-% and weaken on the leeward side as terrain-induced flow deflection
-% severs the easterly moisture inflow. Through the land phase, the
-% precipitation signal progressively concentrates in the inner core
-% ($<100$\,km), transitioning from a \emph{broad-ocean regime}
-% (large-scale moisture advection) to a \emph{compact-land regime}
-% (local surface evapotranspiration sustaining inner-vortex
-% convection). This inward contraction of the precipitation footprint
-% is identified here as the \textbf{Hovm\"{o}ller fingerprint of the BOE}.
-
-%%  FIGURE: Hovmoller TP long-lived
-%%  SOURCE: output_YYYY/track_N/hovmoller/ - choose a long-lived BOE-candidate
-%%  (e.g., the track with longest post-landfall duration in your dataset).
-%%  Mark t=0 dashed; label inner core / outer band zones; use warm colormap.
-% \begin{figure}[H]
-%   \centering
-%   %% >> INSERT FIGURE:
-% output_YYYY/track_N/hovmoller/track_N_tp_hovmoller.png <<
-%   %% (long-lived, BOE-candidate system)
-%   \fbox{\rule{0pt}{7cm}\rule{0.85\textwidth}{0pt}}
-%   % \includegraphics[width=0.85\textwidth]{Chapter4/Figs/hovmoller_tp_longLived}
-%   \caption[Hovm\"{o}ller: precipitation, long-lived BOE-candidate
-% MD]{Azimuthal
-%     Hovm\"{o}ller of total precipitation (mm\,hr$^{-1}$) for a
-%     long-lived BOE-candidate
-%     MD. Inward contraction of the rainband after $t=0$ (dashed) is the
-%   Hovm\"{o}ller BOE fingerprint.}
-%   \label{fig:hovmoller_tp_long}
-% \end{figure}
-%
-% In contrast, from Figure~\ref{fig:hovmoller_tp_short} (short-lived,
-% non-BOE system), there is no inward contraction. Instead, both the
-% inner-core and outer-band precipitation collapse uniformly within
-% 12-24\,h of landfall, with the outer rainband dissipating entirely by
-% $t = +48$\,h. This rapid and uniform collapse indicates that the
-% system's precipitation was wholly dependent on oceanic moisture
-% inflow: once the BoB supply was severed at landfall, no compensating
-% surface source was available.
-%
-% %%  FIGURE: Hovmoller TP short-lived
-% %%  SOURCE: output_YYYY/track_N/hovmoller/ - choose a short-lived
-% % non-BOE system.
-% %%  Keep the same colour scale and axis range as the figure above for
-% % direct comparison.
-% \begin{figure}[H]
-%   \centering
-%   %% >> INSERT FIGURE:
-% output_YYYY/track_N/hovmoller/track_N_tp_hovmoller.png <<
-%   %% (short-lived, non-BOE system)
-%   \fbox{\rule{0pt}{7cm}\rule{0.85\textwidth}{0pt}}
-%   % \includegraphics[width=0.85\textwidth]{Chapter4/Figs/hovmoller_tp_shortLived}
-%   \caption[Hovm\"{o}ller: precipitation, short-lived MD]{As
-%     Figure~\ref{fig:hovmoller_tp_long} but for a short-lived non-BOE MD.
-%     Uniform collapse of both inner-core and outer-band signals within 12-24\,h
-%     of landfall reflects the absence of a compensating land-surface
-%   energy source.}
-%   \label{fig:hovmoller_tp_short}
-% \end{figure}
-
-\subsection{Soil Moisture: Pre-Conditioning and Self-Wetting}
-\label{subsec:hovmoller_swvl1}
-
-The \texttt{swvl1} Hovmüller diagnostics (e.g.,
-Figure~\ref{fig:hovmoller_swvl1}) demonstrate that long-lived systems
-benefit from a two-stage soil moisture feedback.
-\begin{itemize}
-  \item Pre-conditioning: In BOE-candidate cases, the background soil
-    moisture at outer radii (representing the inland environment) is
-    consistently high ($\gtrsim 0.32$,m$^3$,m$^{-3}$) prior to
-    arrival. This pre-landfall saturation ensures that the surface is
-    already in an energy-limited evaporation regime, allowing for
-    immediate High Latent Heat Flux (LHF) generation upon arrival of
-    the storm's wind field.
-  \item Self-Wetting Feedback: Post-landfall, a distinct "diagonal"
-    signal of increasing soil moisture is observed at inner radii
-    ($<150$,km). As the MD moves inland, its own core precipitation
-    drives the soil toward local saturation ($\sim
-    0.45$,m$^3$,m$^{-3}$). This creates a self-sustaining loop: the
-    storm's rainfall maintains the very soil moisture levels required
-    to provide the latent heat that fuels the storm.
-\end{itemize}
-
-In short-lived systems, the antecedent levels are typically below the
-0.30,m$^3$,m$^{-3}$ threshold. While these storms still produce
-rainfall that wets the soil, the "self-wetting" is too little, too
-late; the system decays before the surface can reach the
-flux-intensification stage required to offset the loss of oceanic energy.
-
-% The \texttt{swvl1} Hovm\"{o}ller (Figure~\ref{fig:hovmoller_swvl1})
-% reveals two
-% physically distinct processes operating at different radial scales and times.
-%
-% In the ocean phase ($t < 0$), values at outer radii (200-400\,km)
-% represent the antecedent soil moisture of the Indian interior along
-% the MD's future track. For BOE-candidate systems, this background
-% level is $\gtrsim % 0.30$\,m$^3$\,m$^{-3}$-placing the surface
-% already in or near the energy-limited evaporation regime at the
-% moment of landfall. From Figure~\ref{fig:hovmoller_swvl1}, the
-% \texttt{swvl1} value at the track centre at $t = 0$ (the most
-% direct ASMI reading) exceeds 0.35\,m$^3$\,m$^{-3}$ for all
-% confirmed BOE-candidate events, confirming that pre-existing
-% saturation at the surface-not only the MD's own rainfall-is
-% necessary for BOE onset.
-%
-% After landfall, \texttt{swvl1} increases progressively at inner radii
-% 150$\,km), the self-wetting component of the BOE. The MD's own heavy
-% the soil toward saturation ($\sim 0.45$-$0.48$\,m$^3$\,m$^{-3}$ for
-% Gangetic loam). This result supports the conclusion that the BOE
-% operates a two-stage \emph{antecedent pre-conditioning} enables BOE
-% onset at landfall, and emph{self-wetting feedback} sustains it
-% through the subsequent land phase.  Hovmoller SWVL1
-% %%  SOURCE: output_YYYY/track_N/hovmoller/ - same long-lived BOE-candidate.
-% %%  Sequential blue-to-yellow colormap; add a horizontal dashed line
-% % at 0.35 m3/m3
-% \begin{figure}[H]
-% \centering
-% \fbox{\rule{0pt}{7cm}\rule{0.85\textwidth}{0pt}}
-% % \includegraphics[width=0.85\textwidth]{Chapter4/Figs/hovmoller_swvl1}
-% \caption[Hovm\"{o}ller: near-surface soil moisture
-% (\texttt{swvl1}), BOE-candidate]{
-%   Azimuthal Hovm\"{o}ller of \texttt{swvl1} (m$^3$\,m$^{-3}$) for the same
-%   long-lived MD. Dashed line at 0.35\,m$^3$\,m$^{-3}$ marks the
-%   ASMI threshold.
-%   Progressive inner-core wetting after $t=0$ is the self-wetting
-% feedback signal.}
-% \label{fig:hovmoller_swvl1}
-% \end{figure}
-
-% \subsection{Surface Latent Heat Flux: The BOE Energy Signal}
-% \label{subsec:hovmoller_lhf}
-%
-% The LHF Hovm\"{o}ller (Figure~\ref{fig:hovmoller_lhf}) provides the
-% most direct quantitative measure of the BOE. From the ocean phase,
-% inner-core LHF values of 100-150\,W\,m$^{-2}$ reflect efficient
-% evaporation from the warm BoB surface under enhanced MD circulation
-% winds. This ocean-phase value serves as the reference baseline
-% against which the land-phase maintenance is measured.
-%
-% From Figure~\ref{fig:hovmoller_lhf}, in the BOE-candidate case, LHF
-% at inner radii ($<100$\,km) does not collapse abruptly at $t = 0$.
-% Instead, it decreases only modestly-remaining above the
-% 70\,W\,m$^{-2}$ threshold for $>18$\,h into the land phase-meeting
-% the \citeauthor{andersen2013} criterion. The region enclosed by the
-% 70\,W\,m$^{-2}$ contour during the land phase represents the
-% spatial extent of the BOE-active zone; a large enclosed area
-% indicates that the BOE is sustaining not just the immediate vortex
-% core but the full inner secondary circulation. In non-BOE systems
-% (not shown for LHF but evident in the time-series comparison), LHF
-% at all radii falls below 70\,W\,m$^{-2}$ within 6-12\,h of landfall.
-%
-% \begin{figure}[H]
-%   \centering
-%   \includegraphics[width=0.85\textwidth]{Chapter4/Figs/}
-%   \caption[Hovm\"{o}ller: surface LHF, BOE-candidate MD]{Azimuthal
-% Hovm\"{o}ller
-%     of LHF (W\,m$^{-2}$). Bold contour at 70\,W\,m$^{-2}$; hatching marks the
-%   $\geq 18$\,h sustained exceedance zone confirming BOE candidacy.}
-%   \label{fig:hovmoller_lhf}
-% \end{figure}
-
-% \subsection{2-m Dew-Point Depression: Boundary-Layer Moisture State}
-% \label{subsec:hovmoller_dpd}
-%
-% From Figure~\ref{fig:hovmoller_dpd}, the dew-point depression (DPD
-% $= T_{2m} - T_{d,2m}$) Hovm\"{o}ller provides the atmospheric
-% column's perspective on the surface moisture signal. In long-lived
-% MDs (top panel), the DPD at inner radii remains $<3$\,K throughout
-% the land phase. This is the atmospheric fingerprint of the BOE:
-% continuous surface LHF re-moistens the boundary layer faster than
-% dry-air entrainment and subsidence can dry it, sustaining
-% near-saturated conditions ($>90$\,\% relative humidity) and
-% maintaining convective potential. In short-lived systems (bottom
-% panel), the DPD increases sharply to $>5$\,K within 24\,h of
-% landfall, reflecting a rapidly drying boundary layer as the surface
-% moisture supply collapses.
-%
-% %%  FIGURE: Hovmoller DPD (two-panel)
-% %%  SOURCE: output_YYYY/track_N/hovmoller/ - use TWO tracks (one
-% % long, one short)
-% %%  Two-panel figure: top = long-lived BOE-candidate, bottom =
-% % short-lived non-BOE.
-% %%  Same colour scale for direct comparison (cool-to-warm: small DPD
-% % = cool, large = warm).
-% \begin{figure}[H]
-%   \centering
-%   %% >> INSERT FIGURE: Two-panel: top = long-lived DPD hovmoller,
-%   % bottom = short-lived <<
-%   \fbox{\rule{0pt}{10cm}\rule{0.85\textwidth}{0pt}}
-%   % \includegraphics[width=0.85\textwidth]{Chapter4/Figs/hovmoller_dpd_comparison}
-%   \caption[Hovm\"{o}ller: dew-point depression, long-lived vs
-%   short-lived]{Azimuthal
-%     Hovm\"{o}ller of DPD (K) for a long-lived BOE-candidate (top) and
-%     a short-lived
-%     non-BOE system (bottom). Near-saturated inner core ($<3$\,K)
-%     persists through
-%   the land phase only in the BOE-candidate system.}
-%   \label{fig:hovmoller_dpd}
-% \end{figure}
-
-\section{Track-Following Time-Series Results}
-\label{sec:results_timeseries}
-
-\subsection{What Happens at Landfall: LHF and SHF Transition}
-\label{subsec:ts_hf}
-
-Figure~\ref{fig:ts_lhf_boe} shows the heat flux time series for a representative
-long-lived BOE-candidate system. Several features are immediately apparent.
-\emph{Before landfall} ($t < 0$), LHF exceeds 100\,W\,m$^{-2}$ sustained by the
-warm BoB, while SHF is $<20$\,W\,m$^{-2}$-the characteristic
-low-Bowen-ratio oceanic
-surface energy state. \emph{At landfall} ($t = 0$), there is an
-abrupt but modest
-decrease in LHF rather than a collapse: LHF drops to approximately \textbf{[X]}
-W\,m$^{-2}$ but remains above the 70\,W\,m$^{-2}$ threshold.
-Meanwhile, SHF shows
-only a small increase. This near-continuity of LHF across the
-land-sea boundary is the
-hallmark of the BOE in the time domain. \emph{Through the land
-phase}, LHF maintains
-$\geq 70$\,W\,m$^{-2}$ for \textbf{[T\_BOE]}\,hours, confirming BOE
-candidacy by the
-Andersen-Shepherd criterion.
-
-%%  FIGURE: Heat flux time series - BOE candidate
-%%  SOURCE: output_YYYY/track_N/time_series/track_N_HF_time_series.png
-%%  (choose the same long-lived BOE-candidate system used in
-% Hovmoller figures above)
-%%  Show LHF (blue), SHF (red), Total HF (black dashed); ocean/land shading;
-%%  horizontal dashed at 70 W/m2; hatch sustained exceedance region.
+% --- BOE-ACTIVE SYSTEM ---
 \begin{figure}[H]
   \centering
-  %% >> INSERT FIGURE:
-  % output_YYYY/track_N/time_series/track_N_HF_time_series.png <<
-  \fbox{\rule{0pt}{6.5cm}\rule{0.85\textwidth}{0pt}}
-  % \includegraphics[width=0.85\textwidth]{Chapter4/Figs/ts_hf_boe_candidate}
-  \caption[Surface heat flux time series, long-lived BOE-candidate
-  MD]{Surface LHF
-    (blue), SHF (red), and total heat flux (black) for a long-lived
-    BOE-candidate.
-    The 70\,W\,m$^{-2}$ threshold (dashed) and sustained exceedance
-    zone (hatching)
-  confirm BOE candidacy.}
+  \includegraphics[width=0.67\textwidth]{Chapter4/Figs/track_long_spatial}
+  \caption{Long-lived Track (Sept 2024), BOE Track Path}
+  \label{fig:tp_long_spatial}
+\end{figure}
+
+% --- NON-BOE SYSTEM ---
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.67\textwidth]{Chapter4/Figs/track_short_spatial}
+  \caption{Short-lived Track (June 2001), Non-BOE Track Path}
+  \label{fig:tp_short_spatial}
+\end{figure}
+
+The above spatial track paths for the representative systems used in
+the azimuthal analysis. The long-lived system exhibits a sustained
+westward trajectory, whereas the short-lived system terminates on the
+windward slopes of the terrain.
+
+\subsection{Total Precipitation Dynamics}
+\label{subsec:hovmoller_tp}
+
+The evolution of total precipitation (\texttt{TP}) provides the most
+visible evidence of the BOE mechanism. As shown in the representative
+long-lived case, corresponding hovm\"oller plot
+(Figure~\ref{fig:hovmoller_tp_long}), the MD
+undergoes a structural regime shift.
+
+In contrast, short-lived systems, corresponding hovm\"oller plot
+(Figure~\ref{fig:hovmoller_tp_short}), exhibit a uniform radial
+collapse. The absence of a sufficient land-surface energy source
+leads to heavy precipitation at landfall leads to the simultaneous
+dissipation of both core and peripheral convection within 24 hours of landfall.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.69\textwidth]{Chapter4/Figs/track_long_tp_hov}
+  \caption{Uniform precipitation after landfall}
+  \label{fig:hovmoller_tp_long}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.69\textwidth]{Chapter4/Figs/track_short_tp_hov}
+  \caption{Heavy precipitation at landfall}
+  \label{fig:hovmoller_tp_short}
+\end{figure}
+
+% \caption{MD spatial track and Hovm\"{o}ller of precipitation. The
+% long-lived system maintains its core rain-rate even after landfall.}
+% \label{fig:hov_track_comparison_tp}
+
+\subsection{Soil Moisture: Exposure Duration and Feedbacks}
+\label{subsec:hovmoller_swvl1}
+
+The Soil Water Volumetric level-1 (\texttt{SWVL1}) Hovm\"{o}ller
+comparison (Figure~\ref{fig:hov_long_swvl1} and
+\ref{fig:hov_short_swvl1}) reveals a critical temporal distinction in
+surface energy availability. While both long-lived and short-lived
+systems encounter similar absolute volumetric ranges (approximately
+0.24-0.43\,m$^3$\,m$^{-3}$), their interaction with this moisture
+reservoir differs in two key ways:
+
+\textbf{Sustained Inland Exposure:} In the long-lived (BOE-active)
+case (Figure~\ref{fig:hov_long_swvl1}), the system maintains
+exposure to high soil moisture levels ($\gtrsim
+0.38$\,m$^3$\,m$^{-3}$) for more than 72 hours post-landfall. This
+extended exposure time with moist soil allows the system to continuously extract
+latent heat as it traverses the Gangetic Plain.
+
+\textbf{The Self-Wetting Signal:} Post-landfall ($t > 0$), the
+long-lived MD displays a widening saturated core at radii
+$<100$\,km. This is the evidence of a self-wetting feedback: the
+storm's own precipitation replenishes the soil moisture,preventing
+the rapid surface drying that typically follows landfall.
+
+In contrast, while short-lived systems may encounter initially moist
+soils (Figure~\ref{fig:hov_short_swvl1}) the duration of this
+exposure is significantly truncated. Convective organization
+collapses within 24 hours, often before the self-wetting feedback can
+establish a stable energy-limited evaporation regime. This suggests
+that the \textbf{persistence of the moist surface contact}, rather
+than just the initial value, is the true gatekeeper of MD longevity.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.69\textwidth]{Chapter4/Figs/track_long_swvl1_hov}
+  \caption{BOE: Extended exposure to moist surface}
+  \label{fig:hov_long_swvl1}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.69\textwidth]{Chapter4/Figs/track_short_swvl1_hov}
+  \caption{Non-BOE: Rapid soil moisture decay}
+  \label{fig:hov_short_swvl1}
+\end{figure}
+
+\subsection{Surface Latent Heat Flux: The BOE Energy Signal}
+\label{subsec:hovmoller_slhtf}
+
+The Surface Latent Heat Flux (\texttt{SLHTF}) provides the most direct measure
+of the energy available to sustain the MD's secondary circulation. As
+shown in Figure~\ref{fig:hov_long_slhtf} and \ref{fig:hov_short_slhtf}, both
+long-lived and short-lived systems exhibit high oceanic LHF
+magnitudes (ranging from $-220$ to $-150$\,W\,m$^{-2}$) prior to landfall.
+
+The divergence in behavior occurs post-landfall ($t > 0$). In the
+BOE-active case, the inner-core LHF stays effectively ``oceanic'' due
+to the saturated soil state. This prevents the typical thermodynamic
+decoupling that occurs when a storm moves over land. Conversely, in
+non-BOE systems, the LHF is transient; the lack of a deep soil
+moisture reservoir leads to a rapid collapse of the energy supply,
+resulting in the dissipation of core convection.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.69\textwidth]{Chapter4/Figs/track_long_slhtf_hov}
+  \caption{BOE: Sustained land-phase flux}
+  \label{fig:hov_long_slhtf}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.69\textwidth]{Chapter4/Figs/track_short_slhtf_hov}
+  \caption{Non-BOE: Transient flux collapse}
+  \label{fig:hov_short_slhtf}
+\end{figure}
+
+Azimuthal Hovm\"{o}ller of Surface latent heat flux (\texttt{SLHTF})
+(W\,m$^{-2}$), in the long-lived system
+(Figure~\ref{fig:hov_long_slhtf}), LHF remains consistently above the
+sustaining threshold ($>70$\,W\,m$^{-2}$) for over 48 hours inland.
+While in the short-lived system (Figure~\ref{fig:hov_short_slhtf}),
+the flux collapses within 12-18 hours of landfall despite similar
+initial ranges.
+
+\subsection{Surface Sensible Heat Flux: Thermal Feedback}
+\label{subsec:hovmoller_ishf}
+
+The Surface Sensible Heat Flux (\texttt{ISHF}) diagnostics
+(Figure~\ref{fig:hov_long_ishf} and \ref{fig:hov_short_ishf}) reveal
+the thermal state of the boundary layer. Over the ocean, both systems
+maintain near-neutral SHF values ($-12$ to $-17$\,W\,m$^{-2}$),
+indicating thermal equilibrium with the Bay of Bengal.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.67\textwidth]{Chapter4/Figs/track_long_ishf_hov}
+  \caption{BOE: Suppressed sensible heating}
+  \label{fig:hov_long_ishf}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.67\textwidth]{Chapter4/Figs/track_short_ishf_hov}
+  \caption{Non-BOE: Thermal destabilization}
+  \label{fig:hov_short_ishf}
+\end{figure}
+
+Upon landfall, the BOE-active system (Figure~\ref{fig:hov_long_ishf})
+maintains low Sensible heat flux on land; the energy is partitioned
+into latent rather than sensible heat, keeping the inner core cool
+and saturated, which is essential for vortex maintenance. In
+contrast, the short-lived system encounters a stable thermal
+environment, with SHF reaching extremes of 21\,W\,m$^{-2}$ (downward)
+to $-37$\,W\,m$^{-2}$ (upward). This rapid sensible heating from a
+dry surface increases the boundary layer height and encourages
+dry-air entrainment.
+
+Azimuthal Hovm\"{o}ller of SSHF (W\,m$^{-2}$). The non-BOE system
+(Figure~\ref{fig:hov_short_ishf}) shows extreme fluctuations at
+landfall (ranging from 21 to $-37$\,W\,m$^{-2}$), indicating a hot,
+dry surface that disrupts the saturated inner-core structure after
+encountering landfall.
+
+\subsection{Dew Point Temperature: Boundary Layer Saturation and Maintenance}
+\label{subsec:hovmoller_d2m}
+
+% The 2-m dew point temperature ($d2m$) Hovm\"{o}ller results
+% (Figure~\ref{fig:hov_track_comparison_d2m}) serve as a diagnostic for
+% the moisture state of the boundary layer, complementing the energy
+% flux analysis in Section~\ref{subsec:hovmoller_slhtf}. While both
+% long-lived and short-lived systems eventually reach a minimum dew
+% point of $\sim$295\,K, the \textbf{timescale of desipation} varies
+% significantly, marking the difference between a system that carries
+% its environment inland and one that succumb to continental drying.
+
+The azimuthal hovm\"{o}ller evolution of 2-m dew point temperature
+(\texttt{D2M}) illustrates how BOE-active systems maintain a
+maritime-like boundary layer deep into the inland. While both
+eventually settle toward a floor value of $\sim$295--296\,K, the
+distinction lies in the \textbf{moisture decay rate} following landfall
+(Figure~\ref{fig:hov_long_d2m} and \ref{fig:hov_short_d2m}).
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.69\textwidth]{Chapter4/Figs/track_long_d2m_hov}
+  \caption{BOE: Sustained moisture saturation}
+  \label{fig:hov_long_d2m}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.69\textwidth]{Chapter4/Figs/track_short_d2m_hov}
+  \caption{Non-BOE: Rapid boundary layer drying}
+  \label{fig:hov_short_d2m}
+\end{figure}
+
+Azimuthal Hovm\"{o}ller of 2-m dew point temperature (\texttt{D2M}).
+The long-lived system (Figure~\ref{fig:hov_long_d2m}) maintains a
+high moisture floor ($>298$\,K) for over 72 hours, whereas the
+short-lived system (Figure~\ref{fig:hov_short_d2m}) drops to values
+almost immediately after landfall.
+
+In a standard landfall scenario, the removal of the maritime moisture
+source should trigger a rapid drop in \texttt{D2M}. This is observed in the
+short-lived population (Figure~\ref{fig:hov_short_d2m}), where
+\texttt{D2M} falls toward 296\,K within 12-24 hours. This drop increases
+the Dew Point Depression (DPD), raising the Lifting Condensation
+Level (LCL) and effectively dissipating the core convection.
+
+However, long-lived MDs exhibit a moisture maintenance signal. By
+sustaining \texttt{D2M} at 298--299\,K deep into the land phase and for
+longer time period, these systems effectively carry their own
+environment inland. This maintenance is a direct physical consequence
+of the soil moisture and LHF feedbacks described in previous sections:
+\begin{itemize}
+  \item \textbf{Recycling:} The wet soil reservoir identified in
+    Section~\ref{subsec:hovmoller_swvl1} evaporates moisture back
+    into the boundary layer via sustained LHF
+    (Section~\ref{subsec:hovmoller_slhtf}).
+  \item \textbf{Low-Altitude Latent Heat:} Keeping the boundary layer
+    near saturation (high \texttt{D2M}) ensures a very low LCL. This allows
+    latent heat to be released at lower altitudes, keeping the vortex
+    structurally strong and resisting the shear that typically
+    dissipates land-falling systems.
+\end{itemize}
+
+Ultimately, the transition from 299\,K to 296\,K represents the shift
+from a saturated, ``ocean-like'' boundary layer to an unsaturated
+continental one. The BOE-active systems delay this transition
+indefinitely through local moisture recycling, providing the
+thermodynamic fuel necessary for their longer inland penetration.
+
+\section{The Elevation Barrier vs. Thermodynamic Escape}
+\label{sec:results_elevation}
+
+The transition of a Monsoon Depression (MD) from the Bay of Bengal to
+the Indian landmass is characterized by a competition between
+mechanical dissipation and thermodynamic maintenance. The 600,m
+contour of the Eastern Ghats serves as a critical spatial gatekeeper
+in this process.
+
+As shown in Figures~\ref{fig:long_elevated} and
+\ref{fig:short_elevated}, short-lived systems typically terminate
+within 100,km of the coastline. For these systems, the increase in
+surface roughness and the energy cost of orographic lifting consume
+the system's remaining oceanic kinetic energy. Without a terrestrial
+energy source to offset these losses, the vortex structure undergoes
+rapid frictional collapse.
+
+Conversely, long-lived tracks exhibit what can be termed a
+\textbf{Thermodynamic Escape}. While these systems experience the
+same initial mechanical deceleration upon encountering the terrain,
+the orographic ascent triggers a concentrated burst of precipitation.
+As detailed in Section~\ref{subsec:hovmoller_tp}, this rainfall
+initiates the self-wetting feedback loop. Only systems that possess
+the synchronized BOE signature-specifically high \texttt{LHF},
+sustained \texttt{D2M}, and a contracted \texttt{TP} core-have the
+energetic resilience to overcome the frictional penalty of the
+terrain and reorganize on the leeward side of the Ghats.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{Chapter4/Figs/track_long_elevation_mosaic}
+  \caption{BOE-active: Successful terrain crossing and leeward maintenance.}
+  \label{fig:long_elevated}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{Chapter4/Figs/track_short_elevation_mosaic}
+  \caption{Non-BOE: Mechanical dissipation on windward slopes.}
+  \label{fig:short_elevated}
+\end{figure}
+
+Elevation Mosaic using SRTM data for MD interaction with the Eastern
+Ghats. The top panel shows a long-lived track maintaining structural
+integrity across high elevation, while the bottom panel illustrates
+the typical termination of short-lived systems near the 600\,m contour.
+
+\subsection{Surface Energy Partitioning: LHF and SHF Synchronization}
+\label{subsec:ts_hf}
+
+The transition of the surface energy balance at landfall is the
+primary determinant of whether a system maintains its oceanic-like
+core structure. Figure~\ref{fig:ts_lhf_boe} illustrates the
+track-following heat flux evolution for a representative long-lived
+(BOE-active) system.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{Chapter4/Figs/track_long_HF_time_series}
+  \caption{Surface energy fluxes for a long-lived BOE-active MD.
+    Continuity of LHF across the landfall boundary and the sustained
+  exceedance of the 70\,W\,m$^{-2}$ threshold deep into the land phase.}
   \label{fig:ts_lhf_boe}
 \end{figure}
 
-For comparison, Figure~\ref{fig:ts_lhf_nonboe} shows the same time series for a
-short-lived non-BOE system. Here, LHF drops below 70\,W\,m$^{-2}$ within
-\textbf{[T$_\text{collapse}$]}\,hours of landfall. Simultaneously,
-SHF rises steeply
-to \textbf{[SHF\_peak]}\,W\,m$^{-2}$ by $t = +24$\,h, indicating that
-the dry soil
-is now heating the boundary layer sensibly rather than supplying moisture. This
-fundamental shift in surface energy partitioning-from latent-dominated to
-sensible-dominated-reflects the transition from the energy-limited to
-the water-limited
-evaporation regime \citep{seneviratne2010investigating}.
+Several thermodynamic features distinguish the BOE-active lifecycle.
+\textit{Prior to landfall} ($t < 0$), LHF exceeds
+150--200\,W\,m$^{-2}$ while SHF remains near-zero, maintaining the
+low-Bowen-ratio state characteristic of the warm Bay of Bengal.
+\textit{At landfall} ($t = 0$), the long-lived system exhibits a
+resilient energy profile; LHF decreases only modestly and remains
+consistently above the 70\,W\,m$^{-2}$ sustaining threshold. This
+indicates that the saturated soil acts as an effective surrogate for
+the ocean surface. Throughout the land phase ($t > 0$), the system
+maintains this high-flux state for over 72~hours, satisfying the
+energetic criteria for the Brown Ocean Effect.
 
-%%  FIGURE: Heat flux time series - non-BOE system
-%%  SOURCE:
-% output_YYYY/track_N/time_series/track_N_HF_time_series.png (short-lived)
-%%  Same format as above for direct comparison.
+In contrast, the short-lived non-BOE population
+(Figure~\ref{fig:ts_lhf_nonboe}) displays a fundamental shift in
+surface energy partitioning. In these cases, LHF drops below the
+critical 70\,W\,m$^{-2}$ threshold within 12--18 hours of landfall.
+
 \begin{figure}[H]
   \centering
-  %% >> INSERT FIGURE:
-  % output_YYYY/track_N/time_series/track_N_HF_time_series.png <<
-  %% (different track - short-lived, non-BOE system)
-  \fbox{\rule{0pt}{6.5cm}\rule{0.85\textwidth}{0pt}}
-  % \includegraphics[width=0.85\textwidth]{Chapter4/Figs/ts_hf_nonboe}
-  \caption[Surface heat flux time series, short-lived non-BOE MD]{As
-    Figure~\ref{fig:ts_lhf_boe} but for a short-lived non-BOE MD. LHF
-    falls below
-    70\,W\,m$^{-2}$ within \textbf{[T]} hours; SHF rises sharply, indicating a
-  water-limited surface regime.}
+  \includegraphics[width=0.85\textwidth]{Chapter4/Figs/track_short_HF_time_series}
+  \caption{Surface energy fluxes for a short-lived non-BOE MD. The
+    rapid collapse of LHF and the corresponding rise in SHF at landfall
+  signifies the transition to a water-limited evaporation regime.}
   \label{fig:ts_lhf_nonboe}
 \end{figure}
 
-\subsection{Bowen Ratio: Quantifying Evaporation}
-\label{subsec:ts_bowen}
+Simultaneously, the SHF in short-lived systems rises sharply to
+values exceeding 30--40\,W\,m$^{-2}$. This transition from a
+latent-dominated to a sensible-dominated regime marks the shift from
+an energy-limited to a water-limited surface
+\citep{seneviratne2010investigating}. Physically, this means the
+surface energy is no longer being utilized to recycle moisture into
+the MD's core, but is instead heating the boundary layer, which
+encourages dry-air entrainment and triggers the rapid structural
+collapse observed in Section~\ref{subsec:hovmoller_tp}.
 
-From Figure~\ref{fig:ts_bowen}, the Bowen ratio trajectory isolates
-the transition
-most clearly. Over the ocean ($t < 0$), both long-lived and
-short-lived categories
-show $\beta \approx 0.2$-$0.3$, the characteristic low Bowen ratio of
-a moisture-rich
-surface. At landfall, the divergence between the two populations is immediate
-and quantitatively large. For BOE candidates, $\beta$ rises only to
-$\approx 0.4$-$0.5$,
-confirming that the surface remains in the energy-limited evaporation throughout
-the land phase: evaporation is limited not by water supply but by the available
-radiative energy. For non-BOE systems, $\beta$ rises steeply, exceeding 1.0
-within \textbf{[T\_beta1]}\,hours of landfall, meaning sensible heating has
-overtaken latent heating. A $\beta > 1.0$ implies the surface is
-actively heating
-the boundary layer while providing insufficient moisture flux to sustain
-convective instability-a state incompatible with continued MD organisation.
-
-%%  FIGURE: Bowen ratio comparison
-%%  SOURCE: output_YYYY/track_N/time_series/track_N_bowen_ratio.png
-%%  Overlay BOTH long-lived (orange) and short-lived (blue) on same axes.
-%%  Add reference lines at beta = 0.3 (oceanic value) and beta = 1.0 (parity).
-\begin{figure}[H]
-  \centering
-  %% >> INSERT FIGURE: overlay of BOE-candidate and non-BOE Bowen ratio plots <<
-  \fbox{\rule{0pt}{6cm}\rule{0.85\textwidth}{0pt}}
-  % \includegraphics[width=0.85\textwidth]{Chapter4/Figs/bowen_ratio_comparison}
-  \caption[Track-following Bowen ratio time series]{Bowen ratio
-    ($\beta = Q_H/Q_E$)
-    for long-lived BOE-candidate (orange) and short-lived non-BOE (blue) MDs.
-    Reference lines at $\beta = 0.3$ (oceanic value) and $\beta = 1.0$ (LHF/SHF
-    parity). The divergence after $t = 0$ reflects fundamentally
-    different post-landfall
-  surface energy regimes.}
-  \label{fig:ts_bowen}
-\end{figure}
-
-\subsection{Precipitation-Soil Moisture Co-Evolution and the Feedback Loop}
+\subsection{Feedback: The Precipitation-Soil Moisture Loop}
 \label{subsec:ts_sm_tp}
 
-Figure~\ref{fig:ts_sm_tp} shows the co-evolution of \texttt{swvl1} and total
-precipitation for a BOE-candidate system. Three features are noteworthy.
-First, at $t = 0$, the antecedent \texttt{swvl1} value is already
-$\geq 0.35$\,m$^3$\,m$^{-3}$, confirming pre-conditioned soils at the moment of
-landfall. Second, through the land phase, \texttt{swvl1} rises progressively as
-the MD's own precipitation falls, approaching field capacity
-($\sim 0.46$\,m$^3$\,m$^{-3}$) by $t \approx +36$\,h. Third, the simultaneous
-maintenance of heavy precipitation while \texttt{swvl1} rises confirms the
-precipitation-soil moisture positive feedback loop: the system's rainfall wets
-the soil, the wet soil sustains LHF, and LHF sustains subsequent convection and
-rainfall. This closed feedback is the mechanistic core of the BOE in
-the Indian MD context.
+The integration of heat flux diagnostics with the temporal evolution
+of moisture confirms the existence of a closed-loop feedback in
+BOE-active systems. While the Hovm\"{o}ller analysis captures the
+radial contraction of the MD, the track-following time-series
+(Figures~\ref{fig:long_ts_sm_tp} and \ref{fig:short_ts_sm_tp})
+reveals the temporal synchronization required for inland maintenance.
 
-%%  FIGURE: SWVL1 + TP time series
-%%  SOURCE: output_YYYY/track_N/time_series/track_N_TP-SWVL1_time_series.png
-%%  Dual-axis: left = swvl1 (solid line), right = tp (shaded bars).
-%%  Horizontal dashed at field capacity (~0.46 m3/m3 for Gangetic clay loam).
+\subsubsection*{Self-Wetting Dynamics in BOE-Active Systems}
+
+Figure~\ref{fig:long_ts_sm_tp} illustrates the co-evolution of
+\texttt{swvl1} and total precipitation (\texttt{TP}) for a
+representative long-lived MD. Three temporal features define the BOE
+maintenance phase:
+\begin{enumerate}
+  \item \textbf{Pre-conditioned Landfall ($t=0$):} The system
+    encounters antecedent soil moisture levels already $\geq
+    0.35$\,m$^3$\,m$^{-3}$. This high initial state prevents the
+    standard surface energy collapse associated with dry-landfall.
+  \item \textbf{The Intensive Wetting Phase ($0 < t < 36$\,h):}
+    Post-landfall, \texttt{swvl1} rises progressively toward field
+    capacity ($\sim 0.46$\,m$^3$\,m$^{-3}$). This rise is driven by
+    the MD's own inner-core precipitation, which remains sustained
+    around 4\,mm\,h$^{-1}$.
+  \item \textbf{Phase Synchronization:} The simultaneous maintenance
+    of heavy precipitation while \texttt{swvl1} approaches saturation
+    confirms a positive feedback loop. The storm's rainfall sustains
+    the soil reservoir, which in turn fuels the LHF
+    ($>70$\,W\,m$^{-2}$) necessary to drive subsequent deep convection.
+\end{enumerate}
+
 \begin{figure}[H]
   \centering
-  %% >> INSERT FIGURE:
-  % output_YYYY/track_N/time_series/track_N_TP-SWVL1_time_series.png <<
-  \fbox{\rule{0pt}{6.5cm}\rule{0.85\textwidth}{0pt}}
-  % \includegraphics[width=0.85\textwidth]{Chapter4/Figs/ts_sm_tp}
-  \caption[Co-evolution of \texttt{swvl1} and precipitation, BOE-candidate MD]{
-    Track-following \texttt{swvl1} (left axis, line) and total precipitation
-    (right axis, bars) for a BOE-candidate. Dashed line marks field capacity;
-    $t=0$ marks landfall. Rising \texttt{swvl1} concurrent with sustained heavy
-  precipitation demonstrates the active self-wetting feedback loop.}
-  \label{fig:ts_sm_tp}
+  \includegraphics[width=0.97\textwidth]{Chapter4/Figs/track_long_tp-swvl1_time_series}
+  \caption[Co-evolution of Soil moisture (\texttt{SWVL1}) and Total
+  precipitation (\texttt{TP}), BOE-active MD]{Track-following Soil
+    moisture \texttt{SWVL1} and Total precipitation (\texttt{TP}) for a
+    long-lived MD. The sustained precipitation concurrent with rising
+  soil moisture indicates the establishment of a self-wetting feedback loop.}
+  \label{fig:long_ts_sm_tp}
 \end{figure}
 
-\subsection{Translational Speed: Ocean vs Land and Terrain Deceleration}
+\subsubsection*{Feedback Failure in Short-Lived Systems}
+
+For comparison, the non-BOE system (Figure~\ref{fig:short_ts_sm_tp})
+exhibits a failure to establish this feedback. Although the system
+may produce an initial burst of precipitation at landfall, the lack
+of pre-conditioned soil leads to rapid surface desiccation. Without
+the moisted land surface provided by high antecedent soil moisture, the
+LHF collapses (as seen in Section~\ref{subsec:ts_hf}), causing the
+precipitation to cease before the soil can reach a sustaining level
+of saturation. This confirms that the BOE is a threshold-gated
+mechanism; if the self-wetting loop is not activated within the first
+24 hours of landfall, the system inevitably undergoes structural decay.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.97\textwidth]{Chapter4/Figs/track_short_tp-swvl1_time_series}
+  \caption[Co-evolution of Soil moisture (\texttt{SWVL1}) and
+  precipitation (\texttt{TP}), Non-BOE MD]{Track-following
+    \texttt{swvl1} and precipitation for a short-lived MD. The rapid
+    decline in precipitation at $t \approx 18$\,h prevents the soil
+    from reaching field capacity, resulting in the dissipation of the
+  surface energy reservoir.}
+  \label{fig:short_ts_sm_tp}
+\end{figure}
+
+% \subsection{Bowen Ratio: Quantifying Evaporation}
+% \label{subsec:ts_bowen}
+%
+% From Figure~\ref{fig:ts_bowen}, the Bowen ratio trajectory isolates
+% the transition most clearly. Over the ocean ($t < 0$), both
+% long-lived and short-lived categories show $\beta \approx
+% 0.2$-$0.3$, the characteristic low Bowen ratio of a moisture-rich
+% surface. At landfall, the divergence between the two populations is
+% immediate and quantitatively large. For BOE candidates, $\beta$
+% rises only to $\approx 0.4$-$0.5$, confirming that the surface
+% remains in the energy-limited evaporation throughout the land
+% phase: evaporation is limited not by water supply but by the
+% available radiative energy. For non-BOE systems, $\beta$ rises
+% steeply, exceeding 1.0 within \textbf{[T\_beta1]}\,hours of
+% landfall, meaning sensible heating has overtaken latent heating. A
+% $\beta > 1.0$ implies the surface is actively heating the boundary
+% layer while providing insufficient moisture flux to sustain
+% convective instability-a state incompatible with continued MD organisation.
+%
+% %%  FIGURE: Bowen ratio comparison
+% %%  SOURCE: output_YYYY/track_N/time_series/track_N_bowen_ratio.png
+% %%  Overlay BOTH long-lived (orange) and short-lived (blue) on same axes.
+% %%  Add reference lines at beta = 0.3 (oceanic value) and beta = 1.0 (parity).
+% \begin{figure}[H]
+%   \centering
+%   %% >> INSERT FIGURE: overlay of BOE-candidate and non-BOE Bowen
+% ratio plots <<
+%   \fbox{\rule{0pt}{6cm}\rule{0.85\textwidth}{0pt}}
+%   % \includegraphics[width=0.85\textwidth]{Chapter4/Figs/bowen_ratio_comparison}
+%   \caption[Track-following Bowen ratio time series]{Bowen ratio
+%     ($\beta = Q_H/Q_E$)
+%     for long-lived BOE-candidate (orange) and short-lived non-BOE (blue) MDs.
+%     Reference lines at $\beta = 0.3$ (oceanic value) and $\beta =
+% 1.0$ (LHF/SHF
+%     parity). The divergence after $t = 0$ reflects fundamentally
+%     different post-landfall
+%   surface energy regimes.}
+%   \label{fig:ts_bowen}
+% \end{figure}
+
+\subsection{Translational Speed: Terrain Deceleration and BOE Recovery}
 \label{subsec:ts_speed}
 
-From Figure~\ref{fig:ts_speed_elev}, the composite translational
-speed profile reveals
-a clear two-stage behaviour. \emph{Over the ocean}, MDs translate at
-a mean speed of
-\textbf{[V\_ocean]}\,km\,h$^{-1}$ (\textbf{[V\_ms]}\,m\,s$^{-1}$),
-consistent with
-the known range of 7-22\,km\,h$^{-1}$. \emph{At and after landfall},
-both long-lived
-and short-lived systems decelerate as the track elevation increases through the
-200-1000\,m Eastern Ghats zone. This terrain-induced deceleration is
-consistent with
-increased surface roughness and mechanical flow blocking \citep{houze1994}.
+The interaction between the MD core and the complex orography of the
+Eastern Ghats is most clearly visible in the evolution of
+translational speed ($V_t$). As shown in the elevation-speed maps
+(Figures~\ref{fig:track_long_speed_map} and
+\ref{fig:track_short_speed_map}), elevation acts as a mechanical sink
+for the system's kinetic energy.
 
-The critical distinction between the two populations lies in the
-leeward speed recovery.
-Long-lived (BOE-candidate) systems recover translational speed west
-of the main terrain
-crest (elevation $<200$\,m); their speed returns to approximately
-\textbf{[V\_leeward\_long]}\,km\,h$^{-1}$. Short-lived systems continue to slow,
-reaching a minimum of \textbf{[V\_leeward\_short]}\,km\,h$^{-1}$ west
-of the crest
-with no subsequent recovery. This differential recovery provides
-compelling evidence
-that the BOE maintains vortex coherence and the pressure gradient
-force through the
-terrain phase, enabling speed recovery once the terrain obstacle is cleared.
+\textit{Over the ocean}, MDs translate at a steady mean speed of
+6\,m\,s$^{-1}$. However, as the systems encounter the 200-1000\,m
+elevation gradient of the Eastern Ghats, both MDs undergo significant
+deceleration. This is consistent with increased surface roughness and
+mechanical flow blocking \citep{houze1994}, which reduces the
+low-level momentum of the vortex.
 
-%%  FIGURE: Speed + elevation composite (two-panel)
-%%  SOURCE: output_YYYY/Global_elevation_analysis/orographic_speed_reduction.png
-%%  OR composite from per-track translational-speed/track_N_speed_kmh.png files.
-%%  Two-panel: top = composite translational speed (km/h) vs distance
-% from coast,
-%%             bottom = composite elevation profile vs distance from coast.
-%%  Long-lived (red) vs short-lived (blue). Grey shading = 200-1000m
-% terrain zone.
+The critical divergence occurs west of the main terrain crest.
+Long-lived (BOE-active) systems exhibit a clear leeward speed
+recovery; as elevation drops below 200\,m, the speed returns to
+approximately 5\,m\,s$^{-1}$. This suggests that the sustained
+surface LHF (the BOE engine) maintains the low-level pressure
+gradient force required to drive the system forward.
+
+Conversely, short-lived systems fail to overcome the mechanical drag
+by elevated land. In Figure~\ref{fig:track_short_speed_map}, these
+tracks often show a stalling behavior or a slight recurvature before
+dissipating. Without the thermodynamic replenishment from the soil,
+the convective MD vortex structure collapses during the
+terrain-crossing phase, leading to a permanent loss of translational
+momentum and subsequent track termination.
+
 \begin{figure}[H]
   \centering
-  %% >> INSERT FIGURE:
-  % output_YYYY/Global_elevation_analysis/orographic_speed_reduction.png <<
-  \fbox{\rule{0pt}{8cm}\rule{0.85\textwidth}{0pt}}
-  % \includegraphics[width=0.85\textwidth]{Chapter4/Figs/speed_elevation_composite}
-  \caption[Composite translational speed and elevation profile for
-  Ghats-crossing MDs]{Composite translational speed (km\,h$^{-1}$,
-    upper) and terrain elevation (m, lower) vs distance from coast for
-    long-lived (red) and short-lived (blue) Ghats-crossing MDs. Grey
-    shading marks the 200-1000\,m terrain zone. Speed recovery on the
-    leeward side distinguishes long-lived (BOE-candidate) from
-  short-lived systems.}
-  \label{fig:ts_speed_elev}
+  \includegraphics[width=0.86\textwidth]{Chapter4/Figs/track_long_elevation_speed_map}
+  \caption{BOE-active: Speed recovery following the crossing of the
+  600\,m contour.}
+  \label{fig:track_long_speed_map}
 \end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.86\textwidth]{Chapter4/Figs/track_short_elevation_speed_map}
+  \caption{Non-BOE: Sustained deceleration and track termination
+  upon terrain encounter.}
+  \label{fig:track_short_speed_map}
+\end{figure}
+
+Spatial evolution of MD translational speed overlaid on SRTM
+elevation. While both systems decelerate upon landfall, the
+long-lived system exhibits a post-terrain re-acceleration, signaling
+a replenishment of vortex strength via the BOE.
+
+\section{Synthesis: The BOE as a Diagnostic Mechanism}
+\label{subsec:results_synthesis}
+
+The results presented from the azimuthal Hovm\"{o}ller
+(\ref{sec:results_hovmoller}) and terrain analyses
+(\ref{sec:results_elevation}) demonstrate that the Brown Ocean Effect
+is not a predictive coincidence, but a synchronized physical state.
+In every confirmed long-lived event, four independent observational
+signals converge at landfall:
+\begin{enumerate}
+  \item \textbf{Inward Contraction:} Precipitation maximum shifts
+    from a broad maritime footprint to a concentrated inner-core
+    ($<100$\,km) structure.
+  \item \textbf{Self-Wetting Persistence:} Core rainfall maintains a
+    saturated soil reservoir ($>0.40$\,m$^3$\,m$^{-3}$), preventing the
+    surface desiccation that usually follows landfall.
+  \item \textbf{Oceanic-Scale Fluxes:} Land-phase Latent Heat Flux
+    remains above the sustaining threshold ($>70$\,W\,m$^{-2}$),
+    effectively mimicking the energy environment of the Bay of Bengal.
+  \item \textbf{Thermodynamic Stability:} The partitioning of energy
+    into evaporation rather than sensible heating (low Bowen Ratio)
+    preserves a cool, moist boundary layer and a low Lifting
+    Condensation Level (LCL).
+\end{enumerate}
+
+The presence of this synchronized signature explains the ``Predictive
+Paradox'' of MD longevity. While mechanical factors like the Eastern
+Ghats modulate the translational speed of all systems, only
+BOE-active systems exhibit a leeward speed recovery. This confirms
+that the thermodynamic energy supply provided by land-atmosphere
+coupling is the primary determinant of whether a system penetrates
+the Indian inland or dissipates near coast.
 
 % \subsection{Windward-Leeward Dew-Point Depression Asymmetry at the Ghats}
 % \label{subsec:ts_dpd_asymmetry}
@@ -762,578 +1175,32 @@ terrain phase, enabling speed recovery once the terrain obstacle is cleared.
 %   \label{fig:ts_dpd_asymmetry}
 % \end{figure}
 
-\section{BOE Classification and Landfall Flux Transitions}
-\label{sec:results_boe}
+\section{The Eastern Ghats Filtering Effect: Identification of Survivors}
+\label{sec:ghats_filtering}
 
-\yellownote{TODO: Update values}
-Applying the criterion of Equation~\eqref{eq:boe_criterion},
-\textbf{[N$_\text{BOE}$]} of the \textbf{[N$_\text{land}$]} confirmed
-land-falling MDs are classified as BOE candidates (\textbf{[X]}\,\%).
-All BOE candidates are long-lived ($\geq 96$\,h); no short-lived
-system meets the criterion.
-This exclusive overlap between BOE candidacy and long-lived status is
-a key finding: it confirms that the BOE is not an incidental
-thermodynamic coincidence but a \emph{necessary condition} for
-anomalous inland persistence in the Indian MD population.
+While the majority of Monsoon Depressions (MDs) dissipate within 48
+hours of interacting with the rugged topography of the Eastern Ghats,
+a distinct subset of systems exhibits anomalous longevity.
+Figure~\ref{fig:ghats_survivors_map} illustrates this spatial
+dichotomy. The background (gray tracks) shows the climatological
+termination of MDs along the coast, effectively treating the Ghats as
+a topographic 'wall'.
 
-From Figure~\ref{fig:boe_lhf_boxplot}, the peak inland LHF
-distributions show clear bimodal separation: BOE candidates cluster
-above $\sim 80$\,W\,m$^{-2}$, while non-BOE systems cluster below
-$\sim 55$\,W\,m$^{-2}$.
-The gap between these two distributions is
-consistent with the threshold nature of the LHF regime transition at
-soil saturation \citep{seneviratne2010investigating}: below the
-saturation threshold, LHF is water-limited (proportional to soil
-moisture) and insufficient for the BOE; above it, LHF is
-energy-limited (near its maximum possible value) and sufficient.
+However, four specific systems---2005 (T6), 2017 (T4), 2021 (T5), and
+2024 (T4)---demonstrate the 'filter' effect, maintaining structural
+integrity and MD-level intensity despite crossing high-relief regions.
 
-%%  FIGURE: BOE LHF box-whisker
-% output_YYYY/track_N/heat_flux_analysis/track_N_boe_classification.csv
-%%  across all years. Box-whisker: x = BOE-candidate vs non-BOE; y =
-% peak inland LHF (W/m2).
-%%  Dashed line at 70 W/m2. Colour orange = BOE, blue = non-BOE.
 \begin{figure}[H]
   \centering
-  \fbox{\rule{0pt}{6cm}\rule{0.75\textwidth}{0pt}}
-  % \includegraphics[width=0.75\textwidth]{Chapter4/Figs/boe_lhf_boxplot}
-  \caption[Peak inland LHF: BOE candidates vs non-BOE
-  systems]{Box-whisker of peak inland LHF (W\,m$^{-2}$) for BOE
-    candidates (orange) and non-BOE systems (blue). Dashed line at
-    70\,W\,m$^{-2}$ threshold. Clear bimodal separation supports the
-  threshold-regime interpretation.}
-  \label{fig:boe_lhf_boxplot}
+  \includegraphics[width=0.95\textwidth]{Chapter4/Figs/ghats_survivors_map}
+  \caption[Spatial distribution of Eastern Ghats
+  survivors]{Comparison of standard MD tracks vs. the four anomalous
+    survivor systems. Landfall points for survivors are marked with
+    circles, indicating where the transition to Brown Ocean Effect
+  thermodynamic maintenance begins.}
+  \label{fig:ghats_survivors_map}
 \end{figure}
 
-Figure~\ref{fig:landfall_transition} compares 24-hour mean LHF before
-and after landfall. BOE candidates show a mean post-landfall LHF
-reduction of only \textbf{[X$\pm$Y]}\,W\,m$^{-2}$ (\textbf{[Z]}\,\%
-of ocean-phase LHF), confirming that the land surface effectively
-compensates for the lost oceanic energy source.
-
-\yellownote{Check this Mann-Whitney U test}
-Non-BOE systems show a mean reduction of
-\textbf{[A$\pm$B]}\,W\,m$^{-2}$ (\textbf{[C]}\,\%), consistent with
-conventional post-landfall decay. The difference in these reduction
-magnitudes between the two populations is statistically significant
-($p < 0.05$, Mann-Whitney $U$ test).
-
-%%  FIGURE: Landfall LHF transition bar chart
-%%  SOURCE: output_YYYY/heat_flux_transitions.csv (aggregate across all years)
-%%  Paired bar chart: light bars = 24h before landfall, dark bars = 24h after.
-%%  Orange = BOE-candidate, blue = non-BOE. Error bars = 1 std dev.
-\begin{figure}[H]
-  \centering
-  %% INSERT FIGURE: computed from heat_flux_transitions.csv
-  \fbox{\rule{0pt}{6cm}\rule{0.82\textwidth}{0pt}}
-  % \includegraphics[width=0.82\textwidth]{Chapter4/Figs/landfall_flux_transition}
-  \caption[Landfall LHF transition: BOE candidates vs non-BOE]{Mean
-    LHF 24\,h before
-    (light) and after (dark) landfall for BOE candidates (orange) and
-    non-BOE systems
-    (blue). Error bars are $\pm 1$ standard deviation. BOE candidates maintain
-  significantly higher post-landfall LHF.}
-  \label{fig:landfall_transition}
-\end{figure}
-
-% \section{Antecedent Soil Moisture and Inland Longevity}
-% \label{sec:results_asmi}
-%
-% From Figure~\ref{fig:asmi_duration_scatter}, a significant positive
-% correlation between the 7-day ASMI and post-landfall duration is
-% found ($r = \textbf{[r$_1$]}$, $p < 0.05$): systems making landfall
-% over wetter antecedent surfaces persist longer inland. The
-% relationship is non-linear, with a threshold near ASMI $\approx
-% 0.35$\,m$^3$\,m$^{-3}$: above this value, MDs are predominantly
-% long-lived and BOE-candidate; below it, the vast majority are
-% short-lived. This threshold behaviour is consistent with the
-% transition from the water-limited to the energy-limited evaporation
-% regime-the same physical transition that determines BOE onset in
-% Figure~\ref{fig:ts_bowen}.
-%
-% \yellownote{TODO: Update years}
-% From the 2001-2025 record, BOE-candidate events cluster in particular
-% years (\textbf{[year$_1$]}, \textbf{[year$_2$]}, \textbf{[year$_3$]})
-% characterised by anomalously high July-August \texttt{swvl1} over the
-% Gangetic plains. In contrast, drought years and ENSO-affected years
-% with suppressed monsoon rainfall in June-July produce predominantly
-% non-BOE short-lived systems. This interannual pattern corroborates
-% the interpretation that the background land-surface wetness-itself
-% modulated by the cumulative monsoon rainfall prior to each MD
-% event-is the primary discriminator of post-landfall longevity at the
-% climatological scale.
-%
-% %%  FIGURE: ASMI vs duration scatter
-% %%  SOURCE: computed from antecedent_analysis.py outputs across all years.
-% %%  Scatter: x = 7d ASMI (m3/m3), y = post-landfall duration (h).
-% %%  Colour by BOE status (orange = BOE, blue = non-BOE); regression +
-% % 95% CI shading.
-% %%  Mark the ASMI = 0.35 m3/m3 threshold with a dashed vertical line.
-% \begin{figure}[H]
-%   \centering
-%   %% >> INSERT FIGURE: ASMI vs post-landfall duration scatter with
-% regression <<
-%   \fbox{\rule{0pt}{6.5cm}\rule{0.82\textwidth}{0pt}}
-%   % \includegraphics[width=0.82\textwidth]{Chapter4/Figs/asmi_vs_duration}
-%   \caption[ASMI (7-day) vs post-landfall duration]{7-day ASMI
-% (m$^3$\,m$^{-3}$)
-%     vs post-landfall duration (h). BOE candidates (orange); non-BOE
-%     systems (blue).
-%     Regression with 95\,\% confidence interval. Dashed vertical at ASMI = 0.35
-%   marks the approximate threshold above which BOE candidacy dominates.}
-%   \label{fig:asmi_duration_scatter}
-% \end{figure}
-%
-% The same positive correlation ($r = \textbf{[r$_2$]}$, $p < 0.05$)
-% holds for inland penetration distance
-% (Figure~\ref{fig:asmi_penetration_scatter}), corroborating the
-% proxy-based climatology of \citet{kishtawal2013enhancement} using
-% direct ERA5 soil moisture diagnostics.
-%
-% %%  FIGURE: ASMI vs penetration scatter
-% %%  SOURCE: same ASMI computation; scatter: x = 7d ASMI, y = inland
-% % penetration (km).
-% \begin{figure}[H]
-%   \centering
-%   %% >> INSERT FIGURE: ASMI vs inland penetration scatter <<
-%   \fbox{\rule{0pt}{6.5cm}\rule{0.82\textwidth}{0pt}}
-%   % \includegraphics[width=0.82\textwidth]{Chapter4/Figs/asmi_vs_penetration}
-%   \caption[ASMI (7-day) vs inland penetration distance]{7-day ASMI vs inland
-%     penetration distance (km). Colour coding as in
-%     Figure~\ref{fig:asmi_duration_scatter}.
-%     Higher antecedent soil moisture is associated with significantly
-%     greater inland
-%   penetration.}
-%   \label{fig:asmi_penetration_scatter}
-% \end{figure}
-%
-% \yellownote{FIX: section reference}
-% The lag-sensitivity analysis (Figure~\ref{fig:asmi_multilag}) reveals
-% that the ASMI-duration correlation peaks at the 3-7-day lag window.
-% The 24-hour lag shows a weaker correlation, confirming that the
-% background antecedent moisture state accumulated over the preceding
-% week-not the immediate pre-landfall rainfall-is the critical
-% predictor. This 3-7 day decorrelation timescale reflects the soil
-% moisture memory of Gangetic clay loam, consistent with the hydraulic
-% properties discussed in Section~\ref{subsec:soil_memory}.
-%
-% % FIGURE: ASMI lag sensitivity bar chart
-% % SOURCE: compute from antecedent_analysis.py at 24h, 3d, 7d, 14d lags.
-% % Bar chart: x = lag window, y = Pearson r; error bars = 95% CI.
-% % Mark the 7-day peak explicitly.
-% \begin{figure}[H]
-%   \centering
-%   %% >> INSERT FIGURE: ASMI lag sensitivity bar chart <<
-%   \fbox{\rule{0pt}{5.5cm}\rule{0.75\textwidth}{0pt}}
-%   % \includegraphics[width=0.75\textwidth]{Chapter4/Figs/asmi_lag_sensitivity}
-%   \caption[ASMI lag-sensitivity: correlation with post-landfall
-%   duration]{Pearson
-%     $r$ between ASMI and post-landfall duration at four lag windows
-%     (24\,h, 3\,d,
-%     7\,d, 14\,d). Peak at 7\,days identifies the soil moisture
-% memory timescale
-%   as the dominant predictor window.}
-%   \label{fig:asmi_multilag}
-% \end{figure}
-
-% \section{Terrain Interaction: Eastern Ghats Modulation}
-% \label{sec:results_terrain}
-%
-% From Figure~\ref{fig:ts_speed_elev} (discussed in
-% Section~\ref{subsec:ts_speed}) and
-% Figure~\ref{fig:tsi_duration_scatter}, the Eastern Ghats impose a
-% quantifiable but variable terrain influence on MD dynamics. The
-% Terrain Sensitivity Index (TSI) is negatively correlated with
-% post-landfall duration ($r = \textbf{[r$_3$]}$, $p < 0.05$): systems
-% encountering higher, steeper, rougher terrain dissipate faster.
-% However, BOE-candidate systems cluster in the low-TSI, high-duration
-% quadrant, while non-BOE systems are distributed across all TSI
-% values. This pattern is consistent with the interpretation that
-% terrain and BOE are \emph{competing factors}: for sufficiently
-% pre-moistened surfaces, sustained LHF can overcome even moderate
-% terrain-imposed decay.
-%
-%%  FIGURE: TSI vs duration scatter
-%%  SOURCE:
-%         output_YYYY/Global_elevation_analysis/elevation_metrics.csv
-% (per track TSI)
-%%        + per-track duration from MD_tracks_YYYY.csv.
-%%  Scatter: x = mean track TSI, y = post-landfall duration (h).
-% Colour by BOE status.
-% \begin{figure}[H]
-%   \centering
-%   %% >> INSERT FIGURE: TSI vs duration scatter (from elevation_metrics.csv) <<
-%   \fbox{\rule{0pt}{6.5cm}\rule{0.82\textwidth}{0pt}}
-%   % \includegraphics[width=0.82\textwidth]{Chapter4/Figs/tsi_vs_duration}
-%   \caption[Terrain Sensitivity Index vs post-landfall
-%   duration]{Track-mean TSI vs
-%     post-landfall duration (h). BOE candidates (orange) cluster at low TSI;
-%     non-BOE systems (blue) are distributed throughout. This
-% supports terrain and
-%   BOE as competing factors determining system longevity.}
-%   \label{fig:tsi_duration_scatter}
-% \end{figure}
-%
-% Figure~\ref{fig:elevation_comparison} from the Global Elevation
-% Analysis provides an ensemble view of how landfall elevation varies
-% across the track database. Systems that make landfall in the
-% river-valley gaps of the Ghats (Godavari, Mahanadi, and Brahmani
-% corridors) systematically show lower TSI values, lower speed
-% reductions at the terrain, and higher inland penetration distances,
-% consistent with the hypothesis that gap-aligned landfalls preserve
-% low-level moisture inflow channels. This terrain gap effect is
-% visible in the spatial track clustering in
-% Figure~\ref{fig:all_md_tracks_results}, where several long-lived
-% tracks follow river-valley corridors through the Ghats.
-%
-%%  FIGURE: Elevation comparison (ensemble)
-%%  SOURCE: output_YYYY/Global_elevation_analysis/Elevation_comparison.png
-%%  OR elevation_metrics_analysis.png - shows ensemble of per-track
-% elevation profiles.
-% \begin{figure}[H]
-%   \centering
-%   %% FIGURE: output_YYYY/Global_elevation_analysis/Elevation_comparison.png
-%   \fbox{\rule{0pt}{7cm}\rule{0.85\textwidth}{0pt}}
-%   % \includegraphics[width=0.85\textwidth]{Chapter4/Figs/elevation_comparison}
-%   \caption[Ensemble elevation profiles for Ghats-crossing
-% MDs]{Ensemble of track
-%     elevation profiles (SRTM) for all Ghats-crossing MDs, coloured by
-%     post-landfall
-%     duration. Systems traversing lower-elevation gaps (river-valley corridors)
-%   show longer inland persistence.}
-%   \label{fig:elevation_comparison}
-% \end{figure}
-
-\section{Multi-Year Climatological Patterns: 2001-2025}
-\label{sec:results_multiyear}
-
-% FIX: reference
-% The case study analysis of 2025 Track~1 in
-% Sections~\ref{sec:results_track1}-\ref{sec:results_terrain}
-% establishes the process-level mechanisms operating at
-% individual-event scale. This
-% section situates those findings within the broader 24-year
-% (2001-2025) climatological
-% record, documenting the interannual variability, spatial patterns,
-% and statistical
-% regularities that give the case study conclusions generality.
-
-\subsection{Annual MD Count and BOE Frequency}
-\label{subsec:multiyear_count}
-
-Figure~\ref{fig:annual_md_count} shows the annual MD count and the
-fraction of confirmed land-falling BOE candidates from 2001 to 2025.
-
-Two immediate observations emerge:
-\begin{enumerate}
-  \item The total annual MD count shows no statistically significant
-    monotonic trend over the 24-year record ($p > 0.1$, linear
-    regression), consistent with the climatological analysis of
-    \citet{rashid2005track} and \citet{mishra2021monsoon} indicating
-    stable genesis frequency over multi-decadal periods.
-  \item The BOE candidate fraction is substantially more variable
-    year-to-year than the total count, ranging from [0]\,\% to [MAX]\,\%
-    (to be filled from your data), with a mean of [MEAN]\,\%. This high
-    interannual variability in BOE frequency relative to total count is
-    itself a key finding: it demonstrates that post-landfall persistence
-    is not simply proportional to how many MDs form in a season, but is
-    controlled by a state variable (antecedent land-surface moisture)
-    that fluctuates independently of genesis frequency.
-
-\end{enumerate}
-
-% INSERT FIGURE - composite from plot_all_years.py output
-%   Overall_years/ directory - look for annual_count or similar summary PNG.
-%   If it doesn't exist, generate from your MD_tracks_YYYY.csv files:
-%   bar chart of annual count + line of BOE fraction per year.
-\begin{figure}[H]
-  \centering
-  % \includegraphics[width=0.88\textwidth]{Overall_years/annual_md_count_boe_fraction}
-  \fbox{\rule{0pt}{6cm}\rule{0.88\textwidth}{0pt}}
-  \caption[Annual MD count and BOE-candidate fraction, 2001-2025]{Annual
-    Monsoon Depression count (bars) and fraction classified as BOE candidates
-    ($\geq 70$\,W\,m$^{-2}$ LHF for $\geq 18$\,h; line with circles) over
-    2001-2025. The stability of annual count contrasted with the high
-    interannual variability of BOE fraction indicates that post-landfall
-  longevity is controlled by land-surface state rather than genesis frequency.}
-  \label{fig:annual_md_count_boe_fraction}
-\end{figure}
-
-% \yellownote{TODO}
-% High BOE frequency years (the top quartile of the annual BOE fraction
-% distribution) are [YEAR$_1$], [YEAR$_2$], and [YEAR$_3$] (to be
-% filled). Examining July-August mean \texttt{SWVL1} anomalies (from
-% ERA5) in these years reveals above-normal soil moisture over the
-% Gangetic plains and eastern Madhya Pradesh, consistent with the
-% ASMI-threshold hypothesis established in
-% Section~\ref{sec:results_asmi}. Conversely, low BOE years tend to
-% coincide with El Niño conditions \citep{rashid2005track}, when
-% suppressed monsoon rainfall in June-July leaves the antecedent soil
-% surface in a drier state at the time of MD landfall. This ENSO-BOE
-% teleconnection, while beyond the primary scope of this study,
-% represents a potentially significant seasonal predictability pathway:
-% ENSO state at the monsoon onset may precondition the land surface in
-% a way that modulates the probability of BOE-driven inland persistence
-% two months later.
-
-\subsection{Spatial Distribution of Track Termination: The Eastern Ghats Filter}
-\label{subsec:multiyear_spatial}
-
-Figure~\ref{fig:all_tracks_spatial} shows all confirmed MD tracks
-from 2001 to 2025, colour-coded by duration (hours). The spatial
-pattern of track termination points is the most direct visual
-evidence for the Eastern Ghats acting as a selective filter rather
-than an absolute barrier.
-
-% INSERT FIGURE - from Overall_years/ or plot_all_years.py
-%   All-track map, coloured by duration. Add Eastern Ghats 600m contour.
-%   Look for: Overall_years/all_tracks_2001_2025.png or similar.
-\begin{figure}[H]
-  \centering
-  \fbox{\rule{0pt}{8cm}\rule{0.90\textwidth}{0pt}}
-  % \includegraphics[width=0.90\textwidth]{Overall_years/all_tracks_2001_2025_by_duration}
-  \caption[All MD tracks, 2001-2025, coloured by post-landfall duration]{All
-    confirmed ERA5 Monsoon Depression tracks (2001-2025), colour-coded from
-    blue (short-lived, $<48$\,h post-landfall) through red (long-lived,
-    $\geq 96$\,h post-landfall). Eastern Ghats 600\,m elevation contour (bold
-    grey line) overlaid. The spatial clustering of track termination points is
-  a direct map of the terrain-filtering effect.}
-  \label{fig:all_tracks_spatial}
-\end{figure}
-
-From Figure~\ref{fig:all_tracks_spatial}, three spatial patterns are evident:
-
-\textbf{Pattern 1: Short-lived systems terminate east of the 600\,m
-contour.} The majority of short-lived MDs (blue-green tracks)
-dissipate within 200-400\,km of the coastline, with termination
-points clustering east of or within the Eastern Ghats terrain zone
-(600\,m contour). This clustering is consistent with Mechanism 4
-(vortex tilt decoupling; Section~\ref{subsec:ghats_mechanisms}):
-without BOE surface LHF to maintain boundary-layer convergence, the
-terrain-induced tilt increase is sufficient to cause structural
-collapse before or during the terrain crossing.
-
-\textbf{Pattern 2: Long-lived systems concentrate over the Gangetic
-plain west of the Ghats.} Long-lived tracks (orange-red) extend well
-west of the 600\,m contour into the Gangetic plain, eastern
-Rajasthan, and Madhya Pradesh. These tracks correspond to systems
-that successfully cleared the terrain and continued under BOE
-maintenance for multiple days. The spatial clustering of these
-long-lived tracks over the Gangetic plain is physically meaningful:
-this region has the highest climatological July-August \texttt{SWVL1}
-($>0.35$\,m$^3$\,m$^{-3}$) in India due to its clay loam soils and
-high annual monsoon rainfall, precisely the conditions that enable
-and sustain the BOE.
-
-\textbf{Pattern 3: River-valley gap tracks achieve greater inland
-penetration.} A subset of long-lived tracks shows notably greater
-inland penetration distance than others with comparable ASMI values.
-Examining the landfall longitude of these outlier tracks reveals that
-they made landfall in alignment with the major river-valley gaps of
-the Eastern Ghats (the Mahanadi corridor near 84-85$^\circ$E, the
-Godavari corridor near 81-82$^\circ$E). Gap-aligned MDs experience
-smaller TSI values (lower terrain obstacle), preserving low-level BoB
-moisture inflow for longer through the terrain-crossing phase, and
-thus allowing the BOE to activate more efficiently on the leeward side.
-
-\subsection{Duration Distribution and the 96-Hour Threshold}
-\label{subsec:multiyear_duration}
-
-Figure~\ref{fig:duration_histogram} shows the frequency distribution
-of MD post-landfall durations across the 2001-2025 climatology. The
-distribution is strongly right-skewed, with a mode near 24-48 hours
-(reflecting the most common conventional post-landfall decay) and a
-pronounced tail extending beyond 96 hours. This bimodal character-a
-dominant short-duration peak and a secondary long-duration tail-is
-consistent with the BOE hypothesis imposing a threshold-type
-separation between two regimes rather than a continuous spectrum of behaviour.
-
-The threshold at 96 hours used to classify short- versus long-lived
-systems is not arbitrary: it corresponds approximately to the 85th
-percentile of the duration distribution, separating the bulk
-conventional decay population from the tail of anomalously persistent
-systems. Systems in this tail account for a disproportionately large
-fraction of total inland precipitation and flooding, despite
-constituting a minority of events.
-
-% FIX: duplicate label. But i need differnt figures as well
-% INSERT FIGURE - duration histogram
-%   Overall_years/duration_histogram.png from plot_all_years.py
-%   Show: bar chart with 24h bins, dashed line at 96h, label "96h threshold".
-%   Colour bars blue for < 96h and orange for >= 96h.
-\begin{figure}[H]
-  \centering
-  % \includegraphics[width=0.78\textwidth]{Overall_years/duration_histogram}
-  \fbox{\rule{0pt}{6cm}\rule{0.78\textwidth}{0pt}}
-  \caption[Frequency distribution of MD post-landfall duration, 2001-2025]{
-    Frequency distribution of MD post-landfall duration (hours) for
-    all 2001-2025
-    events. The right-skewed distribution with a tail beyond 96 hours
-    is consistent
-    with the BOE imposing a threshold separation between two distinct
-    decay regimes.
-    Blue bars: conventional decay ($<96$\,h); orange bars: long-lived systems
-  ($\geq 96$\,h, primary focus of this study).}
-  % \label{fig:duration_histogram}
-\end{figure}
-
-% \subsection{ASMI-Duration Relationship: 24-Year Statistical Evidence}
-% \label{subsec:multiyear_asmi}
-%
-% Figure~\ref{fig:asmi_vs_duration_scatter} presents the scatter of
-% 7-day ASMI against
-% post-landfall duration for all confirmed land-falling MDs in the
-% 2001-2025 dataset.
-% Each point represents one MD event; colour denotes BOE classification.
-%
-% % INSERT FIGURE - compute from antecedent_analysis.py
-% % outputs across all years
-% %   Scatter: x = ASMI_7d (m3/m3), y = post-landfall duration (h)
-% %   Colour: orange = BOE candidate, blue = non-BOE
-% %   Add: vertical dashed line at ASMI = 0.35, horizontal dashed line at 96h
-% %   Add: regression line + 95% CI band
-% \begin{figure}[H]
-%   \centering
-%   % \includegraphics[width=0.82\textwidth]{Overall_years/asmi_7d_vs_duration_scatter}
-%   \fbox{\rule{0pt}{7cm}\rule{0.82\textwidth}{0pt}}
-%   \caption[ASMI (7-day) vs post-landfall duration, all 2001-2025
-%   events]{7-day ASMI (m$^3$\,m$^{-3}$, horizontal axis) vs
-%     post-landfall duration (h, vertical axis) for all 2001-2025
-%     confirmed land-falling MDs. BOE candidates (orange); non-BOE
-%     systems (blue). Vertical dashed line at ASMI $=
-%     0.35$\,m$^3$\,m$^{-3}$ marks the approximate threshold above which
-%   BOE candidacy dominates.}
-%   \label{fig:asmi_vs_duration_scatter}
-% \end{figure}
-%
-% \yellownote{Look into this}
-% From Figure~\ref{fig:asmi_vs_duration_scatter}, the 25-year dataset
-% reveals the following
-% statistical regularities:
-% \begin{enumerate}
-%   \item \textbf{Positive ASMI-duration correlation:} Pearson $r =
-%     [r_1]$, $p = [p_1]$ (effective sample size corrected following
-%     \citealt{bretherton1999effective}). Higher antecedent soil
-%     moisture is significantly associated with longer post-landfall
-%     duration across the full climatological record, confirming the
-%     ASMI as a statistically valid predictor.
-%   \item \textbf{Threshold behaviour near 0.35\,m$^3$\,m$^{-3}$:}
-%     Systems with ASMI$_{7d}$ $> 0.35$ are predominantly long-lived
-%     and BOE-candidate. Below this threshold, the vast majority are
-%     short-lived. This threshold corresponds to the critical soil
-%     moisture level at which hydraulic conductivity drops steeply in
-%     Gangetic clay loam \citep{clapp1978empirical,
-%     seneviratne2010investigating}, marking the transition from
-%     water-limited to energy-limited evaporation.
-%   \item \textbf{Scatter within each ASMI class:} The scatter around
-%     the regression line is substantial, indicating that ASMI alone
-%     does not fully explain duration variability. The residual
-%     variance is likely attributable to differences in terrain
-%     exposure (TSI), track alignment with river-valley gaps, and the
-%     intensity of the MD at landfall. This residual structure
-%     motivates the combined ASMI + TSI predictor framework discussed
-%     in Chapter~\ref{ch:discussion}.
-% \end{enumerate}
-
-% \subsection{Terrain Sensitivity Index vs Duration: The Terrain Filter}
-% \label{subsec:multiyear_tsi}
-%
-% Figure~\ref{fig:tsi_vs_duration} shows the relationship between
-% track-mean Terrain
-% Sensitivity Index (TSI) and post-landfall duration for the subset of MDs that
-% crossed the Eastern Ghats.
-%
-% \yellownote{TODO}
-% % INSERT FIGURE - from elevation_metrics.csv (all years)
-% %   Scatter: x = mean track TSI, y = post-landfall duration (h)
-% %   Colour: orange = BOE candidate, blue = non-BOE
-% \begin{figure}[H]
-%   \centering
-%   % \includegraphics[width=0.80\textwidth]{Overall_years/tsi_vs_duration_scatter}
-%   \fbox{\rule{0pt}{6.5cm}\rule{0.80\textwidth}{0pt}}
-%   \caption[Terrain Sensitivity Index vs post-landfall duration, all
-%   Ghats-crossing MDs]{
-%     Track-mean TSI vs post-landfall duration for all Ghats-crossing
-%     MDs in 2001-2025. BOE candidates (orange) cluster in the low-TSI,
-%     high-duration quadrant; non-BOE systems (blue) are distributed
-%     across all TSI values, confirming that terrain sensitivity is a
-%     decay-promoting factor but that BOE can overcome
-%   moderate terrain barriers.}
-%   \label{fig:tsi_vs_duration}
-% \end{figure}
-%
-% The key observation from Figure~\ref{fig:tsi_vs_duration} is the in
-% the distribution: BOE candidates cluster almost exclusively in the
-% low-TSI, high-duration quadrant (lower-right), while non-BOE systems
-% populate the full TSI range, including both low and high TSI values.
-% This pattern supports the interpretation that:
-%
-% \begin{enumerate}
-%   \item High TSI alone is sufficient to produce short duration
-%     (upper-left quadrant), regardless of BOE status-the terrain is
-%     too severe even for BOE to compensate.
-%   \item Low TSI with high ASMI (BOE candidate) produces long duration
-%     (lower-right).
-%   \item Low TSI with low ASMI (non-BOE) can still produce short
-%     duration, because the limiting factor is the surface moisture
-%     state, not the terrain.
-% \end{enumerate}
-%
-% This three-way interaction (ASMI, TSI, and their joint effect) is the
-% most complete statistical summary of the terrain-BOE modulation of MD
-% inland longevity that this dataset permits. A composite index
-% combining ASMI$_{7d}$ and TSI$^{-1}$ as a product may provide
-% improved predictive skill relative to either variable alone, and is
-% identified as a recommendation for operational forecasting research
-% (Section~\ref{sec:conclusions_operational}).
-%
-% \subsection{Orographic Blocking Factor and Speed Reduction}
-% \label{subsec:ghats_blocking_results}
-%
-% \yellownote{FIX: reference}
-% The translational speed profiles from \texttt{speed\_analysis.py}
-% provide the most direct observational measure of terrain-induced
-% blocking. Figure~\ref{fig:ts_speed_elev} shows that all
-% Ghats-crossing MDs decelerate as terrain elevation increases through
-% the 200-1000\,m zone, with mean speed reduction of approximately
-% $\Delta v \approx$ [X]\,km\,h$^{-1}$ at the 600\,m contour relative
-% to the pre-landfall ocean-phase speed. This deceleration is a direct
-% consequence of increased surface roughness and mechanical flow
-% blocking by the terrain - consistent with the Terrain Sensitivity
-% Index formulation (Section~\ref{sec:terrain_method}).
-%
-% The blocking effect is not uniform across the Ghats. Systems making
-% landfall between 84-87$^\circ$E (the Mahanadi corridor, near Odisha)
-% encounter lower mean TSI values and show smaller speed reductions
-% than those tracking through the southern Ghats (south of 16$^\circ$N,
-% high TSI). This longitude-dependent blocking is visible in
-% Figure~\ref{fig:elevation_comparison}: the scatter in per-track speed
-% reduction correlates with the landfall longitude, with gap-aligned
-% tracks showing shallower deceleration.
-%
-% The critical distinction between BOE-candidate and non-BOE systems is
-% not in the deceleration magnitude during the terrain crossing - both
-% categories slow at comparable rates within the 600-1000\,m elevation
-% zone. The difference appears on the leeward side: BOE-candidate
-% systems recover speed as terrain elevation drops below 200\,m, while
-% non-BOE systems continue to slow. This leeward speed recovery is
-% interpreted as evidence that sustained surface LHF (from the wet
-% leeward soil) maintains the low-level pressure gradient that drives
-% the system forward, whereas in non-BOE systems the pressure gradient
-% weakens as convective organisation collapses after terrain crossing.
-
-\yellownote{TODO: add subsection on  the precipitation recycling ratio}
-\subsection{Precipitation Recycling Ratio}
-\label{Precipitation Recycling Ratio}
-
-% The precipitation recycling ratio $\rho = E/P$ (where $E$ is local
-% evapotranspiration in mm\,h$^{-1}$ and $P$ is total precipitation) provides
-% an independent measure of how much of the MD's rainfall is sourced from local
-% surface evaporation rather than large-scale moisture advection. Over the ocean
-% phase, $\rho \approx 0.05$-0.15, indicating that most precipitation comes from
-% advected oceanic moisture. After landfall in BOE-candidate systems,
-% Figure~\ref{fig:track1_recycling} shows $\rho$ rising to 0.25-0.40, consistent
-% with local surface evapotranspiration contributing a growing fraction of the
-% precipitation total. This elevated recycling ratio is a direct fingerprint of
-% the BOE: the soil is evaporating at the potential rate and that vapour is
-% falling back as precipitation within the same 100-km buffer.
-% % Source: output_2024/track_1/time_series/track_1_recycling_ratio.png
+The survival of these systems suggests that land-atmosphere coupling
+(the BOE) provides sufficient energy to overcome the mechanical
+frictional dissipation usually imposed by the Ghats.

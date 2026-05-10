@@ -1,5 +1,7 @@
 \documentclass[a4paper, 11pt, times, numbered, print,
 authoryear]{Classes/PhDThesisPSnPDF}
+% \documentclass[chapter, a4paper, 11pt, times, numbered, print,
+% authoryear]{Classes/PhDThesisPSnPDF}
 
 \newcommand{\fullhrulefill}
 {%
@@ -76,12 +78,7 @@ authoryear]{Classes/PhDThesisPSnPDF}
 
 % % Chapter-only mode
 % \ifdefineChapter
-%   \includeonly{Chapter1/chapter1}
-%   \includeonly{Chapter2/chapter2}
-%   \includeonly{Chapter3/chapter3}
-%   \includeonly{Chapter4/chapter4}
-%   \includeonly{Chapter5/chapter5}
-%   \includeonly{Chapter6/chapter6}
+% \includeonly{Chapter1/chapter1}
 % \fi
 
 %  Front Matter
@@ -139,12 +136,11 @@ authoryear]{Classes/PhDThesisPSnPDF}
   % specified in the preamble.tex file in the custombib section.
   % Comment out the lines related to natbib above and uncomment the
   % following line.
-
   % \printbibliography[heading=bibintoc, title={data-proc}]
 \end{spacing}
 
 %  Appendices
-\begin{appendices} % Using appendices environment for more functunality
+\begin{appendices}
   \include{Appendix/appendix1}
   % \include{Appendix/appendix2}
 \end{appendices}
