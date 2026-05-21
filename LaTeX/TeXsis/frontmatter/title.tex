@@ -1,0 +1,75 @@
+\pdfbookmark{Title Page}{titlepage} % add PDF outline entry
+\thispagestyle{empty} % no number on the title page
+\begin{center}
+  \Large
+
+  %% if `\ThesisTitleFront` is not defined, use `\ThesisTitle`
+  \providecommand*{\ThesisTitleFront}{\ThesisTitle}
+  % {\Huge \bfseries \ThesisTitleFront \par}
+  {\fontsize{25pt}{28pt}\selectfont \bfseries
+  \ThesisTitleFront \par}
+
+  % \vfill
+  \vspace{2.5em}
+
+  % {\ifFANCY\sffamily\Huge\else\bfseries\LARGE\fi
+  % \MakeUppercase{\ThesisType} THESIS}
+  %
+  % \vfill
+  %
+  {\Huge \ThesisAuthor}
+
+  (\StudentCode)
+
+  \Department
+
+  \vspace{1.2em}
+
+  \begin{center}
+    \large
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabular}{>{\sffamily\color{Gray40}}r @{\hspace{1.0em}} l}
+      Supervised under & \textbf{\Supervisor} \\
+      \ifdef{\CoSupervisor}{%
+        Co-Supervisor of the Thesis & \CoSupervisor \\
+      }{}
+      \ifdef{\StudyProgramme}{
+        Study Programme & \StudyProgramme \\
+      }{}
+    \end{tabular}
+  \end{center}
+
+  \vspace{4em}
+
+  % \begin{adjustbox}{center,trim=0 0.2cm 4cm 0.2cm}
+  %   \includegraphics[width=1.4\textwidth]{IIST-logo.pdf}
+  % \end{adjustbox}
+  % TODO: make logo in pdf and import
+  % FIX: use high res logo
+  % \includegraphics[width=0.9\textwidth]{IIST-logo} % Horizontal (with name)
+  \includegraphics[width=0.25\textwidth]{iist_logo} % Square (only logo)
+
+  \vfill
+
+  \ifFANCY\sffamily\fi
+  \ifdef{\TimeOfSubmission}%
+  {\TimeOfSubmission \\}% If \TimeOfSubmission is defined
+  {% Otherwise, check if \YearSubmitted is defined
+    \ifdef{\YearSubmitted}%
+      % {Prague \YearSubmitted \\}%
+      {\YearSubmitted \\}%
+      {\textcolor{red}{Submission date was not provided}}% Leave empty if neither is defined
+  }%
+  % \ifdef{\YearRevision}{%
+  %   \emph{Revised version \YearRevision} \par
+  % }{}
+  \ifWIP
+  \small\ttfamily \textcolor{red}{(Draft - \today)} \par
+  \fi
+
+\end{center}
+
+% \newpage
+\cleardoublepage  % forces a blank page if needed in twoside, but in oneside adds a new page
+\thispagestyle{empty} %
+\thispagestyle{empty} %

@@ -1,0 +1,111 @@
+% FIX:
+% Fallback for missing hyperref link target macro
+\RequirePackage{iftex}
+\providecommand{\qedhere}{}
+\providecommand{\MakeLinkTarget}[1]{\relax}
+% \providecommand{\Hy@SectionTarget}[1]{\relax}
+% \providecommand{\texorpdfstring}[2]{#1}
+
+\newcommand*{\TeXsisVERSION}{0.1.0} %% TeXsis 2026-05-05
+
+% %% Enable built-in LaTeX support for PDF/A compliance (must be before `\documentclass`)
+% \RequirePackage{pdfmanagement}
+% \SetKeys[document/metadata]{pdfversion=1.7, pdfstandard=A-2u}
+% \RequirePackage{pdfx}
+% \pdfminorversion=7
+% \input{preamble/pdfA-compliance/glyphtounicode}
+
+\PassOptionsToPackage{rgb,table,tikzpicture}{xcolor}
+%% NOTE: Choose the desirable page layout version (electronic vs print)
+% \documentclass[12pt,a4paper]{report}                      % single-side (electronic)
+\documentclass[12pt,a4paper,openright,twoside]{report}  % two-sided (for printing)
+
+%% Set some toggle flags to control some of the document properties
+\usepackage{xparse}
+\providecommand{\IfBlankF}[2]{#2}   % fallback: treat all as non-blank
+% \providecommand{\includeonlysmart}[1]{\includeonly{#1}}  % fallback
+% FIX: Fallback environments (since keytheorems is missing)
+\NewDocumentEnvironment{remark}{O{}}{%
+    \par\noindent\textbf{Remark.} \textit{#1}\par\nobreak\smallskip
+}{}
+\NewDocumentEnvironment{definition}{O{}}{%
+    \par\noindent\textbf{Definition.} \textit{#1}\par\nobreak\smallskip
+}{}
+\NewDocumentEnvironment{Note}{O{}}{%
+    \par\noindent\textbf{Note.} \textit{#1}\par\nobreak\smallskip
+}{}
+\NewDocumentEnvironment{Warning}{O{}}{%
+    \par\noindent\textcolor{orange}{\textbf{Warning.}} \textit{#1}\par\nobreak\smallskip
+}{}
+\NewDocumentEnvironment{Todo}{O{}}{%
+    \par\noindent\textcolor{red}{\textbf{TODO:}} \textit{#1}\par\nobreak\smallskip
+}{}
+\NewDocumentEnvironment{example}{O{}}{%
+    \par\noindent\textbf{Example.} \textit{#1}\par\nobreak\smallskip
+}{}
+% \NewDocumentEnvironment{Question}{O{}}{%
+%     \par\noindent\textbf{Question.} \textit{#1}\par\nobreak\smallskip
+% }{}
+% TODO: Add other environments as needed for fallback (theorem, proof, lemma, etc.)
+
+
+\input{preamble/toggles}
+% \FANCYfalse % disable some of the more fancy stylistic choices
+%% NOTE: Comment out the following lines for the final version
+% \WIPtrue            % THIS IS A WORK-IN-PROGRESS VERSION
+% \EXTRAMARGINtrue    % add extra right margin in WIP version (for notes/corrections)
+% \LINKBOXESfalse     % disable reference/link boxes for faster compilations
+% \CENSORtrue         % THIS IS A CENSORED VERSION
+
+%% Preamble - data, packages, macros, and more
+\input{preamble/main}
+
+\begin{document}
+
+\frontmatter
+\include{frontmatter/title}
+% \cleardoublepage
+% \thispagestyle{empty}
+% \vspace*{\fill}
+% \begin{flushright}
+%     \qrcode[height=0.3in]{https://github.com/Harshit-Dhanwalkar} %\\
+%     % \tiny\textcolor{blue}{github.com/Harshit-Dhanwalkar}
+% \end{flushright}
+% \cleardoublepage
+
+\include{frontmatter/certificate}
+\setcounter{page}{1}
+\include{frontmatter/declaration}
+\include{frontmatter/acknowledgement}
+% \include{frontmatter/information} % NOTE: this does have information and abstract but I want new page for abstract
+\include{frontmatter/abstract}
+
+\contentsandlists
+
+% \include{chapters/QuickSummary}
+% \include{chapters/Notation}
+
+\mainmatter
+\include{chapters/chapter1} %% Introduction
+\include{chapters/chapter2} %% Background and Literature Review
+\include{chapters/chapter3} %% Data and Methodology
+\include{chapters/chapter4} %% Results
+\include{chapters/chapter5} %% Discussion
+\include{chapters/chapter6} %% Conclusions and Future Work
+
+% \include{chapters/Design}
+% \include{chapters/Usage}
+% \include{chapters/Features}
+% \include{chapters/Tips}
+
+% \backmatter
+% % \include{chapters/Summary}
+% \references
+
+\appendix
+% \include{chapters/Appendix}
+\include{chapters/appendix1}
+% \include{chapters/appendix2}
+
+\includepdf[pages=-]{anc/plagiarism_report}
+\end{document}

@@ -1,0 +1,74 @@
+%% Thesis type: bachelor, master, doctoral
+\newcommand*{\ThesisType}{master}
+
+%% Thesis title (exactly as in the formal assignment)
+\newcommand*{\ThesisTitle}{Post-Landfall Sustainability of Monsoon Depressions over India: The Role of the Brown Ocean Effect, Orographic Modulation by the Eastern Ghats, and Antecedent Soil Moisture}
+
+%% Plaintext version for PDF metadata, uncomment if needed (defauls to \ThesisTitle)
+% \newcommand*{\ThesisTitlePlaintext}{TeXsis Manual \TeXsisVERSION}
+
+% %% Thesis title (if custom formatting is needed for the title page, defauls to \ThesisTitle)
+% \newcommand*{\ThesisTitleFront}{
+%     \ThesisTitle\\
+%     {\Huge\color{gray}\TeXsisVERSION}
+% }
+
+%% Author of the thesis
+\newcommand*{\ThesisAuthor}{Harshit Prashant Dhanwalkar}
+%% Plaintext version for PDF metadata, uncomment if needed (defaults to \ThesisAuthor)
+% \newcommand*{\ThesisAuthorPlaintext}{Author's Name}
+
+%% Year when the thesis is submitted
+\usepackage{datetime2}
+\DTMnewdatestyle{mmyyyy}{%
+  \renewcommand*{\DTMdisplaydate}[4]{%
+    \DTMtwodigits{##2} ##1% ##2 is month, ##1 is year
+  }%
+  \renewcommand*{\DTMDisplaydate}{\DTMdisplaydate}%
+}
+\newcommand*{\TimeOfSubmission}{May 2026}
+\newcommand*{\YearOfSubmission}{2026}
+%% Year of the last revision, uncomment if it is different from \YearSubmitted
+\newcommand*{\YearRevision}{YYYY}
+
+%% University
+\newcommand*{\University}{Indian Institute of Space Science and Technology (IIST)}
+
+%% Name of the department or institute
+\newcommand*{\StudentCode}{SC21B164} % Roll number
+\newcommand*{\Branch}{Engineering Physics and Earth System Science}
+\newcommand*{\Department}{Department of Earth and Space Sciences}
+
+%% Is it a Department, or an Institute?
+\newcommand*{\DeptType}{IIST, Thiruvanathapuram}
+
+%% Thesis supervisor: name, surname and titles
+\newcommand*{\Supervisor}{Dr. A. Chandrasekar}
+\newcommand*{\SupervisorTitle}{Outstanding Professor}
+%% Thesis co-supervisor: name, surname and titles (uncomment if applicable)
+% \newcommand*{\CoSupervisor}{Name, Surname, and Titles}
+
+%% Supervisor's department/institute
+\newcommand*{\SupervisorsDepartment}{Department of Earth and Space Sciences}
+
+%% Study programme and specialization
+% \newcommand*{\StudyProgramme}{\textcolor{red}{Study Programme}}
+
+%%% Abstract (recommended length around 80-300 words)
+% \newcommand*{\Abstract}{%
+%     \textcolor{red}{Write abstract here.}
+% }
+
+%%% Subject (short description for PDF metadata)
+\newcommand*{\Subject}{%
+    Mtech Thesis 2026.
+}
+
+%% Keywords (about 3-7)
+\newcommand*{\Keywords}{%
+    Monsoon Depressions, Tropical Cyclones, Azimuthal Hovm\"oller, Elevation, Latent Heat Flux, Sensible Surface Heat Flux, Total Precipitation, Soil Moisture, Volumatric Soil Water Level, Antecedent Soil Moisture
+}
+%% Plaintext version for PDF metadata, uncomment if needed (defauls to \Keywords)
+\newcommand*{\KeywordsPlaintext}{%
+    Monsoon Depressions, Tropical Cyclones, ERA5, SRTM, Azimuthal Hovm\"oller, Elevation, Latent Heat Flux, Sensible Surface Heat Flux, Total Precipitation, Soil Moisture, Volumatric Soil Water Level, Antecedent Soil Moisture
+}
