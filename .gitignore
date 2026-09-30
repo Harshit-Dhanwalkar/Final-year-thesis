@@ -1,3 +1,8 @@
+# Data
+## ERA5
+Data/pressure-levels/
+Data/single-levels/
+
 # Python
 /venv/
 output*
