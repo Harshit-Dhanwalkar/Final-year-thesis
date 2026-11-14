@@ -22,7 +22,11 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 import xarray as xr
+
 import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use("Agg")
+
 from scipy.optimize import linear_sum_assignment
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature

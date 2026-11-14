@@ -73,7 +73,7 @@ def compute_feedback_strength_index(
     }
 
 
-def compute_fsi_all_tracks(ds, correlation_results_df, track_df_dict):
+def compute_fsi_all_tracks(ds, correlation_results_df, track_df_dict, buffer_km=100):
     """Compute FSI for all tracks"""
     fsi_df = []
     for _, row in correlation_results_df.iterrows():
@@ -96,7 +96,7 @@ def compute_fsi_all_tracks(ds, correlation_results_df, track_df_dict):
                     pt["latitude"],
                     pt["longitude"],
                     pd.to_datetime(pt["time"]),
-                    buffer_km=100,
+                    buffer_km=buffer_km,
                 )
                 if subset is not None and "swvl1" in subset.data_vars:
                     sm = float(subset["swvl1"].mean().values)

@@ -54,6 +54,9 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+import matplotlib
+matplotlib.use("Agg")
+
 from correlation_analysis import analyze_single_track, compute_single_track_correlation
 from coupling_metrics import (
     compute_coupling_efficiency,
@@ -78,7 +81,7 @@ from heatflux_analysis import (
     export_landfall_flux_results,
     print_md_classification_summary,
 )
-from soil_moiture_analysis import compute_soil_moisture_memory, plot_spatial_tp_swvl1
+from soil_moisture_analysis import compute_soil_moisture_memory, plot_spatial_tp_swvl1
 
 # Analysis modules
 from speed_analysis import (
@@ -114,6 +117,8 @@ from timeseries import (
 from utils import extract_spatial_subset, get_time_coord, std_print
 from utils.progress_utils import ProgressSpinner
 from vortex_analysis import global_vortex_analysis, run_track_vortex_analysis
+
+ANALYSIS_BUFFER_KM=500
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -479,7 +484,7 @@ if __name__ == "__main__":
             "..", "Data", "single-levels", "ncfiles", "lsm-soiltype-z.nc"
         )
 
-        output_dir = f"output_{MONSOON_YEAR}"
+        output_dir = f"output_{MONSOON_YEAR}_BUF_{ANALYSIS_BUFFER_KM}"
         if not os.path.exists(output_dir):
             std_print(
                 "WARN",
@@ -662,7 +667,7 @@ if __name__ == "__main__":
                         ds,
                         track_df,
                         track_id,
-                        buffer_km=100,
+                        buffer_km=ANALYSIS_BUFFER_KM,
                         max_lag_hours=48,
                         output_dir=correlation_dir,
                     )
@@ -714,7 +719,7 @@ if __name__ == "__main__":
                 os.makedirs(heatflux_dir, exist_ok=True)
                 try:
                     flux_df = extract_heat_flux_timeseries(
-                        track_ds, track_df, track_id, buffer_km=100
+                        track_ds, track_df, track_id, buffer_km=ANALYSIS_BUFFER_KM
                     )
                     if flux_df is not None:
                         flux_dict[track_id] = flux_df.copy()
@@ -743,6 +748,7 @@ if __name__ == "__main__":
                             track_id,
                             hours_before=24,
                             hours_after=24,
+                            buffer_km=ANALYSIS_BUFFER_KM,
                         )
                         if lf_result:
                             all_landfall_results.append(lf_result)
@@ -852,7 +858,7 @@ if __name__ == "__main__":
 
                     try:
                         theta_df = extract_theta_e_timeseries(
-                            track_ds, track_df, track_id, buffer_km=100
+                            track_ds, track_df, track_id, buffer_km=ANALYSIS_BUFFER_KM
                         )
                         theta_e_timeseries(theta_df, track_id, output_dir=ts_dir)
 
@@ -1006,7 +1012,7 @@ if __name__ == "__main__":
                 print(f"\n-- Soil moisture analysis (track {track_id}) --")
                 try:
                     sm_result = compute_single_track_correlation(
-                        track_ds, track_df, track_id, buffer_km=100
+                        track_ds, track_df, track_id, buffer_km=ANALYSIS_BUFFER_KM
                     )
                     if sm_result:
                         all_sm_results.append(sm_result)
@@ -1017,6 +1023,7 @@ if __name__ == "__main__":
                             track_df,
                             track_id,
                             output_dir=sm_dir,
+                            buffer_km=ANALYSIS_BUFFER_KM, 
                             lsm_ds=lsm_ds,
                         )
                         std_print("SAVED", "an", "Soil moisture plots", sm_dir)
@@ -1029,7 +1036,7 @@ if __name__ == "__main__":
                                 row["latitude"],
                                 row["longitude"],
                                 pd.to_datetime(row["time"]),
-                                buffer_km=100,
+                                buffer_km=ANALYSIS_BUFFER_KM,
                             )
                             if sub is not None and "swvl1" in sub.data_vars:
                                 v = float(sub["swvl1"].mean().values)
@@ -1229,7 +1236,7 @@ if __name__ == "__main__":
             # FSI
             if not correlation_df.empty and track_dict:
                 std_print("INFO", "an", "Computing FSI")
-                fsi_df = compute_fsi_all_tracks(ds, correlation_df, track_dict)
+                fsi_df = compute_fsi_all_tracks(ds, correlation_df, track_dict, buffer_km=ANALYSIS_BUFFER_KM)
                 if fsi_df is not None and not fsi_df.empty:
                     fsi_csv = os.path.join(
                         coupling_metrics_dir, "coupling_metrics_FSI.csv"

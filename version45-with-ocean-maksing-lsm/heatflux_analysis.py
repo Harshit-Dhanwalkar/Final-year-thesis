@@ -20,9 +20,8 @@ from utils import (
     export_results_to_csv,
 )
 
-
 # Landfall flux transition
-def analyze_flux_transition(ds, track_df, track_id, hours_before=24, hours_after=24):
+def analyze_flux_transition(ds, track_df, track_id, hours_before=24, hours_after=24, buffer_km=100):
     """
     ERA5 Heat Flux Sign Convention:
     - avg_slhtf, avg_ishf : W/m^2  (instantaneous average, positive = away from surface)
@@ -64,7 +63,7 @@ def analyze_flux_transition(ds, track_df, track_id, hours_before=24, hours_after
         lat_c = row["latitude"]
         lon_c = row["longitude"]
         is_land = row.get("is_land", False)
-        lat_buf, lon_buf = calculate_buffer_deg(lat_c, buffer_km=100)
+        lat_buf, lon_buf = calculate_buffer_deg(lat_c, buffer_km=buffer_km)
 
         idx = np.argmin(np.abs(ds_times - t))
         t_prev = ds_times[idx] - pd.Timedelta(hours=1)

@@ -163,7 +163,7 @@ def analyze_single_track(ds, track_df, track_id, buffer_km, max_lag_hours, outpu
     os.makedirs(output_dir, exist_ok=True)
     # 1. TP-SWVL1 Feedback
     try:
-        plot_tp_swvl1_correlation(ds, track_df, track_id, buffer_km=100, output_dir=output_dir)
+        plot_tp_swvl1_correlation(ds, track_df, track_id, buffer_km=buffer_km, output_dir=output_dir)
         plot_tp_swvl1_lag_correlation(tp_series, swvl1_series_land, max_lag_hours, track_id, output_dir)
     except Exception as e:
         std_print("ERROR", "ca", "TP-SWVL1 analysis failed", str(e))
@@ -243,7 +243,7 @@ def analyze_all_tracks(ds, full_track_df, buffer_km, output_dir):
 
 
 # Helper functions
-def compute_single_track_correlation(ds, track_df, track_id, buffer_km=100):
+def compute_single_track_correlation(ds, track_df, track_id, buffer_km):
     """Compute Pearson and Spearman correlation between TP and SWVL1 (land only)"""
     track_id = int(track_id)
     std_print("INFO", "ca", "--- Computing correlation (land only) ---")
